@@ -18,8 +18,8 @@ claude --plugin-dir ./doc-detective
 
 Then use the plugin commands:
 - `/doc-detective:doc-detective-testing` - Main skill for testing workflows
-- `/doc-detective:test-docs` - Quick command to test documentation files
-- `/doc-detective:validate-tests` - Validate test specifications
+- `/doc-detective:test` - Quick command to test documentation files
+- `/doc-detective:validate` - Validate test specifications
 
 ### Option 2: Install as a Plugin
 
@@ -37,7 +37,7 @@ Copy the plugin directory to your Claude Code plugins location or follow [Claude
 ### Convert Documentation to Tests
 
 ```bash
-/doc-detective:test-docs path/to/documentation.md
+/doc-detective:test path/to/documentation.md
 ```
 
 The skill will:
@@ -50,7 +50,7 @@ The skill will:
 ### Validate Test Specifications
 
 ```bash
-/doc-detective:validate-tests test-spec.json
+/doc-detective:validate test-spec.json
 ```
 
 Validates structure before execution:
@@ -162,7 +162,7 @@ Create a test specification file `workflows.json`:
 
 Then execute:
 ```
-/doc-detective-plugin:test-docs workflows.json
+/doc-detective:test workflows.json
 ```
 
 ## Resources
