@@ -11,13 +11,13 @@ Validate Doc Detective test specifications to ensure they're correctly structure
 Provide a test specification file or JSON content:
 
 ```
-/doc-detective-plugin:validate-tests test-spec.json
+/doc-detective:validate test-spec.json
 ```
 
 Or provide inline JSON:
 
 ```
-/doc-detective-plugin:validate-tests
+/doc-detective:validate
 {
   "tests": [
     {

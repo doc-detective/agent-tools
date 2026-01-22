@@ -18,13 +18,13 @@ Provide documentation text or a file path. The command will:
 ## Example
 
 ```
-/doc-detective-plugin:test-docs path/to/docs/getting-started.md
+/doc-detective:test path/to/docs/getting-started.md
 ```
 
 Or provide inline documentation:
 
 ```
-/doc-detective-plugin:test-docs
+/doc-detective:test
 1. Navigate to https://example.com
 2. Click the "Sign In" button
 3. Enter your email
