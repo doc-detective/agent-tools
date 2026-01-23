@@ -1,9 +1,9 @@
 ---
-name: doc-detective-testing
+name: doc-testing
 description: Test documentation procedures using Doc Detective (doc-detective.com). Use when (1) testing procedures in markdown/text documentation, (2) converting documentation into executable test specifications, (3) validating existing Doc Detective test specs, (4) running Doc Detective tests and interpreting results, or (5) checking if documented procedures match actual application behavior. Triggers on requests to "test documentation", "verify procedures", "run doc-detective", or "create tests from docs".
 ---
 
-# Doc Detective Testing
+# Doc Testing
 
 Test documentation procedures by converting them to Doc Detective test specifications and executing them.
 

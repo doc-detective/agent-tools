@@ -4,7 +4,7 @@ A Claude Code plugin for testing documentation procedures and validating that do
 
 ## Features
 
-- **Doc Detective Testing Skill** - Full-featured skill for testing documentation procedures using Doc Detective framework
+- **Doc Testing Skill** - Full-featured skill for testing documentation procedures using Doc Detective framework
 - **Test Documentation Command** - Convert markdown documentation into executable test specifications
 - **Validate Tests Command** - Validate test specifications before execution
 
@@ -17,7 +17,7 @@ claude --plugin-dir ./doc-detective
 ```
 
 Then use the plugin commands:
-- `/doc-detective:doc-detective-testing` - Main skill for testing workflows
+- `/doc-detective:doc-testing` - Main skill for testing workflows
 - `/doc-detective:test` - Quick command to test documentation files
 - `/doc-detective:validate` - Validate test specifications
 
@@ -61,7 +61,7 @@ Validates structure before execution:
 ### Use the Core Skill
 
 ```bash
-/doc-detective:doc-detective-testing <your request>
+/doc-detective:doc-testing <your request>
 ```
 
 Full documentation testing workflow with complete control over interpretation, validation, and execution.
@@ -73,7 +73,7 @@ doc-detective/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin manifest
 ├── skills/
-│   └── doc-detective-testing/   # Core testing skill
+│   └── doc-testing/             # Core testing skill
 │       ├── SKILL.md
 │       ├── references/
 │       │   └── actions.md       # Action reference
@@ -104,7 +104,7 @@ The plugin includes complete documentation for Doc Detective actions:
 | `saveCookie`/`loadCookie` | Manage session persistence |
 | `record`/`stopRecord` | Video recording |
 
-See `skills/doc-detective-testing/references/actions.md` for detailed documentation.
+See `skills/doc-testing/references/actions.md` for detailed documentation.
 
 ## Examples
 
@@ -123,7 +123,7 @@ Documentation:
 
 Use the skill:
 ```
-/doc-detective-plugin:doc-detective-testing
+/doc-detective-plugin:doc-testing
 Test this login procedure from our docs to ensure it still works
 ```
 
