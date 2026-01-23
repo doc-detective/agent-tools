@@ -1,0 +1,90 @@
+{
+  "summary": {
+    "specs": {
+      "pass": 1,
+      "fail": 0,
+      "warning": 0,
+      "skipped": 0
+    },
+    "tests": {
+      "pass": 1,
+      "fail": 0,
+      "warning": 0,
+      "skipped": 0
+    },
+    "contexts": {
+      "pass": 1,
+      "fail": 0,
+      "warning": 0,
+      "skipped": 0
+    },
+    "steps": {
+      "pass": 2,
+      "fail": 0,
+      "warning": 0,
+      "skipped": 0
+    }
+  },
+  "specs": [
+    {
+      "result": "PASS",
+      "specId": "2fae6fe5-2860-4abe-aeb6-f5f405c6e232",
+      "tests": [
+        {
+          "result": "PASS",
+          "testId": "verify-doc-detective-website",
+          "description": "Verify Doc Detective website loads and has expected content",
+          "contexts": [
+            {
+              "result": "PASS",
+              "contextId": "dd8a30e4-9bf8-4db9-84ad-2060b7765b00",
+              "platform": "linux",
+              "browser": {
+                "name": "firefox"
+              },
+              "steps": [
+                {
+                  "result": "PASS",
+                  "resultDescription": "Opened URL and all wait conditions met.",
+                  "stepId": "navigate",
+                  "description": "Navigate to Doc Detective website",
+                  "goTo": {
+                    "url": "https://doc-detective.com"
+                  }
+                },
+                {
+                  "outputs": {
+                    "element": {
+                      "text": "",
+                      "html": "<title>Doc Detective</title>",
+                      "tag": "title",
+                      "value": null,
+                      "location": {
+                        "x": 0,
+                        "y": 0
+                      },
+                      "size": {
+                        "width": 0,
+                        "height": 0
+                      },
+                      "clickable": false,
+                      "enabled": true,
+                      "selected": false,
+                      "displayed": false,
+                      "displayedInViewport": false
+                    }
+                  },
+                  "result": "PASS",
+                  "resultDescription": "Found an element matching selector. Found element by elementText.",
+                  "stepId": "verify-heading",
+                  "description": "Verify the site has Doc Detective branding",
+                  "find": "Doc Detective"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,44 +1,68 @@
 ---
 name: doc-testing
-description: Test documentation procedures using Doc Detective (doc-detective.com). Use when (1) testing procedures in markdown/text documentation, (2) converting documentation into executable test specifications, (3) validating existing Doc Detective test specs, (4) running Doc Detective tests and interpreting results, or (5) checking if documented procedures match actual application behavior. Triggers on requests to "test documentation", "verify procedures", "run doc-detective", or "create tests from docs".
+description: 'Test documentation procedures using Doc Detective (doc-detective.com). Use when (1) creating Doc Detective test specs, (2) testing procedures in documentation, (3) converting docs to test specifications, (4) validating Doc Detective test specs, or (5) running Doc Detective tests. Triggers on phrases like "test documentation", "verify procedures", "Doc Detective", "test spec", "doc test", "test the docs", or "create tests from docs". FORMAT: action name IS the key ({"goTo": "url"} not {"action": "goTo"}). ALWAYS validate with ./scripts/dist/validate-test before returning specs. Prefer text over selectors ({"click": "Submit"} not {"click": "#btn"}).'
 ---
 
 # Doc Testing
 
 Test documentation procedures by converting them to Doc Detective test specifications and executing them.
 
+## ⚠️ STOP: Read These Rules Before Generating Any JSON
+
+### Rule 1: Action Name = JSON Key
+
+```json
+✅ { "goTo": "https://example.com" }
+✅ { "find": "Welcome" }  
+✅ { "click": "Submit" }
+✅ { "type": { "keys": "hello", "selector": "#input" } }
+
+❌ { "action": "goTo", "url": "..." }     // WRONG - no "action" key!
+❌ { "action": "find", "text": "..." }    // WRONG - no "action" key!
+```
+
+### Rule 2: Prefer Text Over Selectors
+
+```json
+✅ { "click": "Submit" }           // Text-based - matches visible text
+✅ { "find": "Welcome" }           // Text-based - matches visible text
+
+❌ { "click": "#submit-btn" }      // Selector - only if text won't work
+❌ { "find": ".welcome-msg" }      // Selector - only if text won't work
+```
+
+### Rule 3: ALWAYS Validate Before Returning
+
+```bash
+./scripts/dist/validate-test spec.json    # Must show "Validation PASSED"
+```
+
 ## Workflow
 
 ```
-┌─────────────────┐     ┌──────────────┐     ┌─────────────┐     ┌─────────────┐
-│ 1. Interpret    │────▶│ 2. Validate  │────▶│ 3. Execute  │────▶│ 4. Analyze  │
-│ (docs → spec)   │     │ (check spec) │     │ (run tests) │     │ (results)   │
-└─────────────────┘     └──────────────┘     └─────────────┘     └─────────────┘
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────┐     ┌─────────────┐
+│ 1. Interpret    │────▶│ 2. VALIDATE      │────▶│ 3. Execute  │────▶│ 4. Analyze  │
+│ (docs → spec)   │     │ (MANDATORY GATE) │     │ (run tests) │     │ (results)   │
+└─────────────────┘     └──────────────────┘     └─────────────┘     └─────────────┘
 ```
 
-## 1. Text-to-Test Interpretation
+## Step 1: Text-to-Test Interpretation
 
 Convert documentation procedures into test specifications.
 
-### Identify Procedures
-
-Scan documentation for step-by-step processes. Each distinct procedure becomes a test.
-
 ### Map Actions to Steps
 
-| Documentation describes | Doc Detective action |
+| Documentation describes | Doc Detective step format |
 |---|---|
-| Navigate to URL | `goTo` |
-| Click/tap element | `click` (prefer text) |
-| Find/verify element | `find` (prefer text) |
-| Type text | `type` |
-| API call | `httpRequest` |
-| Screenshot | `screenshot` |
-| Shell command | `runShell` |
-| Wait/pause | `wait` |
-| Check link | `checkLink` |
-
-**Prefer text over selectors.** When docs say "Click Submit", use `{ "click": "Submit" }` not a CSS selector.
+| Navigate to URL | `{ "goTo": "https://..." }` |
+| Click/tap element | `{ "click": "Button Text" }` |
+| Find/verify element | `{ "find": "Expected Text" }` |
+| Type text | `{ "type": { "keys": "text", "selector": "#id" } }` |
+| API call | `{ "httpRequest": { "url": "...", "method": "GET" } }` |
+| Screenshot | `{ "screenshot": "name.png" }` |
+| Shell command | `{ "runShell": { "command": "..." } }` |
+| Wait/pause | `{ "wait": 1000 }` |
+| Check link | `{ "checkLink": "https://..." }` |
 
 ### Generate Test Specification
 
@@ -102,33 +126,85 @@ Use selectors only when:
 - Multiple elements have same text
 - Element has no visible text (icon buttons)
 
-## 2. Validate Before Execution
+## Step 2: Validate (MANDATORY)
 
-Always validate test specs before running. Use `scripts/validate-test.js`:
+**Always run validation before returning specs or executing tests.**
 
-```bash
-node scripts/validate-test.js test-spec.json
-```
-
-Or validate inline with stdin:
+### Validation Command
 
 ```bash
-echo '{"tests":[...]}' | node scripts/validate-test.js --stdin
+# Validate a file
+./scripts/dist/validate-test test-spec.json
+
+# Validate from stdin
+cat test-spec.json | ./scripts/dist/validate-test --stdin
 ```
 
-**Validation modes:**
-- **Structural validation** (default) - Validates structure and known actions without dependencies
-- **Schema validation** - Full JSON schema validation when `doc-detective-common` is installed
+### What Validation Checks
 
-Validation checks:
-- Required `tests` array exists (non-empty)
-- Each test has `steps` array (non-empty)
-- Each step has a known action
+- Required `tests` array exists and is non-empty
+- Each test has `steps` array that is non-empty  
+- Each step has exactly one known action
 - Action parameters match expected types
 
-**Do not execute tests that fail validation.**
+### Known Actions
 
-## 3. Execute Tests
+These are the only valid action types:
+- `goTo` - URL string or `{ url: string, waitUntil?: string }`
+- `click` - Text string or `{ selector: string }`
+- `find` - Text string or `{ selector: string, timeout?: number, matchText?: string }`
+- `type` - `{ keys: string, selector: string }`
+- `wait` - Number (ms) or `{ selector: string, state: string }`
+- `screenshot` - Path string or `{ path: string }`
+- `httpRequest` - `{ url: string, method: string, ... }`
+- `runShell` - `{ command: string, exitCodes?: number[] }`
+- `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
+- `loadVariables` - File path string
+- `loadCookie` / `saveCookie` - File path string
+- `record` - Path string or object
+- `stopRecord` - Boolean true
+
+### Example Validation Output
+
+**Passing:**
+```
+✓ Validation PASSED
+  Mode: structural validation
+  Tests validated: 1
+  Steps validated: 6
+  Steps passed: 6
+  Steps failed: 0
+```
+
+**Failing:**
+```
+✗ Validation FAILED
+  Mode: structural validation
+  Tests validated: 1
+  Steps validated: 3
+  Steps passed: 2
+  Steps failed: 1
+
+Errors:
+
+  1. Unknown action: "navigate". Known actions: checkLink, click, ...
+     Test: my-test
+     Step: step-1
+     Action: navigate
+```
+
+### Validation Failure Handling
+
+If validation fails:
+1. Read the error messages
+2. Fix each reported issue in the test spec
+3. Re-run validation
+4. Repeat until validation passes
+5. Only then proceed to return spec or execute
+
+## Step 3: Execute Tests
+
+**Only execute after validation passes.**
 
 ### Check Available Methods
 
@@ -181,7 +257,7 @@ doc-detective run --input ./docs/
 doc-detective run --config doc-detective.json
 ```
 
-## 4. Analyze Results
+## Step 4: Analyze Results
 
 Doc Detective outputs `testResults-<timestamp>.json`:
 
@@ -234,44 +310,27 @@ Doc Detective outputs `testResults-<timestamp>.json`:
 | "Navigation failed" | URL changed, redirect, auth required |
 | "Unexpected status code" | API endpoint changed, auth issue |
 
-## Use Cases
+## Checklist: Before Completing Any Task
 
-### Test Documentation Files
+Before responding to the user with a test specification:
 
-```bash
-# Test all markdown files in docs/
-doc-detective run --input ./docs/
-
-# Test specific file
-doc-detective run --input ./docs/getting-started.md
-```
-
-### Validate Existing Test Specs
-
-```bash
-node scripts/validate-test.js existing-tests.json
-```
-
-### Generate Test Report
-
-After execution, find latest results:
-
-```bash
-ls -t testResults-*.json | head -1
-```
-
-Parse and summarize for user.
+- [ ] Action names are JSON keys (e.g., `"goTo": "url"` NOT `"action": "goTo"`)
+- [ ] Using text-based matching where possible (`"click": "Submit"` not `"click": "#btn"`)
+- [ ] Generated valid JSON test spec with `tests` array
+- [ ] Each test has `testId` and `steps` array
+- [ ] **RAN `./scripts/dist/validate-test` and it showed "Validation PASSED"**
+- [ ] (If executing) Ran Doc Detective and captured results
 
 ## Actions Reference
 
 For complete action documentation, see `references/actions.md`.
 
-Quick reference:
-- `goTo` - Navigate to URL
-- `click` - Click element (prefer text: `"click": "Button Text"`)
-- `find` - Verify element exists (prefer text: `"find": "Expected Text"`)
-- `type` - Type keys (supports `$ENTER$`, `$TAB$`, etc.)
-- `httpRequest` - HTTP request with response validation
+Quick reference - each action name IS the JSON key:
+- `{ "goTo": "https://..." }` - Navigate to URL
+- `{ "click": "Button Text" }` - Click element (prefer text)
+- `{ "find": "Expected Text" }` - Verify element exists (prefer text)
+- `{ "type": { "keys": "...", "selector": "#..." } }` - Type keys
+- `{ "httpRequest": { "url": "...", "method": "GET" } }` - HTTP request
 - `runShell` - Execute shell command
 - `screenshot` - Capture PNG
 - `wait` - Pause or wait for element

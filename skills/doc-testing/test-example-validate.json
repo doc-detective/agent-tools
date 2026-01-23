@@ -1,0 +1,19 @@
+{
+  "tests": [
+    {
+      "testId": "navigate-example-com",
+      "description": "Navigate to example.com and verify the page loads",
+      "steps": [
+        {
+          "stepId": "nav-to-example",
+          "description": "Navigate to example.com",
+          "goTo": "https://example.com"
+        },
+        {
+          "description": "Verify the page loaded successfully",
+          "find": "Example Domain"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "testId": "navigate-to-example",
+      "description": "Navigate to example.com",
+      "steps": [
+        {
+          "stepId": "nav-to-example",
+          "description": "Navigate to example.com homepage",
+          "goTo": "https://example.com"
+        }
+      ]
+    }
+  ]
+}

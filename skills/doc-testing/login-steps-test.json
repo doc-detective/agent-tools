@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "testId": "login-steps",
+      "description": "Login Steps verification",
+      "steps": [
+        {
+          "stepId": "nav-login",
+          "description": "Navigate to login page",
+          "goTo": "https://example.com/login"
+        },
+        {
+          "stepId": "click-login",
+          "description": "Click the Login button",
+          "click": "Login"
+        },
+        {
+          "stepId": "enter-email",
+          "description": "Type email in the email field",
+          "type": {
+            "keys": "user@test.com",
+            "selector": "[name='email'], [type='email'], #email"
+          }
+        },
+        {
+          "stepId": "verify-welcome",
+          "description": "Verify Welcome text appears",
+          "find": "Welcome"
+        }
+      ]
+    }
+  ]
+}
