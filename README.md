@@ -1,6 +1,6 @@
-# Doc Detective
+# Doc Detective Agent Tools
 
-A Claude Code plugin for testing documentation procedures and validating that documented workflows match actual application behavior.
+Agent tools for testing documentation procedures and validating that documented workflows match actual application behavior. Compatible with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and other AI coding assistants that support plugins or skills.
 
 ## Features
 
@@ -14,15 +14,21 @@ A Claude Code plugin for testing documentation procedures and validating that do
 
 ### Option 1: Claude Code Plugin
 
-1. Add the Doc Detective plugin to Claude Code's plugin marketplace:
+1. Open Claude Code:
 
+   ```bash
+   claude
    ```
+
+2. Add the Doc Detective plugin to Claude Code's plugin marketplace:
+
+   ```text
    /plugin marketplace add doc-detective/agent-tools
    ```
 
 2. Then install specific skill sets via:
 
-   ```
+   ```text
    /plugin install doc-testing@doc-detective-agent-tools
    ```
 
