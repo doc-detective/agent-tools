@@ -5,7 +5,9 @@ A Claude Code plugin for testing documentation procedures and validating that do
 ## Features
 
 - **Doc Testing Skill** - Full-featured skill for testing documentation procedures using Doc Detective framework
-- **Test Documentation Command** - Convert markdown documentation into executable test specifications
+- **Inline Test Injection Skill** - Inject test specifications into documentation as inline comments
+- **Generate Tests Command** - Convert documentation into executable test specifications
+- **Inject Inline Tests Command** - Embed test steps close to associated documentation content
 - **Validate Tests Command** - Validate test specifications before execution
 
 ## Installation
@@ -18,6 +20,8 @@ claude --plugin-dir ./doc-detective
 
 Then use the plugin commands:
 - `/doc-detective:doc-testing` - Main skill for testing workflows
+- `/doc-detective:inject` - Inject test specs into documentation as inline comments
+- `/doc-detective:generate` - Generate test specs from documentation
 - `/doc-detective:test` - Quick command to test documentation files
 - `/doc-detective:validate` - Validate test specifications
 
@@ -73,15 +77,24 @@ doc-detective/
 ├── .claude-plugin/
 │   └── plugin.json              # Plugin manifest
 ├── skills/
-│   └── doc-testing/             # Core testing skill
+│   ├── doc-testing/             # Core testing skill
+│   │   ├── SKILL.md
+│   │   ├── references/
+│   │   │   └── actions.md       # Action reference
+│   │   └── scripts/
+│   │       └── validate-test.js # Validation script
+│   └── inline-test-injection/   # Inline injection skill
 │       ├── SKILL.md
 │       ├── references/
-│       │   └── actions.md       # Action reference
+│       │   └── markup-patterns.md
 │       └── scripts/
-│           └── validate-test.js # Validation script
+│           ├── inject-inline.mjs
+│           └── format-utils.mjs
 ├── commands/
-│   ├── test-docs.md            # Test docs command
-│   └── validate-tests.md       # Validate command
+│   ├── generate.md             # Generate tests command
+│   ├── inject.md               # Inject inline tests command
+│   ├── test.md                 # Test docs command
+│   └── validate.md             # Validate command
 └── README.md
 ```
 
@@ -105,6 +118,30 @@ The plugin includes complete documentation for Doc Detective actions:
 | `record`/`stopRecord` | Video recording |
 
 See `skills/doc-testing/references/actions.md` for detailed documentation.
+
+## Inline Test Injection
+
+Inject test steps from separate spec files directly into documentation as inline comments:
+
+```
+/doc-detective:inject tests/login.yaml docs/login.md --apply
+```
+
+**Before:**
+```markdown
+1. Go to [Login Page](https://example.com/login).
+2. Click **Sign In**.
+```
+
+**After:**
+```markdown
+1. Go to [Login Page](https://example.com/login).
+<!-- step {"goTo":"https://example.com/login"} -->
+2. Click **Sign In**.
+<!-- step {"click":"Sign In"} -->
+```
+
+Steps are matched to content using semantic patterns (links, bold text, action verbs) and placed close to their associated documentation.
 
 ## Examples
 
