@@ -12,22 +12,62 @@ A Claude Code plugin for testing documentation procedures and validating that do
 
 ## Installation
 
-### Option 1: Load Locally During Development
+### Option 1: Claude Code Plugin (Coming Soon)
+
+1. Add the Doc Detective plugin to Claude Code's plugin marketplace:
+
+   ```
+   /plugin marketplace add doc-detective/agent-tools
+   ```
+
+2. Then install specific skill sets via:
+
+   ```
+   /plugin install doc-testing@doc-detective-agent-tools
+   ```
+
+### Option 2: Install with `npx add-skill`
+
+> [!WARNING]
+> `npx add-skill` only installs skills, not commands or other agent tools. For full functionality, consider [manual installation](#manual-installation).
+
+Install these skills with the [`add-skill`](https://github.com/vercel-labs/add-skill) package from Vercel. This works with Claude Code, Cursor, Codex, OpenCode, and other AI coding tools.
 
 ```bash
+npx add-skill doc-detective/agent-tools
+```
+
+The CLI auto-detects which AI tools you have installed and places the skills in the appropriate directories.
+
+### Option 3: Manual Installation {#manual-installation}
+
+#### Clone to your skills directory
+
+```bash
+# For Claude Code
+git clone https://github.com/doc-detective/agent-tools.git ~/.claude/skills/doc-detective
+
+# Or for project-local installation
+git clone https://github.com/doc-detective/agent-tools.git .claude/skills/doc-detective
+```
+
+> [!IMPORTANT]
+> Adjust the path based on your AI tool's expected skill/plugin directory.
+
+#### Load locally during development with Claude Code
+
+```bash
+git clone https://github.com/doc-detective/agent-tools.git
 claude --plugin-dir ./doc-detective
 ```
 
 Then use the plugin commands:
+
 - `/doc-detective:doc-testing` - Main skill for testing workflows
 - `/doc-detective:inject` - Inject test specs into documentation as inline comments
 - `/doc-detective:generate` - Generate test specs from documentation
 - `/doc-detective:test` - Quick command to test documentation files
 - `/doc-detective:validate` - Validate test specifications
-
-### Option 2: Install as a Plugin
-
-Copy the plugin directory to your Claude Code plugins location or follow [Claude Code's plugin installation guide](https://code.claude.com/docs/en/discover-plugins).
 
 ## Requirements
 
@@ -45,6 +85,7 @@ Copy the plugin directory to your Claude Code plugins location or follow [Claude
 ```
 
 The skill will:
+
 1. Extract step-by-step procedures from your documentation
 2. Convert them to Doc Detective test specifications
 3. Validate the test specs
@@ -58,6 +99,7 @@ The skill will:
 ```
 
 Validates structure before execution:
+
 - Required fields present
 - Action types recognized
 - Parameter types correct
@@ -102,20 +144,20 @@ doc-detective/
 
 The plugin includes complete documentation for Doc Detective actions:
 
-| Action | Purpose |
-|--------|---------|
-| `goTo` | Navigate to a URL |
-| `click` | Click an element (prefer text-based) |
-| `find` | Verify an element exists |
-| `type` | Type text input |
-| `httpRequest` | Make HTTP requests |
-| `runShell` | Execute shell commands |
-| `screenshot` | Capture screenshots |
-| `wait` | Pause or wait for elements |
-| `checkLink` | Verify URL returns OK |
-| `loadVariables` | Load environment variables |
-| `saveCookie`/`loadCookie` | Manage session persistence |
-| `record`/`stopRecord` | Video recording |
+| Action                    | Purpose                              |
+| ------------------------- | ------------------------------------ |
+| `goTo`                    | Navigate to a URL                    |
+| `click`                   | Click an element (prefer text-based) |
+| `find`                    | Verify an element exists             |
+| `type`                    | Type text input                      |
+| `httpRequest`             | Make HTTP requests                   |
+| `runShell`                | Execute shell commands               |
+| `screenshot`              | Capture screenshots                  |
+| `wait`                    | Pause or wait for elements           |
+| `checkLink`               | Verify URL returns OK                |
+| `loadVariables`           | Load environment variables           |
+| `saveCookie`/`loadCookie` | Manage session persistence           |
+| `record`/`stopRecord`     | Video recording                      |
 
 See `skills/doc-testing/references/actions.md` for detailed documentation.
 
@@ -128,12 +170,14 @@ Inject test steps from separate spec files directly into documentation as inline
 ```
 
 **Before:**
+
 ```markdown
 1. Go to [Login Page](https://example.com/login).
 2. Click **Sign In**.
 ```
 
 **After:**
+
 ```markdown
 1. Go to [Login Page](https://example.com/login).
 <!-- step {"goTo":"https://example.com/login"} -->
@@ -148,6 +192,7 @@ Steps are matched to content using semantic patterns (links, bold text, action v
 ### Test a Login Procedure
 
 Documentation:
+
 ```markdown
 # Login Procedure
 
@@ -159,6 +204,7 @@ Documentation:
 ```
 
 Use the skill:
+
 ```
 /doc-detective-plugin:doc-testing
 Test this login procedure from our docs to ensure it still works
@@ -175,22 +221,22 @@ Create a test specification file `workflows.json`:
       "testId": "signup-flow",
       "description": "New user signup",
       "steps": [
-        {"goTo": "https://example.com/signup"},
-        {"find": "Create Account"},
-        {"type": {"keys": "newuser@example.com", "selector": "#email"}},
-        {"click": "Sign Up"},
-        {"find": "Welcome"}
+        { "goTo": "https://example.com/signup" },
+        { "find": "Create Account" },
+        { "type": { "keys": "newuser@example.com", "selector": "#email" } },
+        { "click": "Sign Up" },
+        { "find": "Welcome" }
       ]
     },
     {
       "testId": "password-reset",
       "description": "Forgot password flow",
       "steps": [
-        {"goTo": "https://example.com/login"},
-        {"click": "Forgot Password"},
-        {"type": {"keys": "user@example.com", "selector": "#email"}},
-        {"click": "Reset"},
-        {"find": "Check your email"}
+        { "goTo": "https://example.com/login" },
+        { "click": "Forgot Password" },
+        { "type": { "keys": "user@example.com", "selector": "#email" } },
+        { "click": "Reset" },
+        { "find": "Check your email" }
       ]
     }
   ]
@@ -198,6 +244,7 @@ Create a test specification file `workflows.json`:
 ```
 
 Then execute:
+
 ```
 /doc-detective:test workflows.json
 ```
