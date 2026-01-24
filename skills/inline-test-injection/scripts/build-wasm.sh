@@ -1,0 +1,242 @@
+#!/usr/bin/env bash
+# Build script for inline-test-injection WASM module
+# Compiles JavaScript to WebAssembly using Javy and downloads wasmtime runtimes
+
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SRC_DIR="$SCRIPT_DIR/src"
+DIST_DIR="$SCRIPT_DIR/dist"
+RUNTIME_DIR="$DIST_DIR/runtime"
+BUNDLED_JS="$DIST_DIR/inject-inline.bundled.js"
+WASM_OUTPUT="$DIST_DIR/inject-inline.wasm"
+
+# Wasmtime version to download
+WASMTIME_VERSION="v29.0.1"
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+log_info() { echo -e "${GREEN}[INFO]${NC} $1"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+
+# Check for required tools
+check_dependencies() {
+    local missing=()
+    
+    if ! command -v npm &>/dev/null; then
+        missing+=("npm")
+    fi
+    
+    if ! command -v javy &>/dev/null; then
+        missing+=("javy")
+    fi
+    
+    if [ ${#missing[@]} -gt 0 ]; then
+        log_error "Missing required tools: ${missing[*]}"
+        echo ""
+        echo "Installation instructions:"
+        echo "  npm: Install Node.js from https://nodejs.org"
+        echo "  javy: cargo install javy-cli"
+        echo "        or download from https://github.com/bytecodealliance/javy/releases"
+        exit 1
+    fi
+}
+
+# Create dist directory structure
+setup_directories() {
+    log_info "Setting up directories..."
+    mkdir -p "$DIST_DIR"
+    mkdir -p "$RUNTIME_DIR"
+}
+
+# Bundle JavaScript with esbuild
+bundle_javascript() {
+    log_info "Bundling JavaScript with esbuild..."
+    
+    # Install esbuild if not available
+    if ! command -v esbuild &>/dev/null; then
+        log_info "Installing esbuild..."
+        npm install -g esbuild
+    fi
+    
+    # Bundle all modules into single file
+    esbuild "$SRC_DIR/inject-inline-wasm.mjs" \
+        --bundle \
+        --platform=neutral \
+        --format=esm \
+        --target=es2020 \
+        --outfile="$BUNDLED_JS"
+    
+    log_info "Bundle created: $BUNDLED_JS"
+}
+
+# Compile to WebAssembly using Javy
+compile_wasm() {
+    log_info "Compiling to WebAssembly with Javy..."
+    
+    javy build "$BUNDLED_JS" -o "$WASM_OUTPUT"
+    
+    local size=$(stat -f%z "$WASM_OUTPUT" 2>/dev/null || stat -c%s "$WASM_OUTPUT" 2>/dev/null)
+    log_info "WASM module created: $WASM_OUTPUT ($(( size / 1024 )) KB)"
+}
+
+# Download wasmtime runtime for a specific platform
+download_runtime() {
+    local platform=$1
+    local target_dir="$RUNTIME_DIR/$platform"
+    
+    # Map platform names to wasmtime release names
+    local release_name
+    case "$platform" in
+        linux-x64)   release_name="x86_64-linux" ;;
+        linux-arm64) release_name="aarch64-linux" ;;
+        darwin-x64)  release_name="x86_64-macos" ;;
+        darwin-arm64) release_name="aarch64-macos" ;;
+        windows-x64) release_name="x86_64-windows" ;;
+        windows-arm64) release_name="aarch64-windows" ;;
+        *)
+            log_warn "Unknown platform: $platform"
+            return 1
+            ;;
+    esac
+    
+    # Determine archive extension
+    local ext="tar.xz"
+    if [[ "$platform" == windows-* ]]; then
+        ext="zip"
+    fi
+    
+    local download_url="https://github.com/bytecodealliance/wasmtime/releases/download/${WASMTIME_VERSION}/wasmtime-${WASMTIME_VERSION}-${release_name}.${ext}"
+    local archive_file="$RUNTIME_DIR/wasmtime-${platform}.${ext}"
+    
+    # Check if already downloaded
+    local binary_name="wasmtime"
+    if [[ "$platform" == windows-* ]]; then
+        binary_name="wasmtime.exe"
+    fi
+    
+    if [ -f "$target_dir/$binary_name" ]; then
+        log_info "Runtime already exists: $platform"
+        return 0
+    fi
+    
+    log_info "Downloading wasmtime for $platform..."
+    
+    # Download
+    if command -v curl &>/dev/null; then
+        curl -fsSL "$download_url" -o "$archive_file"
+    elif command -v wget &>/dev/null; then
+        wget -q "$download_url" -O "$archive_file"
+    else
+        log_error "Neither curl nor wget available for download"
+        return 1
+    fi
+    
+    # Extract
+    mkdir -p "$target_dir"
+    
+    if [[ "$ext" == "tar.xz" ]]; then
+        tar -xJf "$archive_file" -C "$target_dir" --strip-components=1
+    else
+        # Windows zip
+        if command -v unzip &>/dev/null; then
+            unzip -q "$archive_file" -d "$target_dir"
+            # Move contents from nested directory
+            mv "$target_dir"/wasmtime-*/* "$target_dir/" 2>/dev/null || true
+            rmdir "$target_dir"/wasmtime-* 2>/dev/null || true
+        else
+            log_warn "unzip not available, skipping Windows runtime"
+            rm -f "$archive_file"
+            return 1
+        fi
+    fi
+    
+    # Cleanup archive
+    rm -f "$archive_file"
+    
+    # Make executable
+    chmod +x "$target_dir/$binary_name" 2>/dev/null || true
+    
+    log_info "Installed wasmtime for $platform"
+}
+
+# Download all platform runtimes
+download_all_runtimes() {
+    log_info "Downloading wasmtime runtimes..."
+    
+    local platforms=(
+        "linux-x64"
+        "linux-arm64"
+        "darwin-x64"
+        "darwin-arm64"
+        "windows-x64"
+        "windows-arm64"
+    )
+    
+    for platform in "${platforms[@]}"; do
+        download_runtime "$platform" || log_warn "Failed to download runtime for $platform"
+    done
+}
+
+# Clean build artifacts
+clean() {
+    log_info "Cleaning build artifacts..."
+    rm -rf "$DIST_DIR"
+    log_info "Clean complete"
+}
+
+# Main build process
+build() {
+    log_info "Starting build process..."
+    
+    check_dependencies
+    setup_directories
+    bundle_javascript
+    compile_wasm
+    download_all_runtimes
+    
+    log_info "Build complete!"
+    echo ""
+    echo "Output files:"
+    echo "  WASM module: $WASM_OUTPUT"
+    echo "  Runtimes:    $RUNTIME_DIR/"
+    echo ""
+    echo "Usage:"
+    echo "  ./loaders/run.sh <spec-file> <source-file> [--apply]"
+    echo "  python loaders/run.py <spec-file> <source-file> [--apply]"
+    echo "  node loaders/run.mjs <spec-file> <source-file> [--apply]"
+}
+
+# Parse arguments
+case "${1:-build}" in
+    build)
+        build
+        ;;
+    clean)
+        clean
+        ;;
+    runtimes)
+        download_all_runtimes
+        ;;
+    wasm)
+        check_dependencies
+        setup_directories
+        bundle_javascript
+        compile_wasm
+        ;;
+    *)
+        echo "Usage: $0 [build|clean|runtimes|wasm]"
+        echo ""
+        echo "Commands:"
+        echo "  build     Full build (default): bundle, compile, download runtimes"
+        echo "  clean     Remove all build artifacts"
+        echo "  runtimes  Download wasmtime runtimes only"
+        echo "  wasm      Build WASM module only (no runtime download)"
+        exit 1
+        ;;
+esac
