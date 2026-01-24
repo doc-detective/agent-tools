@@ -12,7 +12,7 @@
     {
       "name": "doc-detective",
       "source": {
-        "source": "."
+        "source": "./"
       },
       "description": "Full-featured skill for testing documentation procedures using Doc Detective framework. Convert documentation into executable test specifications and validate that documented workflows match actual application behavior.",
       "version": "1.0.0-beta.0",
