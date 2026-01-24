@@ -1,6 +1,6 @@
 ---
 name: doc-testing
-description: 'Test documentation procedures using Doc Detective (doc-detective.com). Use when (1) creating Doc Detective test specs, (2) testing procedures in documentation, (3) converting docs to test specifications, (4) validating Doc Detective test specs, or (5) running Doc Detective tests. Triggers on phrases like "test documentation", "verify procedures", "Doc Detective", "test spec", "doc test", "test the docs", or "create tests from docs". FORMAT: action name IS the key ({"goTo": "url"} not {"action": "goTo"}). ALWAYS validate with ./scripts/dist/validate-test before returning specs. Prefer text over selectors ({"click": "Submit"} not {"click": "#btn"}).'
+description: 'Doc Detective test specs and JSON test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, verify procedures.'
 ---
 
 # Doc Testing
@@ -44,6 +44,12 @@ Test documentation procedures by converting them to Doc Detective test specifica
 │ 1. Interpret    │────▶│ 2. VALIDATE      │────▶│ 3. Execute  │────▶│ 4. Analyze  │
 │ (docs → spec)   │     │ (MANDATORY GATE) │     │ (run tests) │     │ (results)   │
 └─────────────────┘     └──────────────────┘     └─────────────┘     └─────────────┘
+```
+
+**Efficiency tip:** For full workflows, chain commands. Example:
+```bash
+# Generate, validate, and execute in sequence
+echo '{"tests":[...]}' > spec.json && ./scripts/dist/validate-test spec.json && npx doc-detective run --input spec.json
 ```
 
 ## Step 1: Text-to-Test Interpretation
@@ -126,19 +132,15 @@ Use selectors only when:
 - Multiple elements have same text
 - Element has no visible text (icon buttons)
 
-## Step 2: Validate (MANDATORY)
+## Step 2: Validate (MANDATORY - DO NOT SKIP)
 
-**Always run validation before returning specs or executing tests.**
-
-### Validation Command
+⚠️ **YOU MUST RUN THIS COMMAND before returning ANY test spec to the user:**
 
 ```bash
-# Validate a file
 ./scripts/dist/validate-test test-spec.json
-
-# Validate from stdin
-cat test-spec.json | ./scripts/dist/validate-test --stdin
 ```
+
+**Do not return a test spec without running validation and showing the output.**
 
 ### What Validation Checks
 
@@ -312,14 +314,15 @@ Doc Detective outputs `testResults-<timestamp>.json`:
 
 ## Checklist: Before Completing Any Task
 
-Before responding to the user with a test specification:
+⚠️ **MANDATORY: Complete ALL steps before returning a test spec:**
 
-- [ ] Action names are JSON keys (e.g., `"goTo": "url"` NOT `"action": "goTo"`)
-- [ ] Using text-based matching where possible (`"click": "Submit"` not `"click": "#btn"`)
-- [ ] Generated valid JSON test spec with `tests` array
-- [ ] Each test has `testId` and `steps` array
-- [ ] **RAN `./scripts/dist/validate-test` and it showed "Validation PASSED"**
-- [ ] (If executing) Ran Doc Detective and captured results
+1. [ ] Action names are JSON keys (`"goTo": "url"` NOT `"action": "goTo"`)
+2. [ ] Text-based matching (`"click": "Submit"` not `"click": "#btn"`)
+3. [ ] Valid JSON with `tests` array containing `testId` and `steps`
+4. [ ] **RUN `./scripts/dist/validate-test <file>` and SHOW output**
+5. [ ] Validation shows "PASSED" - if not, fix and re-validate
+
+**Never skip step 4. Always run validation and show the result.**
 
 ## Actions Reference
 
