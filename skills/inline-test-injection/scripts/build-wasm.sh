@@ -24,23 +24,23 @@ BUNDLED_JS="$DIST_DIR/inject-inline.bundled.js"
 WASM_OUTPUT="$DIST_DIR/inject-inline.wasm"
 
 # Wasmtime version to download
-WASMTIME_VERSION="v29.0.1"
+WASMTIME_VERSION="v41.0.0"
 
-# SHA-256 checksums for wasmtime v29.0.1 (for integrity verification)
+# SHA-256 checksums for wasmtime v41.0.0 (for integrity verification)
 # These checksums were computed from official releases at:
-# https://github.com/bytecodealliance/wasmtime/releases/tag/v29.0.1
+# https://github.com/bytecodealliance/wasmtime/releases/tag/v41.0.0
 # Note: Wasmtime does not publish official checksums, so these are recorded
 # here for verification purposes.
 #
 # If you're using pre-existing binaries from the runtimes/ directory,
 # checksum verification will be skipped since we only verify archives.
 declare -A WASMTIME_CHECKSUMS=(
-    ["wasmtime-v29.0.1-x86_64-linux.tar.xz"]="579ec7086f34ff6bbc53483ae00f660be1570f3ef10af0880a4ba9867067a77c"
-    ["wasmtime-v29.0.1-aarch64-linux.tar.xz"]="5db4d27d008d726fe69adf8fcf59f42b0c2f0e51519970414860efda8b5e9655"
-    ["wasmtime-v29.0.1-x86_64-macos.tar.xz"]="7f62746a61c759932f4307cec32f139b31c9e5db93eab6c02238dcb82bd9a6d8"
-    ["wasmtime-v29.0.1-aarch64-macos.tar.xz"]="56fb3c04c230eabcce92717081c51d3dc87d3416c3b059a2783e5496a29cf384"
-    ["wasmtime-v29.0.1-x86_64-windows.zip"]="3d4c7b4145fb4426c4ece54302f598c33998f9d2cc8894059d7103b83d3dddff"
-    ["wasmtime-v29.0.1-aarch64-windows.zip"]="93b4a2bcbe9ad9c0505b246c6bd38550428be05876995230b607fde35bd772f1"
+    ["wasmtime-v41.0.0-x86_64-linux.tar.xz"]="07b82a195dc3bda0be010f73d48778b43a209829e9912a4bcd46a8e3760d74e9"
+    ["wasmtime-v41.0.0-aarch64-linux.tar.xz"]="99d9dd1e314f60eb96256615685bc28f8669b613efcf162881abdf5ad646d35a"
+    ["wasmtime-v41.0.0-x86_64-macos.tar.xz"]="ec91e9d4130fe1776bde8601c2dffde299dc59b4dbdad6f8f471bac04bd86094"
+    ["wasmtime-v41.0.0-aarch64-macos.tar.xz"]="3f8520e697e9d2105fc8e5c77f03185a75629065d0b84c90b8e57e09adb029f1"
+    ["wasmtime-v41.0.0-x86_64-windows.zip"]="78f4216dffdce4a8b2310bff6e019c1ea9d2935d72e4ccdb7cd7bcbc5907fd0a"
+    ["wasmtime-v41.0.0-aarch64-windows.zip"]="15528c688f54990d37e7d17479712a4d73314973e6d4b0658848535cc2283f91"
 )
 
 # Colors for output
