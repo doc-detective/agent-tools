@@ -96,6 +96,8 @@ def run_wasmtime(wasmtime_path, wasm_module, input_json):
         if "exitCode" in output_data:
             exit_code = int(output_data["exitCode"])
     except (json.JSONDecodeError, ValueError, TypeError):
+        # If the output is not valid JSON or lacks a usable "exitCode",
+        # fall back to the process return code determined above.
         pass
 
     return stdout.strip(), stderr.strip(), exit_code

@@ -33,7 +33,6 @@ import {
   serializeTestEnd,
   batchUpdateContent,
   generatePreview,
-  COMMENT_FORMATS,
 } from './format-utils-wasm.mjs';
 
 // Default markup patterns for semantic matching

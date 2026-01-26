@@ -167,35 +167,38 @@ main() {
     local spec_content
     if [[ "$spec_file" == *.yaml || "$spec_file" == *.yml ]]; then
         # Convert YAML to JSON using Python or Node if available
+        # Use environment variable to pass file path safely (avoids code injection)
         if command -v python3 &>/dev/null; then
-            spec_content=$(python3 -c "
-import sys, json, yaml
-with open('$spec_file', 'r') as f:
+            spec_content=$(SPEC_FILE="$spec_file" python3 -c '
+import sys, json, yaml, os
+spec_file = os.environ["SPEC_FILE"]
+with open(spec_file, "r") as f:
     data = yaml.safe_load(f)
 print(json.dumps(data))
-" 2>/dev/null) || {
+' 2>/dev/null) || {
                 # Try with PyYAML installed via pip
-                spec_content=$(python3 -c "
-import sys, json
+                spec_content=$(SPEC_FILE="$spec_file" python3 -c '
+import sys, json, os
 try:
     import yaml
-    with open('$spec_file', 'r') as f:
+    spec_file = os.environ["SPEC_FILE"]
+    with open(spec_file, "r") as f:
         data = yaml.safe_load(f)
     print(json.dumps(data))
 except ImportError:
     sys.exit(1)
-" 2>/dev/null) || {
+' 2>/dev/null) || {
                     echo "Error: YAML parsing requires PyYAML (pip install pyyaml)" >&2
                     exit 2
                 }
             }
         elif command -v node &>/dev/null; then
-            spec_content=$(node -e "
-const fs = require('fs');
-const yaml = require('yaml');
-const content = fs.readFileSync('$spec_file', 'utf8');
+            spec_content=$(SPEC_FILE="$spec_file" node -e '
+const fs = require("fs");
+const yaml = require("yaml");
+const content = fs.readFileSync(process.env.SPEC_FILE, "utf8");
 console.log(JSON.stringify(yaml.parse(content)));
-" 2>/dev/null) || {
+' 2>/dev/null) || {
                 echo "Error: YAML parsing requires yaml package (npm install yaml)" >&2
                 exit 2
             }
