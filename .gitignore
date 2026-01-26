@@ -1,2 +1,4 @@
 node_modules/
 bun.lock*.bundled.js
+__pycache__/
+*.pyc
