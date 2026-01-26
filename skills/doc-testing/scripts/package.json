@@ -1,0 +1,12 @@
+{
+  "name": "doc-testing-scripts",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "build": "./build-wasm.sh",
+    "test": "./test-wasm.sh"
+  },
+  "devDependencies": {
+    "esbuild": "^0.18.17"
+  }
+}

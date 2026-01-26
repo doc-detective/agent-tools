@@ -1,0 +1,17 @@
+{
+  "name": "ai-tools",
+  "version": "0.0.0",
+  "private": true,
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build:doc-testing": "cd skills/doc-testing/scripts && ./build-wasm.sh",
+    "test:doc-testing": "cd skills/doc-testing/scripts && ./test-wasm.sh",
+    "build:inline": "cd skills/inline-test-injection/scripts && ./build-wasm.sh",
+    "test:inline": "cd skills/inline-test-injection/scripts && ./test-wasm.sh"
+  },
+  "devDependencies": {
+    "esbuild": "^0.18.17"
+  }
+}
