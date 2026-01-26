@@ -38,15 +38,29 @@ const KNOWN_ACTIONS = [
   'wait'
 ];
 
+// Metadata keys that are not actions (should be excluded when detecting actions)
+const METADATA_KEYS = [
+  'description',
+  'stepId',
+  'unsafe',
+  'outputs',
+  'variables',
+  'breakpoint',
+  '$schema',
+  'sourceLocation',
+  'id',
+  'contexts'
+];
+
 /**
  * Validate a single step against known actions (structural validation)
  * @param {Object} step - The step object to validate
  * @returns {Object} - Validation result with valid flag and errors array
  */
 function validateStepStructural(step) {
-  // Find the action key (not description or stepId)
+  // Find the action key (not metadata like description, stepId, unsafe, etc.)
   const actionKey = Object.keys(step).find(key =>
-    key !== 'description' && key !== 'stepId'
+    !METADATA_KEYS.includes(key)
   );
 
   if (!actionKey) {

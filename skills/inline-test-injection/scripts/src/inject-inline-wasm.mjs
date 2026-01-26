@@ -223,12 +223,26 @@ function findContentMatches(content, patterns) {
   return deduplicated;
 }
 
+// Metadata keys that are not actions (should be excluded when detecting actions)
+const METADATA_KEYS = [
+  'stepId',
+  'description',
+  'sourceLocation',
+  'unsafe',
+  'outputs',
+  'variables',
+  'breakpoint',
+  '$schema',
+  'id',
+  'contexts'
+];
+
 /**
  * Calculate similarity between step and content match
  */
 function calculateSimilarity(step, match) {
   const stepAction = Object.keys(step).find(k => 
-    !['stepId', 'description', 'sourceLocation'].includes(k)
+    !METADATA_KEYS.includes(k)
   );
   
   const matchAction = match.actions[0];
