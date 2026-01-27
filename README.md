@@ -32,18 +32,18 @@ Agent tools for testing documentation procedures and validating that documented 
    /plugin install doc-detective@doc-detective
    ```
 
-### Option 2: Install with `npx add-skill`
+### Option 2: Install with `npx skills`
 
 > [!WARNING]
-> `npx add-skill` only installs skills, not commands or other agent tools. For full functionality, consider [manual installation](#option-3-manual-installation).
+> `npx skills` only installs skills, not commands or other agent tools. For full functionality, consider [manual installation](#option-3-manual-installation).
 
-Install these skills with the [`add-skill`](https://github.com/vercel-labs/add-skill) package from Vercel. This works with Claude Code, Cursor, Codex, OpenCode, and other AI coding tools.
+Install these skills with the [`skills`](https://github.com/vercel-labs/skills) package from Vercel. This works with Claude Code, Cursor, Codex, OpenCode, and other AI coding tools.
 
 ```bash
-npx add-skill doc-detective/agent-tools
+npx skills add doc-detective/agent-tools
 ```
 
-The CLI auto-detects which AI tools you have installed and places the skills in the appropriate directories.
+Follow the prompts. The CLI auto-detects which AI tools you have installed and places the skills in the appropriate directories.
 
 ### Option 3: Manual Installation
 
