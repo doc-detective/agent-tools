@@ -152,12 +152,18 @@ function injectComments(
       // Find the line containing the match
       const beforeMatch = modifiedContent.substring(0, match.index);
       const lineStart = beforeMatch.lastIndexOf('\n') + 1;
-      const lineEnd = modifiedContent.indexOf('\n', match.index);
-      const line = modifiedContent.substring(lineStart, lineEnd === -1 ? undefined : lineEnd);
       
-      // Skip if line already has a doc-detective comment
-      if (line.includes('doc-detective-test:')) {
-        continue;
+      // Check the preceding line for an existing doc-detective comment
+      // (since we insert the comment before the matched line)
+      if (lineStart > 0) {
+        const prevLineEnd = lineStart - 1; // position of the '\n' before current line
+        const prevLineStart = modifiedContent.lastIndexOf('\n', prevLineEnd - 1) + 1;
+        const precedingLine = modifiedContent.substring(prevLineStart, prevLineEnd);
+        
+        // Skip if preceding line already has a doc-detective comment
+        if (precedingLine.includes('doc-detective-test:')) {
+          continue;
+        }
       }
       
       // Generate the comment
