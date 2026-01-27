@@ -11,12 +11,8 @@ let analyzeTool: (input: any) => Promise<any>;
 
 describe('Analyze Tool', () => {
   beforeAll(async () => {
-    try {
-      const module = await import('../../../src/tools/analyze.js');
-      analyzeTool = module.analyzeTool;
-    } catch (e) {
-      // Expected to fail in RED phase
-    }
+    const module = await import('../../../src/tools/analyze.js');
+    analyzeTool = module.analyzeTool;
   });
 
   test('analyzeTool function exists', () => {

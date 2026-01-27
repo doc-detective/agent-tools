@@ -10,12 +10,8 @@ let validateTool: (input: any) => Promise<any>;
 
 describe('Validate Tool', () => {
   beforeAll(async () => {
-    try {
-      const module = await import('../../../src/tools/validate.js');
-      validateTool = module.validateTool;
-    } catch (e) {
-      // Expected to fail in RED phase
-    }
+    const module = await import('../../../src/tools/validate.js');
+    validateTool = module.validateTool;
   });
 
   test('validateTool function exists', () => {

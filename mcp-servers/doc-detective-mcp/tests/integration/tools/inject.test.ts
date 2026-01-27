@@ -15,12 +15,8 @@ let tempFile: string | null = null;
 
 describe('Inject Tool', () => {
   beforeAll(async () => {
-    try {
-      const module = await import('../../../src/tools/inject.js');
-      injectTool = module.injectTool;
-    } catch (e) {
-      // Expected to fail in RED phase
-    }
+    const module = await import('../../../src/tools/inject.js');
+    injectTool = module.injectTool;
   });
 
   afterEach(() => {

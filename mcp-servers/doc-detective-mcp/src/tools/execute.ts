@@ -10,7 +10,6 @@ import type { ExecuteInput, ExecuteOutput, TestResult } from '../types/index.js'
 import { loadSpec } from '../utils/spec-handler.js';
 import { validateTool } from './validate.js';
 import { formatError } from '../utils/errors.js';
-import { loadConfig } from '../utils/config.js';
 
 /**
  * Execute Doc Detective tests using the bundled CLI
@@ -43,9 +42,6 @@ export async function executeTool(input: ExecuteInput): Promise<ExecuteOutput> {
       };
     }
     
-    // Load configuration
-    const config = loadConfig(config_file);
-    
     // Create a temporary file for the spec if it was passed as JSON
     let specFile = spec_input;
     let tempFile: string | null = null;
@@ -61,7 +57,7 @@ export async function executeTool(input: ExecuteInput): Promise<ExecuteOutput> {
       const result = await runDocDetective(specFile, {
         headless,
         timeout,
-        config,
+        configFile: config_file,
       });
       
       return result;
@@ -81,7 +77,7 @@ export async function executeTool(input: ExecuteInput): Promise<ExecuteOutput> {
 interface ExecuteOptions {
   headless: boolean;
   timeout: number;
-  config: Record<string, unknown>;
+  configFile?: string;
 }
 
 /**
@@ -99,18 +95,41 @@ async function runDocDetective(specFile: string, options: ExecuteOptions): Promi
       args.push('--headless');
     }
     
+    // Pass config file to CLI if provided
+    if (options.configFile && fs.existsSync(options.configFile)) {
+      args.push('--config', options.configFile);
+    }
+    
     const startTime = Date.now();
     let stdout = '';
     let stderr = '';
+    let settled = false;
+    let timeoutId: NodeJS.Timeout;
+    
+    // Helper to ensure we only resolve once
+    const finish = (result: ExecuteOutput) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeoutId);
+      resolve(result);
+    };
     
     const proc = spawn('npx', args, {
-      timeout: options.timeout,
       env: {
         ...process.env,
         // Ensure we're in headless mode
         HEADLESS: options.headless ? 'true' : 'false',
       },
     });
+    
+    // Set up timeout handler
+    timeoutId = setTimeout(() => {
+      proc.kill();
+      finish({
+        success: false,
+        message: `Execution timed out after ${options.timeout}ms`,
+      });
+    }, options.timeout);
     
     proc.stdout?.on('data', (data) => {
       stdout += data.toString();
@@ -122,7 +141,7 @@ async function runDocDetective(specFile: string, options: ExecuteOptions): Promi
     
     proc.on('error', (error) => {
       // If npx fails (e.g., doc-detective not found), simulate a basic response
-      resolve(createSimulatedResult(specFile, options, error.message));
+      finish(createSimulatedResult(specFile, error.message));
     });
     
     proc.on('close', (code) => {
@@ -132,7 +151,7 @@ async function runDocDetective(specFile: string, options: ExecuteOptions): Promi
         // Try to parse output as JSON
         try {
           const results = parseDocDetectiveOutput(stdout);
-          resolve({
+          finish({
             success: true,
             results: {
               total_tests: results.total,
@@ -146,7 +165,7 @@ async function runDocDetective(specFile: string, options: ExecuteOptions): Promi
           });
         } catch {
           // If parsing fails, return raw output
-          resolve({
+          finish({
             success: true,
             results: {
               total_tests: 1,
@@ -161,18 +180,9 @@ async function runDocDetective(specFile: string, options: ExecuteOptions): Promi
         }
       } else {
         // Non-zero exit code
-        resolve(createSimulatedResult(specFile, options, stderr || `Exit code: ${code}`));
+        finish(createSimulatedResult(specFile, stderr || `Exit code: ${code}`));
       }
     });
-    
-    // Handle timeout
-    setTimeout(() => {
-      proc.kill();
-      resolve({
-        success: false,
-        message: `Execution timed out after ${options.timeout}ms`,
-      });
-    }, options.timeout);
   });
 }
 
@@ -227,35 +237,37 @@ function parseDocDetectiveOutput(output: string): {
 
 /**
  * Create a simulated result when Doc Detective CLI is not available
+ * Uses loadSpec to support both JSON and YAML specs
  */
-function createSimulatedResult(specFile: string, options: ExecuteOptions, error: string): ExecuteOutput {
-  // Read spec to count tests
-  try {
-    const content = fs.readFileSync(specFile, 'utf-8');
-    const spec = JSON.parse(content);
-    const testCount = spec.tests?.length || 0;
-    
-    return {
-      success: true,
-      results: {
-        total_tests: testCount,
-        passed: 0,
-        failed: 0,
-        skipped: testCount,
-        duration_ms: 0,
-        test_results: (spec.tests || []).map((t: any, i: number) => ({
-          testId: t.id || t.testId || `test-${i}`,
-          passed: false,
-          status: 'SKIPPED',
-          error: `Doc Detective CLI not available: ${error}`,
-        })),
-      },
-      message: `Tests skipped: Doc Detective CLI execution failed. Error: ${error}. Install doc-detective globally or ensure npx can access it.`,
-    };
-  } catch {
+function createSimulatedResult(specFile: string, error: string): ExecuteOutput {
+  // Read spec to count tests using loadSpec for JSON/YAML support
+  const loadResult = loadSpec(specFile);
+  
+  if (!loadResult.success || !loadResult.spec) {
     return {
       success: false,
-      message: `Failed to execute tests: ${error}`,
+      message: `Failed to execute tests: ${loadResult.error || error}`,
     };
   }
+  
+  const spec = loadResult.spec;
+  const testCount = spec.tests?.length || 0;
+  
+  return {
+    success: true,
+    results: {
+      total_tests: testCount,
+      passed: 0,
+      failed: 0,
+      skipped: testCount,
+      duration_ms: 0,
+      test_results: (spec.tests || []).map((t: any, i: number) => ({
+        testId: t.id || t.testId || `test-${i}`,
+        passed: false,
+        status: 'SKIPPED',
+        error: `Doc Detective CLI not available: ${error}`,
+      })),
+    },
+    message: `Tests skipped: Doc Detective CLI execution failed. Error: ${error}. Install doc-detective globally or ensure npx can access it.`,
+  };
 }

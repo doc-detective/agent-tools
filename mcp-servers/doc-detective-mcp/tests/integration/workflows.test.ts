@@ -1,5 +1,6 @@
 import { describe, test, expect, beforeAll } from '@jest/globals';
 import * as path from 'path';
+import * as os from 'os';
 import * as fs from 'fs';
 import { fileURLToPath } from 'url';
 
@@ -53,16 +54,18 @@ describe('Workflow Integration Tests', () => {
   });
 
   test('generate → inject preview workflow succeeds', async () => {
+    const tempSpecPath = path.join(os.tmpdir(), 'test-workflow-spec.json');
+    
     // Step 1: Generate spec
     const genResult = await generateTool({
       source_file: path.join(fixturesDir, 'sample-docs.md'),
-      output_file: '/tmp/test-workflow-spec.json',
+      output_file: tempSpecPath,
     });
     expect(genResult.success).toBe(true);
 
     // Step 2: Preview injection
     const injectResult = await injectTool({
-      spec_file: '/tmp/test-workflow-spec.json',
+      spec_file: tempSpecPath,
       source_file: path.join(fixturesDir, 'sample-docs.md'),
       apply: false,
     });
@@ -70,8 +73,8 @@ describe('Workflow Integration Tests', () => {
     expect(injectResult.applied).toBe(false);
 
     // Cleanup
-    if (fs.existsSync('/tmp/test-workflow-spec.json')) {
-      fs.unlinkSync('/tmp/test-workflow-spec.json');
+    if (fs.existsSync(tempSpecPath)) {
+      fs.unlinkSync(tempSpecPath);
     }
   });
 

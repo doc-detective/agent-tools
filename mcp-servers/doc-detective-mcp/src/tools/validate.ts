@@ -18,8 +18,10 @@ const VALID_ACTIONS = [
  */
 export async function validateTool(input: ValidateInput): Promise<ValidateOutput> {
   try {
+    const { spec_input, strict = false } = input;
+    
     // Load the spec
-    const loadResult = loadSpec(input.spec_input);
+    const loadResult = loadSpec(spec_input);
     
     if (!loadResult.success || !loadResult.spec) {
       return {
@@ -69,8 +71,15 @@ export async function validateTool(input: ValidateInput): Promise<ValidateOutput
         
         if (!actionKey && !hasActionProperty) {
           errors.push(`Test "${testId}", Step ${stepIndex}: No valid action found. Valid actions: ${VALID_ACTIONS.join(', ')}`);
-        } else if (hasActionProperty && !actionKey && typeof step.action === 'string' && !VALID_ACTIONS.includes(step.action)) {
-          errors.push(`Test "${testId}", Step ${stepIndex}: Invalid action "${step.action}". Valid actions: ${VALID_ACTIONS.join(', ')}`);
+        }
+
+        // Always validate step.action when present
+        if (hasActionProperty) {
+          if (typeof step.action !== 'string') {
+            errors.push(`Test "${testId}", Step ${stepIndex}: "action" must be a string. Valid actions: ${VALID_ACTIONS.join(', ')}`);
+          } else if (!VALID_ACTIONS.includes(step.action)) {
+            errors.push(`Test "${testId}", Step ${stepIndex}: Invalid action "${step.action}". Valid actions: ${VALID_ACTIONS.join(', ')}`);
+          }
         }
         
         // Validate specific actions
@@ -106,17 +115,20 @@ export async function validateTool(input: ValidateInput): Promise<ValidateOutput
       });
     });
     
-    const valid = errors.length === 0;
+    // In strict mode, treat warnings as errors
+    const finalErrors = strict ? [...errors, ...warnings] : errors;
+    const finalWarnings = strict ? [] : warnings;
+    const valid = finalErrors.length === 0;
     
     return {
       success: true,
       valid,
-      errors,
-      warnings,
+      errors: finalErrors,
+      warnings: finalWarnings,
       spec: valid ? spec : undefined,
       message: valid 
         ? `Validation passed. ${spec.tests.length} test(s) found.`
-        : `Validation failed with ${errors.length} error(s).`,
+        : `Validation failed with ${finalErrors.length} error(s).`,
     };
   } catch (error) {
     return {

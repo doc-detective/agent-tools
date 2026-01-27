@@ -16,12 +16,8 @@ let tempOutputPath: string | null = null;
 
 describe('Generate Tool', () => {
   beforeAll(async () => {
-    try {
-      const module = await import('../../../src/tools/generate.js');
-      generateTool = module.generateTool;
-    } catch (e) {
-      // Expected to fail in RED phase
-    }
+    const module = await import('../../../src/tools/generate.js');
+    generateTool = module.generateTool;
   });
 
   afterEach(() => {

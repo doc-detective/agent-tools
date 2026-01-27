@@ -177,7 +177,7 @@ function getStepPattern(step: DocDetectiveStep): RegExp | null {
         : (step.click as any)?.selector ?? selector;
     if (target) {
       const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      return new RegExp(`(?:click|tap|press|select).*${escaped}`, 'i');
+      return new RegExp(`(?:click|tap|press|select).*?${escaped}`, 'i');
     }
   }
   
@@ -188,7 +188,7 @@ function getStepPattern(step: DocDetectiveStep): RegExp | null {
         : (step.find as any)?.selector ?? selector;
     if (target) {
       const escaped = target.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      return new RegExp(`(?:find|verify|see|check).*${escaped}`, 'i');
+      return new RegExp(`(?:find|verify|see|check).*?${escaped}`, 'i');
     }
   }
   
@@ -242,15 +242,27 @@ function generateComment(
 }
 
 /**
+ * Escape XML special characters
+ */
+function escapeXml(str: string): string {
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+/**
  * Convert object to simple XML representation
  */
 function objectToXml(obj: Record<string, unknown>): string {
   const entries = Object.entries(obj);
   return entries.map(([key, value]) => {
-    if (typeof value === 'object') {
-      return `<${key}>${JSON.stringify(value)}</${key}>`;
+    if (typeof value === 'object' && value !== null) {
+      return `<${key}>${escapeXml(JSON.stringify(value))}</${key}>`;
     }
-    return `<${key}>${value}</${key}>`;
+    return `<${key}>${escapeXml(String(value))}</${key}>`;
   }).join('');
 }
 

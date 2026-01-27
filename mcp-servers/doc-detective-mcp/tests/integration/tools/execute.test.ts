@@ -10,12 +10,8 @@ let executeTool: (input: any) => Promise<any>;
 
 describe('Execute Tool', () => {
   beforeAll(async () => {
-    try {
-      const module = await import('../../../src/tools/execute.js');
-      executeTool = module.executeTool;
-    } catch (e) {
-      // Expected to fail in RED phase
-    }
+    const module = await import('../../../src/tools/execute.js');
+    executeTool = module.executeTool;
   });
 
   test('executeTool function exists', () => {
