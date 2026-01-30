@@ -88,11 +88,15 @@ Bootstrap Doc Detective in a repository. Detects documentation, generates minima
 
 ### Phase 1: Detect Documentation
 
-Scan the repository for documentation files using `doc-detective-resolver`:
+The agent scans the repository to understand documentation structure and gather context for subsequent phases.
 
-```bash
-npx doc-detective-resolver detect --path . --output detection-report.json
-```
+**What the agent looks for:**
+
+1. **Documentation directories** - Common paths like `docs/`, `documentation/`, `content/`, `pages/`
+2. **File types** - Identify supported formats and their locations
+3. **Structure patterns** - How docs are organized (flat, nested, by feature, by audience)
+4. **Existing configuration** - Check for `.doc-detective.json`, `doc-detective.config.js`, etc.
+5. **Related tooling** - Look for existing test frameworks, CI configs, build systems
 
 **Supported formats:**
 - Markdown (`.md`, `.markdown`)
@@ -102,6 +106,13 @@ npx doc-detective-resolver detect --path . --output detection-report.json
 - HTML (`.html`, `.htm`)
 - DITA (`.dita`, `.ditamap`, `.xml`)
 
+**Agent gathers:**
+- File counts by type and location
+- Directory structure overview
+- Sample files for pattern analysis
+- Potential procedure-heavy files (tutorials, guides, how-tos)
+- Any existing test specs or config files
+
 **Output:**
 ```
 📁 Documentation detected:
@@ -110,6 +121,10 @@ npx doc-detective-resolver detect --path . --output detection-report.json
    
    Total: 15 documentation files
    Estimated procedures: 8-12
+   
+   Key directories: docs/, pages/
+   Tutorials found: 3
+   How-to guides: 5
 ```
 
 ### Phase 2: Configure

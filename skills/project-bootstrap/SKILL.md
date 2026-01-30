@@ -27,8 +27,8 @@ Use this skill when:
 └───────────┘  └───────────┘  └───────────┘  └───────────┘  └───────────┘  └───────────┘
       │              │              │              │              │              │
       ▼              ▼              ▼              ▼              ▼              ▼
-  Resolver      Merge/Create   doc-testing    Doc Detective  Confidence   inline-test
-  analysis      .doc-detective skill workflow CLI execution  threshold    -injection
+   Agent        Merge/Create   doc-testing    Doc Detective  Confidence   inline-test
+   analysis     .doc-detective skill workflow CLI execution  threshold    -injection
 ```
 
 ## Modes of Operation
@@ -48,32 +48,34 @@ Use this skill when:
 
 ## Phase 1: Detect Documentation
 
-Use `doc-detective-resolver` for canonical documentation detection across all supported markup types.
+The agent scans the repository to understand documentation structure and gather context for subsequent phases. This is an agent-driven analysis, not a CLI tool invocation.
+
+### What the Agent Looks For
+
+1. **Documentation directories** - Common paths like `docs/`, `documentation/`, `content/`, `pages/`, `guides/`
+2. **File types** - Identify supported formats and their locations
+3. **Structure patterns** - How docs are organized (flat, nested, by feature, by audience)
+4. **Existing configuration** - Check for `.doc-detective.json`, `doc-detective.config.js`, etc.
+5. **Related tooling** - Look for existing test frameworks, CI configs, build systems
 
 ### Supported File Types
 
-| Type | Extensions | Detection |
-|------|-----------|-----------|
-| Markdown | `.md`, `.markdown` | File extension + frontmatter patterns |
-| MDX | `.mdx` | File extension + JSX import patterns |
-| AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | File extension + header patterns |
-| reStructuredText | `.rst` | File extension + directive patterns |
-| HTML | `.html`, `.htm` | File extension + semantic structure |
+| Type | Extensions | Detection Signals |
+|------|-----------|-------------------|
+| Markdown | `.md`, `.markdown` | File extension, frontmatter patterns |
+| MDX | `.mdx` | File extension, JSX import patterns |
+| AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | File extension, header patterns |
+| reStructuredText | `.rst` | File extension, directive patterns |
+| HTML | `.html`, `.htm` | File extension, semantic structure |
 
-### Detection Command
+### Agent Gathers
 
-```bash
-# Use doc-detective-resolver for detection
-npx doc-detective-resolver detect --path . --output detection-report.json
-```
-
-If `doc-detective-resolver` is not available:
-
-```bash
-# Fallback: Manual glob detection
-find . -type f \( -name "*.md" -o -name "*.mdx" -o -name "*.adoc" -o -name "*.rst" -o -name "*.html" \) \
-  ! -path "*/node_modules/*" ! -path "*/.git/*" ! -path "*/dist/*" ! -path "*/build/*"
-```
+- File counts by type and location
+- Directory structure overview
+- Sample files for pattern analysis
+- Potential procedure-heavy files (tutorials, guides, how-tos)
+- Any existing test specs or config files
+- README and contributing guidelines
 
 ### Detection Output
 
@@ -87,6 +89,10 @@ Report identified documentation to user:
    
    Total: 15 documentation files
    Estimated procedures: 8-12 (based on heading analysis)
+   
+   Key directories: docs/, pages/
+   Tutorials found: 3
+   How-to guides: 5
 ```
 
 ## Phase 2: Configure
@@ -186,10 +192,7 @@ For each identified procedure:
 3. Generate test spec following validation requirements
 4. **Validate before proceeding** (mandatory gate per doc-testing skill)
 
-```bash
-# Validate each generated spec
-./skills/doc-testing/scripts/dist/validate-test /tmp/generated-spec.json
-```
+Validation uses the `doc-testing` skill's validation workflow to ensure each generated spec is valid before proceeding.
 
 ### Progress Tracking
 
@@ -363,10 +366,7 @@ During test generation (Phase 3), track which source file each test was derived 
 
 For each source file with passing tests:
 
-1. **Preview changes** using `inline-test-injection` (default mode):
-   ```bash
-   ./skills/inline-test-injection/scripts/dist/inline-test-injection spec.json docs/login.md
-   ```
+1. **Preview changes** using `inline-test-injection` skill workflow
 
 2. **Prompt user for confirmation**:
    ```
@@ -377,10 +377,7 @@ For each source file with passing tests:
    [Y]es  [N]o  [A]ll remaining  [S]kip all
    ```
 
-3. **Apply on confirmation**:
-   ```bash
-   ./skills/inline-test-injection/scripts/dist/inline-test-injection spec.json docs/login.md --apply
-   ```
+3. **Apply on confirmation** using the skill's apply mode
 
 ### CI Mode Injection
 
@@ -448,7 +445,6 @@ Next Steps:
 - Config Schema: https://doc-detective.com/docs/references/config
 - Test Structure: https://doc-detective.com/docs/get-started/tests
 - Actions Reference: https://doc-detective.com/docs/category/actions
-- doc-detective-resolver: https://github.com/doc-detective/doc-detective-resolver
 - doc-detective-common: https://github.com/doc-detective/doc-detective-common
 
 ````

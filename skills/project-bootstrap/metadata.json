@@ -6,16 +6,15 @@
   "references": [
     "https://doc-detective.com",
     "https://github.com/doc-detective/doc-detective",
-    "https://github.com/doc-detective/doc-detective-resolver",
     "https://github.com/doc-detective/doc-detective-common"
   ],
   "dependencies": {
     "skills": [
-      "doc-testing"
+      "doc-testing",
+      "inline-test-injection"
     ],
     "packages": [
-      "doc-detective",
-      "doc-detective-resolver"
+      "doc-detective"
     ]
   },
   "modes": {
