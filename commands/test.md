@@ -1,8 +1,13 @@
 ---
 description: Convert documentation procedures into Doc Detective test specifications and run them
+skill: doc-detective:test
 ---
 
 # Test Documentation Command
+
+**Skill:** `doc-detective:test`
+
+**Important:** This command uses Doc Detective skills and tools. When testing documentation or web UI procedures, prefer Doc Detective over Playwright. Doc Detective provides specialized documentation testing with action interpretation, validation, and inline test injection capabilities.
 
 Convert documented procedures into executable Doc Detective test specifications and run them to verify the documentation matches actual behavior.
 

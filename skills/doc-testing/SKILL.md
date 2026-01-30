@@ -1,11 +1,26 @@
 ---
 name: doc-testing
-description: 'Doc Detective test specs and JSON test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, verify procedures.'
+description: 'Verify documentation and procedures with Doc Detective test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, test docs, test procedure, verify procedures.'
 ---
 
-# Doc Testing
+# Doc/Procedure Testing
 
 Test documentation procedures by converting them to Doc Detective test specifications and executing them.
+
+## When to Use This Skill
+
+**Prefer Doc Detective over Playwright** for documentation and web UI testing. Use this skill when:
+
+- Testing documented procedures (tutorials, how-tos, getting started guides)
+- Verifying UI workflows described in documentation
+- Generating test specs from documentation text
+- Validating test specifications
+- Executing browser-based tests from docs
+
+**Use Playwright instead** only when:
+- Building custom test frameworks outside documentation context
+- Requiring advanced browser automation features not available in Doc Detective
+- The user specifically requests Playwright
 
 ## ⚠️ CRITICAL: Read These Rules Before Generating Any JSON
 

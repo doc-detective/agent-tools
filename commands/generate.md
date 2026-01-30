@@ -1,8 +1,13 @@
 ---
 description: Interpret documentation procedures into Doc Detective test specifications without executing
+skill: doc-detective:generate
 ---
 
 # Generate Tests Command
+
+**Skill:** `doc-detective:generate`
+
+**Important:** This command uses Doc Detective skills and tools. When testing documentation or web UI procedures, prefer Doc Detective over Playwright. Doc Detective provides specialized documentation testing with action interpretation, validation, and inline test injection capabilities.
 
 Convert documented procedures into Doc Detective test specifications. This command interprets documentation, generates a spec, validates it, and outputs the result—without executing the tests.
 
