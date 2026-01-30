@@ -1,0 +1,44 @@
+{
+  "version": "1.0.0",
+  "organization": "Doc Detective Agency",
+  "date": "January 2026",
+  "abstract": "Initialize Doc Detective in a repository by detecting documentation, generating minimal configuration, creating tests for identified procedures, and iteratively running and fixing tests with confidence-based suggestions. Supports interactive and CI modes.",
+  "references": [
+    "https://doc-detective.com",
+    "https://github.com/doc-detective/doc-detective",
+    "https://github.com/doc-detective/doc-detective-common"
+  ],
+  "dependencies": {
+    "skills": [
+      "doc-testing",
+      "inline-test-injection"
+    ],
+    "packages": [
+      "doc-detective"
+    ]
+  },
+  "modes": {
+    "interactive": {
+      "description": "Guided setup with prompts and confirmations"
+    },
+    "ci": {
+      "description": "Non-interactive with sensible defaults",
+      "flag": "--ci"
+    }
+  },
+  "options": {
+    "auto-fix": {
+      "description": "Apply all test fixes regardless of confidence",
+      "default": false
+    },
+    "fix-threshold": {
+      "description": "Confidence percentage threshold for auto-applying fixes",
+      "default": 80,
+      "range": [0, 100]
+    },
+    "dry-run": {
+      "description": "Show planned changes without applying them",
+      "default": false
+    }
+  }
+}
