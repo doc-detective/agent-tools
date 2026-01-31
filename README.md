@@ -1,14 +1,11 @@
 # Doc Detective Agent Tools
 
-Agent tools for testing documentation procedures and validating that documented workflows match actual application behavior. Compatible with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and other AI coding assistants that support plugins or skills.
+Agent tools for testing documentation procedures and validating that documented workflows match actual application behavior. Compatible with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and other AI coding assistants that support plugins, skills, or commands.
 
-## Features
-
-- **Doc Testing Skill** - Full-featured skill for testing documentation procedures using Doc Detective framework
-- **Inline Test Injection Skill** - Inject test specifications into documentation as inline comments
-- **Generate Tests Command** - Convert documentation into executable test specifications
-- **Inject Inline Tests Command** - Embed test steps close to associated documentation content
-- **Validate Tests Command** - Validate test specifications before execution
+- **Set up Doc Detective for a project.** Initialize Doc Detective in a project with automatic documentation detection, config generation, and test creation.
+- **Generate tests.** Convert documentation into executable test specifications.
+- **Run tests.** Execute tests against your application and report results.
+- **Inject tests into your docs content.** Embed test steps close to associated documentation content.
 
 ## Installation
 
@@ -26,16 +23,22 @@ Agent tools for testing documentation procedures and validating that documented 
    /plugin marketplace add doc-detective/agent-tools
    ```
 
-2. Then install specific skill sets via:
+3. Then install specific skill sets via:
 
    ```text
    /plugin install doc-detective@doc-detective
    ```
 
+4. Ask Claude about Doc Detective, or use the `init` command to get started:
+
+   ```text
+   /doc-detective:init
+   ```
+
 ### Option 2: Install with `npx skills`
 
 > [!WARNING]
-> `npx skills` only installs skills, not commands or other agent tools. For full functionality, consider [manual installation](#option-3-manual-installation).
+> `npx skills` only installs skills, not agents, commands, or other tools. For full functionality, consider [manual installation](#option-3-manual-installation).
 
 Install these skills with the [`skills`](https://github.com/vercel-labs/skills) package from Vercel. This works with Claude Code, Cursor, Codex, OpenCode, and other AI coding tools.
 
@@ -47,56 +50,62 @@ Follow the prompts. The CLI auto-detects which AI tools you have installed and p
 
 ### Option 3: Manual Installation
 
-#### Clone to your skills directory
+#### Copy to your project directory
 
 ```bash
-# For Claude Code
-git clone https://github.com/doc-detective/agent-tools.git ~/.claude/skills/doc-detective
+git clone https://github.com/doc-detective/agent-tools.git
 
-# Or for project-local installation
-git clone https://github.com/doc-detective/agent-tools.git .claude/skills/doc-detective
+cp agent-tools/agents .{agent-dir}/agents      # Agents
+cp agent-tools/commands .{agent-dir}/commands  # Commands
+cp agent-tools/skills .{agent-dir}/skills      # Skills
 ```
 
 > [!IMPORTANT]
-> Adjust the path based on your AI tool's expected skill/plugin directory.
+> Adjust the path based on your agent's expected skill/plugin directory. For example, `.github/` for GitHub Copilot, `.cursor/` for Cursor, etc.
 
 #### Load locally during development with Claude Code
 
 ```bash
 git clone https://github.com/doc-detective/agent-tools.git
-claude --plugin-dir ./doc-detective
+claude --plugin-dir ./agent-tools
 ```
-
-Then use the plugin commands:
-
-- `/doc-detective:doc-testing` - Main skill for testing workflows
-- `/doc-detective:inject` - Inject test specs into documentation as inline comments
-- `/doc-detective:generate` - Generate test specs from documentation
-- `/doc-detective:test` - Quick command to test documentation files
-- `/doc-detective:validate` - Validate test specifications
-
-## Requirements
-
-- Doc Detective installed globally, via Docker, or accessible via npx:
-  - **Global**: `doc-detective` command available
-  - **Docker**: Docker installed and `docdetective/docdetective` image available
-  - **NPX**: npx available (included with Node.js 15.1.0+)
 
 ## Usage
 
+### Bootstrap Doc Detective for a Project
+
+```bash
+/doc-detective:init
+```
+
+Initializes Doc Detective in your repository by:
+1. Detecting documentation files
+2. Generating a minimal configuration
+3. Creating tests for identified procedures
+4. Running tests
+5. Iteratively fixing failures with confidence-based suggestions
+
 ### Convert Documentation to Tests
+
+```bash
+/doc-detective:generate path/to/documentation.md
+```
+
+Identify testable procedures and convert them into Doc Detective test specifications.
+
+### Run Tests
 
 ```bash
 /doc-detective:test path/to/documentation.md
 ```
 
-The skill will:
+Runs tests from docs or test specification files:
 
-1. Extract step-by-step procedures from your documentation
-2. Convert them to Doc Detective test specifications
-3. Validate the test specs
-4. Execute tests using Doc Detective
-5. Report results with any failures mapped back to documentation sections
+1. Extracts step-by-step procedures from your documentation.
+2. Converts them to Doc Detective test specifications.
+3. Validates the test specs.
+4. Executes tests using Doc Detective.
+5. Reports results with any failures mapped back to documentation sections.
 
 ### Validate Test Specifications
 
@@ -110,46 +119,13 @@ Validates structure before execution:
 - Action types recognized
 - Parameter types correct
 
-### Use the Core Skill
+### Inject Tests into Documentation
 
 ```bash
-/doc-detective:doc-testing <your request>
+/doc-detective:inject tests/spec.yaml docs/procedure.md --apply
 ```
 
-Full documentation testing workflow with complete control over interpretation, validation, and execution.
-
-## Plugin Structure
-
-```
-doc-detective/
-├── .claude-plugin/
-│   └── plugin.json              # Plugin manifest
-├── skills/
-│   ├── doc-testing/             # Core testing skill
-│   │   ├── SKILL.md
-│   │   ├── references/
-│   │   │   └── actions.md       # Action reference
-│   │   └── scripts/
-│   │       ├── src/             # Source files
-│   │       │   ├── validate-test.js
-│   │       │   └── fix-tests.mjs
-│   │       └── dist/            # Bundled output
-│   │           ├── validate-test.js
-│   │           └── fix-tests.js
-│   └── inline-test-injection/   # Inline injection skill
-│       ├── SKILL.md
-│       ├── references/
-│       │   └── markup-patterns.md
-│       └── scripts/
-│           └── dist/
-│               └── inline-test-injection.js
-├── commands/
-│   ├── generate.md             # Generate tests command
-│   ├── inject.md               # Inject inline tests command
-│   ├── test.md                 # Test docs command
-│   └── validate.md             # Validate command
-└── README.md
-```
+Takes a well-formed test specification and injects test steps as inline comments into the associated documentation content so you don't have to maintain separate files.
 
 ## Doc Detective Actions Reference
 
@@ -176,7 +152,7 @@ See `skills/doc-testing/references/actions.md` for detailed documentation.
 
 Inject test steps from separate spec files directly into documentation as inline comments:
 
-```
+```bash
 /doc-detective:inject tests/login.yaml docs/login.md --apply
 ```
 
@@ -217,8 +193,7 @@ Documentation:
 Use the skill:
 
 ```
-/doc-detective-plugin:doc-testing
-Test this login procedure from our docs to ensure it still works
+/doc-detective:test path/to/file.md this login procedure from our docs to make sure it still works
 ```
 
 ### Test Multiple Workflows
@@ -269,7 +244,7 @@ Then execute:
 
 ## License
 
-MIT
+AGPL3
 
 ## Contributing
 
