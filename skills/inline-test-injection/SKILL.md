@@ -1,6 +1,7 @@
 ---
 name: inline-test-injection
 description: Inject Doc Detective test specs into documentation source files as inline comments. Use when (1) you have a valid test spec (JSON/YAML) with steps and need to embed them in a source file, (2) the user asks to add inline tests to documentation, (3) converting separate test files to inline format, or (4) placing test steps close to their associated content in Markdown, MDX, HTML, AsciiDoc, or XML/DITA files.
+user-invocable: false
 ---
 
 # Inline Test Injection
