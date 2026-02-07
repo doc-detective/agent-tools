@@ -1,8 +1,9 @@
-# AUTO-GENERATED — DO NOT EDIT
-# Source: commands/generate.md
-# Regenerate: npm run build
+---
+description: Interpret documentation procedures into Doc Detective test specifications without executing
+skill: doc-detective:generate
+---
 
-prompt = """# Generate Tests Command
+# Generate Tests Command
 
 **Skill:** `doc-detective:generate`
 
@@ -260,5 +261,3 @@ For complete action documentation, see:
 - This command does NOT execute tests—use `/doc-detective:test` for execution
 - Use `/doc-detective:validate` to re-validate an existing spec
 - Variable placeholders like `$EMAIL$` should be replaced with actual values or loaded via `loadVariables`
-"""
-description="""Interpret documentation procedures into Doc Detective test specifications without executing"""

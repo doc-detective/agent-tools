@@ -1,8 +1,9 @@
-# AUTO-GENERATED — DO NOT EDIT
-# Source: commands/test.md
-# Regenerate: npm run build
+---
+description: Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures
+skill: doc-detective:test
+---
 
-prompt = """# Test Documentation Command
+# Test Documentation Command
 
 **Skill:** `doc-detective:test`
 
@@ -102,5 +103,3 @@ When `--fix` is enabled:
 | Navigation failed | Update URL, handle redirects |
 | Text mismatch | Update expected text |
 | Multiple matches | Make selector more specific |
-"""
-description="""Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures"""

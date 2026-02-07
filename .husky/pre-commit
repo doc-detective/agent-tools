@@ -1,0 +1,2 @@
+npm run build
+git add commands/doc-detective/ plugins/doc-detective/ .claude-plugin/marketplace.json gemini-extension.json

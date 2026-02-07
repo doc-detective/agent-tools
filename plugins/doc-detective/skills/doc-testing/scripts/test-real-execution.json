@@ -1,0 +1,20 @@
+{
+  "tests": [
+    {
+      "testId": "verify-doc-detective-website",
+      "description": "Verify Doc Detective website loads and has expected content",
+      "steps": [
+        {
+          "stepId": "navigate",
+          "description": "Navigate to Doc Detective website",
+          "goTo": "https://doc-detective.com"
+        },
+        {
+          "stepId": "verify-heading",
+          "description": "Verify the site has Doc Detective branding",
+          "find": "Doc Detective"
+        }
+      ]
+    }
+  ]
+}
