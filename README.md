@@ -1,6 +1,6 @@
 # Doc Detective Agent Tools
 
-Agent tools for testing documentation procedures and validating that documented workflows match actual application behavior. Compatible with Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and other AI coding assistants that support plugins, skills, or commands.
+Agent tools for testing documentation procedures and validating that documented workflows match actual application behavior. Compatible with Gemini CLI, Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and other AI coding assistants that support plugins, skills, or commands.
 
 - **Set up Doc Detective for a project.** Initialize Doc Detective in a project with automatic documentation detection, config generation, and test creation.
 - **Generate tests.** Convert documentation into executable test specifications.
@@ -9,7 +9,7 @@ Agent tools for testing documentation procedures and validating that documented 
 
 ## Installation
 
-### Option 1: Claude Code Plugin
+### Claude Code
 
 1. Open Claude Code:
 
@@ -35,10 +35,32 @@ Agent tools for testing documentation procedures and validating that documented 
    /doc-detective:init
    ```
 
-### Option 2: Install with `npx skills`
+### Gemini CLI
+
+1. Install the extension:
+
+   ```bash
+   gemini extensions install https://github.com/doc-detective/agent-tools.git
+   ```
+
+2. Open Gemini CLI:
+
+   ```bash
+   gemini
+   ```
+
+3. Use Doc Detective commands in Gemini CLI:
+
+   ```text
+   /doc-detective:init
+   ```
+
+### Codex, Cursor, OpenCode, and other AI coding assistants
+
+#### Option 1: Install with `npx skills`
 
 > [!WARNING]
-> `npx skills` only installs skills, not agents, commands, or other tools. For full functionality, consider [manual installation](#option-3-manual-installation).
+> `npx skills` only installs skills, not agents, commands, or other tools. For full functionality, consider [manual installation](#option-4-manual-installation).
 
 Install these skills with the [`skills`](https://github.com/vercel-labs/skills) package from Vercel. This works with Claude Code, Cursor, Codex, OpenCode, and other AI coding tools.
 
@@ -48,7 +70,7 @@ npx skills add doc-detective/agent-tools
 
 Follow the prompts. The CLI auto-detects which AI tools you have installed and places the skills in the appropriate directories.
 
-### Option 3: Manual Installation
+#### Option 2: Manual Installation
 
 #### Copy to your project directory
 
@@ -62,13 +84,6 @@ cp agent-tools/skills .{agent-dir}/skills      # Skills
 
 > [!IMPORTANT]
 > Adjust the path based on your agent's expected skill/plugin directory. For example, `.github/` for GitHub Copilot, `.cursor/` for Cursor, etc.
-
-#### Load locally during development with Claude Code
-
-```bash
-git clone https://github.com/doc-detective/agent-tools.git
-claude --plugin-dir ./agent-tools
-```
 
 ## Usage
 
