@@ -66,9 +66,9 @@ Agent tools for testing documentation procedures and validating that documented 
    Bootstrap Doc Detective for my project
    ```
 
-### Qwen CLI
+### Qwen Code
 
-1. Installthe plugin and open Qwen CLI:
+1. Installthe plugin and open Qwen Code:
 
    ```bash
    qwen extensions install https://github.com/doc-detective/agent-tools
