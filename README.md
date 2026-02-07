@@ -40,7 +40,7 @@ Agent tools for testing documentation procedures and validating that documented 
 1. Install the extension:
 
    ```bash
-   gemini extensions install https://github.com/doc-detective/agent-tools.git
+   gemini extensions install https://github.com/doc-detective/agent-tools.git --auto-update
    ```
 
 2. Open Gemini CLI:
