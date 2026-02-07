@@ -206,4 +206,4 @@ See `skills/inline-test-injection/references/markup-patterns.md` for pattern cus
 - `/doc-detective:validate` - Validate test specifications
 - `/doc-detective:test` - Execute test specifications
 """
-description="""Inject Doc Detective tests intonsource files for easier management."""
+description="""Inject Doc Detective tests into source files for easier management."""

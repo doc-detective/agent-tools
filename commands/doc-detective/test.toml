@@ -71,14 +71,14 @@ When `--fix` is enabled:
 
 ```
 ┌─────────────┐     ┌─────────────┐     ┌─────────────┐     ┌─────────────┐
-│ Run Tests   │──▶│ Failures?   │─Y─▶│ Analyze &   │──▶│ Apply Fix   │─┐
-│             │     │             │     │ Generate Fix│     │ (if conf>n) │ │
+│  Run Tests  │────▶│  Failures?  │─Y──▶│  Analyze &  │────▶│  Apply Fix  │─┐
+│             │     │             │     │ Generate Fix │     │ (if conf>n) │ │
 └─────────────┘     └─────────────┘     └─────────────┘     └─────────────┘ │
-       ▲                    │ N                                             │
-       │                    ▼                                             │
-       │             ┌─────────────┐                                       │
-       └─────────────┤ Done/Report │◀─────────────────────────────────────┘
-                     └─────────────┘
+       ▲                   │ N                                              │
+       │                   ▼                                                │
+       │            ┌─────────────┐                                         │
+       └────────────┤ Done/Report │◀────────────────────────────────────────┘
+                    └─────────────┘
 ```
 
 ### Confidence-Based Decisions
@@ -99,4 +99,4 @@ When `--fix` is enabled:
 | Text mismatch | Update expected text |
 | Multiple matches | Make selector more specific |
 """
-description="""Test your docs or Doc Detecrive test specs."""
+description="""Test your docs or Doc Detective test specs."""

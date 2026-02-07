@@ -60,7 +60,7 @@ Agent tools for testing documentation procedures and validating that documented 
 #### Option 1: Install with `npx skills`
 
 > [!WARNING]
-> `npx skills` only installs skills, not agents, commands, or other tools. For full functionality, consider [manual installation](#option-4-manual-installation).
+> `npx skills` only installs skills, not agents, commands, or other tools. For full functionality, consider [manual installation](#option-2-manual-installation).
 
 Install these skills with the [`skills`](https://github.com/vercel-labs/skills) package from Vercel. This works with Claude Code, Cursor, Codex, OpenCode, and other AI coding tools.
 

@@ -275,4 +275,4 @@ jobs:
 - Config schema: https://doc-detective.com/docs/references/schemas/config
 - Actions reference: https://doc-detective.com/docs/category/actions
 """
-description="""BootstrapDoc Detecticr in this repo."""
+description="""Bootstrap Doc Detective in this repo."""
