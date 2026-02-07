@@ -45,6 +45,27 @@ Agent tools for testing documentation procedures and validating that documented 
    /doc-detective:init
    ```
 
+### Copilot CLI
+
+1. Open Copilot CLI:
+
+   ```bash
+   copilot
+   ```
+
+2. Install the Doc Detective plugin:
+
+   ```text
+   /plugin marketplace add doc-detective/agent-tools
+   /plugin install doc-detective@doc-detective
+   ```
+
+3. Ask about Doc Detective:
+
+   ```text
+   Bootstrap Doc Detective for my project
+   ```
+
 ### Qwen CLI
 
 1. Installthe plugin and open Qwen CLI:
