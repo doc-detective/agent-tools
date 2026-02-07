@@ -17,19 +17,14 @@ Agent tools for testing documentation procedures and validating that documented 
    claude
    ```
 
-2. Add the Doc Detective plugin to Claude Code's plugin marketplace:
+2. Add the Doc Detective marketplace and plugin:
 
    ```text
    /plugin marketplace add doc-detective/agent-tools
-   ```
-
-3. Then install specific skill sets via:
-
-   ```text
    /plugin install doc-detective@doc-detective
    ```
 
-4. Ask Claude about Doc Detective, or use the `init` command to get started:
+3. Ask about Doc Detective, or use the `init` command to get started:
 
    ```text
    /doc-detective:init
@@ -37,19 +32,30 @@ Agent tools for testing documentation procedures and validating that documented 
 
 ### Gemini CLI
 
-1. Install the extension:
+1. Install the extension and open Gemini CLI:
 
    ```bash
    gemini extensions install https://github.com/doc-detective/agent-tools.git --auto-update
-   ```
-
-2. Open Gemini CLI:
-
-   ```bash
    gemini
    ```
 
-3. Use Doc Detective commands in Gemini CLI:
+2. Ask about Doc Detective, or use the `init` command to get started:
+
+   ```text
+   /doc-detective:init
+   ```
+
+### Qwen CLI
+
+1. Installthe plugin and open Qwen CLI:
+
+   ```bash
+   qwen extensions install https://github.com/doc-detective/agent-tools
+   qwen extensions install doc-detective:doc-detective
+   qwen
+   ```
+
+2. Ask about Doc Detective, or use the `init` command to get started:
 
    ```text
    /doc-detective:init
@@ -83,7 +89,7 @@ cp agent-tools/skills .{agent-dir}/skills      # Skills
 ```
 
 > [!IMPORTANT]
-> Adjust the path based on your agent's expected skill/plugin directory. For example, `.github/` for GitHub Copilot, `.cursor/` for Cursor, etc.
+> Adjust the path based on your agent's expected skill/plugin directory. For example, `.agents` for Ckdex, `.cursor` for Cursor, etc.
 
 ## Usage
 
