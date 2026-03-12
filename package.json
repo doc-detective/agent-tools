@@ -12,7 +12,8 @@
     "build:inline": "cd skills/inline-test-injection/scripts/src && npm run build",
     "test:doc-testing": "cd skills/doc-testing/scripts && ./test-skill.sh",
     "test:inline": "cd skills/inline-test-injection/scripts && ./test-skill.sh",
-    "prepare": "husky"
+    "prepare": "husky",
+    "validate:skills": "./scripts/validate-skills.sh"
   },
   "devDependencies": {
     "husky": "^9.1.7"
