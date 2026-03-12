@@ -1,17 +1,18 @@
 #!/usr/bin/env node
 
-// build.js — Sync content from repo root into all downstream targets.
+// build.js — Build agent-tools from src/ into downstream artifact directories.
 //
-// Source of truth (repo root):
+// Source of truth:
+//   src/agents/                           → agent definitions
+//   src/skills/                           → skill implementations (SKILL.md, references/, scripts/)
 //   package.json                          → version
-//   skills/*/SKILL.md (user-invocable)    → command prompts (generate commands/*.md)
-//   agents/                               → agent definitions
-//   skills/                               → skill implementations
 //
-// Generated/synced targets:
-//   commands/*.md                                    ← from skills/*/SKILL.md (user-invocable: true)
-//   commands/doc-detective/*.toml                    ← from commands/*.md
-//   plugins/doc-detective/{agents,skills}/           ← copied from root
+// Generated/synced artifact directories (do not edit directly):
+//   agents/                                          ← copied from src/agents/
+//   skills/                                          ← copied from src/skills/
+//   commands/*.md                                    ← generated from src/skills/*/SKILL.md (user-invocable: true)
+//   commands/doc-detective/*.toml                    ← generated from commands/*.md
+//   plugins/doc-detective/{agents,skills}/           ← copied from agents/, skills/
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
 //   gemini-extension.json                            ← version from package.json
@@ -117,7 +118,26 @@ function syncVersions() {
   log("  gemini-extension.json");
 }
 
-// ─── 2. Generate command Markdown files from user-invocable skills ──────────
+// ─── 2. Copy src/ to artifact directories ───────────────────
+
+function syncSourceToArtifacts() {
+  log("\nSyncing src/ to artifact directories...");
+
+  for (const dir of ["agents", "skills"]) {
+    const target = path.join(ROOT, dir);
+
+    // Remove existing artifact directory
+    if (fs.existsSync(target)) {
+      fs.rmSync(target, { recursive: true });
+    }
+
+    // Copy from src/
+    copyDirRecursive(path.join(ROOT, "src", dir), target);
+    log(`  src/${dir}/ -> ${dir}/`);
+  }
+}
+
+// ─── 3. Generate command Markdown files from user-invocable skills ──────────
 
 /**
  * Derive command filename from a skill name.
@@ -132,7 +152,7 @@ function skillNameToCommandFile(skillName) {
 function generateCommands() {
   log("\nGenerating command Markdown files from skills...");
 
-  const skillsDir = path.join(ROOT, "skills");
+  const skillsDir = path.join(ROOT, "src/skills");
   const cmdDir = path.join(ROOT, "commands");
   fs.mkdirSync(cmdDir, { recursive: true });
 
@@ -169,7 +189,7 @@ function generateCommands() {
   }
 }
 
-// ─── 3. Generate TOML command files from Markdown sources ────
+// ─── 4. Generate TOML command files from Markdown sources ────
 
 function generateTomls() {
   log("\nGenerating command TOML files...");
@@ -199,7 +219,7 @@ function generateTomls() {
     // Build TOML with an auto-generated header comment
     const toml = [
       `# AUTO-GENERATED — DO NOT EDIT`,
-      `# Source: skills/${skillNameToCommandFile(skillName)}/SKILL.md`,
+      `# Source: src/skills/${skillNameToCommandFile(skillName)}/SKILL.md`,
       `# Regenerate: npm run build`,
       ``,
       `prompt = """${trimmedBody}`,
@@ -214,7 +234,7 @@ function generateTomls() {
   }
 }
 
-// ─── 4. Copy content to plugin directory ─────────────────────
+// ─── 5. Copy content to plugin directory ─────────────────────
 
 function syncPluginDir() {
   log("\nSyncing plugin directory...");
@@ -242,7 +262,7 @@ function syncPluginDir() {
   }
 }
 
-// ─── 5. Build skill scripts ──────────────────────────────────
+// ─── 6. Build skill scripts ──────────────────────────────────
 
 function buildSkillScripts() {
   if (SKIP_SCRIPTS) {
@@ -253,10 +273,10 @@ function buildSkillScripts() {
   log("\nBuilding skill scripts...");
 
   const skills = [
-    { name: "doc-testing", dir: "skills/doc-testing/scripts/src" },
+    { name: "doc-testing", dir: "src/skills/doc-testing/scripts/src" },
     {
       name: "inline-test-injection",
-      dir: "skills/inline-test-injection/scripts/src",
+      dir: "src/skills/inline-test-injection/scripts/src",
     },
   ];
 
@@ -283,9 +303,10 @@ function buildSkillScripts() {
 log("Building agent-tools...\n");
 
 syncVersions();
+buildSkillScripts();
+syncSourceToArtifacts();
 generateCommands();
 generateTomls();
 syncPluginDir();
-buildSkillScripts();
 
 log("\nBuild complete!");

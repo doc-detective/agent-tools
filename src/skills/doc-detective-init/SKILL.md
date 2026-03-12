@@ -1,8 +1,16 @@
-# AUTO-GENERATED — DO NOT EDIT
-# Source: src/skills/doc-detective-init/SKILL.md
-# Regenerate: npm run build
+---
+name: doc-detective-init
+description: 'Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop'
+user-invocable: true
+metadata:
+  version: '1.1.0'
+  organization: Doc Detective
+  date: March 2026
+  abstract: Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.
+  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+---
 
-prompt = """# Init Command
+# Init Command
 
 **Skill:** `doc-detective:init`
 
@@ -282,5 +290,3 @@ jobs:
 - Doc Detective docs: https://doc-detective.com
 - Config schema: https://doc-detective.com/docs/references/schemas/config
 - Actions reference: https://doc-detective.com/docs/category/actions
-"""
-description="""Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop"""

@@ -1,8 +1,16 @@
-# AUTO-GENERATED — DO NOT EDIT
-# Source: src/skills/doc-detective-inject/SKILL.md
-# Regenerate: npm run build
+---
+name: doc-detective-inject
+description: 'Inject test specifications into documentation source files as inline comments'
+user-invocable: true
+metadata:
+  version: '1.1.0'
+  organization: Doc Detective
+  date: March 2026
+  abstract: Inject Doc Detective test specifications into documentation source files as inline comments, placing test steps close to their associated content using semantic pattern matching.
+  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+---
 
-prompt = """# Inject Inline Tests Command
+# Inject Inline Tests Command
 
 **Skill:** `doc-detective:inject`
 
@@ -209,5 +217,3 @@ See `skills/inline-test-injection/references/markup-patterns.md` for pattern cus
 - `/doc-detective:generate` - Generate test specs from documentation (opposite direction)
 - `/doc-detective:validate` - Validate test specifications
 - `/doc-detective:test` - Execute test specifications
-"""
-description="""Inject test specifications into documentation source files as inline comments"""

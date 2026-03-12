@@ -1,8 +1,16 @@
-# AUTO-GENERATED — DO NOT EDIT
-# Source: src/skills/doc-detective-test/SKILL.md
-# Regenerate: npm run build
+---
+name: doc-detective-test
+description: 'Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures'
+user-invocable: true
+metadata:
+  version: '1.1.0'
+  organization: Doc Detective
+  date: March 2026
+  abstract: Convert documentation procedures into executable Doc Detective test specifications, run them, optionally fix failures, and verify the documentation matches actual behavior.
+  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+---
 
-prompt = """# Test Documentation Command
+# Test Documentation Command
 
 **Skill:** `doc-detective:test`
 
@@ -102,5 +110,3 @@ When `--fix` is enabled:
 | Navigation failed | Update URL, handle redirects |
 | Text mismatch | Update expected text |
 | Multiple matches | Make selector more specific |
-"""
-description="""Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures"""

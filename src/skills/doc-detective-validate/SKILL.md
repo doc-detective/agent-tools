@@ -1,8 +1,16 @@
-# AUTO-GENERATED — DO NOT EDIT
-# Source: src/skills/doc-detective-validate/SKILL.md
-# Regenerate: npm run build
+---
+name: doc-detective-validate
+description: 'Validate Doc Detective test specifications or configuration files'
+user-invocable: true
+metadata:
+  version: '1.1.0'
+  organization: Doc Detective
+  date: March 2026
+  abstract: Validate Doc Detective test specifications or configuration files to ensure they are correctly structured.
+  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
+---
 
-prompt = """# Validate Command
+# Validate Command
 
 **Skill:** `doc-detective:validate`
 
@@ -134,5 +142,3 @@ See [doc-detective-common](https://github.com/doc-detective/doc-detective-common
 }
 ```
 Errors: `input` should be array, `browser` should be object, `logLevel` invalid value
-"""
-description="""Validate Doc Detective test specifications or configuration files"""

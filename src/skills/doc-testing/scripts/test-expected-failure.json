@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "testId": "intentional-failure",
+      "description": "Test that should fail - looking for nonexistent element",
+      "steps": [
+        {
+          "stepId": "navigate",
+          "description": "Navigate to Doc Detective website",
+          "goTo": "https://doc-detective.com"
+        },
+        {
+          "stepId": "find-nonexistent",
+          "description": "Look for text that does not exist",
+          "find": {
+            "selector": "#this-element-does-not-exist-xyz123",
+            "timeout": 3000
+          }
+        }
+      ]
+    }
+  ]
+}
