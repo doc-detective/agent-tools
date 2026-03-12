@@ -1,7 +1,4 @@
 node_modules/
 bun.lock
 *.bundled.js
-
-# Generated from skills/*/SKILL.md (user-invocable: true) — do not edit directly
-commands/*.md
 settings.local.json

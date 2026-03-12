@@ -2,6 +2,12 @@
 name: inline-test-injection
 description: Inject Doc Detective test specs into documentation source files as inline comments. Use when (1) you have a valid test spec (JSON/YAML) with steps and need to embed them in a source file, (2) the user asks to add inline tests to documentation, (3) converting separate test files to inline format, or (4) placing test steps close to their associated content in Markdown, MDX, HTML, AsciiDoc, or XML/DITA files.
 user-invocable: false
+metadata:
+  version: '1.1.0'
+  organization: Doc Detective Agency
+  date: January 2026
+  abstract: Inject Doc Detective test specifications directly into documentation files using HTML comments. Supports Markdown, AsciiDoc, HTML, and MDX formats with automatic format detection.
+  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
 ---
 
 # Inline Test Injection
@@ -147,3 +153,27 @@ If `.doc-detective.json` or `.doc-detective.yaml` exists, custom markup patterns
 **Nested content (lists, blockquotes):**
 - Indentation is preserved from the matched line
 - Comment inserted at same indentation level
+
+## Scripts and Test Fixtures
+
+### Tools
+
+- `scripts/dist/inline-test-injection.js` — Main injection script
+
+### Test Fixtures
+
+- `scripts/fixtures/sources/sample.md` — Sample Markdown source
+- `scripts/fixtures/sources/sample.mdx` — Sample MDX source
+- `scripts/fixtures/sources/sample.html` — Sample HTML source
+- `scripts/fixtures/sources/sample.adoc` — Sample AsciiDoc source
+- `scripts/fixtures/sources/with-config/sample.md` — Sample with config
+- `scripts/fixtures/sources/with-config/.doc-detective.json` — Fixture config
+- `scripts/fixtures/expected/sample-injected.md` — Expected injection result
+- `scripts/fixtures/specs/valid-basic.json` — Valid basic test spec
+- `scripts/fixtures/specs/valid-complex.yaml` — Valid complex test spec (YAML)
+- `scripts/fixtures/specs/invalid-no-tests.json` — Invalid spec example (no tests)
+
+### Build and Test Infrastructure
+
+- `scripts/build-skill.sh` — Build script for compiling skill tools
+- `scripts/test-skill.sh` — Test script for validating skill functionality

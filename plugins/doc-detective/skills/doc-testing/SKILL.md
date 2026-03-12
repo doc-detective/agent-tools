@@ -2,6 +2,12 @@
 name: doc-testing
 description: 'Verify documentation and procedures with Doc Detective test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, test docs, test procedure, verify procedures.'
 user-invocable: false
+metadata:
+  version: '1.1.0'
+  organization: Doc Detective
+  date: January 2026
+  abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
+  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
 ---
 
 # Doc/Procedure Testing
@@ -256,91 +262,26 @@ If validation fails:
 
 When you generate a test spec **from a source documentation file**, offer to inject the tests directly into that file using inline test markup.
 
-### When to Offer Injection
+**Offer injection when** validation passed AND the test spec was generated from a specific, accessible source file (not a URL or user description).
 
-Offer injection when ALL of these conditions are met:
-- Validation passed (Step 2 complete)
-- The test spec was generated from a specific source file (not from a URL, user description, or other non-file source)
-- The source file path is known and accessible
+### Injection Workflow
 
-**Do NOT offer injection when:**
-- Validation failed
-- Spec was generated from a URL or user-provided description (no source file)
-- Source file cannot be modified (e.g., read-only, external repository)
-
-### Track Source File Path
-
-Throughout the workflow, remember which source file(s) each test was generated from:
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ Source File     │────▶│ Test Spec       │────▶│ Injection       │
-│ docs/login.md   │     │ test: login-flow│     │ Target: login.md│
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-```
-
-### Injection Decision Prompt
-
-After validation passes, ask the user:
-
-> **Would you like to inject this test spec into your source file?**
->
-> This will add inline test comments to `<source-file-path>` that Doc Detective can execute directly from your documentation.
->
-> - **Yes** - Show preview of changes, then apply on confirmation
-> - **No** - Return the JSON spec only
-
-### Injection Workflow (Preview-Then-Apply)
-
-If user accepts injection:
-
-1. **Write spec to temp file** for the injection tool:
+1. **Write spec to temp file**:
    ```bash
-   # Create temp spec file
    echo '<validated-spec-json>' > /tmp/doc-detective-spec-$(date +%s).json
    ```
 
-2. **Show preview first** (default mode - no `--apply` flag):
+2. **Show preview** (no `--apply` flag):
    ```bash
    node ./skills/inline-test-injection/scripts/dist/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
    ```
-   This displays a diff of planned changes without modifying the file.
 
-3. **Ask for confirmation** after user reviews preview:
-   > **Apply these changes to `<source-file-path>`?**
-   > - **Yes** - Apply the injection
-   > - **No** - Cancel (spec JSON still available)
-
-4. **Apply changes** on confirmation:
+3. **Apply on confirmation**:
    ```bash
    node ./skills/inline-test-injection/scripts/dist/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
    ```
 
-5. **Clean up** temp file after successful apply. Retain on error for debugging.
-
-### Multi-File Handling
-
-When a test spec spans multiple source files, offer injection **separately for each file**:
-
-```
-Source files: docs/login.md, docs/checkout.md
-Generated spec: 2 tests (login-flow from login.md, checkout-flow from checkout.md)
-
-Injection offers:
-1. "Inject login-flow tests into docs/login.md?" → Yes/No
-2. "Inject checkout-flow tests into docs/checkout.md?" → Yes/No
-```
-
-**User can accept/decline per-file.** Return the full JSON spec regardless of injection decisions.
-
-### Injection Tool Location
-
-The injection tool is part of the `inline-test-injection` skill:
-```
-skills/inline-test-injection/scripts/dist/inline-test-injection
-```
-
-If the tool is not available, inform the user and return the JSON spec without injection.
+For multi-file specs, offer injection separately per source file. Return the full JSON spec regardless of injection decisions. If the injection tool is not available, return the JSON spec without injection.
 
 ## Step 3: Execute Tests
 
@@ -452,183 +393,7 @@ Doc Detective outputs `testResults-<timestamp>.json`:
 
 ## Step 5: Fix Failing Tests (Optional)
 
-When tests fail, analyze the failures and generate fixes with confidence scores.
-
-### Fix Tool
-
-Use the fix-tests tool to analyze failures and propose fixes:
-
-```bash
-# Analyze failures and show proposed fixes (dry-run)
-node ./scripts/dist/fix-tests.js results.json --spec test-spec.json --dry-run
-
-# Apply fixes above 80% confidence threshold
-node ./scripts/dist/fix-tests.js results.json --spec test-spec.json --threshold 80
-
-# Apply all fixes regardless of confidence
-node ./scripts/dist/fix-tests.js results.json --spec test-spec.json --auto-fix
-```
-
-### Fix Loop Workflow
-
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ Analyze Failure │────▶│ Generate Fix    │────▶│ Calculate       │────▶│ Apply/Prompt    │
-│ (read results)  │     │ (modify spec)   │     │ Confidence      │     │ (threshold-based)│
-└─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                                                 │
-        ┌────────────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────┐     ┌─────────────────┐
-│ Re-run Tests    │────▶│ Pass/Fail Check │─── Pass ──▶ Done
-│ (validate fix)  │     │ (max 3 attempts)│─── Fail ──▶ Loop or Manual Review
-└─────────────────┘     └─────────────────┘
-```
-
-### Fix Options
-
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--fix` | `false` | Enable automatic fix attempts |
-| `--auto-fix` | `false` | Apply all fixes without prompting |
-| `--fix-threshold` | `80` | Confidence threshold (0-100) for auto-apply |
-| `--max-fix-attempts` | `3` | Maximum fix iterations per test |
-
-### Failure Analysis
-
-For each failing step, analyze:
-
-1. **Error type**: Element not found, timeout, navigation failure, assertion failure
-2. **Context**: What the step was trying to do
-3. **Actual result**: What happened instead
-4. **Potential causes**: Why it might have failed
-
-```json
-{
-  "failureAnalysis": {
-    "stepId": "click-submit",
-    "errorType": "element_not_found",
-    "action": "click",
-    "target": "Submit",
-    "resultDescription": "Element 'Submit' not found within timeout",
-    "potentialCauses": [
-      "Button text changed",
-      "Element not yet visible",
-      "Different selector needed"
-    ]
-  }
-}
-```
-
-### Generate Fix with Confidence Score
-
-Based on failure analysis, generate a fix and calculate confidence:
-
-```json
-{
-  "fix": {
-    "stepId": "click-submit",
-    "originalStep": { "click": "Submit" },
-    "fixedStep": { "click": "Submit Form" },
-    "confidence": 85,
-    "reasoning": "Page contains button with text 'Submit Form' which matches the intent"
-  }
-}
-```
-
-**Confidence scoring factors:**
-- **High (80-100)**: Exact alternative found, clear pattern match
-- **Medium (50-79)**: Partial match, likely correct but uncertain
-- **Low (0-49)**: Best guess, significant uncertainty
-
-### Apply Fix Decision
-
-Based on confidence and options:
-
-```
-if --auto-fix:
-    Apply fix automatically
-else if confidence >= fix-threshold:
-    Apply fix automatically
-else:
-    Prompt user for confirmation:
-    
-    ⚠️ Low confidence fix proposed (65%)
-    
-    Step: click "Submit"
-    Error: Element not found
-    Proposed fix: click "Submit Form"
-    Reasoning: Found button with similar text
-    
-    [A]pply  [S]kip  [M]anual edit  [Q]uit fixing
-```
-
-### Re-run and Iterate
-
-After applying fixes:
-
-1. Save updated spec to temp file
-2. Run validator on updated spec
-3. Execute tests again
-4. Check results:
-   - All pass → Report success, exit loop
-   - Still failing → Analyze new failures, iterate (up to max attempts)
-   - Max attempts reached → Report "needs manual review"
-
-### Fix History Tracking
-
-Track all fix attempts for reporting:
-
-```json
-{
-  "fixHistory": [
-    {
-      "attempt": 1,
-      "stepId": "click-submit",
-      "original": { "click": "Submit" },
-      "fixed": { "click": "Submit Form" },
-      "confidence": 85,
-      "result": "PASS"
-    },
-    {
-      "attempt": 1,
-      "stepId": "find-welcome",
-      "original": { "find": "Welcome" },
-      "fixed": { "find": "Welcome back" },
-      "confidence": 45,
-      "result": "FAIL",
-      "note": "Needs manual review"
-    }
-  ]
-}
-```
-
-### Common Fix Patterns
-
-| Failure | Fix Strategy | Typical Confidence |
-|---------|--------------|-------------------|
-| Element text changed | Search page for similar text | 70-90% |
-| Element not visible | Add wait step before action | 80-95% |
-| Timeout | Increase timeout value | 90% |
-| Selector invalid | Switch to text-based match | 75-85% |
-| Navigation redirect | Update URL to final destination | 85-95% |
-| Multiple matches | Add more specific context | 60-80% |
-
-### Fix Mode Integration
-
-When `--fix` is enabled in the test command:
-
-```bash
-# Interactive fix (prompt when confidence < 80%)
-/doc-detective:test docs/guide.md --fix
-
-# Fully autonomous (apply all fixes)
-/doc-detective:test docs/guide.md --fix --auto-fix
-
-# Custom threshold (prompt when confidence < 60%)
-/doc-detective:test docs/guide.md --fix --fix-threshold 60
-```
+When tests fail, use the fix-tests tool to analyze failures, generate fixes with confidence scores, and iteratively re-run. See `references/fix-failing-tests.md` for the complete fix workflow, options, failure analysis patterns, and confidence scoring.
 
 ## Checklist: Before Completing Any Task
 
@@ -670,3 +435,36 @@ Quick reference - each action name IS the JSON key:
 - GitHub: https://github.com/doc-detective/doc-detective
 
 Do not assume Doc Detective works like other test runners. Verify against official documentation when uncertain.
+
+## Scripts and Examples
+
+### Tools
+
+- `scripts/dist/validate-test.js` — Validate test specs (required before returning specs)
+- `scripts/dist/fix-tests.js` — Analyze failures and propose fixes
+
+### Sample Files
+
+- `scripts/sample-docs.md` — Example documentation source
+- `scripts/sample-docs-test-spec.json` — Test spec generated from sample docs
+- `scripts/sample-docs-test.json` — Test results from sample docs
+- `scripts/sample-docs-injection-test.md` — Sample docs with inline test injection
+- `scripts/sample-docs-injection-test-spec.json` — Injection test spec
+- `scripts/interpreted-from-docs.json` — Example of interpreted documentation procedures
+
+### Test Examples
+
+- `scripts/test-example-navigation.json` — Navigation test example
+- `scripts/test-expected-failure.json` — Expected failure test example
+- `scripts/test-real-execution.json` — Real execution test example
+
+### Build and Test Infrastructure
+
+- `scripts/build-skill.sh` — Build script for compiling skill tools
+- `scripts/test-skill.sh` — Test script for validating skill functionality
+- `scripts/src/validate-test.js` — Source for validate-test tool
+- `scripts/src/fix-tests.mjs` — Source for fix-tests tool
+- `scripts/src/package.json` — Dependencies for skill tools
+- `scripts/src/package-lock.json` — Dependency lock file
+- `scripts/src/bun.lock` — Bun lock file
+- `scripts/src/dist/validate-test.js` — Compiled validate-test tool
