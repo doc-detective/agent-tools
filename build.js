@@ -3,14 +3,15 @@
 // build.js — Sync content from repo root into all downstream targets.
 //
 // Source of truth (repo root):
-//   package.json           → version
-//   commands/*.md           → command prompts (generate TOML files)
-//   agents/                 → agent definitions
-//   skills/                 → skill implementations
+//   package.json                          → version
+//   skills/*/SKILL.md (user-invocable)    → command prompts (generate commands/*.md)
+//   agents/                               → agent definitions
+//   skills/                               → skill implementations
 //
 // Generated/synced targets:
+//   commands/*.md                                    ← from skills/*/SKILL.md (user-invocable: true)
 //   commands/doc-detective/*.toml                    ← from commands/*.md
-//   plugins/doc-detective/{agents,commands,skills}/  ← copied from root
+//   plugins/doc-detective/{agents,skills}/           ← copied from root
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
 //   gemini-extension.json                            ← version from package.json
@@ -116,7 +117,59 @@ function syncVersions() {
   log("  gemini-extension.json");
 }
 
-// ─── 2. Generate TOML command files from Markdown sources ────
+// ─── 2. Generate command Markdown files from user-invocable skills ──────────
+
+/**
+ * Derive command filename from a skill name.
+ * "doc-detective:generate" → "generate"
+ * Falls back to the raw name if no colon is present.
+ */
+function skillNameToCommandFile(skillName) {
+  const colon = skillName.lastIndexOf(":");
+  return colon >= 0 ? skillName.slice(colon + 1) : skillName;
+}
+
+function generateCommands() {
+  log("\nGenerating command Markdown files from skills...");
+
+  const skillsDir = path.join(ROOT, "skills");
+  const cmdDir = path.join(ROOT, "commands");
+  fs.mkdirSync(cmdDir, { recursive: true });
+
+  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+
+    const skillMdPath = path.join(skillsDir, entry.name, "SKILL.md");
+    if (!fs.existsSync(skillMdPath)) continue;
+
+    const content = fs.readFileSync(skillMdPath, "utf8");
+    const { meta, body } = parseFrontmatter(content);
+
+    if (meta["user-invocable"] !== "true") continue;
+
+    const skillName = meta["name"] || entry.name;
+    // Strip surrounding YAML quotes (single or double) from description
+    const rawDesc = meta["description"] || "";
+    const description = rawDesc.replace(/^(['"])(.*)\1$/, "$2");
+    const cmdFile = skillNameToCommandFile(skillName) + ".md";
+
+    const commandMd = [
+      `---`,
+      `description: ${description}`,
+      `skill: ${skillName}`,
+      `---`,
+      ``,
+      body.trim(),
+      ``,
+    ].join("\n");
+
+    const cmdPath = path.join(cmdDir, cmdFile);
+    fs.writeFileSync(cmdPath, commandMd);
+    log(`  skills/${entry.name}/SKILL.md -> commands/${cmdFile}`);
+  }
+}
+
+// ─── 3. Generate TOML command files from Markdown sources ────
 
 function generateTomls() {
   log("\nGenerating command TOML files...");
@@ -137,6 +190,7 @@ function generateTomls() {
     const { meta, body } = parseFrontmatter(content);
 
     const description = meta.description || name;
+    const skillName = meta.skill || name;
 
     // Strip the YAML frontmatter header and trailing whitespace from the body.
     // Everything after the frontmatter becomes the TOML prompt value.
@@ -145,7 +199,7 @@ function generateTomls() {
     // Build TOML with an auto-generated header comment
     const toml = [
       `# AUTO-GENERATED — DO NOT EDIT`,
-      `# Source: commands/${mdFile}`,
+      `# Source: skills/${skillNameToCommandFile(skillName)}/SKILL.md`,
       `# Regenerate: npm run build`,
       ``,
       `prompt = """${trimmedBody}`,
@@ -160,14 +214,15 @@ function generateTomls() {
   }
 }
 
-// ─── 3. Copy content to plugin directory ─────────────────────
+// ─── 4. Copy content to plugin directory ─────────────────────
 
 function syncPluginDir() {
   log("\nSyncing plugin directory...");
 
   const pluginDir = path.join(ROOT, "plugins/doc-detective");
 
-  for (const dir of ["agents", "commands", "skills"]) {
+  // commands/ is intentionally excluded — commands are accessed via skills/
+  for (const dir of ["agents", "skills"]) {
     const target = path.join(pluginDir, dir);
 
     // Remove existing entry (symlink file, real directory, etc.)
@@ -187,7 +242,7 @@ function syncPluginDir() {
   }
 }
 
-// ─── 4. Build skill scripts ──────────────────────────────────
+// ─── 5. Build skill scripts ──────────────────────────────────
 
 function buildSkillScripts() {
   if (SKIP_SCRIPTS) {
@@ -228,6 +283,7 @@ function buildSkillScripts() {
 log("Building agent-tools...\n");
 
 syncVersions();
+generateCommands();
 generateTomls();
 syncPluginDir();
 buildSkillScripts();

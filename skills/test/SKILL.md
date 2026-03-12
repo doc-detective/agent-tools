@@ -1,6 +1,7 @@
 ---
-description: Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures
-skill: doc-detective:test
+name: doc-detective:test
+description: 'Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures'
+user-invocable: true
 ---
 
 # Test Documentation Command

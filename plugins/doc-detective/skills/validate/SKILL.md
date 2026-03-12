@@ -1,6 +1,7 @@
 ---
-description: Validate Doc Detective test specifications or configuration files
-skill: doc-detective:validate
+name: doc-detective:validate
+description: 'Validate Doc Detective test specifications or configuration files'
+user-invocable: true
 ---
 
 # Validate Command

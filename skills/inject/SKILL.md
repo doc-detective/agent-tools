@@ -1,6 +1,7 @@
 ---
-description: Inject test specifications into documentation source files as inline comments
-skill: doc-detective:inject
+name: doc-detective:inject
+description: 'Inject test specifications into documentation source files as inline comments'
+user-invocable: true
 ---
 
 # Inject Inline Tests Command

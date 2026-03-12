@@ -1,6 +1,7 @@
 ---
-description: Interpret documentation procedures into Doc Detective test specifications without executing
-skill: doc-detective:generate
+name: doc-detective:generate
+description: 'Interpret documentation procedures into Doc Detective test specifications without executing'
+user-invocable: true
 ---
 
 # Generate Tests Command

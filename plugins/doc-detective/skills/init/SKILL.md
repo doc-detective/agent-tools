@@ -1,6 +1,7 @@
 ---
-description: Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop
-skill: doc-detective:init
+name: doc-detective:init
+description: 'Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop'
+user-invocable: true
 ---
 
 # Init Command

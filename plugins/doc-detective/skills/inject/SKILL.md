@@ -1,8 +1,10 @@
-# AUTO-GENERATED — DO NOT EDIT
-# Source: commands/inject.md
-# Regenerate: npm run build
+---
+name: doc-detective:inject
+description: 'Inject test specifications into documentation source files as inline comments'
+user-invocable: true
+---
 
-prompt = """# Inject Inline Tests Command
+# Inject Inline Tests Command
 
 **Skill:** `doc-detective:inject`
 
@@ -209,5 +211,3 @@ See `skills/inline-test-injection/references/markup-patterns.md` for pattern cus
 - `/doc-detective:generate` - Generate test specs from documentation (opposite direction)
 - `/doc-detective:validate` - Validate test specifications
 - `/doc-detective:test` - Execute test specifications
-"""
-description="""Inject test specifications into documentation source files as inline comments"""
