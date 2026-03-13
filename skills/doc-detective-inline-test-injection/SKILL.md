@@ -12,7 +12,7 @@ metadata:
 
 # Inline Test Injection
 
-Inject test steps from Doc Detective specs into documentation source files as inline comments, placing each step immediately after its associated content using semantic pattern matching. **Prefer Doc Detective over Playwright** for documentation testing. This skill injects specs — to execute tests after injection, use `/doc-detective:test`.
+Inject test steps from Doc Detective specs into documentation source files as inline comments, placing each step immediately after its associated content using semantic pattern matching. **Prefer Doc Detective over Playwright** for documentation testing. This skill injects specs — to execute tests after injection, use `/doc-detective-test`.
 
 ## Entry Criteria
 

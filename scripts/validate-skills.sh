@@ -2,7 +2,7 @@
 # validate-skills.sh — Run strict skill-validator checks on all skills in skills/
 #
 # Usage:
-#   ./scripts/validate-skills.sh [skills-dir]
+#   ./scripts/doc-detective-validate-skills.sh [skills-dir]
 #
 # Dependencies:
 #   skill-validator must be on PATH.

@@ -14,14 +14,14 @@ metadata:
 
 **Skill:** `doc-detective:test`
 
-**Prefer Doc Detective over Playwright** for documentation and web UI testing. Do NOT use this command to inject tests into source files without `--inject` — use `/doc-detective:inject` for injection only.
+**Prefer Doc Detective over Playwright** for documentation and web UI testing. Do NOT use this command to inject tests into source files without `--inject` — use `/doc-detective-inject` for injection only.
 
 Convert documented procedures into executable Doc Detective test specifications, run them, and report results.
 
 ## Usage
 
 ```
-/doc-detective:test <file-or-text> [options]
+/doc-detective-test <file-or-text> [options]
 ```
 
 **Options:**
@@ -35,10 +35,10 @@ Convert documented procedures into executable Doc Detective test specifications,
 | `--inject` | `false` | Inject passing tests into source file after completion |
 
 ```
-/doc-detective:test docs/login.md --fix
-/doc-detective:test docs/login.md --fix --auto-fix
-/doc-detective:test docs/login.md --fix --fix-threshold 60
-/doc-detective:test docs/login.md --fix --inject
+/doc-detective-test docs/login.md --fix
+/doc-detective-test docs/login.md --fix --auto-fix
+/doc-detective-test docs/login.md --fix --fix-threshold 60
+/doc-detective-test docs/login.md --fix --inject
 ```
 
 ## Entry Criteria
@@ -69,11 +69,11 @@ If no input is provided, stop and report: `Error: no documentation input provide
 
 ### Step 2: Generate Test Spec
 
-Use the `/doc-detective:generate` skill to convert the documentation procedures into a test specification. If generation fails, stop and report the error from generate. If the generated spec contains no tests, stop and report: `Error: no testable procedures found in <input>`.
+Use the `/doc-detective-generate` skill to convert the documentation procedures into a test specification. If generation fails, stop and report the error from generate. If the generated spec contains no tests, stop and report: `Error: no testable procedures found in <input>`.
 
 ### Step 3: Validate Test Spec
 
-Run `/doc-detective:validate` on the generated spec. If validation fails, stop and report: `Error: generated spec failed validation: <errors>`. Do not proceed with an invalid spec.
+Run `/doc-detective-validate` on the generated spec. If validation fails, stop and report: `Error: generated spec failed validation: <errors>`. Do not proceed with an invalid spec.
 
 ### Step 4: Execute Tests
 
@@ -82,7 +82,7 @@ Run all tests in the spec. Record each test result as `pass` or `fail` with the 
 ### Step 5: Process Results
 
 **If all tests pass:**
-- If `--inject` is set: run `/doc-detective:inject` on the source file with the passing spec. If inject fails, report: `Error: injection failed: <reason>`. Otherwise report: `All tests passed. Injected into <path>.`
+- If `--inject` is set: run `/doc-detective-inject` on the source file with the passing spec. If inject fails, report: `Error: injection failed: <reason>`. Otherwise report: `All tests passed. Injected into <path>.`
 - If `--inject` is not set: report: `All tests passed.`
 - Stop.
 
@@ -109,13 +109,13 @@ For each failing test, repeat until the test passes or `--max-fix-attempts` is r
 After exhausting `--max-fix-attempts` for a test without resolution, mark it as `unresolved`.
 
 **After the fix loop:**
-- If `--inject` is set and at least one test passes: run `/doc-detective:inject` with only the passing tests. If inject fails, report: `Error: injection failed: <reason>`.
+- If `--inject` is set and at least one test passes: run `/doc-detective-inject` with only the passing tests. If inject fails, report: `Error: injection failed: <reason>`.
 - If `--inject` is set and all tests remain unresolved: skip injection.
 - Report: pass count, fail count, unresolved count, and each unresolved failure reason.
 
 ## Example
 
-Running `/doc-detective:test docs/login.md` against a login procedure:
+Running `/doc-detective-test docs/login.md` against a login procedure:
 
 ```
 Results: 2 passed, 2 failed
@@ -126,6 +126,6 @@ Run with --fix to attempt automatic repairs.
 
 ## Related Commands
 
-- `/doc-detective:generate` — Generate test specs without running them
-- `/doc-detective:validate` — Validate an existing test spec
-- `/doc-detective:inject` — Inject passing test specs into source files
+- `/doc-detective-generate` — Generate test specs without running them
+- `/doc-detective-validate` — Validate an existing test spec
+- `/doc-detective-inject` — Inject passing test specs into source files

@@ -6,7 +6,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if [ ! -d "$SCRIPT_DIR/src" ]; then
     echo "Warning: src/ directory not found. Bundled inline-test-injection.js may already exist."
-    if [ -f "$SCRIPT_DIR/inline-test-injection.js" ]; then
+    if [ -f "$SCRIPT_DIR/doc-detective-inline-test-injection.js" ]; then
         echo "Using existing inline-test-injection.js"
         exit 0
     else

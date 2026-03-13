@@ -14,11 +14,11 @@ Validate Doc Detective test specifications or configuration files to ensure they
 Validate a test specification file or inline JSON:
 
 ```bash
-/doc-detective:validate test-spec.json
+/doc-detective-validate test-spec.json
 ```
 
 ```bash
-/doc-detective:validate
+/doc-detective-validate
 ```
 
 ```json
@@ -36,7 +36,7 @@ Validate a test specification file or inline JSON:
 Validate a configuration file:
 
 ```bash
-/doc-detective:validate --config .doc-detective.json
+/doc-detective-validate --config .doc-detective.json
 ```
 
 ## Entry Criteria
@@ -63,7 +63,7 @@ Run the validator (try in order; stop and tell the user if none are available):
 
 ```bash
 # Option 1
-echo '<spec-json>' | node skills/doc-testing/scripts/validate-test.js --stdin
+echo '<spec-json>' | node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
 # Option 2
 npx doc-detective validate --input <spec-file>
 ```

@@ -1,6 +1,6 @@
 #!/bin/bash
 # Test script for inline-test-injection skill
-# Run from skill directory: ./scripts/test-skill.sh
+# Run from skill directory: ./scripts/doc-detective-test-skill.sh
 #
 # Options:
 #   --quick       Skip slow tests (Claude CLI tests)
@@ -107,9 +107,9 @@ fi
 
 # Check if bundled script exists
 INJECT_SCRIPT=""
-if [ -f "$SCRIPT_DIR/inline-test-injection.js" ]; then
-    INJECT_SCRIPT="node $SCRIPT_DIR/inline-test-injection.js"
-    echo "Inject script: $SCRIPT_DIR/inline-test-injection.js (bundled)"
+if [ -f "$SCRIPT_DIR/doc-detective-inline-test-injection.js" ]; then
+    INJECT_SCRIPT="node $SCRIPT_DIR/doc-detective-inline-test-injection.js"
+    echo "Inject script: $SCRIPT_DIR/doc-detective-inline-test-injection.js (bundled)"
 else
     echo "Inject script: not found (run build-skill.sh first)"
 fi

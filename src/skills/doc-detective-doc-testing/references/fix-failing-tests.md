@@ -115,11 +115,11 @@ When `--fix` is enabled in the test command:
 
 ```bash
 # Interactive fix (prompt when confidence < 80%)
-/doc-detective:test docs/guide.md --fix
+/doc-detective-test docs/guide.md --fix
 
 # Fully autonomous (apply all fixes)
-/doc-detective:test docs/guide.md --fix --auto-fix
+/doc-detective-test docs/guide.md --fix --auto-fix
 
 # Custom threshold (prompt when confidence < 60%)
-/doc-detective:test docs/guide.md --fix --fix-threshold 60
+/doc-detective-test docs/guide.md --fix --fix-threshold 60
 ```

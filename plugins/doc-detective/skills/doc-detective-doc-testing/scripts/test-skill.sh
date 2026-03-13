@@ -1,6 +1,6 @@
 #!/bin/bash
 # Test script for doc-testing skill
-# Run from skill directory: ./scripts/test-skill.sh
+# Run from skill directory: ./scripts/doc-detective-test-skill.sh
 #
 # Options:
 #   --quick       Skip slow tests (browser automation & Claude CLI tests)
@@ -179,7 +179,7 @@ EOF
     # Test 3: validate-test shows usage when no args
     echo ""
     echo "--- Test 3: Validator shows usage with no args ---"
-    OUTPUT=$(node ./scripts/validate-test.js 2>&1 || true)
+    OUTPUT=$(node ./scripts/doc-detective-validate-test.js 2>&1 || true)
     if echo "$OUTPUT" | grep -q "Usage:"; then
         pass "Validator shows usage message"
     else
@@ -189,7 +189,7 @@ EOF
     # Test 4: Valid test spec passes validation
     echo ""
     echo "--- Test 4: Valid test spec passes validation ---"
-    if cat << 'EOF' | node ./scripts/validate-test.js --stdin > /dev/null 2>&1
+    if cat << 'EOF' | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1
 { "tests": [{ "testId": "simple-test", "steps": [{ "goTo": "https://example.com" }, { "find": "Welcome" }, { "click": "Login" }] }] }
 EOF
     then
@@ -201,7 +201,7 @@ EOF
     # Test 5: Missing tests array fails validation
     echo ""
     echo "--- Test 5: Missing tests array fails validation ---"
-    if cat << 'EOF' | node ./scripts/validate-test.js --stdin > /dev/null 2>&1
+    if cat << 'EOF' | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1
 { "notTests": [] }
 EOF
     then
@@ -213,7 +213,7 @@ EOF
     # Test 6: Unknown action fails validation
     echo ""
     echo "--- Test 6: Unknown action fails validation ---"
-    if cat << 'EOF' | node ./scripts/validate-test.js --stdin > /dev/null 2>&1
+    if cat << 'EOF' | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1
 { "tests": [{ "testId": "test-1", "steps": [{ "unknownAction": "value" }] }] }
 EOF
     then
@@ -225,7 +225,7 @@ EOF
     # Test 7: Invalid type action fails validation
     echo ""
     echo "--- Test 7: Invalid type action fails validation ---"
-    if cat << 'EOF' | node ./scripts/validate-test.js --stdin > /dev/null 2>&1
+    if cat << 'EOF' | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1
 { "tests": [{ "testId": "test-1", "steps": [{ "type": "should be object with keys" }] }] }
 EOF
     then
@@ -237,7 +237,7 @@ EOF
     # Test 8: Empty tests array fails validation
     echo ""
     echo "--- Test 8: Empty tests array fails validation ---"
-    if cat << 'EOF' | node ./scripts/validate-test.js --stdin > /dev/null 2>&1
+    if cat << 'EOF' | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1
 { "tests": [] }
 EOF
     then
@@ -249,7 +249,7 @@ EOF
     # Test 9: Empty steps array fails validation
     echo ""
     echo "--- Test 9: Empty steps array fails validation ---"
-    if cat << 'EOF' | node ./scripts/validate-test.js --stdin > /dev/null 2>&1
+    if cat << 'EOF' | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1
 { "tests": [{ "testId": "test-1", "steps": [] }] }
 EOF
     then
@@ -261,7 +261,7 @@ EOF
     # Test 10: All known actions are accepted
     echo ""
     echo "--- Test 10: All known actions are accepted ---"
-    if cat << 'EOF' | node ./scripts/validate-test.js --stdin > /dev/null 2>&1
+    if cat << 'EOF' | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1
 {
   "tests": [{
     "testId": "all-actions",
@@ -562,12 +562,12 @@ Just say VALID or INVALID and briefly why.")
             EXTRACTED_JSON=$(echo "$SPEC" | grep -oP '\{[^{}]*"tests"[^{}]*\[.*\].*\}' | head -1 || echo "$SPEC")
         fi
         
-        if [ -n "$EXTRACTED_JSON" ] && echo "$EXTRACTED_JSON" | node ./scripts/validate-test.js --stdin > /dev/null 2>&1; then
+        if [ -n "$EXTRACTED_JSON" ] && echo "$EXTRACTED_JSON" | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1; then
             pass "Generated spec passes validation"
         else
             # Try a more permissive extraction using sed
             EXTRACTED_JSON=$(echo "$SPEC" | jq -r '.result // empty' 2>/dev/null | sed 's/^```json//; s/^```//; s/```$//' | tr '\n' ' ')
-            if [ -n "$EXTRACTED_JSON" ] && echo "$EXTRACTED_JSON" | node ./scripts/validate-test.js --stdin > /dev/null 2>&1; then
+            if [ -n "$EXTRACTED_JSON" ] && echo "$EXTRACTED_JSON" | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1; then
                 pass "Generated spec passes validation (after extraction)"
             else
                 fail "Generated spec did not pass validation" "$(echo "$SPEC" | head -c 300)"
@@ -692,7 +692,7 @@ if [ "$RUN_EXECUTION_TESTS" = true ]; then
         # Test 18: Skill can execute a Doc Detective test
         echo ""
         echo "--- Test 18: Skill executes Doc Detective test ---"
-        RESULT=$(run_claude_test "Run Doc Detective on the test spec at scripts/test-real-execution.json and show me the results.")
+        RESULT=$(run_claude_test "Run Doc Detective on the test spec at scripts/doc-detective-test-real-execution.json and show me the results.")
         
         if [ "$VERBOSE" = true ]; then
             echo "Raw output:"
@@ -710,7 +710,7 @@ if [ "$RUN_EXECUTION_TESTS" = true ]; then
         # Test 19: Skill detects and reports test failures
         echo ""
         echo "--- Test 19: Skill reports test failures ---"
-        RESULT=$(run_claude_test "Run Doc Detective on scripts/test-expected-failure.json. This test is expected to fail - tell me what failed and why.")
+        RESULT=$(run_claude_test "Run Doc Detective on scripts/doc-detective-test-expected-failure.json. This test is expected to fail - tell me what failed and why.")
         
         if [ "$VERBOSE" = true ]; then
             echo "Raw output:"
@@ -728,7 +728,7 @@ if [ "$RUN_EXECUTION_TESTS" = true ]; then
         # Test 20: Skill parses results JSON correctly
         echo ""
         echo "--- Test 20: Skill parses results structure ---"
-        RESULT=$(run_claude_test "Run Doc Detective on scripts/test-real-execution.json and parse the results file. Tell me: (1) how many tests passed, (2) how many steps passed, and (3) what actions were executed.")
+        RESULT=$(run_claude_test "Run Doc Detective on scripts/doc-detective-test-real-execution.json and parse the results file. Tell me: (1) how many tests passed, (2) how many steps passed, and (3) what actions were executed.")
         
         if [ "$VERBOSE" = true ]; then
             echo "Raw output:"
@@ -746,7 +746,7 @@ if [ "$RUN_EXECUTION_TESTS" = true ]; then
         # Test 21: Skill provides actionable failure analysis
         echo ""
         echo "--- Test 21: Skill analyzes failure causes ---"
-        RESULT=$(run_claude_test "Run Doc Detective on scripts/test-expected-failure.json and analyze the failure. What specific element or text was not found? How could the test be fixed?")
+        RESULT=$(run_claude_test "Run Doc Detective on scripts/doc-detective-test-expected-failure.json and analyze the failure. What specific element or text was not found? How could the test be fixed?")
         
         if [ "$VERBOSE" = true ]; then
             echo "Raw output:"

@@ -20,7 +20,7 @@ Bootstrap Doc Detective in a repository: detect docs, generate config, create te
 ## Usage
 
 ```bash
-/doc-detective:init [options]
+/doc-detective-init [options]
 ```
 
 | Option | Default | Description |
@@ -33,9 +33,9 @@ Bootstrap Doc Detective in a repository: detect docs, generate config, create te
 | `--skip-fix-loop` | false | Run tests but skip iterative fixing |
 
 ```bash
-/doc-detective:init
-/doc-detective:init --ci
-/doc-detective:init --dry-run
+/doc-detective-init
+/doc-detective-init --ci
+/doc-detective-init --dry-run
 ```
 
 ## Entry Criteria
@@ -85,13 +85,13 @@ Generate `.doc-detective.json` following the "smallest reasonable config" princi
 { "input": "docs", "output": ".doc-detective/results", "detectSteps": false }
 ```
 
-If `--dry-run`, print the config that would be written and skip file creation. If config cannot be created or the user rejects the merge, stop and report — do not proceed. See `skills/project-bootstrap/references/config-guidance.md` for full options.
+If `--dry-run`, print the config that would be written and skip file creation. If config cannot be created or the user rejects the merge, stop and report — do not proceed. See `skills/doc-detective-project-bootstrap/references/config-guidance.md` for full options.
 
 ### Phase 3: Generate Tests
 
 For each procedure-containing file identified in Phase 1:
 
-1. Invoke `/doc-detective:generate <file-path> --output .doc-detective/tests/<name>-spec.json`, where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens (e.g., `login-guide.md` → `login-guide`).
+1. Invoke `/doc-detective-generate <file-path> --output .doc-detective/doc-detective-tests/<name>-spec.json`, where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens (e.g., `login-guide.md` → `login-guide`).
 2. Confirm each spec passes validation before continuing. If a spec cannot be fixed, skip it and report it to the user.
 3. If `--dry-run`, print each spec without writing to disk.
 
@@ -100,7 +100,7 @@ For each procedure-containing file identified in Phase 1:
 Run all generated specs:
 
 ```bash
-doc-detective run --input .doc-detective/tests/ --output .doc-detective/results/
+doc-detective --input .doc-detective/doc-detective-tests/ --output .doc-detective/results/
 ```
 
 Skip this phase if `--skip-tests` or `--dry-run` is set. If the command fails to execute, stop and report the error — do not proceed to Phase 5. After execution, collect all failing tests from the results output.
@@ -128,6 +128,6 @@ Report all "needs manual review" tests to the user before completing.
 
 ## Related Commands
 
-- `/doc-detective:test` — Run existing tests without re-bootstrapping
-- `/doc-detective:generate` — Generate tests for a single file
-- `/doc-detective:validate` — Validate an existing test spec
+- `/doc-detective-test` — Run existing tests without re-bootstrapping
+- `/doc-detective-generate` — Generate tests for a single file
+- `/doc-detective-validate` — Validate an existing test spec

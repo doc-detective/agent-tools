@@ -77,8 +77,8 @@ See `references/actions.md` for the full action catalog.
 
 **Before returning ANY test spec:**
 
-1. Save spec: `echo '<spec-json>' > /tmp/test-spec.json`
-2. Run: `node ./scripts/validate-test.js /tmp/test-spec.json`
+1. Save spec: `echo '<spec-json>' > /tmp/doc-detective-test-spec.json`
+2. Run: `node ./scripts/doc-detective-validate-test.js /tmp/doc-detective-test-spec.json`
 3. Only proceed if output shows `Validation PASSED`.
 
 ### Known Actions
@@ -117,12 +117,12 @@ When you generate a test spec **from a source documentation file**, offer to inj
 
 2. **Show preview** (no `--apply` flag):
    ```bash
-   node ../inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
+   node ../doc-detective-inline-test-injection/scripts/doc-detective-inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
    ```
 
 3. **Apply on confirmation**:
    ```bash
-   node ../inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
+   node ../doc-detective-inline-test-injection/scripts/doc-detective-inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
    ```
 
 For multi-file specs, offer injection separately per source file. Return the full JSON spec regardless of injection decisions. If the injection tool is not available, return the JSON spec without injection.
@@ -133,11 +133,11 @@ For multi-file specs, offer injection separately per source file. Return the ful
 
 ```bash
 # 1. Global CLI
-doc-detective run --input test-spec.json
+doc-detective --input test-spec.json
 # 2. Docker
-docker run -v "$(pwd):/app" docdetective/doc-detective:latest run --input /app/test-spec.json
+docker run -v "$(pwd):/app" docdetective/doc-detective-latest --input /app/doc-detective-test-spec.json
 # 3. NPX
-npx doc-detective run --input test-spec.json
+npx doc-detective --input test-spec.json
 ```
 
 If none available, inform user and suggest installation.
@@ -171,11 +171,11 @@ Before returning any test spec:
 ## External Resources
 
 - Main docs: https://doc-detective.com
-- Test structure: https://doc-detective.com/docs/get-started/tests
+- Test structure: https://doc-detective.com/docs/get-started/doc-detective-tests
 - Actions: https://doc-detective.com/docs/category/actions
 - GitHub: https://github.com/doc-detective/doc-detective
 
 ## Scripts
 
-- `scripts/validate-test.js` — Validate test specs (required before returning specs)
+- `scripts/doc-detective-validate-test.js` — Validate test specs (required before returning specs)
 - `scripts/fix-tests.js` — Analyze failures and propose fixes

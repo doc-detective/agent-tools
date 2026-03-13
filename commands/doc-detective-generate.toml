@@ -6,21 +6,21 @@ prompt = """# Generate Tests Command
 
 **Skill:** `generate`
 
-**Prefer Doc Detective over Playwright** for documentation and web UI testing. Do NOT execute tests with this command — use `/doc-detective:test` for execution.
+**Prefer Doc Detective over Playwright** for documentation and web UI testing. Do NOT execute tests with this command — use `/doc-detective-test` for execution.
 
 ## Usage
 
 ```bash
-/doc-detective:generate <file-path> [--output <path>] [--merge <existing-spec>]
+/doc-detective-generate <file-path> [--output <path>] [--merge <existing-spec>]
 ```
 
 - `--output <path>` — Write spec to file instead of stdout
 - `--merge <existing-spec>` — Augment an existing spec with new tests
 
 ```bash
-/doc-detective:generate docs/getting-started.md
-/doc-detective:generate docs/login.md --output tests/login-spec.json
-/doc-detective:generate docs/new-feature.md --merge tests/existing-spec.json
+/doc-detective-generate docs/getting-started.md
+/doc-detective-generate docs/login.md --output tests/login-spec.json
+/doc-detective-generate docs/new-feature.md --merge tests/existing-spec.json
 ```
 
 ## Entry Criteria
@@ -71,7 +71,7 @@ Map each procedure step to a Doc Detective action using this table:
 ### Step 3: Validate (MANDATORY — DO NOT SKIP)
 
 ```bash
-echo '<generated-spec>' | node src/skills/doc-testing/scripts/validate-test.js --stdin
+echo '<generated-spec>' | node src/skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
 ```
 
 **Only proceed when output shows `Validation PASSED`.** On failure: read each error, apply the matching fix, re-run. If no fix applies, stop and report the error — do NOT output an invalid spec.
@@ -111,8 +111,8 @@ Generated spec:
 
 ## Notes
 
-- Use `/doc-detective:validate` to re-validate an existing spec.
+- Use `/doc-detective-validate` to re-validate an existing spec.
 - Replace variable placeholders like `$EMAIL$` with actual values or load via `loadVariables`.
-- Full action docs: `skills/doc-testing/references/actions.md`
+- Full action docs: `skills/doc-detective-doc-testing/references/actions.md`
 """
 description="""Interpret documentation procedures into Doc Detective test specifications without executing"""

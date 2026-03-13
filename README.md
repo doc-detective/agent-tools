@@ -27,7 +27,7 @@ Agent tools for testing documentation procedures and validating that documented 
 3. Ask about Doc Detective, or use the `init` command to get started:
 
    ```text
-   /init
+   /doc-detective-init
    ```
 
 ### Gemini CLI
@@ -42,7 +42,7 @@ Agent tools for testing documentation procedures and validating that documented 
 2. Ask about Doc Detective, or use the `init` command to get started:
 
    ```text
-   /doc-detective:init
+   /doc-detective-init
    ```
 
 ### Copilot CLI
@@ -63,7 +63,7 @@ Agent tools for testing documentation procedures and validating that documented 
 3. Ask about Doc Detective, or use the `init` command to get started:
 
    ```text
-   /init
+   /doc-detective-init
    ```
 
 ### Qwen Code
@@ -79,7 +79,7 @@ Agent tools for testing documentation procedures and validating that documented 
 2. Ask about Doc Detective, or use the `init` command to get started:
 
    ```text
-   /doc-detective:init
+   /doc-detective-init
    ```
 
 ### Codex, Cursor, OpenCode, and other agents
@@ -117,7 +117,7 @@ cp -r agent-tools/skills .{agent-dir}/skills      # Skills
 ### Bootstrap Doc Detective for a Project
 
 ```bash
-/init
+/doc-detective-init
 ```
 
 Initializes Doc Detective in your repository by:
@@ -130,7 +130,7 @@ Initializes Doc Detective in your repository by:
 ### Convert Documentation to Tests
 
 ```bash
-/generate path/to/documentation.md
+/doc-detective-generate path/to/documentation.md
 ```
 
 Identify testable procedures and convert them into Doc Detective test specifications.
@@ -138,7 +138,7 @@ Identify testable procedures and convert them into Doc Detective test specificat
 ### Run Tests
 
 ```bash
-/test path/to/documentation.md
+/doc-detective-test path/to/documentation.md
 ```
 
 Runs tests from docs or test specification files:
@@ -152,7 +152,7 @@ Runs tests from docs or test specification files:
 ### Validate Test Specifications
 
 ```bash
-/validate test-spec.json
+/doc-detective-validate test-spec.json
 ```
 
 Validates structure before execution:
@@ -164,7 +164,7 @@ Validates structure before execution:
 ### Inject Tests into Documentation
 
 ```bash
-/inject tests/spec.yaml docs/procedure.md --apply
+/doc-detective-inject tests/spec.yaml docs/procedure.md --apply
 ```
 
 Takes a well-formed test specification and injects test steps as inline comments into the associated documentation content so you don't have to maintain separate files.
@@ -188,14 +188,14 @@ The plugin includes complete documentation for Doc Detective actions:
 | `saveCookie`/`loadCookie` | Manage session persistence           |
 | `record`/`stopRecord`     | Video recording                      |
 
-See `skills/doc-testing/references/actions.md` for detailed documentation.
+See `skills/doc-detective-doc-testing/references/actions.md` for detailed documentation.
 
 ## Inline Test Injection
 
 Inject test steps from separate spec files directly into documentation as inline comments:
 
 ```bash
-/inject tests/login.yaml docs/login.md --apply
+/doc-detective-inject tests/login.yaml docs/login.md --apply
 ```
 
 **Before:**
@@ -235,7 +235,7 @@ Documentation:
 Use the skill:
 
 ```
-/test path/to/file.md this login procedure from our docs to make sure it still works
+/doc-detective-test path/to/file.md this login procedure from our docs to make sure it still works
 ```
 
 ### Test Multiple Workflows
@@ -274,14 +274,14 @@ Create a test specification file `workflows.json`:
 Then execute:
 
 ```
-/test workflows.json
+/doc-detective-test workflows.json
 ```
 
 ## Resources
 
 - [Doc Detective Documentation](https://doc-detective.com)
 - [Doc Detective GitHub](https://github.com/doc-detective/doc-detective)
-- [Test Specification Format](https://doc-detective.com/docs/get-started/tests)
+- [Test Specification Format](https://doc-detective.com/docs/get-started/doc-detective-tests)
 - [Actions Reference](https://doc-detective.com/docs/category/actions)
 
 ## Repository Structure

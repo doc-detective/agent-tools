@@ -77,7 +77,7 @@ If no config exists, create silently with minimal defaults. If a config exists: 
 
 For each procedure-heavy file identified in Phase 1:
 
-1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, write output to `.doc-detective/tests/<name>-spec.json` where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens.
+1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, write output to `.doc-detective/doc-detective-tests/<name>-spec.json` where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens.
 2. Track the source file for each test (`_sourceFile` field) to support Phase 6 injection.
 3. Validate each spec before proceeding. If a spec cannot be fixed, skip it and report it to the user.
 
@@ -86,7 +86,7 @@ For each procedure-heavy file identified in Phase 1:
 Run all generated specs (try global CLI, then Docker, then npx — same fallback chain as the `doc-testing` skill):
 
 ```bash
-doc-detective run --input .doc-detective/tests/ --output .doc-detective/results/
+doc-detective --input .doc-detective/doc-detective-tests/ --output .doc-detective/results/
 ```
 
 If no runner is available, stop and inform the user. After execution, collect all failing tests from `testResults-<timestamp>.json`.

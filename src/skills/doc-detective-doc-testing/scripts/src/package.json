@@ -9,6 +9,6 @@
     "prebuild": "npm install",
     "build": "npm run build-fix-tests && npm run build-validate-test",
     "build-fix-tests": "npx esbuild fix-tests.mjs --bundle --minify --outfile=../fix-tests.js --platform=node",
-    "build-validate-test": "npx esbuild validate-test.js --bundle --minify --outfile=../validate-test.js --platform=node"
+    "build-validate-test": "npx esbuild validate-test.js --bundle --minify --outfile=../doc-detective-validate-test.js --platform=node"
   }
 }

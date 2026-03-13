@@ -237,6 +237,6 @@ When docs describe submitting forms:
 
 ## Related Resources
 
-- Doc Detective actions: ../../../doc-testing/references/actions.md
-- Test structure: https://doc-detective.com/docs/get-started/tests
-- Detected tests: https://doc-detective.com/docs/get-started/tests#detected-tests
+- Doc Detective actions: ../../../doc-detective-doc-testing/references/actions.md
+- Test structure: https://doc-detective.com/docs/get-started/doc-detective-tests
+- Detected tests: https://doc-detective.com/docs/get-started/doc-detective-tests#detected-tests

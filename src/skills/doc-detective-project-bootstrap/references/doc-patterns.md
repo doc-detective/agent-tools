@@ -155,4 +155,4 @@ Example generated config segment:
 
 - Doc Detective resolver: https://github.com/doc-detective/doc-detective-resolver
 - File type configuration: https://doc-detective.com/docs/references/schemas/config
-- Markup patterns: https://doc-detective.com/docs/get-started/tests#detected-tests
+- Markup patterns: https://doc-detective.com/docs/get-started/doc-detective-tests#detected-tests

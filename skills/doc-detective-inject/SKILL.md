@@ -21,7 +21,7 @@ Inject Doc Detective test specifications into documentation source files as inli
 ## Usage
 
 ```bash
-/doc-detective:inject <spec-file> <source-file> [options]
+/doc-detective-inject <spec-file> <source-file> [options]
 ```
 
 **Options:**
@@ -139,11 +139,11 @@ tests:
 If `.doc-detective.json` or `.doc-detective.yaml` exists in the working directory, custom markup patterns load automatically. Override with `--config`:
 
 ```bash
-/doc-detective:inject spec.json doc.md --config custom-config.json
+/doc-detective-inject spec.json doc.md --config custom-config.json
 ```
 
 ## Related Commands
 
-- `/doc-detective:generate` - Generate test specs from documentation
-- `/doc-detective:validate` - Validate test specifications
-- `/doc-detective:test` - Execute test specifications
+- `/doc-detective-generate` - Generate test specs from documentation
+- `/doc-detective-validate` - Validate test specifications
+- `/doc-detective-test` - Execute test specifications

@@ -355,7 +355,7 @@ Load environment variables from a .env file.
 ```
 
 ```json
-{ "loadVariables": "config/test.env" }
+{ "loadVariables": "config/doc-detective-test.env" }
 ```
 
 ### saveCookie / loadCookie
