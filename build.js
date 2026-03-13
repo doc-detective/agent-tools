@@ -114,6 +114,40 @@ function getMetadataUserInvocable(content) {
   return m ? m[1] === "true" : true;
 }
 
+/** Returns the current build date as "Month YYYY" (e.g., "March 2026"). */
+function getCurrentDate() {
+  const d = new Date();
+  return d.toLocaleString("en-US", { month: "long", year: "numeric" });
+}
+
+/**
+ * Updates (or inserts) version: and date: lines within the metadata: block
+ * of a YAML frontmatter string. If no metadata: block exists, injects one
+ * before the closing ---.
+ */
+function updateFrontmatterMetadata(content, version, date, organization) {
+  let updated = content
+    .replace(/^(\s+version:\s*)(['"]?)[^\n]*\2\s*$/m, `$1'${version}'`)
+    .replace(/^(\s+date:\s*)[^\n]*$/m, `$1${date}`);
+
+  // Upsert organization: within existing metadata block
+  if (/^metadata:/m.test(updated)) {
+    if (/^\s+organization:/m.test(updated)) {
+      updated = updated.replace(/^(\s+organization:\s*)[^\n]*$/m, `$1${organization}`);
+    } else {
+      updated = updated.replace(/^(metadata:)/m, `$1\n  organization: ${organization}`);
+    }
+  } else {
+    // Inject full metadata block before closing ---
+    updated = updated.replace(
+      /^(---\r?\n[\s\S]*?)(\r?\n---\r?\n)/,
+      `$1\nmetadata:\n  version: '${version}'\n  organization: ${organization}\n  date: ${date}$2`
+    );
+  }
+
+  return updated;
+}
+
 /** Inject root-level user-invocable into frontmatter, derived from metadata block. */
 function injectRootUserInvocable(content) {
   const m = content.match(/^(---\r?\n[\s\S]*?)(\r?\n---\r?\n)/);
@@ -177,7 +211,44 @@ function syncVersions() {
   log("  gemini-extension.json");
 }
 
-// ─── 2. Copy src/ to artifact directories ───────────────────
+// ─── 2. Sync metadata (version + date) in source files ───────
+
+function syncMetadataInSourceFiles() {
+  const pkg = readJSON(path.join(ROOT, "package.json"));
+  const version = pkg.version;
+  const date = getCurrentDate();
+  const organization = "Doc Detective";
+  log(`\nSyncing metadata in source files (version: ${version}, date: ${date})...`);
+
+  // Update skills
+  const skillsDir = path.join(ROOT, "src/skills");
+  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skillMdPath = path.join(skillsDir, entry.name, "SKILL.md");
+    if (!fs.existsSync(skillMdPath)) continue;
+    const original = fs.readFileSync(skillMdPath, "utf8");
+    const updated = updateFrontmatterMetadata(original, version, date, organization);
+    if (updated !== original) {
+      fs.writeFileSync(skillMdPath, updated);
+      log(`  updated src/skills/${entry.name}/SKILL.md`);
+    }
+  }
+
+  // Update agents
+  const agentsDir = path.join(ROOT, "src/agents");
+  for (const entry of fs.readdirSync(agentsDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const agentPath = path.join(agentsDir, entry.name);
+    const original = fs.readFileSync(agentPath, "utf8");
+    const updated = updateFrontmatterMetadata(original, version, date, organization);
+    if (updated !== original) {
+      fs.writeFileSync(agentPath, updated);
+      log(`  updated src/agents/${entry.name}`);
+    }
+  }
+}
+
+// ─── 4. Copy src/ to artifact directories ───────────────────
 
 function syncSourceToArtifacts() {
   log("\nSyncing src/ to artifact directories...");
@@ -188,7 +259,7 @@ function syncSourceToArtifacts() {
   }
 }
 
-// ─── 3. Generate command Markdown files from user-invocable skills ──────────
+// ─── 5. Generate command Markdown files from user-invocable skills ──────────
 
 /**
  * Derive command filename from a skill name.
@@ -352,6 +423,7 @@ log("Building agent-tools...\n");
 
 cleanOutputDirs();
 syncVersions();
+syncMetadataInSourceFiles();
 buildSkillScripts();
 syncSourceToArtifacts();
 generateCommands();
