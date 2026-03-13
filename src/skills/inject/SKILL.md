@@ -1,8 +1,8 @@
 ---
 name: inject
 description: 'Inject test specifications into documentation source files as inline comments'
+user-invocable: 'true'
 metadata:
-  user-invocable: 'true'
   version: '1.2.0'
   organization: Doc Detective
   date: March 2026

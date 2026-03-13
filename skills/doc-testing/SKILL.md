@@ -1,8 +1,8 @@
 ---
 name: doc-testing
 description: 'Verify documentation and procedures with Doc Detective test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, test docs, test procedure, verify procedures.'
+user-invocable: 'false'
 metadata:
-  user-invocable: 'false'
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026

@@ -1,8 +1,8 @@
 ---
 name: project-bootstrap
 description: Initialize Doc Detective in a repository by detecting documentation, generating minimal config, creating tests for procedures, and iteratively running/fixing them. Use when (1) setting up Doc Detective in a new project, (2) user asks to "init" or "bootstrap" doc testing, (3) creating initial test coverage for existing documentation, or (4) onboarding a project to Doc Detective workflows.
+user-invocable: 'false'
 metadata:
-  user-invocable: 'false'
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026

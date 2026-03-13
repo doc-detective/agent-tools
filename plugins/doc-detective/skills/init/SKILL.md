@@ -1,8 +1,8 @@
 ---
 name: init
 description: 'Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop'
+user-invocable: 'true'
 metadata:
-  user-invocable: 'true'
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026

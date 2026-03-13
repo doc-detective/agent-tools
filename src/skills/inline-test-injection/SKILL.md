@@ -1,8 +1,8 @@
 ---
 name: inline-test-injection
 description: 'Inject Doc Detective test specs into documentation source files as inline comments'
+user-invocable: 'false'
 metadata:
-  user-invocable: 'false'
   version: '1.2.0'
   organization: Doc Detective
   date: March 2026
