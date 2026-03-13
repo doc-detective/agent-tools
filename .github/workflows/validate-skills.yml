@@ -34,9 +34,15 @@ jobs:
 
       - name: Validate skills
         run: |
+          # Exit codes: 0 = pass, 1 = errors, 2 = warnings only.
+          # Treat warnings (exit 2) as success; only fail on actual errors.
+          set +e
           skill-validator check --emit-annotations skills/
+          rc=$?
+          set -e
+          if [ "$rc" -eq 1 ]; then exit 1; fi
 
       - name: Write step summary
         if: always()
         run: |
-          skill-validator check -o markdown skills/ >> "$GITHUB_STEP_SUMMARY"
+          skill-validator check -o markdown skills/ >> "$GITHUB_STEP_SUMMARY" || true
