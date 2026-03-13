@@ -17,6 +17,21 @@
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
 //   gemini-extension.json                            ← version from package.json
 //
+// user-invocable field pattern:
+//   src/skills/*/SKILL.md stores `user-invocable` nested under `metadata:` (e.g.
+//   `metadata.user-invocable: true`). This is the canonical source of truth.
+//
+//   Two consumers read this field:
+//     1. generateCommands() — reads it via getMetadataUserInvocable() to decide
+//        whether to emit a commands/*.md file for the skill.
+//     2. syncPluginDir() — after copying skills into plugins/doc-detective/skills/,
+//        calls injectRootUserInvocable() to write a root-level `user-invocable:`
+//        line into each plugin SKILL.md. Claude reads the root frontmatter level,
+//        so this injection is required for the plugin to honour the flag.
+//
+//   skills/ (root artifact) and src/skills/ do NOT get the injected root field —
+//   the metadata-nested form is intentional there.
+//
 // Usage:
 //   node build.js           # full build (sync + copy + build scripts)
 //   node build.js --no-scripts  # skip JS bundle builds
@@ -89,6 +104,22 @@ function copyDirRecursive(src, dest, insideScripts = false) {
       fs.copyFileSync(srcPath, destPath);
     }
   }
+}
+
+/** Extract user-invocable from the metadata: block in raw frontmatter. Defaults to true. */
+function getMetadataUserInvocable(content) {
+  const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmMatch) return true;
+  const m = fmMatch[1].match(/^\s+user-invocable:\s*(true|false)\s*$/m);
+  return m ? m[1] === "true" : true;
+}
+
+/** Inject root-level user-invocable into frontmatter, derived from metadata block. */
+function injectRootUserInvocable(content) {
+  const m = content.match(/^(---\r?\n[\s\S]*?)(\r?\n---\r?\n)/);
+  if (!m) return content;
+  const value = getMetadataUserInvocable(content);
+  return m[1] + "\nuser-invocable: " + value + m[2] + content.slice(m[0].length);
 }
 
 // ─── 1. Sync version across config files ─────────────────────
@@ -170,7 +201,7 @@ function generateCommands() {
     const content = fs.readFileSync(skillMdPath, "utf8");
     const { meta, body } = parseFrontmatter(content);
 
-    if (meta["user-invocable"] !== "true") continue;
+    if (!getMetadataUserInvocable(content)) continue;
 
     const skillName = meta["name"] || entry.name;
     // Strip surrounding YAML quotes (single or double) from description
@@ -264,6 +295,17 @@ function syncPluginDir() {
     // Copy from root
     copyDirRecursive(path.join(ROOT, dir), target);
     log(`  ${dir}/ -> plugins/doc-detective/${dir}/`);
+  }
+
+  // Inject root-level user-invocable into each plugin SKILL.md
+  const pluginSkillsDir = path.join(pluginDir, "skills");
+  for (const entry of fs.readdirSync(pluginSkillsDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const skillMdPath = path.join(pluginSkillsDir, entry.name, "SKILL.md");
+    if (!fs.existsSync(skillMdPath)) continue;
+    const updated = injectRootUserInvocable(fs.readFileSync(skillMdPath, "utf8"));
+    fs.writeFileSync(skillMdPath, updated);
+    log(`  Injected user-invocable into plugins/doc-detective/skills/${entry.name}/SKILL.md`);
   }
 }
 

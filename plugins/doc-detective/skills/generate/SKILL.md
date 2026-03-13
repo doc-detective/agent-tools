@@ -1,13 +1,14 @@
 ---
 name: generate
 description: 'Interpret documentation procedures into Doc Detective test specifications without executing'
-user-invocable: 'true'
 metadata:
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026
   abstract: Interpret documentation procedures into Doc Detective test specifications without executing the tests. Parses docs, maps language to actions, validates the spec, and outputs the result.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+  user-invocable: true
+user-invocable: true
 ---
 
 # Generate Tests Command
