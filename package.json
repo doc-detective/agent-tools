@@ -1,6 +1,6 @@
 {
   "name": "agent-tools",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "engines": {
     "node": ">=20"
@@ -8,11 +8,12 @@
   "scripts": {
     "build": "node build.js",
     "build:no-scripts": "node build.js --no-scripts",
-    "build:doc-testing": "cd skills/doc-testing/scripts/src && npm run build",
-    "build:inline": "cd skills/inline-test-injection/scripts/src && npm run build",
-    "test:doc-testing": "cd skills/doc-testing/scripts && ./test-skill.sh",
-    "test:inline": "cd skills/inline-test-injection/scripts && ./test-skill.sh",
-    "prepare": "husky"
+    "build:doc-testing": "cd src/skills/doc-detective-doc-testing/scripts/src && npm run build",
+    "build:inline": "echo 'No source directory for inline-test-injection; rebuild not available'",
+    "test:doc-testing": "cd skills/doc-detective-doc-testing/scripts && ./doc-detective-test-skill.sh",
+    "test:inline": "cd skills/doc-detective-inline-test-injection/scripts && ./doc-detective-test-skill.sh",
+    "prepare": "husky",
+    "validate:skills": "./scripts/doc-detective-validate-skills.sh"
   },
   "devDependencies": {
     "husky": "^9.1.7"
