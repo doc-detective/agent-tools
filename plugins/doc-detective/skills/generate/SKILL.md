@@ -1,8 +1,8 @@
 ---
 name: generate
 description: 'Interpret documentation procedures into Doc Detective test specifications without executing'
-user-invocable: true
 metadata:
+  user-invocable: true
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026
@@ -79,7 +79,7 @@ Map each procedure step to a Doc Detective action using this table:
 ### Step 3: Validate (MANDATORY — DO NOT SKIP)
 
 ```bash
-echo '<generated-spec>' | node skills/doc-testing/scripts/validate-test.js --stdin
+echo '<generated-spec>' | node src/skills/doc-testing/scripts/validate-test.js --stdin
 ```
 
 **Only proceed when output shows `Validation PASSED`.** On failure: read each error, apply the matching fix, re-run. If no fix applies, stop and report the error — do NOT output an invalid spec.

@@ -1,8 +1,8 @@
 ---
 name: validate
 description: 'Validate Doc Detective test specifications or configuration files'
-user-invocable: true
 metadata:
+  user-invocable: true
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026
@@ -87,7 +87,7 @@ Check the provided JSON against the doc-detective-common config schema. Report e
 
 **Config checks:**
 
-- `input`: must be a string array of valid glob patterns or file paths
+- `input`: must be a string or string array of valid glob patterns or file paths
 - `recursive`: must be a boolean
 - `output`: must be a valid directory path string
 - `logLevel`: must be one of `silent`, `error`, `warning`, `info`, `debug`
@@ -107,6 +107,6 @@ Check the provided JSON against the doc-detective-common config schema. Report e
 { "input": "docs/", "browser": "chrome", "logLevel": "verbose" }
 ```
 
-Errors: `input` must be array, `browser` must be object, `logLevel` value invalid.
+Errors: `browser` must be object, `logLevel` value invalid.
 
 See [doc-detective-common](https://github.com/doc-detective/doc-detective-common) for the full configuration schema.

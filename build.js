@@ -38,7 +38,7 @@ const COPY_EXCLUDES = new Set([
 
 // Subdirectories to exclude when inside a scripts/ directory
 // (build sources and test fixtures belong in src/, not in output artifacts)
-const SCRIPTS_DIR_EXCLUDES = new Set(["src", "dist", "fixtures"]);
+const SCRIPTS_DIR_EXCLUDES = new Set(["src", "dist"]);
 
 // ─── Helpers ─────────────────────────────────────────────────
 

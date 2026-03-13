@@ -1,8 +1,8 @@
 ---
 name: doc-testing
 description: 'Verify documentation and procedures with Doc Detective test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, test docs, test procedure, verify procedures.'
-user-invocable: false
 metadata:
+  user-invocable: false
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026
@@ -116,12 +116,12 @@ When you generate a test spec **from a source documentation file**, offer to inj
 
 2. **Show preview** (no `--apply` flag):
    ```bash
-   node ./skills/inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
+   node ../inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
    ```
 
 3. **Apply on confirmation**:
    ```bash
-   node ./skills/inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
+   node ../inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
    ```
 
 For multi-file specs, offer injection separately per source file. Return the full JSON spec regardless of injection decisions. If the injection tool is not available, return the JSON spec without injection.

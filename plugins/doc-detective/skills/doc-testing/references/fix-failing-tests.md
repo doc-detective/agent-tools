@@ -27,8 +27,8 @@ Analyze failure → Generate fix → Calculate confidence → Apply/Prompt → R
 |--------|---------|-------------|
 | `--fix` | `false` | Enable automatic fix attempts |
 | `--auto-fix` | `false` | Apply all fixes without prompting |
-| `--fix-threshold` | `80` | Confidence threshold (0-100) for auto-apply |
-| `--max-fix-attempts` | `3` | Maximum fix iterations per test |
+| `--threshold` | `80` | Confidence threshold (0-100) for auto-apply |
+| `--max-iterations` | `3` | Maximum fix iterations per test |
 
 ## Failure Analysis
 

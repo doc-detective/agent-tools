@@ -20,10 +20,6 @@
 
 import { readFileSync, writeFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
-import { fileURLToPath } from 'url';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
 
 // Configuration
 const DEFAULT_THRESHOLD = 80;
@@ -184,7 +180,7 @@ function generateFix(strategy, originalStep, error) {
   const fix = JSON.parse(JSON.stringify(originalStep)); // Deep clone
 
   switch (strategy) {
-    case 'update_text':
+    case 'update_text': {
       // Extract potential new text from error message
       const textMatch = error.match(/found "([^"]+)"|got "([^"]+)"|actual: "([^"]+)"/i);
       if (textMatch) {
@@ -196,6 +192,7 @@ function generateFix(strategy, originalStep, error) {
         }
       }
       break;
+    }
 
     case 'add_wait':
       // Insert a wait before the step
@@ -220,7 +217,7 @@ function generateFix(strategy, originalStep, error) {
         wait: 5000
       };
 
-    case 'update_url':
+    case 'update_url': {
       // Try to extract the actual URL from error
       const urlMatch = error.match(/redirected to "([^"]+)"|actual: "([^"]+)"|got "(https?:\/\/[^"]+)"/i);
       if (urlMatch && fix.goTo) {
@@ -232,8 +229,9 @@ function generateFix(strategy, originalStep, error) {
         }
       }
       break;
+    }
 
-    case 'update_expected_text':
+    case 'update_expected_text': {
       const expectedMatch = error.match(/got "([^"]+)"|actual: "([^"]+)"/i);
       if (expectedMatch) {
         const actualText = expectedMatch[1] || expectedMatch[2];
@@ -242,6 +240,7 @@ function generateFix(strategy, originalStep, error) {
         }
       }
       break;
+    }
 
     case 'wait_for_clickable':
       if (fix.click && typeof fix.click === 'object') {
