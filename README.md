@@ -82,7 +82,7 @@ Agent tools for testing documentation procedures and validating that documented 
    /doc-detective:init
    ```
 
-### Codex, Cursor, OpenCode, and other AI coding assistants
+### Codex, Cursor, OpenCode, and other agents
 
 #### Option 1: Install with `npx skills`
 
