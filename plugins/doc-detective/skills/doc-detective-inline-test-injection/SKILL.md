@@ -7,7 +7,7 @@ metadata:
   date: March 2026
   abstract: Inject Doc Detective test specifications directly into documentation files as inline comments. Supports Markdown, MDX, HTML, AsciiDoc, and XML/DITA formats with automatic format detection and semantic step matching.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
-  user-invocable: false
+  user-invocable: 'false'
 user-invocable: false
 ---
 

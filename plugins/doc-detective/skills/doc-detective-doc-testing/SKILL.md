@@ -7,7 +7,7 @@ metadata:
   date: March 2026
   abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
-  user-invocable: false
+  user-invocable: 'false'
 user-invocable: false
 ---
 

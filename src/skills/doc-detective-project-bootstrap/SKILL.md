@@ -7,7 +7,7 @@ metadata:
   date: March 2026
   abstract: Initialize Doc Detective in a repository by detecting documentation, generating minimal configuration, creating tests for identified procedures, and iteratively running and fixing tests with confidence-based suggestions. Supports interactive and CI modes.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
-  user-invocable: false
+  user-invocable: 'false'
 ---
 
 # Project Bootstrap

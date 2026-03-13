@@ -110,7 +110,7 @@ function copyDirRecursive(src, dest, insideScripts = false) {
 function getMetadataUserInvocable(content) {
   const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!fmMatch) return true;
-  const m = fmMatch[1].match(/^\s+user-invocable:\s*(true|false)\s*$/m);
+  const m = fmMatch[1].match(/^\s+user-invocable:\s*['"]?(true|false)['"]?\s*$/m);
   return m ? m[1] === "true" : true;
 }
 
