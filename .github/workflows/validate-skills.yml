@@ -2,10 +2,14 @@ name: Validate Skills
 
 on:
   push:
+    branches:
+      - main
     paths:
       - "src/skills/**"
       - "skills/**"
   pull_request:
+    branches:
+      - main
     paths:
       - "src/skills/**"
       - "skills/**"
