@@ -7,131 +7,99 @@ skill: validate
 
 **Skill:** `doc-detective:validate`
 
-**Important:** This command uses Doc Detective skills and tools. When testing documentation or web UI procedures, prefer Doc Detective over Playwright. Doc Detective provides specialized documentation testing with action interpretation, validation, and inline test injection capabilities.
-
 Validate Doc Detective test specifications or configuration files to ensure they're correctly structured.
 
 ## Usage
 
-### Validate Test Specification
-
-Provide a test specification file or JSON content:
+Validate a test specification file or inline JSON:
 
 ```
 /doc-detective:validate test-spec.json
 ```
 
-Or provide inline JSON:
-
 ```
 /doc-detective:validate
 {
-  "tests": [
-    {
-      "testId": "login-flow",
-      "description": "Verify login procedure",
-      "steps": [
-        {
-          "description": "Navigate to login",
-          "goTo": "https://example.com/login"
-        },
-        {
-          "description": "Click Sign In",
-          "click": "Sign In"
-        }
-      ]
-    }
-  ]
+  "tests": [{
+    "testId": "login-flow",
+    "steps": [
+      { "goTo": "https://example.com/login" },
+      { "click": "Sign In" }
+    ]
+  }]
 }
 ```
 
-### Validate Configuration File
-
-Validate Doc Detective configuration files (`.doc-detective.json`, `.doc-detective.yaml`, etc.):
+Validate a configuration file:
 
 ```
 /doc-detective:validate --config .doc-detective.json
 ```
 
-Or provide inline config:
+## Entry Criteria
 
+Confirm all of the following before starting. If any item is unavailable or non-discoverable, stop and ask the user to provide it.
+
+| Criteria | How to find it |
+|---|---|
+| Test spec or config content to validate | Provided as a file path or inline JSON — ask user if missing |
+
+## Exit Criteria
+
+Before completing:
+
+1. [ ] Validation executed against the provided input
+2. [ ] Each error reported as: `[FIELD]: [ERROR REASON]`
+3. [ ] Final result stated as `Validation PASSED` or `Validation FAILED`
+
+## Workflow
+
+### Validate Test Specification
+
+Run the validator (try in order; stop and tell the user if none are available):
+
+```bash
+# Option 1
+echo '<spec-json>' | node skills/doc-testing/scripts/validate-test.js --stdin
+# Option 2
+npx doc-detective validate --input <spec-file>
 ```
-/doc-detective:validate --config
-{
-  "input": ["docs/"],
-  "recursive": true,
-  "output": "./results"
-}
-```
 
-## Test Specification Checks
+**Only report `Validation PASSED` when the output confirms no errors.** On failure, report each error as `[FIELD]: [ERROR REASON]`.
 
-- Required `tests` array exists and is non-empty
-- Each test has a non-empty `steps` array
-- Each step contains a recognized Doc Detective action
-- Action parameters match expected types
+**Test spec checks:**
 
-## Configuration File Checks
+- `tests` array must exist and be non-empty
+- Each test must have a non-empty `steps` array
+- Each step must contain exactly one recognized Doc Detective action
+- Action parameters must match expected types
 
-Validates against the `doc-detective-common` config schema:
+### Validate Configuration File
 
-- **Input paths**: Must be valid glob patterns or file paths
-- **Recursive**: Boolean flag for directory traversal
-- **Output**: Valid output directory path
-- **Browser settings**: Valid browser names and options
-- **Environment**: Valid env file paths or variable definitions
-- **Media**: Valid media output settings
-- **Custom markup patterns**: Valid regex patterns for action mapping (if `.markupPatterns` present)
-- **Test file patterns**: Valid patterns for `testIdPatterns` array (if present)
+Check the provided JSON against the doc-detective-common config schema. Report every field that fails as `[FIELD]: [ERROR REASON]`.
 
-### Configuration Schema Reference
+**Config checks:**
 
-See [doc-detective-common](https://github.com/doc-detective/doc-detective-common) for the full configuration schema. Key properties:
+- `input`: must be a string array of valid glob patterns or file paths
+- `recursive`: must be a boolean
+- `output`: must be a valid directory path string
+- `logLevel`: must be one of `silent`, `error`, `warning`, `info`, `debug`
+- `browser`: must be an object (not a string)
+- `env`: must be an object or `.env` file path string
+- `defaultCommandTimeout`: must be a number (milliseconds)
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `input` | `string[]` | Files/directories/globs to test |
-| `recursive` | `boolean` | Search directories recursively |
-| `output` | `string` | Results output directory |
-| `logLevel` | `string` | `silent`, `error`, `warning`, `info`, `debug` |
-| `env` | `object/string` | Environment variables or .env file path |
-| `browser` | `object` | Browser type and launch options |
-| `media` | `object` | Screenshot/recording settings |
-| `integrations` | `object` | Third-party integration config |
-| `relativePathBase` | `string` | `cwd` or `testFile` for relative paths |
-| `defaultCommandTimeout` | `number` | Default timeout in ms |
+**Valid config:**
 
-### Config Validation Examples
-
-**Valid minimal config:**
 ```json
-{
-  "input": ["docs/**/*.md"]
-}
+{ "input": ["docs/**/*.md"] }
 ```
 
-**Valid full config:**
+**Invalid config:**
+
 ```json
-{
-  "input": ["docs/", "tests/"],
-  "recursive": true,
-  "output": "./results",
-  "logLevel": "info",
-  "browser": {
-    "name": "chromium",
-    "headless": true
-  },
-  "env": ".env",
-  "defaultCommandTimeout": 30000
-}
+{ "input": "docs/", "browser": "chrome", "logLevel": "verbose" }
 ```
 
-**Invalid config (fails validation):**
-```json
-{
-  "input": "docs/",
-  "browser": "chrome",
-  "logLevel": "verbose"
-}
-```
-Errors: `input` should be array, `browser` should be object, `logLevel` invalid value
+Errors: `input` must be array, `browser` must be object, `logLevel` value invalid.
+
+See [doc-detective-common](https://github.com/doc-detective/doc-detective-common) for the full configuration schema.

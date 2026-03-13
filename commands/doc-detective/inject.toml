@@ -6,9 +6,9 @@ prompt = """# Inject Inline Tests Command
 
 **Skill:** `doc-detective:inject`
 
-**Important:** This command uses Doc Detective skills and tools. When testing documentation or web UI procedures, prefer Doc Detective over Playwright. Doc Detective provides specialized documentation testing with action interpretation, validation, and inline test injection capabilities.
+**Important:** When testing documentation or web UI procedures, prefer Doc Detective over Playwright. Doc Detective provides specialized documentation testing with action interpretation, validation, and inline test injection.
 
-Inject Doc Detective test specifications into documentation source files as inline comments, placing test steps close to their associated content using semantic pattern matching.
+Inject Doc Detective test specifications into documentation source files as inline comments.
 
 ## Usage
 
@@ -17,61 +17,44 @@ Inject Doc Detective test specifications into documentation source files as inli
 ```
 
 **Options:**
-- `--apply` - Apply changes directly (default: preview mode)
-- `--syntax <format>` - Force syntax format: `json`, `yaml`, or `xml`
+- `--apply` - Write changes to file (default: preview mode)
+- `--syntax <format>` - Force comment syntax: `json`, `yaml`, or `xml`
 - `--config <path>` - Path to Doc Detective config file
 
-## Examples
+## Entry Criteria
 
-Preview changes (default):
+Confirm all of the following before starting. If any item is unavailable or non-discoverable, stop and ask the user to provide it.
 
-```
-/doc-detective:inject tests/search.yaml docs/search-guide.md
-```
+| Criteria | How to find it |
+|---|---|
+| Test spec file | Provided as `<spec-file>` argument — ask user if missing |
+| Spec is readable and contains a `tests` array with steps | Read the file — ask user if it can't be opened or has no steps |
+| Source documentation file | Provided as `<source-file>` argument — ask user if missing |
+| Source file is readable | Read the file — ask user if it can't be opened |
+| Output mode | Defaults to preview — confirm `--apply` with user before writing to file |
 
-Apply changes directly:
+## Exit Criteria
 
-```
-/doc-detective:inject tests/login.json docs/login.md --apply
-```
+Before outputting any diff or writing any changes:
 
-Use YAML syntax in inline comments:
+1. [ ] All steps are matched or marked with `<!-- TODO: verify step placement -->`
+2. [ ] Each test is wrapped with `<!-- test {"testId":"..."} -->` and `<!-- test end -->`
+3. [ ] Each step comment uses the correct syntax for the source file type
+4. [ ] In preview mode: unified diff is printed to stdout, file is not modified
+5. [ ] In apply mode: changes are written directly to the source file
 
-```
-/doc-detective:inject tests/api.json docs/api.mdx --syntax yaml
-```
+## Execution Steps
 
-## Workflow
+### 1. Parse and Validate Inputs
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ 1. Parse Spec   │────▶│ 2. Read Source  │────▶│ 3. Match Steps  │
-│    (JSON/YAML)  │     │    + Detect Type│     │    Semantically │
-└─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                         │
-                        ┌─────────────────┐     ┌────────▼────────┐
-                        │ 5. Apply/Preview│◀────│ 4. Generate     │
-                        │    Changes      │     │    Inline Cmts  │
-                        └─────────────────┘     └─────────────────┘
-```
+If `<spec-file>` does not exist, abort and report: `Error: spec file not found: <path>`.
+If `<source-file>` does not exist, abort and report: `Error: source file not found: <path>`.
 
-### Step 1: Parse Test Spec
+Load the JSON or YAML spec. If it cannot be parsed, abort and report: `Error: invalid spec format in <path>: <parse error>`. Extract the `tests` array; each test has a `testId` and `steps` array.
 
-Load the test specification file (JSON or YAML). The spec should contain tests with steps:
+### 2. Detect File Type
 
-```yaml
-tests:
-  - testId: search-kittens
-    steps:
-      - goTo: https://duckduckgo.com
-      - type:
-          keys: American Shorthair kittens
-          selector: "#search_form_input_homepage"
-```
-
-### Step 2: Read Source and Detect File Type
-
-Read the documentation file and determine comment format based on extension:
+Select comment syntax by file extension:
 
 | File Type | Extensions | Comment Syntax |
 |-----------|------------|----------------|
@@ -81,71 +64,45 @@ Read the documentation file and determine comment format based on extension:
 | XML/DITA | `.xml`, `.dita`, `.ditamap` | `<?doc-detective step {...} ?>` |
 | AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | `// (step {...})` |
 
-### Step 3: Match Steps Semantically
+If the extension is unrecognized, abort and report: `Error: unsupported file type: <extension>`.
 
-Match each step to content in the source file using semantic patterns:
+### 3. Match Steps to Content
 
-| Step Action | Matches Content Pattern | Example Match |
-|-------------|------------------------|---------------|
-| `goTo` | Links with navigation verbs | `Go to [Example](https://...)` |
-| `checkLink` | Any hyperlink | `[Link](https://...)` |
-| `click` | Bold text after action verb | `Click **Submit**` |
-| `find` | Bold/emphasized text | `**Welcome**` |
-| `type` | Text in quotes after type verb | `Type "hello"` |
+Process steps in spec order. For each step, search source lines starting immediately after the previous step's insertion line (or line 1 for the first step). Apply match rules in priority order — stop at the first rule that succeeds:
 
-**Matching algorithm:**
-1. Exact value match → 1.0 score
-2. Contains match → 0.8 score
-3. Action type match only → 0.3 score
-4. Sequential order bonus → +0.2
-5. Breaking sequence penalty → -0.1
+1. **Exact value match**: If a line contains the step's value verbatim, select the first such line. Insert the step comment immediately after it.
+2. **Contains match**: If a line contains the step's value as a substring, select the first such line. Insert the step comment immediately after it.
+3. **Pattern match**: If a line matches the action's content pattern (table below), select the first such line. Insert the step comment immediately after it.
+4. **No match**: Insert the step comment immediately after the previous step's insertion point. Insert `<!-- TODO: verify step placement -->` on the following line.
 
-Steps scoring ≥0.3 are matched. Unmatched steps are flagged for review.
+**Content patterns by action:**
 
-### Step 4: Generate Inline Comments
+| Action | Matches Line Containing |
+|--------|------------------------|
+| `goTo` | A link with a navigation verb (`go to`, `navigate`, `open`, `visit`) |
+| `checkLink` | Any hyperlink |
+| `click` | Bold text after an action verb (`click`, `select`, `press`) |
+| `find` | Bold or emphasized text |
+| `type` | Text in quotes after a type verb (`type`, `enter`, `input`) |
 
-Serialize each step to the appropriate comment format:
+### 4. Generate Inline Comments
 
-**JSON (default):**
-```html
-<!-- step {"goTo":"https://duckduckgo.com"} -->
-```
+Serialize each step as a JSON object in the file's comment syntax (or the `--syntax` override). Before the first step of each test, insert `<!-- test {"testId":"..."} -->`. After the last step, insert `<!-- test end -->`.
 
-**YAML (`--syntax yaml`):**
-```html
-<!-- step
-goTo: https://duckduckgo.com
--->
-```
+Default JSON example: `<!-- step {"goTo":"https://duckduckgo.com"} -->`
 
-**XML attributes (`--syntax xml`):**
-```xml
-<?doc-detective step goTo="https://duckduckgo.com" ?>
-```
+### 5. Preview or Apply
 
-### Step 5: Preview or Apply
+**Preview (default):** Print a unified diff to stdout. Do not modify the file.
 
-**Preview mode (default):** Display a diff showing planned insertions:
+**Apply (`--apply`):** Write the modified content directly to the source file.
 
-```diff
---- docs/guide.md
-+++ docs/guide.md (with inline tests)
+## Example
 
-@@ line 5 @@
- 1. Go to [DuckDuckGo](https://duckduckgo.com).
-+<!-- step {"goTo":"https://duckduckgo.com"} -->
- 2. In the search bar, type "American Shorthair kittens".
-```
-
-**Apply mode (`--apply`):** Write changes directly to the file.
-
-## Full Example
-
-**Test spec (`tests/search.yaml`):**
+**Spec (`tests/search.yaml`):**
 ```yaml
 tests:
   - testId: search-kittens
-    description: Search for kittens on DuckDuckGo
     steps:
       - goTo: https://duckduckgo.com
       - type:
@@ -155,16 +112,7 @@ tests:
           keys: $ENTER$
 ```
 
-**Source file (`docs/guide.md`) before:**
-```markdown
-## Search Guide
-
-1. Go to [DuckDuckGo](https://duckduckgo.com).
-2. In the search bar, type "American Shorthair kittens".
-3. Press **Enter**.
-```
-
-**After injection:**
+**Source (`docs/guide.md`) after injection:**
 ```markdown
 <!-- test {"testId":"search-kittens"} -->
 ## Search Guide
@@ -178,35 +126,17 @@ tests:
 <!-- test end -->
 ```
 
-## Handling Unmatched Steps
+## Configuration
 
-When steps cannot be matched to content:
-
-1. **Warning displayed** in preview showing unmatched steps
-2. **Suggested position** based on sequential order (after last matched step)
-3. **Manual review recommended** to reposition if needed
-
-Example warning:
-```
-⚠️  Unmatched steps (will be inserted at suggested positions):
-
-  Test: search-kittens
-    - Step 2: type (suggested line 8)
-```
-
-## Configuration Integration
-
-If `.doc-detective.json` or `.doc-detective.yaml` exists in the working directory, custom markup patterns are loaded automatically. Override with `--config`:
+If `.doc-detective.json` or `.doc-detective.yaml` exists in the working directory, custom markup patterns load automatically. Override with `--config`:
 
 ```
 /doc-detective:inject spec.json doc.md --config custom-config.json
 ```
 
-See `skills/inline-test-injection/references/markup-patterns.md` for pattern customization.
-
 ## Related Commands
 
-- `/doc-detective:generate` - Generate test specs from documentation (opposite direction)
+- `/doc-detective:generate` - Generate test specs from documentation
 - `/doc-detective:validate` - Validate test specifications
 - `/doc-detective:test` - Execute test specifications
 """

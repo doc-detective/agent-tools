@@ -19,20 +19,7 @@ node ./scripts/fix-tests.js results.json --spec test-spec.json --auto-fix
 
 ## Fix Loop Workflow
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│ Analyze Failure │────▶│ Generate Fix    │────▶│ Calculate       │────▶│ Apply/Prompt    │
-│ (read results)  │     │ (modify spec)   │     │ Confidence      │     │ (threshold-based)│
-└─────────────────┘     └─────────────────┘     └─────────────────┘     └─────────────────┘
-                                                                                 │
-        ┌────────────────────────────────────────────────────────────────────────┘
-        │
-        ▼
-┌─────────────────┐     ┌─────────────────┐
-│ Re-run Tests    │────▶│ Pass/Fail Check │─── Pass ──▶ Done
-│ (validate fix)  │     │ (max 3 attempts)│─── Fail ──▶ Loop or Manual Review
-└─────────────────┘     └─────────────────┘
-```
+Analyze failure → Generate fix → Calculate confidence → Apply/Prompt → Re-run tests → Pass (done) or Fail (loop, max 3 attempts)
 
 ## Fix Options
 
@@ -92,65 +79,24 @@ Based on failure analysis, generate a fix and calculate confidence:
 
 ## Apply Fix Decision
 
-Based on confidence and options:
-
-```
-if --auto-fix:
-    Apply fix automatically
-else if confidence >= fix-threshold:
-    Apply fix automatically
-else:
-    Prompt user for confirmation:
-    
-    ⚠️ Low confidence fix proposed (65%)
-    
-    Step: click "Submit"
-    Error: Element not found
-    Proposed fix: click "Submit Form"
-    Reasoning: Found button with similar text
-    
-    [A]pply  [S]kip  [M]anual edit  [Q]uit fixing
-```
-
-## Re-run and Iterate
-
-After applying fixes:
-
-1. Save updated spec to temp file
-2. Run validator on updated spec
-3. Execute tests again
-4. Check results:
-   - All pass → Report success, exit loop
-   - Still failing → Analyze new failures, iterate (up to max attempts)
-   - Max attempts reached → Report "needs manual review"
+With `--auto-fix`, apply all fixes automatically. Otherwise, apply fixes at or above `--fix-threshold` automatically; prompt user for confirmation on lower-confidence fixes.
 
 ## Fix History Tracking
 
-Track all fix attempts for reporting:
+Track fix attempts for reporting. Each entry records the step, original/fixed values, confidence, and result:
 
 ```json
 {
   "fixHistory": [
-    {
-      "attempt": 1,
-      "stepId": "click-submit",
-      "original": { "click": "Submit" },
-      "fixed": { "click": "Submit Form" },
-      "confidence": 85,
-      "result": "PASS"
-    },
-    {
-      "attempt": 1,
-      "stepId": "find-welcome",
-      "original": { "find": "Welcome" },
-      "fixed": { "find": "Welcome back" },
-      "confidence": 45,
-      "result": "FAIL",
-      "note": "Needs manual review"
-    }
+    { "attempt": 1, "stepId": "click-submit", "original": { "click": "Submit" }, "fixed": { "click": "Submit Form" }, "confidence": 85, "result": "PASS" },
+    { "attempt": 1, "stepId": "find-welcome", "original": { "find": "Welcome" }, "fixed": { "find": "Welcome back" }, "confidence": 45, "result": "FAIL", "note": "Needs manual review" }
   ]
 }
 ```
+
+## Re-run and Iterate
+
+Save updated spec → run validator → execute tests → check results. If all pass, report success. If still failing, iterate up to max attempts, then report "needs manual review."
 
 ## Common Fix Patterns
 

@@ -2,20 +2,6 @@
 
 Quick reference for all Doc Detective actions. For comprehensive documentation, see https://doc-detective.com/docs/category/actions.
 
-## Table of Contents
-
-- [Navigation & Browser](#navigation--browser)
-- [Element Interaction](#element-interaction)
-- [Form Input](#form-input)
-- [Verification](#verification)
-- [HTTP Requests](#http-requests)
-- [Shell & Code Execution](#shell--code-execution)
-- [Media Capture](#media-capture)
-- [Session Management](#session-management)
-- [Utilities](#utilities)
-
----
-
 ## Navigation & Browser
 
 ### goTo
@@ -54,26 +40,10 @@ Click or tap an element.
 { "click": "Submit" }
 ```
 
-```json
-{ "click": "Sign In" }
-```
-
 **Selector-based** (when text matching is insufficient):
 
 ```json
-{
-  "click": {
-    "selector": "button.primary"
-  }
-}
-```
-
-```json
-{
-  "click": {
-    "selector": "[aria-label='Close']"
-  }
-}
+{ "click": { "selector": "button.primary" } }
 ```
 
 ### find
@@ -84,10 +54,6 @@ Check if an element exists. Can optionally interact with it.
 
 ```json
 { "find": "Welcome" }
-```
-
-```json
-{ "find": "Dashboard" }
 ```
 
 **Selector-based with options**:
@@ -444,9 +410,7 @@ Wait for element:
 
 ## Text vs Selector Guidelines
 
-### When to use text-based matching (preferred)
-
-Use visible text when documentation describes user-visible elements:
+### Use text-based matching (preferred)
 
 | Documentation says | Test step |
 |---|---|
@@ -455,19 +419,13 @@ Use visible text when documentation describes user-visible elements:
 | "Tap **Next**" | `{ "click": "Next" }` |
 | "Look for **Dashboard**" | `{ "find": "Dashboard" }` |
 
-### When to use selectors
+### Use selectors when
 
-Use CSS selectors when:
-
-1. **Multiple elements have same text** - Need to disambiguate
-2. **Element has no visible text** - Icon buttons, images
-3. **Documentation provides selector** - Explicit technical reference
-4. **Testing structural elements** - Specific DOM structure
-
-Examples:
+- Multiple elements share the same text
+- Element has no visible text (icon buttons, images)
+- Documentation explicitly provides a CSS selector
 
 ```json
 { "click": { "selector": "button[aria-label='Close']" } }
 { "find": { "selector": "#main-content > h1" } }
-{ "click": { "selector": ".nav-menu button:first-child" } }
 ```

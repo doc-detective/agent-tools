@@ -2,3 +2,4 @@ node_modules/
 bun.lock
 *.bundled.js
 settings.local.json
+.score_cache/

@@ -7,7 +7,7 @@ skill: init
 
 **Skill:** `doc-detective:init`
 
-Bootstrap Doc Detective in a repository. Detects documentation, generates minimal configuration, creates tests for identified procedures, runs them, and iteratively fixes failures with confidence-based suggestions.
+Bootstrap Doc Detective in a repository: detect docs, generate config, create tests, run them, and fix failures. Do NOT use Playwright — use Doc Detective for all documentation testing.
 
 ## Usage
 
@@ -15,271 +15,111 @@ Bootstrap Doc Detective in a repository. Detects documentation, generates minima
 /doc-detective:init [options]
 ```
 
-**Modes:**
-
-| Mode | Description |
-|------|-------------|
-| Interactive (default) | Guided setup with prompts at key decision points |
-| CI (`--ci`) | Non-interactive, uses sensible defaults, no prompts |
-
-**Options:**
-
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--ci` | false | Run in non-interactive CI mode |
-| `--auto-fix` | false | Apply all test fixes regardless of confidence |
+| `--ci` | false | Non-interactive; use defaults, no prompts |
+| `--auto-fix` | false | Apply all fixes regardless of confidence |
 | `--fix-threshold <0-100>` | 80 | Confidence threshold for auto-applying fixes |
 | `--dry-run` | false | Show planned changes without applying |
-| `--skip-tests` | false | Generate config and tests but don't execute |
+| `--skip-tests` | false | Generate config and tests but do not execute |
 | `--skip-fix-loop` | false | Run tests but skip iterative fixing |
 
-## Examples
-
-```bash
-# Interactive setup
-/doc-detective:init
-
-# CI mode with defaults
-/doc-detective:init --ci
-
-# Preview without changes
-/doc-detective:init --dry-run
-
-# Auto-fix all failures
-/doc-detective:init --auto-fix
-
-# Custom confidence threshold
-/doc-detective:init --fix-threshold 70
-
-# Only generate config and tests
-/doc-detective:init --skip-tests
 ```
+/doc-detective:init
+/doc-detective:init --ci
+/doc-detective:init --dry-run
+```
+
+## Entry Criteria
+
+Confirm all of the following before starting. If any item is unavailable or non-discoverable, stop and ask the user to provide it.
+
+| Criteria | How to find it |
+|---|---|
+| Repository root is accessible | Check working directory — ask user if unclear |
+| Documentation files exist | Glob for `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, `**/*.dita` — ask user if none found |
+| Existing config (if present) is readable | Check for `.doc-detective.json` / `doc-detective.config.js` — ask user if file exists but can't be parsed |
+
+## Exit Criteria
+
+Before completing:
+
+1. [ ] Config created or merged and confirmed
+2. [ ] Test specs generated and validated for all identified procedures
+3. [ ] Tests executed (unless `--skip-tests` or `--dry-run`)
+4. [ ] Fix loop completed or skipped (unless `--skip-fix-loop`)
+5. [ ] Any unresolved failures reported to user with "needs manual review" status
 
 ## Workflow
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                           DOC DETECTIVE INIT                                │
-├─────────────────────────────────────────────────────────────────────────────┤
-│                                                                             │
-│  ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐   ┌──────────┐  │
-│  │ 1.DETECT │──▶│2.CONFIG  │──▶│3.GENERATE│──▶│ 4.RUN    │──▶│ 5.FIX    │  │
-│  │          │   │          │   │          │   │          │   │          │  │
-│  │ Scan for │   │ Create   │   │ Create   │   │ Execute  │   │ Analyze  │  │
-│  │ docs     │   │ minimal  │   │ tests    │   │ tests    │   │ failures │  │
-│  └──────────┘   │ config   │   │ from     │   │          │   │ & fix    │  │
-│                 └──────────┘   │ docs     │   └──────────┘   └──────────┘  │
-│                                └──────────┘                                 │
-│                                                                             │
-│  Config handling:                                                           │
-│  • New config: Create silently                                              │
-│  • Existing config: Merge + prompt for confirmation                         │
-│                                                                             │
-│  Fix loop:                                                                  │
-│  • Confidence ≥ threshold: Auto-apply                                       │
-│  • Confidence < threshold: Flag for user review                             │
-│  • Max 3 iterations per test                                                │
-│                                                                             │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+**Phases run in order. Do NOT advance to the next phase if the current phase fails.**
 
-## Phase Details
+1. Detect → 2. Configure → 3. Generate Tests → 4. Execute → 5. Fix Loop
 
 ### Phase 1: Detect Documentation
 
-The agent scans the repository to understand documentation structure and gather context for subsequent phases.
-
-**What the agent looks for:**
-
-1. **Documentation directories** - Common paths like `docs/`, `documentation/`, `content/`, `pages/`
-2. **File types** - Identify supported formats and their locations
-3. **Structure patterns** - How docs are organized (flat, nested, by feature, by audience)
-4. **Existing configuration** - Check for `.doc-detective.json`, `doc-detective.config.js`, etc.
-5. **Related tooling** - Look for existing test frameworks, CI configs, build systems
-
-**Supported formats:**
-- Markdown (`.md`, `.markdown`)
-- MDX (`.mdx`)
-- AsciiDoc (`.adoc`, `.asciidoc`, `.asc`)
-- reStructuredText (`.rst`)
-- HTML (`.html`, `.htm`)
-- DITA (`.dita`, `.ditamap`, `.xml`)
-
-**Agent gathers:**
-- File counts by type and location
-- Directory structure overview
-- Sample files for pattern analysis
-- Potential procedure-heavy files (tutorials, guides, how-tos)
-- Any existing test specs or config files
-
-**Output:**
-```
-📁 Documentation detected:
-   Markdown: 12 files (docs/, README.md)
-   MDX: 3 files (pages/)
-   
-   Total: 15 documentation files
-   Estimated procedures: 8-12
-   
-   Key directories: docs/, pages/
-   Tutorials found: 3
-   How-to guides: 5
-```
+1. Search for documentation files matching: `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, `**/*.dita`
+2. If no files found, stop and ask the user where documentation is located.
+3. Check for existing config: `.doc-detective.json`, `doc-detective.config.js`
+4. Identify procedure-heavy files: read each file and flag it if it contains 3 or more numbered steps or sequential bullet points with action verbs (navigate, click, enter, verify, type, select).
 
 ### Phase 2: Configure
 
-Generate minimal `.doc-detective.json` following "smallest reasonable config" principle.
-
-**Config handling:**
+Generate `.doc-detective.json` following the "smallest reasonable config" principle.
 
 | Scenario | Action |
-|----------|--------|
-| No existing config | Create silently |
-| Existing config | Merge + prompt for confirmation |
-| CI mode + existing | Skip merge, use existing |
+|---|---|
+| No existing config | Create with minimal defaults (see below) |
+| Existing config | Read, merge new fields, prompt user to confirm (skip prompt if `--ci`) |
+| `--ci` + existing config | Use existing config unchanged |
 
-**Minimal config example:**
 ```json
-{
-  "input": "docs",
-  "output": ".doc-detective/results",
-  "detectSteps": false
-}
+{ "input": "docs", "output": ".doc-detective/results", "detectSteps": false }
 ```
 
-See `skills/project-bootstrap/references/config-guidance.md` for detailed guidance.
+If `--dry-run`, print the config that would be written and skip file creation. If config cannot be created or the user rejects the merge, stop and report — do not proceed. See `skills/project-bootstrap/references/config-guidance.md` for full options.
 
 ### Phase 3: Generate Tests
 
-Identify testable procedures and create complete tests using the `doc-testing` skill workflow:
+For each procedure-containing file identified in Phase 1:
 
-1. Analyze documentation structure (headings, lists, action verbs)
-2. Extract sequential procedures
-3. Map to Doc Detective actions
-4. Validate each generated spec
-5. Track progress
-
-**Progress display:**
-```
-📝 Generating tests...
-
-| # | Source File | Procedure | Status |
-|---|-------------|-----------|--------|
-| 1 | docs/login.md | Login flow | ✅ Generated (6 steps) |
-| 2 | docs/setup.md | Installation | ✅ Generated (4 steps) |
-| 3 | docs/api.md | API auth | ⏳ Generating... |
-```
+1. Invoke `/doc-detective:generate <file-path> --output .doc-detective/tests/<name>-spec.json`, where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens (e.g., `login-guide.md` → `login-guide`).
+2. Confirm each spec passes validation before continuing. If a spec cannot be fixed, skip it and report it to the user.
+3. If `--dry-run`, print each spec without writing to disk.
 
 ### Phase 4: Execute Tests
 
-Run generated tests:
+Run all generated specs:
 
 ```bash
 doc-detective run --input .doc-detective/tests/ --output .doc-detective/results/
 ```
 
-**Results:**
-```
-🧪 Test Execution Results
-
-Summary:
-  Tests: 8 passed, 2 failed
-  Steps: 45 passed, 5 failed
-  
-Failed Tests:
-  ❌ docs/login.md#login-flow - Step 4: "Element 'Sign In' not found"
-  ❌ docs/api.md#api-auth - Step 2: "Unexpected status code 401"
-```
+Skip this phase if `--skip-tests` or `--dry-run` is set. If the command fails to execute, stop and report the error — do not proceed to Phase 5. After execution, collect all failing tests from the results output.
 
 ### Phase 5: Fix Loop
 
-Analyze failures and propose fixes with confidence scoring:
+Skip this phase if `--skip-fix-loop` is set.
 
-```
-⚠️ Low confidence fix (65%) for docs/login.md#login-flow step 4:
+For each failing test, repeat up to 3 times:
 
-  Issue: Element 'Sign In' not found
-  
-  Proposed fix: 
-    Before: { "find": "Sign In" }
-    After:  { "find": "Log In" }
-  
-  Reason: Page may have changed button text
-  
-  [A]pply fix  [S]kip  [E]dit manually  [Q]uit fix loop
-```
+1. Read the step's `resultDescription` to identify the failure.
+2. Propose a fix and assign a confidence score: **High (80–100)** — exact alternative identified; **Medium (50–79)** — likely correct but uncertain; **Low (0–49)** — best guess with significant uncertainty.
+3. Apply the fix based on confidence:
 
-**Confidence thresholds:**
+| Confidence | Action |
+|---|---|
+| ≥ threshold (default 80%) | Apply automatically |
+| < threshold | Show proposed fix, ask user: apply / skip / edit manually |
+| < 50% | Always ask user regardless of threshold |
 
-| Score | Action |
-|-------|--------|
-| ≥ threshold (default 80%) | Auto-apply |
-| < threshold | Flag user for review |
-| < 50% | Always flag user |
+4. Re-run the test. If it passes, move to the next failing test.
+5. After 3 failed attempts, mark the test as "needs manual review" and continue.
 
-**Fix loop limits:**
-- Max 3 iterations per test
-- Unresolved after 3 attempts → "needs manual review"
-
-## Output
-
-After completion:
-
-```
-✅ Doc Detective Bootstrap Complete
-
-Configuration:
-  📄 Created .doc-detective.json
-
-Tests Generated:
-  📝 8 test specs in .doc-detective/tests/
-  
-Execution Results:
-  ✅ 6 tests passed
-  🔧 2 tests fixed (auto-applied)
-  ❌ 0 tests need manual review
-
-Next Steps:
-  • Run `doc-detective run` to execute tests
-  • Add to CI: `doc-detective run --ci`
-  • See .doc-detective/results/ for reports
-```
-
-## CI Integration
-
-Use in GitHub Actions:
-
-```yaml
-name: Doc Detective
-on: [push, pull_request]
-jobs:
-  test-docs:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - run: npm install -g doc-detective
-      - run: doc-detective run --ci
-```
+Report all "needs manual review" tests to the user before completing.
 
 ## Related Commands
 
-| Command | Description |
-|---------|-------------|
-| `/doc-detective:test` | Run existing tests |
-| `/doc-detective:generate` | Generate tests without executing |
-| `/doc-detective:validate` | Validate test specifications |
-| `/doc-detective:inject` | Inject tests into source files |
-
-## Related Skills
-
-- `doc-testing` - Core documentation testing skill
-- `inline-test-injection` - Inject tests into source files
-
-## Resources
-
-- Doc Detective docs: https://doc-detective.com
-- Config schema: https://doc-detective.com/docs/references/schemas/config
-- Actions reference: https://doc-detective.com/docs/category/actions
+- `/doc-detective:test` — Run existing tests without re-bootstrapping
+- `/doc-detective:generate` — Generate tests for a single file
+- `/doc-detective:validate` — Validate an existing test spec
