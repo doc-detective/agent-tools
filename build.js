@@ -122,6 +122,29 @@ function injectRootUserInvocable(content) {
   return m[1] + "\nuser-invocable: " + value + m[2] + content.slice(m[0].length);
 }
 
+// ─── 0. Clean output directories ─────────────────────────────
+
+function cleanOutputDirs() {
+  log("Cleaning output directories...");
+
+  const dirs = [
+    "agents",
+    "skills",
+    "commands",
+    "plugins/doc-detective/agents",
+    "plugins/doc-detective/skills",
+  ];
+
+  for (const dir of dirs) {
+    const target = path.join(ROOT, dir);
+    if (fs.existsSync(target)) {
+      fs.rmSync(target, { recursive: true });
+    }
+    fs.mkdirSync(target, { recursive: true });
+    log(`  cleared ${dir}/`);
+  }
+}
+
 // ─── 1. Sync version across config files ─────────────────────
 
 function syncVersions() {
@@ -160,15 +183,7 @@ function syncSourceToArtifacts() {
   log("\nSyncing src/ to artifact directories...");
 
   for (const dir of ["agents", "skills"]) {
-    const target = path.join(ROOT, dir);
-
-    // Remove existing artifact directory
-    if (fs.existsSync(target)) {
-      fs.rmSync(target, { recursive: true });
-    }
-
-    // Copy from src/
-    copyDirRecursive(path.join(ROOT, "src", dir), target);
+    copyDirRecursive(path.join(ROOT, "src", dir), path.join(ROOT, dir));
     log(`  src/${dir}/ -> ${dir}/`);
   }
 }
@@ -279,21 +294,7 @@ function syncPluginDir() {
 
   // commands/ is intentionally excluded — commands are accessed via skills/
   for (const dir of ["agents", "skills"]) {
-    const target = path.join(pluginDir, dir);
-
-    // Remove existing entry (symlink file, real directory, etc.)
-    if (fs.existsSync(target)) {
-      const stat = fs.lstatSync(target);
-      if (stat.isDirectory()) {
-        fs.rmSync(target, { recursive: true });
-      } else {
-        // Symlink stored as a text file (common on WSL/Windows) or actual symlink
-        fs.unlinkSync(target);
-      }
-    }
-
-    // Copy from root
-    copyDirRecursive(path.join(ROOT, dir), target);
+    copyDirRecursive(path.join(ROOT, dir), path.join(pluginDir, dir));
     log(`  ${dir}/ -> plugins/doc-detective/${dir}/`);
   }
 
@@ -349,6 +350,7 @@ function buildSkillScripts() {
 
 log("Building agent-tools...\n");
 
+cleanOutputDirs();
 syncVersions();
 buildSkillScripts();
 syncSourceToArtifacts();
