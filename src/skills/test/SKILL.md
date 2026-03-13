@@ -2,7 +2,7 @@
 name: test
 description: 'Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures'
 metadata:
-  user-invocable: true
+  user-invocable: 'true'
   version: '1.2.0'
   organization: Doc Detective
   date: March 2026

@@ -2,7 +2,7 @@
 name: generate
 description: 'Interpret documentation procedures into Doc Detective test specifications without executing'
 metadata:
-  user-invocable: true
+  user-invocable: 'true'
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026

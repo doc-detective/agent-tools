@@ -2,7 +2,7 @@
 name: validate
 description: 'Validate Doc Detective test specifications or configuration files'
 metadata:
-  user-invocable: true
+  user-invocable: 'true'
   version: '1.1.0'
   organization: Doc Detective
   date: March 2026
