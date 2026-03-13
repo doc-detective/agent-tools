@@ -1,6 +1,6 @@
 # Doc Detective Agent Tools
 
-Agent tools for testing documentation procedures and validating that documented workflows match actual application behavior. Compatible with Gemini CLI, Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and other AI coding assistants that support plugins, skills, or commands.
+Agent tools for testing documentation procedures and validating that documented workflows match actual application behavior. Compatible with Gemini CLI, Claude Code, Cursor, Codex, OpenCode, GitHub Copilot, and other AI coding agents that support plugins, skills, or commands.
 
 - **Set up Doc Detective for a project.** Initialize Doc Detective in a project with automatic documentation detection, config generation, and test creation.
 - **Generate tests.** Convert documentation into executable test specifications.
