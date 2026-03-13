@@ -21,12 +21,15 @@ Validate Doc Detective test specifications or configuration files to ensure they
 
 Validate a test specification file or inline JSON:
 
-```
+```bash
 /doc-detective:validate test-spec.json
 ```
 
-```
+```bash
 /doc-detective:validate
+```
+
+```json
 {
   "tests": [{
     "testId": "login-flow",
@@ -40,7 +43,7 @@ Validate a test specification file or inline JSON:
 
 Validate a configuration file:
 
-```
+```bash
 /doc-detective:validate --config .doc-detective.json
 ```
 

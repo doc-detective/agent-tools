@@ -11,14 +11,14 @@ skill: doc-detective-generate
 
 ## Usage
 
-```
+```bash
 /doc-detective:generate <file-path> [--output <path>] [--merge <existing-spec>]
 ```
 
 - `--output <path>` — Write spec to file instead of stdout
 - `--merge <existing-spec>` — Augment an existing spec with new tests
 
-```
+```bash
 /doc-detective:generate docs/getting-started.md
 /doc-detective:generate docs/login.md --output tests/login-spec.json
 /doc-detective:generate docs/new-feature.md --merge tests/existing-spec.json

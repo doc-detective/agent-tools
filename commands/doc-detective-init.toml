@@ -10,7 +10,7 @@ Bootstrap Doc Detective in a repository: detect docs, generate config, create te
 
 ## Usage
 
-```
+```bash
 /doc-detective:init [options]
 ```
 
@@ -23,7 +23,7 @@ Bootstrap Doc Detective in a repository: detect docs, generate config, create te
 | `--skip-tests` | false | Generate config and tests but do not execute |
 | `--skip-fix-loop` | false | Run tests but skip iterative fixing |
 
-```
+```bash
 /doc-detective:init
 /doc-detective:init --ci
 /doc-detective:init --dry-run
