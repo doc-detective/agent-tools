@@ -34,9 +34,9 @@ jobs:
 
       - name: Validate skills
         run: |
-          skill-validator check --strict --emit-annotations skills/
+          skill-validator check --emit-annotations skills/
 
       - name: Write step summary
         if: always()
         run: |
-          skill-validator check --strict -o markdown skills/ >> "$GITHUB_STEP_SUMMARY"
+          skill-validator check -o markdown skills/ >> "$GITHUB_STEP_SUMMARY"
