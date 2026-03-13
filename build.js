@@ -11,7 +11,7 @@
 //   agents/                                          ← copied from src/agents/
 //   skills/                                          ← copied from src/skills/
 //   commands/*.md                                    ← generated from src/skills/*/SKILL.md (user-invocable: true)
-//   commands/doc-detective/*.toml                    ← generated from commands/*.md
+//   commands/*.toml                                  ← generated from commands/*.md
 //   plugins/doc-detective/{agents,skills}/           ← copied from agents/, skills/
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
@@ -231,7 +231,7 @@ function generateTomls() {
   log("\nGenerating command TOML files...");
 
   const cmdDir = path.join(ROOT, "commands");
-  const tomlDir = path.join(cmdDir, "doc-detective");
+  const tomlDir = cmdDir;
 
   fs.mkdirSync(tomlDir, { recursive: true });
 
@@ -266,7 +266,7 @@ function generateTomls() {
 
     const tomlPath = path.join(tomlDir, `${name}.toml`);
     fs.writeFileSync(tomlPath, toml);
-    log(`  commands/${mdFile} -> commands/doc-detective/${name}.toml`);
+    log(`  commands/${mdFile} -> commands/${name}.toml`);
   }
 }
 
