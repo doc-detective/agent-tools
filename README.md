@@ -7,6 +7,23 @@ Agent tools for testing documentation procedures and validating that documented 
 - **Run tests.** Execute tests against your application and report results.
 - **Inject tests into your docs content.** Embed test steps close to associated documentation content.
 
+## Repository Structure
+
+Source content lives in `src/`. The build system (`npm run build`) generates downstream artifact directories that consumers install:
+
+| Directory | Description |
+|-----------|-------------|
+| `src/agents/` | Agent definitions (source of truth) |
+| `src/skills/` | Skill implementations — SKILL.md, references/, scripts/ (source of truth) |
+| `agents/` | Copied from `src/agents/` (build artifact) |
+| `skills/` | Copied from `src/skills/` (build artifact) |
+| `commands/*.md` | Generated from user-invocable skills (build artifact) |
+| `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
+| `plugins/doc-detective/` | Copied from `agents/` and `skills/` (build artifact) |
+
+> [!NOTE]
+> Do not edit files in `agents/`, `skills/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.
+
 ## Installation
 
 ### Claude Code
@@ -27,7 +44,7 @@ Agent tools for testing documentation procedures and validating that documented 
 3. Ask about Doc Detective, or use the `init` command to get started:
 
    ```text
-   /doc-detective:init
+   /init
    ```
 
 ### Gemini CLI
@@ -60,15 +77,15 @@ Agent tools for testing documentation procedures and validating that documented 
    /plugin install doc-detective@doc-detective
    ```
 
-3. Ask about Doc Detective:
+3. Ask about Doc Detective, or use the `init` command to get started:
 
    ```text
-   Bootstrap Doc Detective for my project
+   /init
    ```
 
 ### Qwen Code
 
-1. Installthe plugin and open Qwen Code:
+1. Install the plugin and open Qwen Code:
 
    ```bash
    qwen extensions install https://github.com/doc-detective/agent-tools
@@ -104,20 +121,20 @@ Follow the prompts. The CLI auto-detects which AI tools you have installed and p
 ```bash
 git clone https://github.com/doc-detective/agent-tools.git
 
-cp agent-tools/agents .{agent-dir}/agents      # Agents
-cp agent-tools/commands .{agent-dir}/commands  # Commands
-cp agent-tools/skills .{agent-dir}/skills      # Skills
+cp -r agent-tools/agents .{agent-dir}/agents      # Agents
+cp -r agent-tools/commands .{agent-dir}/commands  # Commands
+cp -r agent-tools/skills .{agent-dir}/skills      # Skills
 ```
 
 > [!IMPORTANT]
-> Adjust the path based on your agent's expected skill/plugin directory. For example, `.agents` for Ckdex, `.cursor` for Cursor, etc.
+> Adjust the destination path based on your agent's expected skill/plugin directory. For example, `.agents` for Codex, `.cursor` for Cursor, etc.
 
 ## Usage
 
 ### Bootstrap Doc Detective for a Project
 
 ```bash
-/doc-detective:init
+/init
 ```
 
 Initializes Doc Detective in your repository by:
@@ -130,7 +147,7 @@ Initializes Doc Detective in your repository by:
 ### Convert Documentation to Tests
 
 ```bash
-/doc-detective:generate path/to/documentation.md
+/generate path/to/documentation.md
 ```
 
 Identify testable procedures and convert them into Doc Detective test specifications.
@@ -138,7 +155,7 @@ Identify testable procedures and convert them into Doc Detective test specificat
 ### Run Tests
 
 ```bash
-/doc-detective:test path/to/documentation.md
+/test path/to/documentation.md
 ```
 
 Runs tests from docs or test specification files:
@@ -152,7 +169,7 @@ Runs tests from docs or test specification files:
 ### Validate Test Specifications
 
 ```bash
-/doc-detective:validate test-spec.json
+/validate test-spec.json
 ```
 
 Validates structure before execution:
@@ -164,7 +181,7 @@ Validates structure before execution:
 ### Inject Tests into Documentation
 
 ```bash
-/doc-detective:inject tests/spec.yaml docs/procedure.md --apply
+/inject tests/spec.yaml docs/procedure.md --apply
 ```
 
 Takes a well-formed test specification and injects test steps as inline comments into the associated documentation content so you don't have to maintain separate files.
@@ -195,7 +212,7 @@ See `skills/doc-testing/references/actions.md` for detailed documentation.
 Inject test steps from separate spec files directly into documentation as inline comments:
 
 ```bash
-/doc-detective:inject tests/login.yaml docs/login.md --apply
+/inject tests/login.yaml docs/login.md --apply
 ```
 
 **Before:**
@@ -235,7 +252,7 @@ Documentation:
 Use the skill:
 
 ```
-/doc-detective:test path/to/file.md this login procedure from our docs to make sure it still works
+/test path/to/file.md this login procedure from our docs to make sure it still works
 ```
 
 ### Test Multiple Workflows
@@ -274,7 +291,7 @@ Create a test specification file `workflows.json`:
 Then execute:
 
 ```
-/doc-detective:test workflows.json
+/test workflows.json
 ```
 
 ## Resources

@@ -141,8 +141,8 @@ function syncSourceToArtifacts() {
 
 /**
  * Derive command filename from a skill name.
- * "doc-detective:generate" → "generate"
- * Falls back to the raw name if no colon is present.
+ * "generate" → "generate"
+ * Falls back to stripping a colon prefix if present.
  */
 function skillNameToCommandFile(skillName) {
   const colon = skillName.lastIndexOf(":");
