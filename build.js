@@ -36,6 +36,10 @@ const COPY_EXCLUDES = new Set([
   ".DS_Store",
 ]);
 
+// Subdirectories to exclude when inside a scripts/ directory
+// (build sources and test fixtures belong in src/, not in output artifacts)
+const SCRIPTS_DIR_EXCLUDES = new Set(["src", "dist", "fixtures"]);
+
 // ─── Helpers ─────────────────────────────────────────────────
 
 function log(msg) {
@@ -69,7 +73,7 @@ function parseFrontmatter(content) {
 }
 
 /** Recursively copy a directory, skipping excluded names. */
-function copyDirRecursive(src, dest) {
+function copyDirRecursive(src, dest, insideScripts = false) {
   fs.mkdirSync(dest, { recursive: true });
 
   for (const entry of fs.readdirSync(src, { withFileTypes: true })) {
@@ -79,7 +83,8 @@ function copyDirRecursive(src, dest) {
     const destPath = path.join(dest, entry.name);
 
     if (entry.isDirectory()) {
-      copyDirRecursive(srcPath, destPath);
+      if (insideScripts && SCRIPTS_DIR_EXCLUDES.has(entry.name)) continue;
+      copyDirRecursive(srcPath, destPath, insideScripts || entry.name === "scripts");
     } else {
       fs.copyFileSync(srcPath, destPath);
     }

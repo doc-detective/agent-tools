@@ -69,7 +69,7 @@ Test documentation procedures by converting them to Doc Detective test specifica
 echo '<your-spec-json>' > /tmp/spec.json
 
 # Run validator - MUST show "Validation PASSED"
-node ./scripts/dist/validate-test.js /tmp/spec.json
+node ./scripts/validate-test.js /tmp/spec.json
 ```
 
 **Do NOT return a spec without running validation. If validation fails, fix the spec and re-validate.**
@@ -91,7 +91,7 @@ node ./scripts/dist/validate-test.js /tmp/spec.json
 **Efficiency tip:** For full workflows, chain commands. Example:
 ```bash
 # Generate, validate, and execute in sequence
-echo '{"tests":[...]}' > spec.json && node ./scripts/dist/validate-test.js spec.json && npx doc-detective run --input spec.json
+echo '{"tests":[...]}' > spec.json && node ./scripts/validate-test.js spec.json && npx doc-detective run --input spec.json
 ```
 
 ## Step 1: Text-to-Test Interpretation
@@ -189,7 +189,7 @@ Use selectors only when:
 
 2. Run the validator and show output:
    ```bash
-   node ./scripts/dist/validate-test.js /tmp/test-spec.json
+   node ./scripts/validate-test.js /tmp/test-spec.json
    ```
 
 3. Only if output shows `Validation PASSED`, proceed to return the spec.
@@ -273,12 +273,12 @@ When you generate a test spec **from a source documentation file**, offer to inj
 
 2. **Show preview** (no `--apply` flag):
    ```bash
-   node ./skills/inline-test-injection/scripts/dist/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
+   node ./skills/inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
    ```
 
 3. **Apply on confirmation**:
    ```bash
-   node ./skills/inline-test-injection/scripts/dist/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
+   node ./skills/inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
    ```
 
 For multi-file specs, offer injection separately per source file. Return the full JSON spec regardless of injection decisions. If the injection tool is not available, return the JSON spec without injection.
@@ -404,7 +404,7 @@ When tests fail, use the fix-tests tool to analyze failures, generate fixes with
 1. [ ] **NO "action" property** - Check every step: if you see `"action":` anywhere, DELETE IT and rewrite. Use `"goTo":`, `"click":`, `"find":` etc. as the key itself.
 2. [ ] **Text-based matching** - Use `"click": "Submit"` not `"click": "#btn"`
 3. [ ] **Valid structure** - `tests` array with `testId` and `steps` in each test
-4. [ ] **EXECUTE VALIDATION** - Run `node ./scripts/dist/validate-test.js` on the spec file and include the output in your response
+4. [ ] **EXECUTE VALIDATION** - Run `node ./scripts/validate-test.js` on the spec file and include the output in your response
 5. [ ] **Validation PASSED** - Output must show "Validation PASSED". If not, fix and re-run.
 
 **STOP: Did you run the validator and show its output? If not, do it now before responding.**
@@ -440,8 +440,8 @@ Do not assume Doc Detective works like other test runners. Verify against offici
 
 ### Tools
 
-- `scripts/dist/validate-test.js` — Validate test specs (required before returning specs)
-- `scripts/dist/fix-tests.js` — Analyze failures and propose fixes
+- `scripts/validate-test.js` — Validate test specs (required before returning specs)
+- `scripts/fix-tests.js` — Analyze failures and propose fixes
 
 ### Sample Files
 
@@ -462,9 +462,3 @@ Do not assume Doc Detective works like other test runners. Verify against offici
 
 - `scripts/build-skill.sh` — Build script for compiling skill tools
 - `scripts/test-skill.sh` — Test script for validating skill functionality
-- `scripts/src/validate-test.js` — Source for validate-test tool
-- `scripts/src/fix-tests.mjs` — Source for fix-tests tool
-- `scripts/src/package.json` — Dependencies for skill tools
-- `scripts/src/package-lock.json` — Dependency lock file
-- `scripts/src/bun.lock` — Bun lock file
-- `scripts/src/dist/validate-test.js` — Compiled validate-test tool

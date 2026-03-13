@@ -105,11 +105,11 @@ else
     echo "Claude CLI: not found (skill tests will be skipped)"
 fi
 
-# Check if dist exists
+# Check if bundled script exists
 INJECT_SCRIPT=""
-if [ -f "$SCRIPT_DIR/dist/inline-test-injection.js" ]; then
-    INJECT_SCRIPT="node $SCRIPT_DIR/dist/inline-test-injection.js"
-    echo "Inject script: $SCRIPT_DIR/dist/inline-test-injection.js (bundled)"
+if [ -f "$SCRIPT_DIR/inline-test-injection.js" ]; then
+    INJECT_SCRIPT="node $SCRIPT_DIR/inline-test-injection.js"
+    echo "Inject script: $SCRIPT_DIR/inline-test-injection.js (bundled)"
 else
     echo "Inject script: not found (run build-skill.sh first)"
 fi

@@ -58,13 +58,13 @@ Inject test steps from Doc Detective specs into documentation source files as in
 
 ```bash
 # Preview mode (default) - shows diff of planned changes
-node ./scripts/dist/inline-test-injection.js <spec-file> <source-file>
+node ./scripts/inline-test-injection.js <spec-file> <source-file>
 
 # Apply mode - writes changes to file
-node ./scripts/dist/inline-test-injection.js <spec-file> <source-file> --apply
+node ./scripts/inline-test-injection.js <spec-file> <source-file> --apply
 
 # Specify syntax format for inline content
-node ./scripts/dist/inline-test-injection.js spec.yaml doc.md --syntax yaml
+node ./scripts/inline-test-injection.js spec.yaml doc.md --syntax yaml
 ```
 
 ### Manual Injection
@@ -154,24 +154,11 @@ If `.doc-detective.json` or `.doc-detective.yaml` exists, custom markup patterns
 - Indentation is preserved from the matched line
 - Comment inserted at same indentation level
 
-## Scripts and Test Fixtures
+## Scripts
 
 ### Tools
 
-- `scripts/dist/inline-test-injection.js` — Main injection script
-
-### Test Fixtures
-
-- `scripts/fixtures/sources/sample.md` — Sample Markdown source
-- `scripts/fixtures/sources/sample.mdx` — Sample MDX source
-- `scripts/fixtures/sources/sample.html` — Sample HTML source
-- `scripts/fixtures/sources/sample.adoc` — Sample AsciiDoc source
-- `scripts/fixtures/sources/with-config/sample.md` — Sample with config
-- `scripts/fixtures/sources/with-config/.doc-detective.json` — Fixture config
-- `scripts/fixtures/expected/sample-injected.md` — Expected injection result
-- `scripts/fixtures/specs/valid-basic.json` — Valid basic test spec
-- `scripts/fixtures/specs/valid-complex.yaml` — Valid complex test spec (YAML)
-- `scripts/fixtures/specs/invalid-no-tests.json` — Invalid spec example (no tests)
+- `scripts/inline-test-injection.js` — Main injection script
 
 ### Build and Test Infrastructure
 

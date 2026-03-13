@@ -8,13 +8,13 @@ Use the fix-tests tool to analyze failures and propose fixes:
 
 ```bash
 # Analyze failures and show proposed fixes (dry-run)
-node ./scripts/dist/fix-tests.js results.json --spec test-spec.json --dry-run
+node ./scripts/fix-tests.js results.json --spec test-spec.json --dry-run
 
 # Apply fixes above 80% confidence threshold
-node ./scripts/dist/fix-tests.js results.json --spec test-spec.json --threshold 80
+node ./scripts/fix-tests.js results.json --spec test-spec.json --threshold 80
 
 # Apply all fixes regardless of confidence
-node ./scripts/dist/fix-tests.js results.json --spec test-spec.json --auto-fix
+node ./scripts/fix-tests.js results.json --spec test-spec.json --auto-fix
 ```
 
 ## Fix Loop Workflow

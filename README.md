@@ -7,23 +7,6 @@ Agent tools for testing documentation procedures and validating that documented 
 - **Run tests.** Execute tests against your application and report results.
 - **Inject tests into your docs content.** Embed test steps close to associated documentation content.
 
-## Repository Structure
-
-Source content lives in `src/`. The build system (`npm run build`) generates downstream artifact directories that consumers install:
-
-| Directory | Description |
-|-----------|-------------|
-| `src/agents/` | Agent definitions (source of truth) |
-| `src/skills/` | Skill implementations — SKILL.md, references/, scripts/ (source of truth) |
-| `agents/` | Copied from `src/agents/` (build artifact) |
-| `skills/` | Copied from `src/skills/` (build artifact) |
-| `commands/*.md` | Generated from user-invocable skills (build artifact) |
-| `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
-| `plugins/doc-detective/` | Copied from `agents/` and `skills/` (build artifact) |
-
-> [!NOTE]
-> Do not edit files in `agents/`, `skills/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.
-
 ## Installation
 
 ### Claude Code
@@ -300,6 +283,23 @@ Then execute:
 - [Doc Detective GitHub](https://github.com/doc-detective/doc-detective)
 - [Test Specification Format](https://doc-detective.com/docs/get-started/tests)
 - [Actions Reference](https://doc-detective.com/docs/category/actions)
+
+## Repository Structure
+
+Source content lives in `src/`. The build system (`npm run build`) generates downstream artifact directories that consumers install:
+
+| Directory | Description |
+|-----------|-------------|
+| `src/agents/` | Agent definitions (source of truth) |
+| `src/skills/` | Skill implementations — SKILL.md, references/, scripts/ (source of truth) |
+| `agents/` | Copied from `src/agents/` (build artifact) |
+| `skills/` | Copied from `src/skills/` (build artifact) |
+| `commands/*.md` | Generated from user-invocable skills (build artifact) |
+| `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
+| `plugins/doc-detective/` | Copied from `agents/` and `skills/` (build artifact) |
+
+> [!NOTE]
+> Do not edit files in `agents/`, `skills/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.
 
 ## License
 

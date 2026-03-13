@@ -256,16 +256,16 @@ Iteratively analyze failures and propose fixes with confidence scoring using the
 
 ```bash
 # Analyze failures (dry-run to preview fixes)
-node ./skills/doc-testing/scripts/dist/fix-tests.js results.json --spec test-spec.json --dry-run
+node ./skills/doc-testing/scripts/fix-tests.js results.json --spec test-spec.json --dry-run
 
 # Apply fixes above threshold (default 80%)
-node ./skills/doc-testing/scripts/dist/fix-tests.js results.json --spec test-spec.json
+node ./skills/doc-testing/scripts/fix-tests.js results.json --spec test-spec.json
 
 # Custom threshold
-node ./skills/doc-testing/scripts/dist/fix-tests.js results.json --spec test-spec.json --threshold 70
+node ./skills/doc-testing/scripts/fix-tests.js results.json --spec test-spec.json --threshold 70
 
 # Auto-fix all regardless of confidence
-node ./skills/doc-testing/scripts/dist/fix-tests.js results.json --spec test-spec.json --auto-fix
+node ./skills/doc-testing/scripts/fix-tests.js results.json --spec test-spec.json --auto-fix
 ```
 
 ### Fix Loop Flow
