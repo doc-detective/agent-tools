@@ -170,7 +170,7 @@ Before returning any test spec:
 ## External Resources
 
 - Main docs: https://doc-detective.com
-- Test structure: https://doc-detective.com/docs/get-started/doc-detective-tests
+- Test structure: https://doc-detective.com/docs/get-started/tests
 - Actions: https://doc-detective.com/docs/category/actions
 - GitHub: https://github.com/doc-detective/doc-detective
 

@@ -286,6 +286,6 @@ npx ajv validate -s https://raw.githubusercontent.com/doc-detective/common/refs/
 ## Related Resources
 
 - Config schema: https://doc-detective.com/docs/references/schemas/config
-- File types: https://doc-detective.com/docs/get-started/doc-detective-tests#detected-tests
+- File types: https://doc-detective.com/docs/get-started/tests#detected-tests
 - Contexts: https://doc-detective.com/docs/get-started/config/contexts
 - doc-detective-common: https://github.com/doc-detective/doc-detective-common

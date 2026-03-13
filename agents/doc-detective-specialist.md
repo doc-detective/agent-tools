@@ -35,7 +35,7 @@ Your knowledge comes from the following in-repo references and external document
 
 ### External Documentation
 - Doc Detective docs: https://doc-detective.com
-- Test structure: https://doc-detective.com/docs/get-started/doc-detective-tests
+- Test structure: https://doc-detective.com/docs/get-started/tests
 - Actions: https://doc-detective.com/docs/category/actions
 - Config schema: https://doc-detective.com/docs/references/schemas/config
 - GitHub: https://github.com/doc-detective/doc-detective
