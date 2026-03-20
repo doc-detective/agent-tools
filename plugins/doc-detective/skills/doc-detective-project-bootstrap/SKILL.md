@@ -49,12 +49,13 @@ Before completing:
 3. [ ] Test specs generated, validated, and executed (unless `--dry-run`)
 4. [ ] Fix loop completed or skipped; unresolved failures reported as "needs manual review"
 5. [ ] Passing tests injected into source files (unless `--skip-inject` or `--ci` without `--inject-all`)
+6. [ ] GitHub Action workflow offered/installed (if GitHub repo)
 
 ## Workflow
 
 **Phases run in order. Do NOT advance to the next phase if the current phase fails.**
 
-1. Detect → 2. Configure → 3. Generate Tests → 4. Execute → 5. Fix Loop → 6. Inject
+1. Detect → 2. Configure → 3. Generate Tests → 4. Execute → 5. Fix Loop → 6. Inject → 7. GitHub Action
 
 ### Phase 1: Detect Documentation
 
@@ -115,3 +116,13 @@ For each source file with passing tests:
 3. Apply confirmed injections using the skill's `--apply` mode.
 
 The injection tool selects the correct comment format automatically.
+
+### Phase 7: Install GitHub Action
+
+**Condition:** Only run if the project is an initialized GitHub repository (`.git/` exists and a remote URL references `github.com`). Skip this phase silently otherwise.
+
+1. If not in `--ci` mode, ask the user if they want to set up the Doc Detective GitHub Action for CI. If the user declines, skip this phase.
+2. If in `--ci` mode, default to yes — proceed without prompting.
+3. Invoke `/doc-detective-install-github-action` with matching flags:
+   - Pass `--ci` if bootstrap was called with `--ci`.
+   - Pass `--exit-on-fail` if appropriate for the project context.
