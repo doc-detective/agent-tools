@@ -125,4 +125,6 @@ The injection tool selects the correct comment format automatically.
 2. If in `--ci` mode, default to yes — proceed without prompting.
 3. Invoke `/doc-detective-install-github-action` with matching flags:
    - Pass `--ci` if bootstrap was called with `--ci`.
-   - Pass `--exit-on-fail` if appropriate for the project context.
+   - For `--exit-on-fail`:
+     - In `--ci` mode, pass `--exit-on-fail` by default.
+     - In interactive mode, ask the user and pass it only if they opt in.

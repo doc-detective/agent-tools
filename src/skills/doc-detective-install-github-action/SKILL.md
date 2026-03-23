@@ -54,7 +54,7 @@ Confirm all of the following before starting. If any item is unavailable, stop a
 Before completing:
 
 1. [ ] Workflow YAML file created at `.github/workflows/doc-detective.yml` (or user-chosen name)
-2. [ ] Required permissions documented in workflow comments
+2. [ ] Required permissions correctly set in the `permissions:` block
 3. [ ] Optional features (PR creation, issue creation, integrations) configured per user choices
 4. [ ] Manual steps reported to user (e.g., enabling Actions permissions, adding secrets)
 
