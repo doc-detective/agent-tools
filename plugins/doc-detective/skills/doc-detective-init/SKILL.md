@@ -57,12 +57,13 @@ Before completing:
 3. [ ] Tests executed (unless `--skip-tests` or `--dry-run`)
 4. [ ] Fix loop completed or skipped (unless `--skip-fix-loop`)
 5. [ ] Any unresolved failures reported to user with "needs manual review" status
+6. [ ] GitHub Action workflow offered/installed (if GitHub repo)
 
 ## Workflow
 
 **Phases run in order. Do NOT advance to the next phase if the current phase fails.**
 
-1. Detect → 2. Configure → 3. Generate Tests → 4. Execute → 5. Fix Loop
+1. Detect → 2. Configure → 3. Generate Tests → 4. Execute → 5. Fix Loop → 6. GitHub Action
 
 ### Phase 1: Detect Documentation
 
@@ -126,8 +127,21 @@ For each failing test, repeat up to 3 times:
 
 Report all "needs manual review" tests to the user before completing.
 
+### Phase 6: Install GitHub Action
+
+**Condition:** Only run if the project is an initialized GitHub repository (`.git` exists as a file or directory, and a remote URL references `github.com`). Skip this phase silently otherwise.
+
+1. If not in `--ci` mode, ask the user if they want to set up the Doc Detective GitHub Action for CI. If the user declines, skip this phase.
+2. If in `--ci` mode, default to yes — proceed without prompting.
+3. Invoke `/doc-detective-install-github-action` with matching flags:
+   - Pass `--ci` if init was called with `--ci`.
+   - For `--exit-on-fail`:
+     - In `--ci` mode, pass `--exit-on-fail` by default.
+     - In interactive mode, ask the user and pass it only if they opt in.
+
 ## Related Commands
 
 - `/doc-detective-test` — Run existing tests without re-bootstrapping
 - `/doc-detective-generate` — Generate tests for a single file
 - `/doc-detective-validate` — Validate an existing test spec
+- `/doc-detective-install-github-action` — Install the Doc Detective GitHub Action workflow
