@@ -47,6 +47,7 @@ Only add fields when:
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
 | Want to detect testable procedures from markup syntax | `detectSteps` |
+| Loading content from Heretto CMS | `integrations.heretto` |
 
 ## Configuration Schema Reference
 
@@ -65,6 +66,18 @@ interface Config {
   runOn?: Context[];              // Execution contexts
   concurrentRunners?: number;     // Default: 1
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
+  integrations?: {                // External CMS integrations
+    heretto?: HerettoConfig[];
+  };
+}
+
+interface HerettoConfig {
+  name: string;                   // Reference name for heretto:<name> input
+  organizationId: string;         // Heretto organization ID
+  username: string;               // Heretto username
+  apiToken: string;               // Heretto API token (use env var)
+  scenarioName?: string;          // Publishing scenario name (default: "Doc Detective")
+  uploadOnChange?: boolean;       // Upload modified content back to Heretto
 }
 ```
 
@@ -137,6 +150,43 @@ interface Config {
   "processDitaMaps": true
 }
 ```
+
+### Heretto CMS Integration
+
+Load content directly from Heretto CMS for testing. Use `heretto:<name>` in your `input` array to reference a configured Heretto integration:
+
+```json
+{
+  "input": ["heretto:my-heretto-docs"],
+  "output": ".doc-detective/results",
+  "loadVariables": ".env",
+  "integrations": {
+    "heretto": [
+      {
+        "name": "my-heretto-docs",
+        "organizationId": "$HERETTO_ORG_ID",
+        "username": "$HERETTO_USERNAME",
+        "apiToken": "$HERETTO_API_TOKEN",
+        "scenarioName": "Doc Detective"
+      }
+    ]
+  }
+}
+```
+
+Then in `.env` (gitignored):
+```
+HERETTO_ORG_ID=your-organization
+HERETTO_USERNAME=user@example.com
+HERETTO_API_TOKEN=your-api-token
+```
+
+**Requirements:**
+- A publishing scenario named "Doc Detective" (or custom name via `scenarioName`) must exist in Heretto
+- The scenario must use `transtype: dita` to output DITA content
+- The scenario must have a valid `file_uuid_picker` parameter pointing to your ditamap
+
+Doc Detective will trigger the publishing job, wait for completion, download the DITA output, and use it as test input.
 
 ## Configuration File Formats
 
