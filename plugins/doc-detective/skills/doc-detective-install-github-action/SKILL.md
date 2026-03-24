@@ -46,7 +46,7 @@ Confirm all of the following before starting. If any item is unavailable, stop a
 | Criteria | How to find it |
 |---|---|
 | Repository root is accessible | Check working directory — ask user if unclear |
-| Git repository initialized | `.git/` directory exists |
+| Git repository initialized | `.git` exists (file or directory) |
 | GitHub remote detected | `.git/config` references `github.com`, or `gh repo view` succeeds |
 | Workflows directory exists or can be created | `.github/workflows/` exists or parent `.github/` can be created |
 
@@ -67,7 +67,7 @@ Before completing:
 
 ### Phase 1: Detect Context
 
-1. Confirm this is a Git repository (`.git/` exists). If not, stop and inform the user.
+1. Confirm this is a Git repository (`.git` exists as a file or directory). If not, stop and inform the user.
 2. Confirm the remote points to GitHub. Check `.git/config` for `github.com` in a remote URL, or run `gh repo view --json url` if the `gh` CLI is available. If not a GitHub repo, stop and inform the user this skill is GitHub-specific.
 3. Check for existing Doc Detective config: `.doc-detective.json`, `doc-detective.config.js`. Record the path if found.
 4. Check for existing workflows in `.github/workflows/` — note any existing `doc-detective*.yml` files to avoid conflicts.

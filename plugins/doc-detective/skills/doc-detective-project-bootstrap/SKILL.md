@@ -119,7 +119,7 @@ The injection tool selects the correct comment format automatically.
 
 ### Phase 7: Install GitHub Action
 
-**Condition:** Only run if the project is an initialized GitHub repository (`.git/` exists and a remote URL references `github.com`). Skip this phase silently otherwise.
+**Condition:** Only run if the project is an initialized GitHub repository (`.git` exists as a file or directory, and a remote URL references `github.com`). Skip this phase silently otherwise.
 
 1. If not in `--ci` mode, ask the user if they want to set up the Doc Detective GitHub Action for CI. If the user declines, skip this phase.
 2. If in `--ci` mode, default to yes — proceed without prompting.
