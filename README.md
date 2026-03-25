@@ -6,6 +6,7 @@ Agent tools for testing documentation procedures and validating that documented 
 - **Generate tests.** Convert documentation into executable test specifications.
 - **Run tests.** Execute tests against your application and report results.
 - **Inject tests into your docs content.** Embed test steps close to associated documentation content.
+- **Install the Doc Detective GitHub Action.** Add a Doc Detective GitHub Actions workflow for automated documentation testing in CI.
 
 ## Installation
 
@@ -168,6 +169,28 @@ Validates structure before execution:
 ```
 
 Takes a well-formed test specification and injects test steps as inline comments into the associated documentation content so you don't have to maintain separate files.
+
+### Install the Doc Detective GitHub Action
+
+```bash
+/doc-detective-install-github-action [options]
+```
+
+Installs a Doc Detective GitHub Actions workflow for automated documentation testing in CI:
+
+1. Detects project context (config files, docs directory, existing workflows).
+2. Generates a workflow YAML with configurable triggers and optional features.
+3. Writes the workflow to `.github/workflows/doc-detective.yml`.
+4. Reports manual steps needed (e.g., enabling Actions permissions).
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--trigger <event>` | `pull_request` | Workflow trigger (`pull_request`, `push`, `schedule`, etc.) |
+| `--exit-on-fail` | false | Fail CI when tests fail |
+| `--create-pr-on-change` | false | Open a PR when files change during test execution |
+| `--create-issue-on-fail` | false | Create a GitHub issue when tests fail |
+| `--integrations <list>` | (none) | Comma-separated integrations to mention in issues |
+| `--ci` | false | Non-interactive; use defaults, no prompts |
 
 ## Doc Detective Actions Reference
 

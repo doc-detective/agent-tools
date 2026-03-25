@@ -4,7 +4,7 @@ description: "Use this agent when the user needs help with Doc Detective configu
 model: inherit
 metadata:
   organization: Doc Detective
-  version: '1.1.0'
+  version: '1.2.0'
   date: March 2026
 ---
 

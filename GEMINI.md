@@ -13,6 +13,7 @@ Documentation contains testable assertions — promises to users about what happ
 - `/doc-detective-test <file>` — Generate tests from docs, validate, execute, and report results
 - `/doc-detective-inject <spec> <source>` — Inject test specs into documentation as inline comments
 - `/doc-detective-validate <spec>` — Validate test specification structure
+- `/doc-detective-install-github-action [options]` — Install a Doc Detective GitHub Actions workflow for CI
 
 ## Available Scripts
 

@@ -2,7 +2,7 @@
 name: doc-detective-install-github-action
 description: 'Install and configure the Doc Detective GitHub Action workflow for automated documentation testing in CI'
 metadata:
-  version: '1.1.0'
+  version: '1.2.0'
   organization: Doc Detective
   date: March 2026
   abstract: Install and configure the Doc Detective GitHub Action workflow for automated documentation testing in CI. Detects project context, creates workflow file, and configures action inputs including PR creation, issue creation, and integrations.
