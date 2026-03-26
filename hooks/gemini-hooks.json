@@ -1,0 +1,54 @@
+{
+  "hooks": {
+    "BeforeTool": [
+      {
+        "matcher": "write_file|replace",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$GEMINI_EXTENSION_DIR/hooks/scripts/pre-edit-block-action-antipattern.js\"",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "AfterTool": [
+      {
+        "matcher": "write_file|replace",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$GEMINI_EXTENSION_DIR/hooks/scripts/post-edit-validate-test-spec.js\"",
+            "timeout": 30000
+          },
+          {
+            "type": "command",
+            "command": "node \"$GEMINI_EXTENSION_DIR/hooks/scripts/post-edit-suggest-testing.js\"",
+            "timeout": 10000
+          },
+          {
+            "type": "command",
+            "command": "node \"$GEMINI_EXTENSION_DIR/hooks/scripts/post-edit-format-test-spec.js\"",
+            "timeout": 15000
+          },
+          {
+            "type": "command",
+            "command": "node \"$GEMINI_EXTENSION_DIR/hooks/scripts/post-edit-warn-inline-tests.js\"",
+            "timeout": 10000
+          }
+        ]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$GEMINI_EXTENSION_DIR/hooks/scripts/session-start-check-install.sh\"",
+            "timeout": 15000
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -108,6 +108,7 @@ git clone https://github.com/doc-detective/agent-tools.git
 cp -r agent-tools/agents .{agent-dir}/agents      # Agents
 cp -r agent-tools/commands .{agent-dir}/commands  # Commands
 cp -r agent-tools/skills .{agent-dir}/skills      # Skills
+cp -r agent-tools/hooks .{agent-dir}/hooks        # Hooks
 ```
 
 > [!IMPORTANT]
@@ -213,6 +214,21 @@ The plugin includes complete documentation for Doc Detective actions:
 
 See `skills/doc-detective-doc-testing/references/actions.md` for detailed documentation.
 
+## Hooks
+
+The plugin includes hooks that activate automatically when installed. Hooks provide deterministic guardrails that run at key points during your agent session — no configuration required.
+
+| Hook | Trigger | Behavior |
+|------|---------|----------|
+| **Test spec validation** | After editing a `.json` test spec | Automatically validates the spec structure and reports errors |
+| **Action anti-pattern blocker** | Before writing test spec content | Blocks the common mistake of `{"action": "goTo"}` — the correct format is `{"goTo": "url"}` |
+| **Documentation test reminder** | After editing a documentation file | Suggests running `/doc-detective-test` if the project has a Doc Detective config |
+| **Installation check** | Session start | Checks if the Doc Detective CLI is available and provides installation instructions if not |
+| **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
+| **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
+
+Hooks are supported in Claude Code and Gemini CLI. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
+
 ## Inline Test Injection
 
 Inject test steps from separate spec files directly into documentation as inline comments:
@@ -315,14 +331,16 @@ Source content lives in `src/`. The build system (`npm run build`) generates dow
 |-----------|-------------|
 | `src/agents/` | Agent definitions (source of truth) |
 | `src/skills/` | Skill implementations — SKILL.md, references/, scripts/ (source of truth) |
+| `src/hooks/` | Hook scripts and platform-specific configs (source of truth) |
 | `agents/` | Copied from `src/agents/` (build artifact) |
 | `skills/` | Copied from `src/skills/` (build artifact) |
+| `hooks/` | Copied from `src/hooks/` (build artifact) |
 | `commands/*.md` | Generated from user-invocable skills (build artifact) |
 | `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
-| `plugins/doc-detective/` | Copied from `agents/` and `skills/` (build artifact) |
+| `plugins/doc-detective/` | Copied from `agents/`, `skills/`, and `hooks/` (build artifact) |
 
 > [!NOTE]
-> Do not edit files in `agents/`, `skills/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.
+> Do not edit files in `agents/`, `skills/`, `hooks/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.
 
 ## License
 

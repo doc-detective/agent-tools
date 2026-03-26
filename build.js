@@ -12,7 +12,9 @@
 //   skills/                                          ← copied from src/skills/
 //   commands/*.md                                    ← generated from src/skills/*/SKILL.md (user-invocable: true)
 //   commands/*.toml                                  ← generated from commands/*.md
+//   hooks/                                           ← copied from src/hooks/
 //   plugins/doc-detective/{agents,skills}/           ← copied from agents/, skills/
+//   plugins/doc-detective/hooks/                     ← copied from src/hooks/ (claude-hooks.json renamed to hooks.json)
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
 //   gemini-extension.json                            ← version from package.json
@@ -164,9 +166,11 @@ function cleanOutputDirs() {
   const dirs = [
     "agents",
     "skills",
+    "hooks",
     "commands",
     "plugins/doc-detective/agents",
     "plugins/doc-detective/skills",
+    "plugins/doc-detective/hooks",
   ];
 
   for (const dir of dirs) {
@@ -356,7 +360,53 @@ function generateTomls() {
   }
 }
 
-// ─── 5. Copy content to plugin directory ─────────────────────
+// ─── 5. Sync hooks to artifact directories ──────────────────
+
+function syncHooks() {
+  log("\nSyncing hooks...");
+
+  const srcHooksDir = path.join(ROOT, "src/hooks");
+  if (!fs.existsSync(srcHooksDir)) {
+    log("  src/hooks/ not found, skipping");
+    return;
+  }
+
+  // Copy to root-level hooks/ artifact (both configs + scripts)
+  copyDirRecursive(srcHooksDir, path.join(ROOT, "hooks"));
+  log("  src/hooks/ -> hooks/");
+
+  // Copy to plugin directory
+  const pluginHooksDir = path.join(ROOT, "plugins/doc-detective/hooks");
+  copyDirRecursive(srcHooksDir, pluginHooksDir);
+
+  // Rename claude-hooks.json -> hooks.json for Claude Code plugin
+  const claudeSrc = path.join(pluginHooksDir, "claude-hooks.json");
+  const hooksDest = path.join(pluginHooksDir, "hooks.json");
+  if (fs.existsSync(claudeSrc)) {
+    fs.renameSync(claudeSrc, hooksDest);
+  }
+
+  // Remove gemini-hooks.json from plugin (not needed there)
+  const geminiSrc = path.join(pluginHooksDir, "gemini-hooks.json");
+  if (fs.existsSync(geminiSrc)) {
+    fs.unlinkSync(geminiSrc);
+  }
+
+  log("  src/hooks/ -> plugins/doc-detective/hooks/ (claude-hooks.json -> hooks.json)");
+
+  // Make .sh files executable in both output locations
+  for (const dir of [path.join(ROOT, "hooks/scripts"), path.join(pluginHooksDir, "scripts")]) {
+    if (fs.existsSync(dir)) {
+      for (const f of fs.readdirSync(dir)) {
+        if (f.endsWith(".sh")) {
+          fs.chmodSync(path.join(dir, f), 0o755);
+        }
+      }
+    }
+  }
+}
+
+// ─── 6. Copy content to plugin directory ─────────────────────
 
 function syncPluginDir() {
   log("\nSyncing plugin directory...");
@@ -426,6 +476,7 @@ syncVersions();
 syncMetadataInSourceFiles();
 buildSkillScripts();
 syncSourceToArtifacts();
+syncHooks();
 generateCommands();
 generateTomls();
 syncPluginDir();
