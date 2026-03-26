@@ -383,6 +383,7 @@ function syncHooks() {
   const claudeSrc = path.join(pluginHooksDir, "claude-hooks.json");
   const hooksDest = path.join(pluginHooksDir, "hooks.json");
   if (fs.existsSync(claudeSrc)) {
+    fs.rmSync(hooksDest, { force: true });
     fs.renameSync(claudeSrc, hooksDest);
   }
 
