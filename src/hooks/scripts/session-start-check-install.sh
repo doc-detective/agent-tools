@@ -35,7 +35,9 @@ fi
 
 # Output result
 if [ "$AVAILABLE" = "true" ]; then
-  printf '{"additionalContext": "Doc Detective status: %s. Tests can be executed directly."}\n' "$STATUS"
+  # Sanitize STATUS to prevent JSON malformation
+  SAFE_STATUS=$(printf '%s' "$STATUS" | sed 's/[\\"/]/\\&/g' | tr -d '\n')
+  printf '{"additionalContext": "Doc Detective status: %s. Tests can be executed directly."}\n' "$SAFE_STATUS"
 else
   printf '{"additionalContext": "Doc Detective CLI is not installed. When the user requests test execution, suggest installation: npm i -g doc-detective, npx doc-detective, or Docker (docker pull docdetective/doc-detective-latest). Test spec generation and validation still work without the CLI."}\n'
 fi

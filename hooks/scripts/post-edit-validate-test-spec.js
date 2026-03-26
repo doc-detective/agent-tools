@@ -64,7 +64,13 @@ async function main() {
       console.log(JSON.stringify({
         additionalContext: `Doc Detective test spec validation FAILED for ${fileName}:\n${output}`
       }));
-    } else if (!err) {
+    } else if (err) {
+      // Timeout or unexpected error
+      const reason = err.killed ? 'timed out' : err.message || 'unknown error';
+      console.log(JSON.stringify({
+        additionalContext: `Doc Detective test spec validation could not complete for ${fileName}: ${reason}`
+      }));
+    } else {
       // Validation passed
       console.log(JSON.stringify({
         additionalContext: `Doc Detective test spec validation PASSED for ${fileName}. ${output}`
