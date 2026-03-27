@@ -10,12 +10,15 @@
     "build:no-scripts": "node build.js --no-scripts",
     "build:doc-testing": "cd src/skills/doc-detective-doc-testing/scripts/src && npm run build",
     "build:inline": "echo 'No source directory for inline-test-injection; rebuild not available'",
+    "test:hooks": "mocha tests/hooks/hook*.test.js --timeout 30000",
+    "test:hooks:integration": "mocha tests/hooks/integration.test.js --timeout 180000",
     "test:doc-testing": "cd skills/doc-detective-doc-testing/scripts && ./doc-detective-test-skill.sh",
     "test:inline": "cd skills/doc-detective-inline-test-injection/scripts && ./doc-detective-test-skill.sh",
     "prepare": "husky",
     "validate:skills": "./scripts/doc-detective-validate-skills.sh"
   },
   "devDependencies": {
-    "husky": "^9.1.7"
+    "husky": "^9.1.7",
+    "mocha": "^11.7.5"
   }
 }

@@ -371,26 +371,38 @@ function syncHooks() {
     return;
   }
 
-  // Copy to root-level hooks/ artifact (both configs + scripts)
-  copyDirRecursive(srcHooksDir, path.join(ROOT, "hooks"));
-  log("  src/hooks/ -> hooks/");
+  // Copy to root-level hooks/ artifact (Gemini extension reads hooks/hooks.json here)
+  const rootHooksDir = path.join(ROOT, "hooks");
+  copyDirRecursive(srcHooksDir, rootHooksDir);
 
-  // Copy to plugin directory
+  // Root hooks/: rename gemini-hooks.json -> hooks.json, remove claude-hooks.json
+  const rootGemini = path.join(rootHooksDir, "gemini-hooks.json");
+  const rootHooksDest = path.join(rootHooksDir, "hooks.json");
+  if (fs.existsSync(rootGemini)) {
+    fs.rmSync(rootHooksDest, { force: true });
+    fs.renameSync(rootGemini, rootHooksDest);
+  }
+  const rootClaude = path.join(rootHooksDir, "claude-hooks.json");
+  if (fs.existsSync(rootClaude)) {
+    fs.unlinkSync(rootClaude);
+  }
+
+  log("  src/hooks/ -> hooks/ (gemini-hooks.json -> hooks.json)");
+
+  // Copy to Claude Code plugin directory
   const pluginHooksDir = path.join(ROOT, "plugins/doc-detective/hooks");
   copyDirRecursive(srcHooksDir, pluginHooksDir);
 
-  // Rename claude-hooks.json -> hooks.json for Claude Code plugin
-  const claudeSrc = path.join(pluginHooksDir, "claude-hooks.json");
-  const hooksDest = path.join(pluginHooksDir, "hooks.json");
-  if (fs.existsSync(claudeSrc)) {
-    fs.rmSync(hooksDest, { force: true });
-    fs.renameSync(claudeSrc, hooksDest);
+  // Plugin hooks/: rename claude-hooks.json -> hooks.json, remove gemini-hooks.json
+  const pluginClaude = path.join(pluginHooksDir, "claude-hooks.json");
+  const pluginHooksDest = path.join(pluginHooksDir, "hooks.json");
+  if (fs.existsSync(pluginClaude)) {
+    fs.rmSync(pluginHooksDest, { force: true });
+    fs.renameSync(pluginClaude, pluginHooksDest);
   }
-
-  // Remove gemini-hooks.json from plugin (not needed there)
-  const geminiSrc = path.join(pluginHooksDir, "gemini-hooks.json");
-  if (fs.existsSync(geminiSrc)) {
-    fs.unlinkSync(geminiSrc);
+  const pluginGemini = path.join(pluginHooksDir, "gemini-hooks.json");
+  if (fs.existsSync(pluginGemini)) {
+    fs.unlinkSync(pluginGemini);
   }
 
   log("  src/hooks/ -> plugins/doc-detective/hooks/ (claude-hooks.json -> hooks.json)");
