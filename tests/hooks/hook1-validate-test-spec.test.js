@@ -72,15 +72,16 @@ describe('Hook 1: post-edit-validate-test-spec', function () {
     });
     assert.strictEqual(result.code, 0);
 
-    const output = parseOutput(result.stdout);
     // Output depends on whether the validator script is reachable.
     // If validator exists, we get PASSED/FAILED. If not, silent exit.
-    if (output) {
+    const trimmed = result.stdout.trim();
+    if (trimmed) {
+      const output = parseOutput(result.stdout);
+      assert.ok(output, 'stdout must be valid JSON when present');
       assert.ok(output.additionalContext, 'should have additionalContext');
-      assert.ok(
-        output.additionalContext.includes('spec.json'),
-        'should reference the filename'
-      );
+      assert.ok(output.additionalContext.includes('spec.json'), 'should reference the filename');
+    } else {
+      assert.strictEqual(trimmed, '');
     }
   });
 

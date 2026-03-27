@@ -378,10 +378,11 @@ function syncHooks() {
   // Root hooks/: rename gemini-hooks.json -> hooks.json, remove claude-hooks.json
   const rootGemini = path.join(rootHooksDir, "gemini-hooks.json");
   const rootHooksDest = path.join(rootHooksDir, "hooks.json");
-  if (fs.existsSync(rootGemini)) {
-    fs.rmSync(rootHooksDest, { force: true });
-    fs.renameSync(rootGemini, rootHooksDest);
+  if (!fs.existsSync(rootGemini)) {
+    throw new Error("Missing required file: src/hooks/gemini-hooks.json");
   }
+  fs.rmSync(rootHooksDest, { force: true });
+  fs.renameSync(rootGemini, rootHooksDest);
   const rootClaude = path.join(rootHooksDir, "claude-hooks.json");
   if (fs.existsSync(rootClaude)) {
     fs.unlinkSync(rootClaude);
@@ -396,10 +397,11 @@ function syncHooks() {
   // Plugin hooks/: rename claude-hooks.json -> hooks.json, remove gemini-hooks.json
   const pluginClaude = path.join(pluginHooksDir, "claude-hooks.json");
   const pluginHooksDest = path.join(pluginHooksDir, "hooks.json");
-  if (fs.existsSync(pluginClaude)) {
-    fs.rmSync(pluginHooksDest, { force: true });
-    fs.renameSync(pluginClaude, pluginHooksDest);
+  if (!fs.existsSync(pluginClaude)) {
+    throw new Error("Missing required file: src/hooks/claude-hooks.json");
   }
+  fs.rmSync(pluginHooksDest, { force: true });
+  fs.renameSync(pluginClaude, pluginHooksDest);
   const pluginGemini = path.join(pluginHooksDir, "gemini-hooks.json");
   if (fs.existsSync(pluginGemini)) {
     fs.unlinkSync(pluginGemini);
