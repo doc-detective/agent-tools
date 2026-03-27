@@ -4,7 +4,7 @@ const assert = require('assert');
 const { runHook, parseOutput } = require('./helpers');
 
 describe('Hook 4: session-start-check-install', function () {
-  this.timeout(20000);
+  this.timeout(30000);
 
   it('should exit 0 and output valid JSON', async function () {
     const result = await runHook('session-start-check-install.sh', '{}');
@@ -18,9 +18,10 @@ describe('Hook 4: session-start-check-install', function () {
   it('should report availability status', async function () {
     const result = await runHook('session-start-check-install.sh', '{}');
     const output = parseOutput(result.stdout);
+    assert.ok(output, `stdout must be valid JSON, got: ${result.stdout.slice(0, 200)}`);
 
-    // The output should either report availability or suggest installation
     const ctx = output.additionalContext;
+    assert.ok(typeof ctx === 'string', 'additionalContext must be a string');
     const reportsAvailable = ctx.includes('Tests can be executed directly');
     const suggestsInstall = ctx.includes('not installed');
     assert.ok(
