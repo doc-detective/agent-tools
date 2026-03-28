@@ -62,10 +62,12 @@ describe('Integration: Claude Code', function () {
       'Is the Doc Detective CLI available in this environment? Answer ONLY "YES" or "NO".'
     );
 
-    // Hook 4 injects context at session start, Claude should know
+    // Hook 4 injects context at session start — verify the hook's marker text appears
+    const combined = result.stdout + result.stderr;
     assert.ok(
+      combined.includes('Doc Detective status:') || combined.includes('Doc Detective CLI is not installed') ||
       result.stdout.includes('YES') || result.stdout.includes('NO'),
-      `Expected YES or NO. Got: ${result.stdout.slice(0, 200)}`
+      `Expected hook marker or YES/NO. Got: ${result.stdout.slice(0, 200)}`
     );
   });
 
@@ -87,9 +89,12 @@ describe('Integration: Claude Code', function () {
     );
 
     // Hook 6 should have fired since the file contains inline tests
+    // Check for the hook's actual warning text or the model's constrained response
+    const combined = result.stdout + result.stderr;
     assert.ok(
-      result.stdout.includes('WARNED') || result.stdout.toLowerCase().includes('warn') || result.stdout.toLowerCase().includes('inline'),
-      `Expected warning about inline tests. Got: ${result.stdout.slice(0, 300)}`
+      combined.includes('contains inline Doc Detective test comments') ||
+      result.stdout.includes('WARNED') || result.stdout.toLowerCase().includes('warn'),
+      `Expected hook warning about inline tests. Got: ${result.stdout.slice(0, 300)}`
     );
   });
 });
@@ -158,9 +163,12 @@ describe('Integration: Gemini CLI', function () {
     // Skip if auth prompt or empty (rate limited / auth issues in CI)
     if (!result.stdout.trim() || result.stdout.includes('authentication')) this.skip();
 
+    // Verify the hook's marker text appears, or fall back to model response
+    const combined = result.stdout + result.stderr;
     assert.ok(
+      combined.includes('Doc Detective status:') || combined.includes('Doc Detective CLI is not installed') ||
       result.stdout.includes('YES') || result.stdout.includes('NO'),
-      `Expected YES or NO. Got: ${result.stdout.slice(0, 200)}`
+      `Expected hook marker or YES/NO. Got: ${result.stdout.slice(0, 200)}`
     );
   });
 
@@ -183,12 +191,12 @@ describe('Integration: Gemini CLI', function () {
     // Skip if empty (rate limited) or auth issues
     if (!result.stdout.trim() || result.stdout.includes('authentication')) this.skip();
 
-    // Check stdout OR stderr — Gemini may surface hook context in either
+    // Check for the hook's actual warning text or the model's constrained response
     const combined = result.stdout + result.stderr;
     assert.ok(
-      combined.includes('WARNED') || combined.toLowerCase().includes('warn') ||
-      combined.toLowerCase().includes('inline') || combined.toLowerCase().includes('doc detective'),
-      `Expected warning about inline tests. Got stdout: ${result.stdout.slice(0, 200)}`
+      combined.includes('contains inline Doc Detective test comments') ||
+      combined.includes('WARNED') || combined.toLowerCase().includes('warn'),
+      `Expected hook warning about inline tests. Got stdout: ${result.stdout.slice(0, 200)}`
     );
   });
 });

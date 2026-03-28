@@ -367,8 +367,7 @@ function syncHooks() {
 
   const srcHooksDir = path.join(ROOT, "src/hooks");
   if (!fs.existsSync(srcHooksDir)) {
-    log("  src/hooks/ not found, skipping");
-    return;
+    throw new Error("Missing required directory: src/hooks");
   }
 
   // Copy to root-level hooks/ artifact (Gemini extension reads hooks/hooks.json here)
