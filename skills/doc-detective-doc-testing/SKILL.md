@@ -128,7 +128,25 @@ For multi-file specs, offer injection separately per source file. Return the ful
 
 ## Step 3: Execute Tests
 
-**Only execute after validation passes.** Try in order until one succeeds:
+**Only execute after validation passes.**
+
+### Check Available Methods
+
+```bash
+# Check for global install and verify version
+which doc-detective
+doc-detective --version
+
+# Check for Docker
+docker --version
+
+# Check for npx
+which npx
+```
+
+### Execution Fallback Chain
+
+Try in order until one succeeds:
 
 ```bash
 # 1. Global CLI
@@ -140,6 +158,16 @@ npx doc-detective --input test-spec.json
 ```
 
 If none available, inform user and suggest installation.
+
+### Information Options
+
+```bash
+# Display version
+doc-detective --version
+
+# Show help and all available options
+doc-detective --help
+```
 
 ## Step 4: Analyze Results
 
