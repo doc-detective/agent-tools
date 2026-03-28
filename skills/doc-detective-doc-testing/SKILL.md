@@ -134,7 +134,7 @@ For multi-file specs, offer injection separately per source file. Return the ful
 # 1. Global CLI
 doc-detective --input test-spec.json
 # 2. Docker
-docker run -v "$(pwd):/app" docdetective/doc-detective-latest --input /app/doc-detective-test-spec.json
+docker run -v "$(pwd):/app" docdetective/docdetective:latest run --input /app/test-spec.json
 # 3. NPX
 npx doc-detective --input test-spec.json
 ```
