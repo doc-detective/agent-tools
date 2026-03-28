@@ -17,7 +17,8 @@ if command -v doc-detective &>/dev/null; then
 fi
 
 # Check 2: npx (use --yes to suppress install prompts, tail -1 to ignore progress output)
-if [ "$AVAILABLE" = "false" ] && command -v npx &>/dev/null; then
+# Skip if CI=true to avoid npm cache lock issues in parallel test runs
+if [ "$AVAILABLE" = "false" ] && [ "$CI" != "true" ] && command -v npx &>/dev/null; then
   if timeout 8 npx --yes doc-detective --version &>/dev/null 2>&1; then
     VERSION=$(timeout 8 npx --yes doc-detective --version 2>/dev/null | tail -1 || echo "unknown")
     STATUS="doc-detective available via npx (version: ${VERSION})"
