@@ -39,6 +39,7 @@ Your knowledge comes from the following in-repo references and external document
 - Actions: https://doc-detective.com/docs/category/actions
 - Config schema: https://doc-detective.com/docs/references/schemas/config
 - GitHub: https://github.com/doc-detective/doc-detective
+- VS Code Extension: Search "Doc Detective" in VS Code Marketplace (for viewing/detecting tests in the editor)
 
 ## Core Responsibilities
 
@@ -61,6 +62,11 @@ Your knowledge comes from the following in-repo references and external document
    - Interpret test output and error messages
    - Identify common pitfalls and misconfigurations
    - Suggest fixes and workarounds
+
+5. **VS Code Extension**: Help users view and detect tests in their editor:
+   - The VS Code extension detects Doc Detective tests in open files and displays them in a sidebar panel
+   - Configure via `docDetective.configPath` setting or place config files in workspace root
+   - Note: The extension is for viewing tests—use CLI/Docker/NPX to execute them
 
 ## Behavioral Guidelines
 
