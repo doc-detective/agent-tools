@@ -91,11 +91,13 @@ These are the only valid action types:
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
 - `runShell` - `{ command: string, exitCodes?: number[] }`
+- `runCode` - `{ language: string, code: string }`
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
 - `record` - Path string or object
 - `stopRecord` - Boolean true
+- `dragAndDrop` - `{ source: string|object, target: string|object, duration?: number }`
 
 ### Validation Failure Handling
 

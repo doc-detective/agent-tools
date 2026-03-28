@@ -97,16 +97,34 @@ Check if an element exists. Can optionally interact with it.
 
 ### dragAndDrop
 
-Drag element from source to target.
+Drag element from source to target. Source and target can be text (for text-based matching) or objects with find options.
+
+**Text-based** (preferred):
 
 ```json
 {
   "dragAndDrop": {
-    "sourceSelector": "#draggable",
-    "targetSelector": "#droppable"
+    "source": "Drag me",
+    "target": "Drop here"
   }
 }
 ```
+
+**Selector-based**:
+
+```json
+{
+  "dragAndDrop": {
+    "source": { "selector": "#draggable" },
+    "target": { "selector": "#droppable" }
+  }
+}
+```
+
+**Options:**
+- `source`: Text string or `{ selector: string }` for source element
+- `target`: Text string or `{ selector: string }` for target element
+- `duration`: Drag duration in ms (default: 1000)
 
 ---
 
@@ -173,7 +191,7 @@ With options:
 
 **Options:**
 - `url`: URL to check
-- `statusCodes`: Array of acceptable status codes (default: 200-299)
+- `statusCodes`: Array of acceptable status codes (default: [200, 301, 302, 307, 308])
 
 ---
 
