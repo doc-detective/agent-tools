@@ -139,6 +139,15 @@ docker run -v "$(pwd):/app" docdetective/doc-detective-latest --input /app/doc-d
 npx doc-detective --input test-spec.json
 ```
 
+**CI/CD** - GitHub Action:
+```yaml
+- uses: doc-detective/github-action@v1
+  with:
+    config: .doc-detective.json
+```
+
+The GitHub Action supports automatic issue creation with AI agent notifications when tests fail. See the `doc-detective-install-github-action` skill and its `references/action-reference.md` for complete documentation including `integrations` and `prompt` inputs.
+
 If none available, inform user and suggest installation.
 
 ## Step 4: Analyze Results
