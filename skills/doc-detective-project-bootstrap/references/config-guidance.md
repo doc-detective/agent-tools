@@ -280,7 +280,7 @@ After generating config, verify it:
 npx doc-detective --config .doc-detective.json --dry-run
 
 # Or validate with JSON Schema
-npx ajv validate -s https://raw.githubusercontent.com/doc-detective/common/refs/heads/main/dist/schemas/config_v3.schema.json -d .doc-detective.json
+npx ajv validate -s https://raw.githubusercontent.com/doc-detective/doc-detective/refs/heads/main/src/common/dist/schemas/config_v3.schema.json -d .doc-detective.json
 ```
 
 ## Related Resources
@@ -288,4 +288,4 @@ npx ajv validate -s https://raw.githubusercontent.com/doc-detective/common/refs/
 - Config schema: https://doc-detective.com/docs/references/schemas/config
 - File types: https://doc-detective.com/docs/get-started/tests#detected-tests
 - Contexts: https://doc-detective.com/docs/get-started/config/contexts
-- doc-detective-common: https://github.com/doc-detective/doc-detective-common
+- doc-detective-common: https://github.com/doc-detective/doc-detective/tree/main/src/common

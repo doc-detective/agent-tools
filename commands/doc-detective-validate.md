@@ -105,4 +105,4 @@ Check the provided JSON against the doc-detective-common config schema. Report e
 
 Errors: `browser` must be object, `logLevel` value invalid.
 
-See [doc-detective-common](https://github.com/doc-detective/doc-detective-common) for the full configuration schema.
+See [doc-detective-common](https://github.com/doc-detective/doc-detective/tree/main/src/common) for the full configuration schema.
