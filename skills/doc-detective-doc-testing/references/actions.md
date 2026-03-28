@@ -342,6 +342,8 @@ Stop recording:
 { "stopRecord": true }
 ```
 
+**macOS requirement:** Chrome must have screen recording permission. If recording fails on macOS, grant permission in **System Preferences > Privacy & Security > Screen Recording**.
+
 ---
 
 ## Session Management
