@@ -50,7 +50,13 @@ Only add fields when:
 
 ## Configuration Schema Reference
 
-From `doc-detective-common`, key fields:
+Import the core types directly from `doc-detective-common`:
+
+```typescript
+import type { Config, Specification, Test, Step, Context, Report } from 'doc-detective-common';
+```
+
+Key `Config` fields:
 
 ```typescript
 interface Config {
