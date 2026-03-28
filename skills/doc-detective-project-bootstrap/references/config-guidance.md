@@ -18,12 +18,21 @@ This uses all defaults:
 - `input`: `.` (current directory)
 - `output`: `.` (current directory)
 - `recursive`: `true`
-- `detectSteps`: `false`
+- `detectSteps`: `true`
 - `fileTypes`: `["markdown", "asciidoc", "html", "dita"]`
 
 ### Standard Minimal Config
 
-For most projects, specify only `input`, `output`, and `detectSteps`:
+For most projects, specify only `input` and `output`:
+
+```json
+{
+  "input": "docs",
+  "output": ".doc-detective/results"
+}
+```
+
+To disable automatic step detection from markup (e.g., when using only explicit inline test comments):
 
 ```json
 {
@@ -46,7 +55,7 @@ Only add fields when:
 | Using environment variables | `loadVariables` |
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
-| Want to detect testable procedures from markup syntax | `detectSteps` |
+| Want to disable automatic step detection from markup | `detectSteps: false` |
 
 ## Configuration Schema Reference
 
@@ -59,7 +68,7 @@ interface Config {
   recursive?: boolean;            // Default: true
   loadVariables?: string;         // Path to .env file
   origin?: string;                // Base URL for relative links
-  detectSteps?: boolean;          // Default: false
+  detectSteps?: boolean;          // Default: true
   allowUnsafeSteps?: boolean;     // Default: false
   fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
   runOn?: Context[];              // Execution contexts

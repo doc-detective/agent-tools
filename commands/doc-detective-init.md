@@ -75,8 +75,10 @@ Generate `.doc-detective.json` following the "smallest reasonable config" princi
 | `--ci` + existing config | Use existing config unchanged |
 
 ```json
-{ "input": "docs", "output": ".doc-detective/results", "detectSteps": false }
+{ "input": "docs", "output": ".doc-detective/results" }
 ```
+
+This uses the default `detectSteps: true`, which automatically detects testable procedures from markup patterns. To disable automatic step detection (e.g., when using only explicit inline test comments), add `"detectSteps": false`.
 
 If `--dry-run`, print the config that would be written and skip file creation. If config cannot be created or the user rejects the merge, stop and report — do not proceed. See `skills/doc-detective-project-bootstrap/references/config-guidance.md` for full options.
 
