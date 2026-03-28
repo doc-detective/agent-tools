@@ -11,6 +11,8 @@ reviews:
     enabled: true
     drafts: false
     auto_pause_after_reviewed_commits: 0
+    auto_approve:
+      enabled: true
   path_filters:
     - "!.claude/**"
     - "!agents/**"
