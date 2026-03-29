@@ -1,2 +1,2 @@
 npm run build
-git add agents/ skills/ commands/ plugins/doc-detective/ .claude-plugin/marketplace.json gemini-extension.json
+git add agents/ skills/ src/hooks/ hooks/ commands/ plugins/doc-detective/ .claude-plugin/marketplace.json gemini-extension.json
