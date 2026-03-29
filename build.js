@@ -17,6 +17,8 @@
 //   plugins/doc-detective/hooks/                     ← copied from src/hooks/ (claude-hooks.json renamed to hooks.json)
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
+//   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json
+//   .agents/plugins/marketplace.json                 ← Codex plugin marketplace (no version field)
 //   gemini-extension.json                            ← version from package.json
 //
 // user-invocable field pattern:
@@ -206,6 +208,16 @@ function syncVersions() {
   pj.version = version;
   writeJSON(pjPath, pj);
   log("  plugins/doc-detective/.claude-plugin/plugin.json");
+
+  // plugins/doc-detective/.codex-plugin/plugin.json
+  const codexPjPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.codex-plugin/plugin.json"
+  );
+  const codexPj = readJSON(codexPjPath);
+  codexPj.version = version;
+  writeJSON(codexPjPath, codexPj);
+  log("  plugins/doc-detective/.codex-plugin/plugin.json");
 
   // gemini-extension.json
   const gePath = path.join(ROOT, "gemini-extension.json");

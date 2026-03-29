@@ -67,6 +67,29 @@ Agent tools for testing documentation procedures and validating that documented 
    /doc-detective-init
    ```
 
+### Codex CLI
+
+1. Open Codex CLI:
+
+   ```bash
+   codex
+   ```
+
+2. Add the Doc Detective marketplace and plugin:
+
+   ```text
+   /plugin marketplace add doc-detective/agent-tools
+   /plugin install doc-detective@doc-detective
+   ```
+
+3. Ask about Doc Detective, or use the `init` command to get started:
+
+   ```text
+   /doc-detective-init
+   ```
+
+> **Note:** Hooks are not currently supported in Codex. Automated hooks for test spec validation, anti-pattern blocking, and other checks are available in Claude Code and Gemini CLI.
+
 ### Qwen Code
 
 1. Install the plugin and open Qwen Code:
@@ -83,14 +106,14 @@ Agent tools for testing documentation procedures and validating that documented 
    /doc-detective-init
    ```
 
-### Codex, Cursor, OpenCode, and other agents
+### Cursor, OpenCode, and other agents
 
 #### Option 1: Install with `npx skills`
 
 > [!WARNING]
 > `npx skills` only installs skills, not agents, commands, or other tools. For full functionality, consider [manual installation](#option-2-manual-installation).
 
-Install these skills with the [`skills`](https://github.com/vercel-labs/skills) package from Vercel. This works with Claude Code, Cursor, Codex, OpenCode, and other AI coding tools.
+Install these skills with the [`skills`](https://github.com/vercel-labs/skills) package from Vercel. This works with Claude Code, Cursor, OpenCode, and other AI coding tools.
 
 ```bash
 npx skills add doc-detective/agent-tools
@@ -338,6 +361,8 @@ Source content lives in `src/`. The build system (`npm run build`) generates dow
 | `commands/*.md` | Generated from user-invocable skills (build artifact) |
 | `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
 | `plugins/doc-detective/` | Copied from `agents/`, `skills/`, and `hooks/` (build artifact) |
+| `plugins/doc-detective/.codex-plugin/` | Codex plugin manifest (checked in, version synced by build) |
+| `.agents/plugins/marketplace.json` | Codex marketplace discovery (checked in) |
 
 > [!NOTE]
 > Do not edit files in `agents/`, `skills/`, `hooks/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.

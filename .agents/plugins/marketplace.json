@@ -1,0 +1,20 @@
+{
+  "name": "doc-detective",
+  "interface": {
+    "displayName": "Doc Detective Agent Tools"
+  },
+  "plugins": [
+    {
+      "name": "doc-detective",
+      "source": {
+        "source": "local",
+        "path": "./plugins/doc-detective"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Developer Tools"
+    }
+  ]
+}
