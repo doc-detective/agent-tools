@@ -67,6 +67,16 @@ Each action name IS the JSON key. Never use an `"action"` property.
 3. **Always validate specs** — Run the validate-test script before returning any test specification
 4. **Execution fallback chain** — Try `doc-detective`, then `docker run docdetective/doc-detective`, then `npx doc-detective`
 
+## Hooks
+
+This extension includes hooks that run automatically:
+- **Test spec validation** — Validates `.json` test specs after editing
+- **Anti-pattern blocker** — Blocks `{"action": "goTo"}` format (must use `{"goTo": "url"}`)
+- **Doc test reminder** — Suggests running tests after editing documentation files
+- **Installation check** — Reports Doc Detective CLI availability at session start
+- **Test spec formatting** — Normalizes test spec JSON formatting
+- **Inline test warning** — Warns when editing docs with inline test comments
+
 ## Detailed References
 
 For complete documentation, read these files:
