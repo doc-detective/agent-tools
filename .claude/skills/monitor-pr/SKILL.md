@@ -4,3 +4,5 @@ description: Monitor PR for CI failures and comments, act on comments if necessa
 ---
 
 Monitor the current PR for CI failures and comments using the `gh` CLI. For each comment, assess whether or not it should be acted upon, act upon it if necessary, respond to the comment in the comment thread, then resolve the comment thread. You must have 3 consecutive PR checks five minutes apart with no new comments and passing CI to complete your task. You must resolve all comment threads you respond to.
+
+If you encounter a state where CodeRabbit hits a rate limit and you don't have an APPROVED review yet, identify the rate limit duration from the CodeRabbit comment, wait for that duration, then comment `@coderabbitai review` on the PR to trigger a new review.
