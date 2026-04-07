@@ -173,7 +173,23 @@ With options:
 
 **Options:**
 - `url`: URL to check
-- `statusCodes`: Array of acceptable status codes (default: 200-299)
+- `statusCodes`: Array of acceptable status codes (default: `[200, 301, 302, 307, 308]`)
+- `headers`: Custom request headers (object)
+
+#### Bot-Protected Sites
+
+Hosting platforms like Vercel and Cloudflare use bot detection that blocks automated requests. On a 429 response, `checkLink` identifies the protection system and suggests bypass options.
+
+For Vercel-protected sites, pass the `x-vercel-protection-bypass` header with your bypass secret:
+
+```yaml
+- checkLink:
+    url: https://portal.example.com
+    headers:
+      x-vercel-protection-bypass: $VERCEL_BYPASS_SECRET
+```
+
+For other protections, check the error message for required headers or tokens.
 
 ---
 
