@@ -171,9 +171,22 @@ With options:
 }
 ```
 
+**Accepting non-2xx status codes:**
+
+Accept any HTTP status code, including non-2xx codes like rate-limiting (429), forbidden (403), or server errors (500):
+
+```json
+{
+  "checkLink": {
+    "url": "https://example.com/rate-limited-endpoint",
+    "statusCodes": [200, 429]
+  }
+}
+```
+
 **Options:**
 - `url`: URL to check
-- `statusCodes`: Array of acceptable status codes (default: 200-299)
+- `statusCodes`: Array of acceptable status codes (default: [200, 301, 302, 307, 308])
 
 ---
 
