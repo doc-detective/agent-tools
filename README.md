@@ -83,7 +83,30 @@ Agent tools for testing documentation procedures and validating that documented 
    /doc-detective-init
    ```
 
-### Codex, Cursor, OpenCode, and other agents
+### Codex
+
+1. Clone the repo and copy the plugin and marketplace into your project:
+
+   ```bash
+   git clone https://github.com/doc-detective/agent-tools.git
+   cp -r agent-tools/plugins/doc-detective ./plugins/doc-detective
+   mkdir -p .agents/plugins
+   cp agent-tools/.agents/plugins/marketplace.json .agents/plugins/marketplace.json
+   ```
+
+2. Open Codex and install the plugin from the marketplace:
+
+   ```bash
+   codex
+   ```
+
+3. Ask about Doc Detective, or use the `init` command to get started:
+
+   ```text
+   /doc-detective-init
+   ```
+
+### Cursor, OpenCode, and other agents
 
 #### Option 1: Install with `npx skills`
 
@@ -227,7 +250,7 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 | **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
 | **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
 
-Hooks are supported in Claude Code and Gemini CLI. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
+Hooks are supported in Claude Code and Gemini CLI. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
 
 ## Inline Test Injection
 
@@ -338,6 +361,7 @@ Source content lives in `src/`. The build system (`npm run build`) generates dow
 | `commands/*.md` | Generated from user-invocable skills (build artifact) |
 | `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
 | `plugins/doc-detective/` | Copied from `agents/`, `skills/`, and `hooks/` (build artifact) |
+| `.agents/plugins/marketplace.json` | Codex marketplace pointing to `plugins/doc-detective/` |
 
 > [!NOTE]
 > Do not edit files in `agents/`, `skills/`, `hooks/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.
