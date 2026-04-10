@@ -1,0 +1,29 @@
+{
+  "name": "doc-detective",
+  "version": "1.3.0",
+  "description": "Documentation testing and validation using Doc Detective. Test documentation procedures, convert docs to executable test specs, and validate that documented workflows match actual application behavior.",
+  "author": {
+    "name": "Doc Detective Agency",
+    "email": "manny@doc-detective.com"
+  },
+  "homepage": "https://doc-detective.com",
+  "repository": "https://github.com/doc-detective/agent-tools",
+  "license": "AGPL3",
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Doc Detective",
+    "shortDescription": "Documentation testing and workflow validation tools.",
+    "longDescription": "Documentation testing and validation using Doc Detective. Test documentation procedures, convert docs to executable test specs, and validate that documented workflows match actual application behavior.",
+    "developerName": "Doc Detective Agency",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "websiteURL": "https://doc-detective.com",
+    "defaultPrompt": [
+      "Use Doc Detective to test documentation procedures.",
+      "Use Doc Detective to validate that documented workflows work correctly."
+    ]
+  }
+}

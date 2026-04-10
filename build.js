@@ -17,6 +17,7 @@
 //   plugins/doc-detective/hooks/                     ← copied from src/hooks/ (claude-hooks.json renamed to hooks.json)
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
+//   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json
 //   gemini-extension.json                            ← version from package.json
 //
 // user-invocable field pattern:
@@ -213,6 +214,16 @@ function syncVersions() {
   ge.version = version;
   writeJSON(gePath, ge);
   log("  gemini-extension.json");
+
+  // plugins/doc-detective/.codex-plugin/plugin.json
+  const codexPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.codex-plugin/plugin.json"
+  );
+  const codex = readJSON(codexPath);
+  codex.version = version;
+  writeJSON(codexPath, codex);
+  log("  plugins/doc-detective/.codex-plugin/plugin.json");
 }
 
 // ─── 2. Sync metadata (version + date) in source files ───────

@@ -12,6 +12,7 @@
     "build:inline": "echo 'No source directory for inline-test-injection; rebuild not available'",
     "test:hooks": "mocha tests/hooks/hook*.test.js --timeout 30000",
     "test:hooks:integration": "mocha tests/hooks/integration.test.js --timeout 180000",
+    "test:codex-plugin": "mocha tests/hooks/codex-plugin.test.js --timeout 30000",
     "test:doc-testing": "cd skills/doc-detective-doc-testing/scripts && ./doc-detective-test-skill.sh",
     "test:inline": "cd skills/doc-detective-inline-test-injection/scripts && ./doc-detective-test-skill.sh",
     "prepare": "husky",
