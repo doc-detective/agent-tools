@@ -4,7 +4,7 @@ You have access to Doc Detective documentation testing tools. Use these to test 
 
 ## Core Concept: Docs as Tests
 
-Documentation contains testable assertions — promises to users about what happens when they follow instructions. Each assertion has an **action** (what the user does), **context** (system state), and **expected outcome** (what should happen). Doc Detective automates validation of these assertions.
+Documentation contains testable assertions — promises to users about what happens when they follow instructions. Each assertion maps to a **procedure** (a complete multi-step workflow), not to individual steps. A procedure has an **action** (the steps the user follows), **context** (system state when they start), and **expected outcome** (what should be true after completion). Doc Detective automates validation of these assertions.
 
 ## Available Commands
 
