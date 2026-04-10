@@ -17,14 +17,9 @@ describe('Codex plugin: manifest', function () {
   let manifest;
 
   before(function () {
-    if (!fs.existsSync(CODEX_PLUGIN_JSON)) {
-      this.skip();
-    }
+    assert.ok(fs.existsSync(CODEX_PLUGIN_JSON),
+      'Codex plugin manifest must exist at plugins/doc-detective/.codex-plugin/plugin.json');
     manifest = JSON.parse(fs.readFileSync(CODEX_PLUGIN_JSON, 'utf8'));
-  });
-
-  it('should exist at plugins/doc-detective/.codex-plugin/plugin.json', function () {
-    assert.ok(fs.existsSync(CODEX_PLUGIN_JSON));
   });
 
   it('should have required name field', function () {
@@ -74,14 +69,9 @@ describe('Codex plugin: marketplace', function () {
   let marketplace;
 
   before(function () {
-    if (!fs.existsSync(CODEX_MARKETPLACE)) {
-      this.skip();
-    }
+    assert.ok(fs.existsSync(CODEX_MARKETPLACE),
+      'Codex marketplace must exist at .agents/plugins/marketplace.json');
     marketplace = JSON.parse(fs.readFileSync(CODEX_MARKETPLACE, 'utf8'));
-  });
-
-  it('should exist at .agents/plugins/marketplace.json', function () {
-    assert.ok(fs.existsSync(CODEX_MARKETPLACE));
   });
 
   it('should have a name', function () {
