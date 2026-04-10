@@ -420,9 +420,10 @@ function syncHooks() {
 
   // Copy OpenCode plugin to plugin directory root (next to agents/, skills/, hooks/)
   const ocSrc = path.join(srcHooksDir, "opencode-plugin.mjs");
+  const ocDest = path.join(ROOT, "plugins/doc-detective/opencode-plugin.mjs");
+  fs.rmSync(ocDest, { force: true });
   if (fs.existsSync(ocSrc)) {
-    const pluginDir = path.join(ROOT, "plugins/doc-detective");
-    fs.copyFileSync(ocSrc, path.join(pluginDir, "opencode-plugin.mjs"));
+    fs.copyFileSync(ocSrc, ocDest);
     log("  src/hooks/opencode-plugin.mjs -> plugins/doc-detective/opencode-plugin.mjs");
   }
 
