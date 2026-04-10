@@ -83,7 +83,33 @@ Agent tools for testing documentation procedures and validating that documented 
    /doc-detective-init
    ```
 
-### Codex, Cursor, OpenCode, and other agents
+### OpenCode
+
+1. Clone the repository:
+
+   ```bash
+   git clone https://github.com/doc-detective/agent-tools.git
+   ```
+
+2. Copy the plugin contents to your project's `.opencode/` directory:
+
+   ```bash
+   mkdir -p .opencode/plugins
+   cp agent-tools/plugins/doc-detective/opencode-plugin.mjs .opencode/plugins/doc-detective.mjs
+   cp -r agent-tools/plugins/doc-detective/hooks .opencode/hooks
+   cp -r agent-tools/plugins/doc-detective/skills .opencode/skills
+   cp -r agent-tools/plugins/doc-detective/agents .opencode/agents
+   ```
+
+3. Start OpenCode and ask about Doc Detective, or use the `init` command:
+
+   ```text
+   /doc-detective-init
+   ```
+
+The plugin provides `tool.execute.before` and `tool.execute.after` hooks that automatically validate test specs, block common anti-patterns, suggest running tests after doc edits, and check for Doc Detective CLI availability.
+
+### Codex, Cursor, and other agents
 
 #### Option 1: Install with `npx skills`
 
@@ -227,7 +253,7 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 | **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
 | **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
 
-Hooks are supported in Claude Code and Gemini CLI. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
+Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
 
 ## Inline Test Injection
 
@@ -338,6 +364,7 @@ Source content lives in `src/`. The build system (`npm run build`) generates dow
 | `commands/*.md` | Generated from user-invocable skills (build artifact) |
 | `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
 | `plugins/doc-detective/` | Copied from `agents/`, `skills/`, and `hooks/` (build artifact) |
+| `plugins/doc-detective/opencode-plugin.mjs` | OpenCode plugin — wraps hook scripts as OpenCode hooks (build artifact) |
 
 > [!NOTE]
 > Do not edit files in `agents/`, `skills/`, `hooks/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.

@@ -15,6 +15,7 @@
 //   hooks/                                           ← copied from src/hooks/
 //   plugins/doc-detective/{agents,skills}/           ← copied from agents/, skills/
 //   plugins/doc-detective/hooks/                     ← copied from src/hooks/ (claude-hooks.json renamed to hooks.json)
+//   plugins/doc-detective/opencode-plugin.mjs        ← copied from src/hooks/opencode-plugin.mjs
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
 //   gemini-extension.json                            ← version from package.json
@@ -407,6 +408,23 @@ function syncHooks() {
   }
 
   log("  src/hooks/ -> plugins/doc-detective/hooks/ (claude-hooks.json -> hooks.json)");
+
+  // Remove OpenCode plugin from platform-specific hook directories
+  // (it lives at plugins/doc-detective/opencode-plugin.mjs, not inside hooks/)
+  for (const dir of [rootHooksDir, pluginHooksDir]) {
+    const ocPlugin = path.join(dir, "opencode-plugin.mjs");
+    if (fs.existsSync(ocPlugin)) {
+      fs.unlinkSync(ocPlugin);
+    }
+  }
+
+  // Copy OpenCode plugin to plugin directory root (next to agents/, skills/, hooks/)
+  const ocSrc = path.join(srcHooksDir, "opencode-plugin.mjs");
+  if (fs.existsSync(ocSrc)) {
+    const pluginDir = path.join(ROOT, "plugins/doc-detective");
+    fs.copyFileSync(ocSrc, path.join(pluginDir, "opencode-plugin.mjs"));
+    log("  src/hooks/opencode-plugin.mjs -> plugins/doc-detective/opencode-plugin.mjs");
+  }
 
   // Make .sh files executable in both output locations
   for (const dir of [path.join(ROOT, "hooks/scripts"), path.join(pluginHooksDir, "scripts")]) {
