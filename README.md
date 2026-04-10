@@ -95,10 +95,10 @@ Agent tools for testing documentation procedures and validating that documented 
 
    ```bash
    mkdir -p .opencode/plugins
-   cp agent-tools/plugins/doc-detective/opencode-plugin.mjs .opencode/plugins/doc-detective.mjs
-   cp -r agent-tools/plugins/doc-detective/hooks .opencode/hooks
-   cp -r agent-tools/plugins/doc-detective/skills .opencode/skills
-   cp -r agent-tools/plugins/doc-detective/agents .opencode/agents
+   cp agent-tools/plugins/doc-detective/opencode-plugin.mjs .opencode/plugins/
+   cp -r agent-tools/plugins/doc-detective/hooks .opencode/
+   cp -r agent-tools/plugins/doc-detective/skills .opencode/
+   cp -r agent-tools/plugins/doc-detective/agents .opencode/
    ```
 
 3. Start OpenCode and ask about Doc Detective, or use the `init` command:
