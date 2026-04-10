@@ -3,7 +3,7 @@
 //
 // Installation:
 //   1. Copy this file to .opencode/plugins/ in your project
-//   2. Copy the hooks/ and skills/ directories alongside it
+//   2. Copy the hooks/, skills/, and agents/ directories alongside it
 //   OR reference the repo in opencode.json:
 //     { "plugin": ["doc-detective/agent-tools"] }
 //
@@ -62,12 +62,12 @@ function runScript(scriptPath, stdinData, timeout = 15000) {
  * Build the stdin payload expected by hook scripts from OpenCode tool args.
  * Scripts expect: { tool_input: { file_path, content, new_string } }
  */
-function buildToolInput(args) {
+function buildToolInput(args = {}) {
   return {
     tool_input: {
-      file_path: args.filePath || args.file_path || args.path || "",
-      content: args.content || "",
-      new_string: args.new_string || args.newString || "",
+      file_path: args?.filePath || args?.file_path || args?.path || "",
+      content: args?.content || "",
+      new_string: args?.new_string || args?.newString || "",
     },
     cwd: process.cwd(),
   };
