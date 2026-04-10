@@ -4,7 +4,7 @@ description: 'Verify documentation and procedures with Doc Detective test specif
 metadata:
   version: '1.3.0'
   organization: Doc Detective
-  date: March 2026
+  date: April 2026
   abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
