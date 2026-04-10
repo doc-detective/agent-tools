@@ -96,6 +96,8 @@ Documentation contains testable assertions—promises to users about what happen
 
 | Component | Description |
 |-----------|-------------|
+| **Action** | The procedure the user follows (one or more steps) |
+| **Context** | System state when they start the procedure |
 | **Action** | Something the user does |
 | **Context** | System state when they do it |
 | **Expected outcome** | What should happen as a result |
