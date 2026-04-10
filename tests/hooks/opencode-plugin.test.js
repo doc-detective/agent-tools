@@ -4,7 +4,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { execFile } = require('child_process');
+const { pathToFileURL } = require('url');
 
 const ROOT = path.resolve(__dirname, '../..');
 const PLUGIN_PATH = path.join(ROOT, 'plugins/doc-detective/opencode-plugin.mjs');
@@ -15,7 +15,7 @@ const SRC_PLUGIN_PATH = path.join(ROOT, 'src/hooks/opencode-plugin.mjs');
  * Since Mocha runs in CJS, we use dynamic import().
  */
 async function loadPlugin(pluginPath) {
-  const mod = await import(pluginPath);
+  const mod = await import(pathToFileURL(pluginPath).href);
   return mod.default;
 }
 

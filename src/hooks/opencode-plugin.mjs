@@ -62,14 +62,14 @@ function runScript(scriptPath, stdinData, timeout = 15000) {
  * Build the stdin payload expected by hook scripts from OpenCode tool args.
  * Scripts expect: { tool_input: { file_path, content, new_string } }
  */
-function buildToolInput(args = {}) {
+function buildToolInput(args = {}, ctx = {}) {
   return {
     tool_input: {
       file_path: args?.filePath || args?.file_path || args?.path || "",
       content: args?.content || "",
       new_string: args?.new_string || args?.newString || "",
     },
-    cwd: process.cwd(),
+    cwd: ctx?.worktree || ctx?.directory || process.cwd(),
   };
 }
 
@@ -84,7 +84,7 @@ function parseHookOutput(stdout) {
   }
 }
 
-const docDetectivePlugin = async (ctx) => {
+const docDetectivePlugin = async (ctx = {}) => {
   // Run session-start check on plugin initialization
   const sessionScript = resolve(SCRIPTS_DIR, "session-start-check-install.sh");
   if (existsSync(sessionScript)) {
@@ -101,7 +101,8 @@ const docDetectivePlugin = async (ctx) => {
 
   return {
     "tool.execute.before": async (input, output) => {
-      if (!EDIT_TOOLS.has(input.tool)) return;
+      const tool = input?.tool || output?.tool;
+      if (!EDIT_TOOLS.has(tool)) return;
 
       const scriptPath = resolve(
         SCRIPTS_DIR,
@@ -109,7 +110,8 @@ const docDetectivePlugin = async (ctx) => {
       );
       if (!existsSync(scriptPath)) return;
 
-      const stdinData = buildToolInput(output.args);
+      const args = output?.args || input?.args || {};
+      const stdinData = buildToolInput(args, ctx);
       const result = await runScript(scriptPath, stdinData, 10000);
 
       // Exit code 2 = blocking error (anti-pattern detected)
@@ -119,7 +121,8 @@ const docDetectivePlugin = async (ctx) => {
     },
 
     "tool.execute.after": async (input, output) => {
-      if (!EDIT_TOOLS.has(input.tool)) return;
+      const tool = input?.tool || output?.tool;
+      if (!EDIT_TOOLS.has(tool)) return;
 
       const postScripts = [
         { name: "post-edit-validate-test-spec.js", timeout: 30000 },
@@ -128,7 +131,8 @@ const docDetectivePlugin = async (ctx) => {
         { name: "post-edit-warn-inline-tests.js", timeout: 10000 },
       ];
 
-      const stdinData = buildToolInput(input.args);
+      const args = input?.args || output?.args || {};
+      const stdinData = buildToolInput(args, ctx);
 
       for (const script of postScripts) {
         const scriptPath = resolve(SCRIPTS_DIR, script.name);
