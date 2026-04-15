@@ -171,9 +171,29 @@ With options:
 }
 ```
 
+With custom headers (for sites behind WAFs or bot protection):
+
+```json
+{
+  "checkLink": {
+    "url": "https://portal.example.com/docs",
+    "headers": {
+      "X-Doc-Detective-Check": "shared-secret"
+    }
+  }
+}
+```
+
 **Options:**
 - `url`: URL to check
-- `statusCodes`: Array of acceptable status codes (default: 200-299)
+- `statusCodes`: Array of acceptable status codes (default: `[200, 301, 302, 307, 308]`)
+- `headers`: Custom HTTP headers as object or newline-separated string. Merged on top of browser-mimicking defaults.
+
+**Behavior:**
+
+Doc Detective automatically retries on `429` or `5xx` responses (up to 3 attempts with exponential backoff), and falls back to a `HEAD` request on final `429`/`403`. Browser-like default headers (`User-Agent`, `Sec-Fetch-*`, etc.) help reduce false failures from bot protection.
+
+For sites behind Cloudflare, AWS WAF, Vercel, or similar, pass allowlist headers via the `headers` field (e.g., `CF-Access-Client-Id`, `X-Vercel-Protection-Bypass`, or a custom shared secret).
 
 ---
 
