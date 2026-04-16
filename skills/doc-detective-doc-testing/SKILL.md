@@ -91,7 +91,7 @@ These are the only valid action types:
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
 - `runShell` - `{ command: string, exitCodes?: number[] }`
-- `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
+- `checkLink` - URL string or `{ url: string, statusCodes?: number[], headers?: object | string }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
 - `record` - Path string or object
