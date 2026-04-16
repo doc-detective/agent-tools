@@ -10,7 +10,44 @@ Agent tools for testing documentation procedures and validating that documented 
 
 ## Installation
 
+### Quick install
+
+The fastest way to install the agent tools is the Doc Detective CLI:
+
+```bash
+npx doc-detective install-agents
+```
+
+It detects which supported agents are installed on your machine, prompts you to choose which to configure, and invokes each agent's native install mechanism. Re-run any time to update to the latest version.
+
+To target a specific agent non-interactively:
+
+```bash
+npx doc-detective install-agents --agent claude-code --scope project --yes
+```
+
+Supported `--agent` ids: `claude-code`, `copilot-cli`, `gemini-cli`, `codex`, `qwen-code`, `opencode`.
+
+Useful flags:
+
+- `--scope project` or `--scope global` — skip the scope prompt.
+- `--yes` — non-interactive; requires `--agent` and `--scope`.
+- `--force` — reinstall even if already up to date.
+- `--dry-run` — print the actions that would be taken without executing them.
+
+Head to the per-agent sections below if you prefer the native install flow or need to troubleshoot.
+
 ### Claude Code
+
+```bash
+npx doc-detective install-agents --agent claude-code
+```
+
+The command auto-detects Claude Code, prompts for install scope (project or user-global) if you don't pass `--scope`, then invokes Claude Code's native plugin management. Re-run any time to update.
+
+If the `claude` binary is not on your PATH but `~/.claude/` exists, the command edits your settings file directly and Claude Code will prompt to complete the install on its next launch.
+
+#### Fallback: install from inside Claude Code
 
 1. Open Claude Code:
 
@@ -33,20 +70,36 @@ Agent tools for testing documentation procedures and validating that documented 
 
 ### Gemini CLI
 
-1. Install the extension and open Gemini CLI:
+```bash
+npx doc-detective install-agents --agent gemini-cli
+```
 
-   ```bash
-   gemini extensions install https://github.com/doc-detective/agent-tools.git --auto-update
-   gemini
-   ```
+This invokes `gemini extensions install` under the hood with auto-update enabled. Gemini CLI installs extensions user-globally — the `--scope` flag has no effect for this agent.
 
-2. Ask about Doc Detective, or use the `init` command to get started:
+#### Fallback: `gemini extensions install`
 
-   ```text
-   /doc-detective-init
-   ```
+```bash
+gemini extensions install https://github.com/doc-detective/agent-tools.git --auto-update
+gemini
+```
+
+Ask about Doc Detective, or use the `init` command to get started:
+
+```text
+/doc-detective-init
+```
 
 ### Copilot CLI
+
+```bash
+npx doc-detective install-agents --agent copilot-cli
+```
+
+The command invokes Copilot CLI's native plugin management to add the marketplace and install the plugin. Copilot CLI installs plugins user-globally — the `--scope` flag has no effect.
+
+If the `copilot` binary is not on your PATH, install it first: `npm install -g @github/copilot` (or see the [Copilot CLI install docs](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli)). You must also be logged in with `copilot login`.
+
+#### Fallback: install from inside Copilot CLI
 
 1. Open Copilot CLI:
 
@@ -69,22 +122,41 @@ Agent tools for testing documentation procedures and validating that documented 
 
 ### Qwen Code
 
-1. Install the plugin and open Qwen Code:
+```bash
+npx doc-detective install-agents --agent qwen-code
+```
 
-   ```bash
-   qwen extensions install https://github.com/doc-detective/agent-tools
-   qwen extensions install doc-detective:doc-detective
-   qwen
-   ```
+The command invokes `qwen extensions install` non-interactively with auto-update enabled. Qwen Code installs extensions user-globally — the `--scope` flag has no effect.
 
-2. Ask about Doc Detective, or use the `init` command to get started:
+#### Fallback: `qwen extensions install`
 
-   ```text
-   /doc-detective-init
-   ```
+```bash
+qwen extensions install https://github.com/doc-detective/agent-tools
+qwen extensions install doc-detective:doc-detective
+qwen
+```
 
-<<<<<<< copilot/add-opencode-plugin
+Ask about Doc Detective, or use the `init` command to get started:
+
+```text
+/doc-detective-init
+```
+
 ### OpenCode
+
+```bash
+# User-global (default)
+npx doc-detective install-agents --agent opencode
+
+# Or per-project
+npx doc-detective install-agents --agent opencode --scope project
+```
+
+The command fetches the agent-tools bundle and copies skills, the runtime plugin, hooks, and agents into the appropriate scope directory (`~/.config/opencode/` or `./.opencode/`). OpenCode auto-discovers them on next launch.
+
+The plugin provides `tool.execute.before` and `tool.execute.after` hooks that automatically validate test specs, block common anti-patterns, suggest running tests after doc edits, and check for Doc Detective CLI availability.
+
+#### Fallback: manual install
 
 1. Clone the repository:
 
@@ -103,8 +175,24 @@ Agent tools for testing documentation procedures and validating that documented 
    ```
 
 3. Start OpenCode and ask about Doc Detective, or use the `init` command:
-=======
+
+   ```text
+   /doc-detective-init
+   ```
+
 ### Codex
+
+```bash
+# User-global (default)
+npx doc-detective install-agents --agent codex
+
+# Or per-project
+npx doc-detective install-agents --agent codex --scope project
+```
+
+The command fetches doc-detective's skills from GitHub and copies them into the user's (or project's) `.agents/skills/` directory. Codex auto-discovers skills on its next launch.
+
+#### Fallback: manual install
 
 1. Clone the repo and copy the plugin and marketplace into your project:
 
@@ -122,19 +210,12 @@ Agent tools for testing documentation procedures and validating that documented 
    ```
 
 3. Ask about Doc Detective, or use the `init` command to get started:
->>>>>>> main
 
    ```text
    /doc-detective-init
    ```
 
-<<<<<<< copilot/add-opencode-plugin
-The plugin provides `tool.execute.before` and `tool.execute.after` hooks that automatically validate test specs, block common anti-patterns, suggest running tests after doc edits, and check for Doc Detective CLI availability.
-
-### Codex, Cursor, and other agents
-=======
-### Cursor, OpenCode, and other agents
->>>>>>> main
+### Cursor and other agents
 
 #### Option 1: Install with `npx skills`
 
@@ -278,11 +359,7 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 | **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
 | **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
 
-<<<<<<< copilot/add-opencode-plugin
-Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
-=======
-Hooks are supported in Claude Code and Gemini CLI. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
->>>>>>> main
+Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
 
 ## Inline Test Injection
 
@@ -393,11 +470,8 @@ Source content lives in `src/`. The build system (`npm run build`) generates dow
 | `commands/*.md` | Generated from user-invocable skills (build artifact) |
 | `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
 | `plugins/doc-detective/` | Copied from `agents/`, `skills/`, and `hooks/` (build artifact) |
-<<<<<<< copilot/add-opencode-plugin
 | `plugins/doc-detective/opencode-plugin.mjs` | OpenCode plugin — wraps hook scripts as OpenCode hooks (build artifact) |
-=======
 | `.agents/plugins/marketplace.json` | Codex marketplace pointing to `plugins/doc-detective/` |
->>>>>>> main
 
 > [!NOTE]
 > Do not edit files in `agents/`, `skills/`, `hooks/`, `commands/`, or `plugins/` directly. Edit the source in `src/` and run `npm run build`.
