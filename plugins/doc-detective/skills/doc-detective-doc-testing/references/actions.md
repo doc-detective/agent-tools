@@ -191,7 +191,7 @@ With custom headers (for sites behind WAFs or bot protection):
 
 **Behavior:**
 
-Doc Detective automatically retries on `429` or `5xx` responses (up to 3 attempts with exponential backoff), and falls back to a `HEAD` request on final `429`/`403`. Browser-like default headers (`User-Agent`, `Sec-Fetch-*`, etc.) help reduce false failures from bot protection.
+Doc Detective automatically retries up to 3 times on `429` or `5xx` responses (4 total attempts, with 1s → 2s → 4s exponential backoff), and falls back to a `HEAD` request on final `429`/`403`. If the server returns a `Retry-After` header, Doc Detective honors it (capped at 10 seconds). Browser-like default headers (`User-Agent`, `Sec-Fetch-*`, etc.) help reduce false failures from bot protection.
 
 For sites behind Cloudflare, AWS WAF, Vercel, or similar, pass allowlist headers via the `headers` field (e.g., `CF-Access-Client-Id`, `X-Vercel-Protection-Bypass`, or a custom shared secret).
 
