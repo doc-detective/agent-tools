@@ -23,10 +23,10 @@ It detects which supported agents are installed on your machine, prompts you to 
 To target a specific agent non-interactively:
 
 ```bash
-npx doc-detective install-agents --agent claude-code --scope project --yes
+npx doc-detective install-agents --agent claude --scope project --yes
 ```
 
-Supported `--agent` ids: `claude-code`, `copilot-cli`, `gemini-cli`, `codex`, `qwen-code`, `opencode`.
+Supported `--agent` ids: `claude`, `copilot`, `gemini`, `codex`, `qwen`, `opencode`.
 
 Useful flags:
 
@@ -40,7 +40,7 @@ Head to the per-agent sections below if you prefer the native install flow or ne
 ### Claude Code
 
 ```bash
-npx doc-detective install-agents --agent claude-code
+npx doc-detective install-agents --agent claude
 ```
 
 The command auto-detects Claude Code, prompts for install scope (project or user-global) if you don't pass `--scope`, then invokes Claude Code's native plugin management. Re-run any time to update.
@@ -71,7 +71,7 @@ If the `claude` binary is not on your PATH but `~/.claude/` exists, the command 
 ### Gemini CLI
 
 ```bash
-npx doc-detective install-agents --agent gemini-cli
+npx doc-detective install-agents --agent gemini
 ```
 
 This invokes `gemini extensions install` under the hood with auto-update enabled. Gemini CLI installs extensions user-globally — the `--scope` flag has no effect for this agent.
@@ -92,7 +92,7 @@ Ask about Doc Detective, or use the `init` command to get started:
 ### Copilot CLI
 
 ```bash
-npx doc-detective install-agents --agent copilot-cli
+npx doc-detective install-agents --agent copilot
 ```
 
 The command invokes Copilot CLI's native plugin management to add the marketplace and install the plugin. Copilot CLI installs plugins user-globally — the `--scope` flag has no effect.
@@ -123,7 +123,7 @@ If the `copilot` binary is not on your PATH, install it first: `npm install -g @
 ### Qwen Code
 
 ```bash
-npx doc-detective install-agents --agent qwen-code
+npx doc-detective install-agents --agent qwen
 ```
 
 The command invokes `qwen extensions install` non-interactively with auto-update enabled. Qwen Code installs extensions user-globally — the `--scope` flag has no effect.
