@@ -131,7 +131,55 @@ For actions with multiple properties:
 
 ## Inline Statement Patterns
 
-The config also supports custom inline statement patterns:
+Doc Detective detects inline test declarations embedded in documentation files. These patterns mark test boundaries and individual steps.
+
+### Default Inline Patterns by File Type
+
+#### Markdown / MDX / HTML
+
+| Statement | Syntax | Example |
+|-----------|--------|---------|
+| Test start | `<!-- test {...} -->` | `<!-- test {"testId": "login-flow"} -->` |
+| Test end | `<!-- test end -->` | `<!-- test end -->` |
+| Step | `<!-- step {...} -->` | `<!-- step {"goTo": "https://example.com"} -->` |
+
+#### AsciiDoc
+
+| Statement | Syntax | Example |
+|-----------|--------|---------|
+| Test start | `// (test {...})` | `// (test {"testId": "login-flow"})` |
+| Test end | `// (test end)` | `// (test end)` |
+| Step | `// (step {...})` | `// (step {"goTo": "https://example.com"})` |
+
+#### XML / DITA
+
+DITA files support multiple inline syntax options:
+
+| Statement | Syntax | Example |
+|-----------|--------|---------|
+| Test start | `<?doc-detective test {...} ?>` | `<?doc-detective test {"testId": "login-flow"} ?>` |
+| Test start | `<data name="doc-detective" value="test {...}"/>` | `<data name="doc-detective" value="test {&quot;testId&quot;: &quot;login-flow&quot;}"/>` |
+| Test end | `<?doc-detective test end ?>` | `<?doc-detective test end ?>` |
+| Test end | `<data name="doc-detective" value="test end"/>` | `<data name="doc-detective" value="test end"/>` |
+| Step | `<?doc-detective step {...} ?>` | `<?doc-detective step {"goTo": "https://example.com"} ?>` |
+| Step | `<data name="doc-detective" value="step {...}"/>` | `<data name="doc-detective" value="step {&quot;goTo&quot;: &quot;https://example.com&quot;}"/>` |
+| Step | `<data name="step">...</data>` | `<data name="step">{"goTo": "https://example.com"}</data>` |
+
+The `<data>` element syntax supports both single and double quotes for attribute values.
+
+In addition to JSON format, the value attribute supports an attribute-like key-value syntax:
+
+```xml
+<data name="doc-detective" value="test testId='login-test' detectSteps=false"/>
+<data name="doc-detective" value='step goTo="https://example.com/login"'/>
+<data name="doc-detective" value='step click="Sign In"'/>
+```
+
+Doc Detective automatically decodes XML/HTML entities in attribute values. This means DITA OT output containing encoded characters like `&quot;`, `&apos;`, `&#34;`, `&#39;`, `&lt;`, `&gt;`, or `&amp;` works correctly without manual preprocessing.
+
+### Custom Inline Patterns
+
+Override or extend default patterns in `.doc-detective.json` or `.doc-detective.yaml`:
 
 ```json
 {
