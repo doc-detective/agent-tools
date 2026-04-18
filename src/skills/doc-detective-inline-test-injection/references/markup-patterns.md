@@ -167,6 +167,16 @@ DITA files support multiple inline syntax options:
 
 The `<data>` element syntax supports both single and double quotes for attribute values.
 
+In addition to JSON format, the value attribute supports an attribute-like key-value syntax:
+
+```xml
+<data name="doc-detective" value="test testId='login-test' detectSteps=false"/>
+<data name="doc-detective" value='step goTo="https://example.com/login"'/>
+<data name="doc-detective" value='step click="Sign In"'/>
+```
+
+Doc Detective automatically decodes XML/HTML entities in attribute values. This means DITA OT output containing encoded characters like `&quot;`, `&apos;`, `&#34;`, `&#39;`, `&lt;`, `&gt;`, or `&amp;` works correctly without manual preprocessing.
+
 ### Custom Inline Patterns
 
 Override or extend default patterns in `.doc-detective.json` or `.doc-detective.yaml`:
