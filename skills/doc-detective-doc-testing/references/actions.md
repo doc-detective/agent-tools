@@ -23,8 +23,25 @@ With options:
 }
 ```
 
+**With query parameters:**
+
+```json
+{
+  "goTo": {
+    "url": "/dashboard",
+    "params": {
+      "utm_source": "test",
+      "debug": "true"
+    }
+  }
+}
+```
+
+The `params` object appends query parameters to the resolved URL. Step-level `params` apply to all URLs (both relative and absolute), while config-level `originParams` only apply to relative URLs. When both are present, they merge with step-level keys taking precedence on collision. Values support environment variable substitution via `$VAR` syntax.
+
 **Options:**
 - `waitUntil`: `"load"` | `"domcontentloaded"` | `"networkidle"` | `"commit"`
+- `params`: Key-value object of query parameters to append to the URL
 
 ---
 
@@ -171,9 +188,25 @@ With options:
 }
 ```
 
+**With query parameters:**
+
+```json
+{
+  "checkLink": {
+    "url": "/api/status",
+    "params": {
+      "api_key": "$API_KEY"
+    }
+  }
+}
+```
+
+The `params` object appends query parameters to the resolved URL. Step-level `params` apply to all URLs (both relative and absolute), while config-level `originParams` only apply to relative URLs. When both are present, they merge with step-level keys taking precedence on collision. Values support environment variable substitution via `$VAR` syntax.
+
 **Options:**
 - `url`: URL to check
 - `statusCodes`: Array of acceptable status codes (default: 200-299)
+- `params`: Key-value object of query parameters to append to the URL
 
 ---
 
