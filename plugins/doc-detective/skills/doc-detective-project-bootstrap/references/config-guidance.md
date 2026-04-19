@@ -46,6 +46,7 @@ Only add fields when:
 | Using environment variables | `loadVariables` |
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
+| Need default query params for all origin URLs | `originParams` |
 | Want to detect testable procedures from markup syntax | `detectSteps` |
 
 ## Configuration Schema Reference
@@ -59,6 +60,7 @@ interface Config {
   recursive?: boolean;            // Default: true
   loadVariables?: string;         // Path to .env file
   origin?: string;                // Base URL for relative links
+  originParams?: Record<string, string>; // Default query params for origin URLs
   detectSteps?: boolean;          // Default: false
   allowUnsafeSteps?: boolean;     // Default: false
   fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
@@ -125,6 +127,26 @@ interface Config {
   "origin": "https://api.example.com"
 }
 ```
+
+### Testing with Authentication Tokens
+
+When your test environment requires tokens or API keys on every request (such as Clerk's testing mode), use `originParams` to set them once:
+
+```json
+{
+  "input": "docs",
+  "output": ".doc-detective/results",
+  "detectSteps": false,
+  "origin": "https://my-app.com",
+  "originParams": {
+    "__clerk_testing_token": "$CLERK_TESTING_TOKEN"
+  }
+}
+```
+
+The `originParams` key-value map appends query parameters to any URL resolved against `origin`. Values support environment variable substitution via `$VAR` syntax. Individual `goTo` and `checkLink` steps can also specify their own `params` object, which merges with `originParams` (step keys win on collision).
+
+**Note:** Parameter values appear in request URLs, test results, logs, and reports. Avoid using long-lived secrets in `originParams`.
 
 ### DITA Documentation
 
