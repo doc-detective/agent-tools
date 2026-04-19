@@ -304,13 +304,15 @@ Assemble and run code snippets.
 
 ### screenshot
 
-Take a PNG screenshot.
+Take a PNG screenshot. Supports visual comparison against a reference image, including remote URLs for cloud-hosted references.
+
+**Basic capture:**
 
 ```json
 { "screenshot": "login-page.png" }
 ```
 
-With options:
+**Full page capture:**
 
 ```json
 {
@@ -321,10 +323,57 @@ With options:
 }
 ```
 
+**Element capture:**
+
+```json
+{
+  "screenshot": {
+    "path": "button.png",
+    "selector": "#submit-button"
+  }
+}
+```
+
+**Visual comparison with local reference:**
+
+```json
+{
+  "screenshot": {
+    "path": "screenshots/dashboard.png",
+    "maxVariation": 0.05,
+    "overwrite": "aboveVariation"
+  }
+}
+```
+
+**Visual comparison with remote URL reference:**
+
+```json
+{
+  "screenshot": {
+    "path": "https://s3.example.com/images/dashboard.png",
+    "maxVariation": 0.05
+  }
+}
+```
+
+When using a URL as `path`:
+- Downloads the remote image once per run as a read-only reference for pixel comparison
+- Saves the captured screenshot locally to `./doc-detective-runs/<timestamp>/<stepId>_<basename>.png`
+- Never modifies remote storage (`overwrite` is ignored for URLs)
+- Reports PASS when within `maxVariation`, WARNING when exceeded
+
 **Options:**
-- `path`: Output file path
+- `path`: Local file path or `http(s)://` URL to a PNG image
 - `fullPage`: Capture entire scrollable page (boolean)
-- `selector`: Capture specific element only
+- `selector`: Capture specific element only (CSS selector)
+- `maxVariation`: Maximum allowed pixel difference as a decimal (e.g., `0.05` for 5%). Triggers comparison when the reference exists
+- `overwrite`: When to overwrite the reference image—`"true"` (always), `"false"` (never), or `"aboveVariation"` (only when difference exceeds `maxVariation`). Ignored for URL paths
+
+**Outputs:**
+- `outputs.screenshotPath`: Path to the captured screenshot
+- `outputs.referenceUrl`: The original URL (only when `path` is a URL)
+- `outputs.changed`: `true` if variation exceeded `maxVariation`, `false` otherwise
 
 ### record / stopRecord
 
