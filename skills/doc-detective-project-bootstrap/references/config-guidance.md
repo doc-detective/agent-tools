@@ -144,7 +144,9 @@ When your test environment requires tokens or API keys on every request (such as
 }
 ```
 
-The `originParams` key-value map appends query parameters to any URL resolved against `origin`. Values support environment variable substitution via `$VAR` syntax. Individual `goTo` and `checkLink` steps can also specify their own `params` object, which merges with `originParams` (step keys win on collision).
+The `originParams` key-value map appends query parameters to relative URLs resolved against `origin`. This means `originParams` only applies when you use relative paths like `/dashboard`—absolute URLs in your tests won't receive these parameters, which prevents accidentally leaking tokens to third-party URLs.
+
+Individual `goTo` and `checkLink` steps can also specify their own `params` object. Step-level `params` apply to all URLs (both relative and absolute) and merge with `originParams`, with step keys winning on collision. Values support environment variable substitution via `$VAR` syntax.
 
 **Note:** Parameter values appear in request URLs, test results, logs, and reports. Avoid using long-lived secrets in `originParams`.
 

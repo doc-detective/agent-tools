@@ -37,7 +37,7 @@ With options:
 }
 ```
 
-The `params` object appends query parameters to the resolved URL. Parameters merge with config-level `originParams`, with step-level keys taking precedence on collision. Values support environment variable substitution via `$VAR` syntax.
+The `params` object appends query parameters to the resolved URL. Step-level `params` apply to all URLs (both relative and absolute), while config-level `originParams` only apply to relative URLs. When both are present, they merge with step-level keys taking precedence on collision. Values support environment variable substitution via `$VAR` syntax.
 
 **Options:**
 - `waitUntil`: `"load"` | `"domcontentloaded"` | `"networkidle"` | `"commit"`
@@ -201,7 +201,7 @@ With options:
 }
 ```
 
-The `params` object appends query parameters to the resolved URL. Parameters merge with config-level `originParams`, with step-level keys taking precedence on collision. Values support environment variable substitution via `$VAR` syntax.
+The `params` object appends query parameters to the resolved URL. Step-level `params` apply to all URLs (both relative and absolute), while config-level `originParams` only apply to relative URLs. When both are present, they merge with step-level keys taking precedence on collision. Values support environment variable substitution via `$VAR` syntax.
 
 **Options:**
 - `url`: URL to check
