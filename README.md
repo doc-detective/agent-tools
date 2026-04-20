@@ -37,6 +37,25 @@ Useful flags:
 
 Head to the per-agent sections below if you prefer the native install flow or need to troubleshoot.
 
+### Automatic prompt during npm install
+
+When you run `npm install doc-detective` in an interactive terminal, the CLI checks for supported coding agents. If it detects agents without doc-detective tools installed, you see a prompt:
+
+```
+Detected coding agents that may be missing doc-detective tools: Claude Code, Gemini CLI.
+? Install doc-detective agent tools now? (y/N)
+```
+
+Answer **y** to launch `install-agents` with the detected agents pre-selected, then choose the install scope (global or project). Answer **n** to skip — the CLI prints a reminder to run `npx doc-detective install-agents` later.
+
+The prompt is skipped when:
+
+- `CI` environment variable is set
+- `DOC_DETECTIVE_SKIP_AGENT_PROMPT` environment variable is set
+- stdin or stdout is not a TTY (piped installs, redirected output, non-interactive shells)
+
+To disable the prompt permanently, add `DOC_DETECTIVE_SKIP_AGENT_PROMPT=1` to your shell profile.
+
 ### Claude Code
 
 ```bash
