@@ -1,1 +1,1 @@
-{"tests":[{"testId":"t","steps":[{"action":"goTo","url":"https://example.com"}]}]}
+{"tests":[{"testId":"t","steps":[{"goTo":"https://example.com"}]}]}
