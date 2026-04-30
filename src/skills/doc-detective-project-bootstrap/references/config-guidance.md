@@ -47,6 +47,7 @@ Only add fields when:
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
 | Want to detect testable procedures from markup syntax | `detectSteps` |
+| Need to inspect resolved tests without executing | `dryRun` |
 
 ## Configuration Schema Reference
 
@@ -61,6 +62,7 @@ interface Config {
   origin?: string;                // Base URL for relative links
   detectSteps?: boolean;          // Default: false
   allowUnsafeSteps?: boolean;     // Default: false
+  dryRun?: boolean;               // Default: false
   fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
   runOn?: Context[];              // Execution contexts
   concurrentRunners?: number;     // Default: 1
@@ -276,12 +278,29 @@ DOC_DETECTIVE_API_KEY=sk-actual-key-here
 After generating config, verify it:
 
 ```bash
-# Test config loads correctly
+# Resolve tests without executing (outputs JSON test plan)
 npx doc-detective --config .doc-detective.json --dry-run
 
 # Or validate with JSON Schema
 npx ajv validate -s https://raw.githubusercontent.com/doc-detective/common/refs/heads/main/dist/schemas/config_v3.schema.json -d .doc-detective.json
 ```
+
+### Dry Run Mode
+
+Use `--dry-run` (CLI) or `dryRun: true` (config) to inspect the resolved test plan without executing tests. Dry run:
+
+- Resolves test files based on `input` paths and file detection rules
+- Extracts inline tests from Markdown and other supported formats
+- Merges environment and config settings
+- Validates resolved tests against the schema
+- Outputs the complete test plan as JSON to stdout
+
+Dry run exits **before** executing any steps—no browser launches, HTTP requests, or shell commands. Use it for:
+
+- Debugging config issues and file detection
+- Verifying inline test extraction
+- Inspecting the resolved test structure before a full run
+- CI pipelines that need to validate test setup without execution
 
 ## Related Resources
 
