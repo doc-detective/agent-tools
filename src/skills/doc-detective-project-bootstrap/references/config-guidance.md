@@ -47,6 +47,8 @@ Only add fields when:
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
 | Want to detect testable procedures from markup syntax | `detectSteps` |
+| Run only specific tests by testId | `testFilter` |
+| Run only specific specs by specId | `specFilter` |
 
 ## Configuration Schema Reference
 
@@ -65,6 +67,8 @@ interface Config {
   runOn?: Context[];              // Execution contexts
   concurrentRunners?: number;     // Default: 1
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
+  testFilter?: string[];          // Regex patterns to filter tests by testId
+  specFilter?: string[];          // Regex patterns to filter specs by specId
 }
 ```
 
@@ -137,6 +141,21 @@ interface Config {
   "processDitaMaps": true
 }
 ```
+
+### Filtered Test Runs
+
+Run only specific tests or specs using regex patterns. Patterns are case-insensitive, and a test runs if its `testId` matches any pattern in `testFilter`. Similarly, a spec runs if its `specId` matches any pattern in `specFilter`. When both filters are set, they apply together (AND logic): a test runs only if its spec matches `specFilter` AND the test matches `testFilter`.
+
+```json
+{
+  "input": "docs",
+  "output": ".doc-detective/results",
+  "testFilter": ["smoke", "login"],
+  "specFilter": ["auth"]
+}
+```
+
+CLI flags `--test` and `--spec` override these config values. If filters exclude all tests, Doc Detective displays a warning: "No tests were run."
 
 ## Configuration File Formats
 

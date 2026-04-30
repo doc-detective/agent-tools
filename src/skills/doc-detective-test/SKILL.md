@@ -33,12 +33,16 @@ Convert documented procedures into executable Doc Detective test specifications,
 | `--fix-threshold <n>` | `80` | Confidence threshold (0–100) for auto-applying fixes |
 | `--max-fix-attempts <n>` | `3` | Maximum fix iterations per failing test |
 | `--inject` | `false` | Inject passing tests into source file after completion |
+| `--test <patterns>` / `-t` | — | Run only tests whose `testId` matches the given regex patterns. Comma-separate multiple patterns; a test runs if any pattern matches. Case-insensitive. |
+| `--spec <patterns>` / `-s` | — | Run only specs whose `specId` matches the given regex patterns. Comma-separate multiple patterns; a spec runs if any pattern matches. Case-insensitive. |
 
 ```
 /doc-detective-test docs/login.md --fix
 /doc-detective-test docs/login.md --fix --auto-fix
 /doc-detective-test docs/login.md --fix --fix-threshold 60
 /doc-detective-test docs/login.md --fix --inject
+/doc-detective-test docs/login.md --test "smoke,login"
+/doc-detective-test docs/login.md --spec "auth" --test "login"
 ```
 
 ## Entry Criteria
