@@ -66,9 +66,9 @@ detect_tests({
 })
 ```
 
-The tool returns `{tests[], detectedFileType, warnings[]}` — a resolved test plan that already conforms to `doc-detective-common` semantics. If the result is satisfactory, skip directly to **Step 3 (Validate)** with the returned `tests` array. If the user asks for additional tests beyond what `detect_tests` produces, augment the result manually using Step 2.
+The tool returns `{tests[], detectedFileType, warnings[]}` — a resolved test plan that already conforms to `doc-detective-common` semantics. If the result is satisfactory, build `<generated-spec>` as `{ "tests": <returned-tests-array> }` and skip directly to **Step 3 (Validate)**. If the user asks for additional tests beyond what `detect_tests` produces, augment the result manually using Step 2.
 
-If the MCP tool is **not** available, proceed with Steps 1–2 below to interpret manually.
+When the MCP tool is **not** available, proceed with Steps 1–2 below to interpret manually.
 
 See `_shared/MCP-USAGE.md` for cross-host tool naming.
 
@@ -97,7 +97,7 @@ Map each procedure step to a Doc Detective action using this table:
 
 ### Step 3: Validate (MANDATORY — DO NOT SKIP)
 
-**Preferred:** Call `validate_spec({object: <generated-spec>, schemaKey: "spec_v3", addDefaults: true})` via MCP if available. The result's `valid: true` corresponds to `Validation PASSED`.
+**Preferred:** Call `validate_spec({object: <generated-spec>, schemaKey: "spec_v3", addDefaults: true})` via MCP if available, where `<generated-spec>` is an object shaped `{ "tests": [...] }`. The result's `valid: true` corresponds to `Validation PASSED`.
 
 **Fallback:** If the MCP tool is unavailable:
 

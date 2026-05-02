@@ -262,8 +262,9 @@ function syncVersions() {
 function syncMcpServers() {
   const registryPath = path.join(ROOT, "src/mcp-servers.json");
   if (!fs.existsSync(registryPath)) {
-    log("\nNo src/mcp-servers.json found, skipping MCP sync");
-    return;
+    throw new Error(
+      "Missing required file: src/mcp-servers.json (canonical MCP server registry)"
+    );
   }
 
   log("\nSyncing MCP server registrations...");
@@ -275,7 +276,25 @@ function syncMcpServers() {
   const qwenBlock = {};
 
   for (const [name, spec] of Object.entries(registry)) {
+    // Validate registry entry shape so a malformed entry can't silently
+    // produce broken host manifests.
+    if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
+      throw new Error(`Invalid MCP entry "${name}": expected an object`);
+    }
     if (spec.enabled === false) continue;
+    if (typeof spec.url !== "string" || spec.url.trim() === "") {
+      throw new Error(
+        `Invalid MCP entry "${name}": "url" must be a non-empty string`
+      );
+    }
+    if (
+      spec.clientNames !== undefined &&
+      (typeof spec.clientNames !== "object" || Array.isArray(spec.clientNames))
+    ) {
+      throw new Error(
+        `Invalid MCP entry "${name}": "clientNames" must be an object when present`
+      );
+    }
 
     const cn = spec.clientNames || {};
     const claudeClient = cn["claude-code"] || "claude-code";
