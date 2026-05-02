@@ -254,8 +254,10 @@ function syncVersions() {
  * plugin spec doesn't accept mcpServers today; users register manually in
  * ~/.codex/config.toml (documented in README).
  *
- * OpenCode (plugins/doc-detective/opencode-plugin.mjs) is hand-edited rather
- * than templated — see the `mcp` block in that file's default export.
+ * OpenCode is hand-edited rather than templated — see the `mcp` block in
+ * the default export of `src/hooks/opencode-plugin.mjs` (the source of truth;
+ * `syncHooks()` copies it to `plugins/doc-detective/opencode-plugin.mjs` on
+ * build, so editing the artifact directly will be overwritten).
  */
 function syncMcpServers() {
   const registryPath = path.join(ROOT, "src/mcp-servers.json");
