@@ -9,12 +9,18 @@ npm run build --silent
 
 ARTIFACT_PATHS="agents/ skills/ src/hooks/ hooks/ commands/ plugins/doc-detective/ .claude-plugin/marketplace.json gemini-extension.json qwen-extension.json"
 
-if ! git diff --quiet -- $ARTIFACT_PATHS; then
+DRIFTED_TRACKED="$(git diff --name-only -- $ARTIFACT_PATHS)"
+DRIFTED_UNTRACKED="$(git ls-files --others --exclude-standard -- $ARTIFACT_PATHS)"
+
+if [ -n "$DRIFTED_TRACKED" ] || [ -n "$DRIFTED_UNTRACKED" ]; then
   echo ""
   echo "ERROR: Build artifacts are out of date with src/."
   echo "       Run 'npm run build' and stage the results, then re-commit."
   echo ""
   echo "Drifted paths:"
-  git diff --name-only -- $ARTIFACT_PATHS | sed 's/^/  /'
+  {
+    printf '%s\n' "$DRIFTED_TRACKED"
+    printf '%s\n' "$DRIFTED_UNTRACKED"
+  } | sed '/^$/d; s/^/  /'
   exit 1
 fi

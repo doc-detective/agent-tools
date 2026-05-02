@@ -61,7 +61,7 @@ Before completing:
 
 **Preferred:** If a tool named `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered in this session, call it instead of shelling out:
 
-```
+```javascript
 validate_spec({
   object: <spec-or-config>,
   schemaKey: "spec_v3",   // or "config_v3" for config files

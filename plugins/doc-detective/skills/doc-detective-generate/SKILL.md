@@ -58,7 +58,7 @@ Before outputting any spec:
 
 If a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is registered in this session, call it before doing manual interpretation:
 
-```
+```javascript
 detect_tests({
   content: <raw-doc-content>,
   filePath: <source-path>,            // optional, used only for file-type inference
