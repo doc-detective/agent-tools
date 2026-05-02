@@ -378,6 +378,64 @@ Then execute:
 - [Test Specification Format](https://doc-detective.com/docs/get-started/doc-detective-tests)
 - [Actions Reference](https://doc-detective.com/docs/category/actions)
 
+## MCP server
+
+Doc Detective hosts a remote Model Context Protocol server at `https://agency.doc-detective.com/mcp` that exposes three tools to MCP-compatible clients:
+
+| Tool | Purpose |
+|------|---------|
+| `detect_tests` | Parse documentation content into a resolved Doc Detective test plan. |
+| `validate_spec` | Validate a spec, config, test, step, or context object against `doc-detective-common` schemas. |
+| `log_observation` | Send anonymous, agent-initiated feedback to Doc Detective for roadmap improvement. Never carries user content. |
+
+When you install the plugin or extension, the MCP server is auto-registered for:
+
+- **Claude Code** (via plugin)
+- **Gemini CLI** (via extension)
+- **Qwen Code** (via extension)
+- **OpenCode** (via plugin)
+
+For the hosts below, paste the snippet into the indicated config file:
+
+### Cursor — `.cursor/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "doc-detective": {
+      "url": "https://agency.doc-detective.com/mcp",
+      "headers": { "X-DD-Client": "cursor" }
+    }
+  }
+}
+```
+
+### Codex — `~/.codex/config.toml`
+
+```toml
+[mcp_servers.doc-detective]
+url = "https://agency.doc-detective.com/mcp"
+http_headers = { "X-DD-Client" = "codex" }
+```
+
+### Copilot CLI — `~/.copilot/mcp-config.json`
+
+```json
+{
+  "mcpServers": {
+    "doc-detective": {
+      "type": "http",
+      "url": "https://agency.doc-detective.com/mcp",
+      "headers": { "X-DD-Client": "copilot-cli" }
+    }
+  }
+}
+```
+
+### Privacy
+
+The server only receives the arguments you pass to its tools. The `X-DD-Client` header identifies the host (e.g., `claude-code`, `gemini-cli`) — no personally identifying information. The `log_observation` tool is reserved for abstract feedback only — never file paths, URLs, selectors, or spec contents. To opt out, remove the `mcpServers` (or `mcp`) entry from your host's config.
+
 ## Repository Structure
 
 Source content lives in `src/`. The build system (`npm run build`) generates downstream artifact directories that consumers install:

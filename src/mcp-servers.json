@@ -1,0 +1,16 @@
+{
+  "doc-detective": {
+    "url": "https://agency.doc-detective.com/mcp",
+    "description": "Doc Detective remote tools: detect_tests, validate_spec, log_observation",
+    "enabled": true,
+    "clientNames": {
+      "claude-code": "claude-code",
+      "gemini-cli": "gemini-cli",
+      "qwen-code": "qwen-code",
+      "opencode": "opencode",
+      "codex": "codex",
+      "cursor": "cursor",
+      "copilot-cli": "copilot-cli"
+    }
+  }
+}
