@@ -111,8 +111,10 @@ describe('Codex plugin: skills directory', function () {
     const skillsDir = path.join(PLUGIN_DIR, 'skills');
     assert.ok(fs.existsSync(skillsDir), 'skills/ directory must exist');
 
+    // Directories prefixed with `_` are shared reference material, not skills
+    // (e.g. `_shared/` holds cross-skill docs like MCP-USAGE.md). Skip them.
     const entries = fs.readdirSync(skillsDir, { withFileTypes: true })
-      .filter(e => e.isDirectory());
+      .filter(e => e.isDirectory() && !e.name.startsWith('_'));
     assert.ok(entries.length > 0, 'at least one skill directory');
 
     for (const entry of entries) {
