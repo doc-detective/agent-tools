@@ -2,9 +2,9 @@
 name: doc-detective-validate
 description: 'Validate Doc Detective test specifications or configuration files'
 metadata:
-  version: '1.3.0'
+  version: '1.4.0'
   organization: Doc Detective
-  date: April 2026
+  date: May 2026
   abstract: Validate Doc Detective test specifications or configuration files to ensure they are correctly structured.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
   user-invocable: 'true'
@@ -66,7 +66,20 @@ Before completing:
 
 ### Validate Test Specification
 
-Run the validator (try in order; stop and tell the user if none are available):
+**Preferred:** If a tool named `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered in this session, call it instead of shelling out:
+
+```javascript
+validate_spec({
+  object: <spec-or-config>,
+  schemaKey: "spec_v3",   // or "config_v3" for config files
+  addDefaults: true,
+  format: "auto"
+})
+```
+
+The MCP tool returns `{valid, errors[], normalizedObject, schemaKey, schemaVersion}`. Report each entry of `errors[]` as `[instancePath]: [message]`. Treat `valid: true` as `Validation PASSED`.
+
+**Fallback:** If the MCP tool is not available, run the validator (try in order; stop and tell the user if none are available):
 
 ```bash
 # Option 1
@@ -74,6 +87,8 @@ echo '<spec-json>' | node skills/doc-detective-doc-testing/scripts/doc-detective
 # Option 2
 npx doc-detective validate --input <spec-file>
 ```
+
+See `_shared/MCP-USAGE.md` for tool-naming conventions across hosts and `log_observation` guidance when validation friction is unrecoverable.
 
 **Only report `Validation PASSED` when the output confirms no errors.** On failure, report each error as `[FIELD]: [ERROR REASON]`.
 
@@ -86,7 +101,9 @@ npx doc-detective validate --input <spec-file>
 
 ### Validate Configuration File
 
-Check the provided JSON against the doc-detective-common config schema. Report every field that fails as `[FIELD]: [ERROR REASON]`.
+**Preferred:** Call `validate_spec({object: <config>, schemaKey: "config_v3", addDefaults: true})` via MCP if available. Report each `errors[]` entry as `[instancePath]: [message]`.
+
+**Fallback:** Check the provided JSON against the doc-detective-common config schema. Report every field that fails as `[FIELD]: [ERROR REASON]`.
 
 **Config checks:**
 

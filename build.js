@@ -5,6 +5,7 @@
 // Source of truth:
 //   src/agents/                           → agent definitions
 //   src/skills/                           → skill implementations (SKILL.md, references/, scripts/)
+//   src/mcp-servers.json                  → canonical MCP server registry (fanned out per host)
 //   package.json                          → version
 //
 // Generated/synced artifact directories (do not edit directly):
@@ -17,9 +18,10 @@
 //   plugins/doc-detective/hooks/                     ← copied from src/hooks/ (claude-hooks.json renamed to hooks.json)
 //   plugins/doc-detective/opencode-plugin.mjs        ← copied from src/hooks/opencode-plugin.mjs
 //   .claude-plugin/marketplace.json                  ← version from package.json
-//   plugins/doc-detective/.claude-plugin/plugin.json ← version from package.json
+//   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers from package.json + src/mcp-servers.json
 //   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json
-//   gemini-extension.json                            ← version from package.json
+//   gemini-extension.json                            ← version + mcpServers from package.json + src/mcp-servers.json
+//   qwen-extension.json                              ← version + mcpServers from package.json + src/mcp-servers.json
 //
 // user-invocable field pattern:
 //   src/skills/*/SKILL.md stores `user-invocable` nested under `metadata:` (e.g.
@@ -216,6 +218,15 @@ function syncVersions() {
   writeJSON(gePath, ge);
   log("  gemini-extension.json");
 
+  // qwen-extension.json (optional — created if present)
+  const qePath = path.join(ROOT, "qwen-extension.json");
+  if (fs.existsSync(qePath)) {
+    const qe = readJSON(qePath);
+    qe.version = version;
+    writeJSON(qePath, qe);
+    log("  qwen-extension.json");
+  }
+
   // plugins/doc-detective/.codex-plugin/plugin.json
   const codexPath = path.join(
     ROOT,
@@ -225,6 +236,127 @@ function syncVersions() {
   codex.version = version;
   writeJSON(codexPath, codex);
   log("  plugins/doc-detective/.codex-plugin/plugin.json");
+}
+
+// ─── 1b. Sync MCP server registrations across host configs ───
+
+/**
+ * Reads src/mcp-servers.json and writes the host-specific registration shape
+ * into each host config that ships in this repo. Idempotent: re-running
+ * re-stamps the entries; never duplicates.
+ *
+ * Host shapes:
+ *   Claude Code  → mcpServers: { name: { type: "http", url, headers } }
+ *   Gemini CLI   → mcpServers: { name: { httpUrl, headers } }
+ *   Qwen Code    → mcpServers: { name: { httpUrl, headers } }   (mirrors Gemini)
+ *
+ * Codex (.codex-plugin/plugin.json) is intentionally untouched — the Codex
+ * plugin spec doesn't accept mcpServers today; users register manually in
+ * ~/.codex/config.toml (documented in README).
+ *
+ * OpenCode is hand-edited rather than templated — see the `mcp` block in
+ * the default export of `src/hooks/opencode-plugin.mjs` (the source of truth;
+ * `syncHooks()` copies it to `plugins/doc-detective/opencode-plugin.mjs` on
+ * build, so editing the artifact directly will be overwritten).
+ */
+function syncMcpServers() {
+  const registryPath = path.join(ROOT, "src/mcp-servers.json");
+  if (!fs.existsSync(registryPath)) {
+    throw new Error(
+      "Missing required file: src/mcp-servers.json (canonical MCP server registry)"
+    );
+  }
+
+  log("\nSyncing MCP server registrations...");
+  const registry = readJSON(registryPath);
+
+  // Build per-host mcpServers blocks.
+  const claudeBlock = {};
+  const geminiBlock = {};
+  const qwenBlock = {};
+
+  for (const [name, spec] of Object.entries(registry)) {
+    // Validate registry entry shape so a malformed entry can't silently
+    // produce broken host manifests.
+    if (!spec || typeof spec !== "object" || Array.isArray(spec)) {
+      throw new Error(`Invalid MCP entry "${name}": expected an object`);
+    }
+    if (spec.enabled === false) continue;
+    if (typeof spec.url !== "string" || spec.url.trim() === "") {
+      throw new Error(
+        `Invalid MCP entry "${name}": "url" must be a non-empty string`
+      );
+    }
+    if (
+      spec.clientNames !== undefined &&
+      (typeof spec.clientNames !== "object" || Array.isArray(spec.clientNames))
+    ) {
+      throw new Error(
+        `Invalid MCP entry "${name}": "clientNames" must be an object when present`
+      );
+    }
+
+    const cn = spec.clientNames || {};
+    const claudeClient = cn["claude-code"] || "claude-code";
+    const geminiClient = cn["gemini-cli"] || "gemini-cli";
+    const qwenClient = cn["qwen-code"] || "qwen-code";
+
+    claudeBlock[name] = {
+      type: "http",
+      url: spec.url,
+      headers: { "X-DD-Client": claudeClient },
+    };
+    geminiBlock[name] = {
+      httpUrl: spec.url,
+      headers: { "X-DD-Client": geminiClient },
+    };
+    qwenBlock[name] = {
+      httpUrl: spec.url,
+      headers: { "X-DD-Client": qwenClient },
+    };
+  }
+
+  // Claude Code plugin manifest
+  const claudePath = path.join(
+    ROOT,
+    "plugins/doc-detective/.claude-plugin/plugin.json"
+  );
+  if (fs.existsSync(claudePath)) {
+    const claude = readJSON(claudePath);
+    if (Object.keys(claudeBlock).length > 0) {
+      claude.mcpServers = claudeBlock;
+    } else {
+      delete claude.mcpServers;
+    }
+    writeJSON(claudePath, claude);
+    log("  plugins/doc-detective/.claude-plugin/plugin.json (mcpServers)");
+  }
+
+  // Gemini extension
+  const geminiPath = path.join(ROOT, "gemini-extension.json");
+  if (fs.existsSync(geminiPath)) {
+    const gemini = readJSON(geminiPath);
+    if (Object.keys(geminiBlock).length > 0) {
+      gemini.mcpServers = geminiBlock;
+    } else {
+      delete gemini.mcpServers;
+    }
+    writeJSON(geminiPath, gemini);
+    log("  gemini-extension.json (mcpServers)");
+  }
+
+  // Qwen extension (mirrors Gemini shape)
+  const qwenPath = path.join(ROOT, "qwen-extension.json");
+  if (fs.existsSync(qwenPath)) {
+    const qwen = readJSON(qwenPath);
+    if (Object.keys(qwenBlock).length > 0) {
+      qwen.mcpServers = qwenBlock;
+    } else {
+      delete qwen.mcpServers;
+    }
+    writeJSON(qwenPath, qwen);
+    log("  qwen-extension.json (mcpServers)");
+  }
 }
 
 // ─── 2. Sync metadata (version + date) in source files ───────
@@ -517,6 +649,7 @@ log("Building agent-tools...\n");
 
 cleanOutputDirs();
 syncVersions();
+syncMcpServers();
 syncMetadataInSourceFiles();
 buildSkillScripts();
 syncSourceToArtifacts();

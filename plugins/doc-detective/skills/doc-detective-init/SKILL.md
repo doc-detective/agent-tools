@@ -2,9 +2,9 @@
 name: doc-detective-init
 description: 'Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop'
 metadata:
-  version: '1.3.0'
+  version: '1.4.0'
   organization: Doc Detective
-  date: April 2026
+  date: May 2026
   abstract: Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
