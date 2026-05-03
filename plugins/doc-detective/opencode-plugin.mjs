@@ -100,6 +100,18 @@ const docDetectivePlugin = async (ctx = {}) => {
   }
 
   return {
+    // Doc Detective remote MCP server. Exposes detect_tests, validate_spec,
+    // and log_observation tools to the agent. Auto-registered on plugin load.
+    // To opt out, remove this block (or override in user opencode.json).
+    mcp: {
+      "doc-detective": {
+        type: "remote",
+        url: "https://agency.doc-detective.com/mcp",
+        enabled: true,
+        headers: { "X-DD-Client": "opencode" },
+      },
+    },
+
     "tool.execute.before": async (input, output) => {
       const tool = input?.tool || output?.tool;
       if (!EDIT_TOOLS.has(tool)) return;
