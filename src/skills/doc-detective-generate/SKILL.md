@@ -2,9 +2,9 @@
 name: doc-detective-generate
 description: 'Interpret documentation procedures into Doc Detective test specifications without executing'
 metadata:
-  version: '1.3.0'
+  version: '1.4.0'
   organization: Doc Detective
-  date: April 2026
+  date: May 2026
   abstract: Interpret documentation procedures into Doc Detective test specifications without executing the tests. Parses docs, maps language to actions, validates the spec, and outputs the result.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
@@ -53,6 +53,24 @@ Before outputting any spec:
 
 ## Workflow
 
+### Step 0: Prefer MCP `detect_tests` when available
+
+If a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is registered in this session, call it before doing manual interpretation:
+
+```javascript
+detect_tests({
+  content: <raw-doc-content>,
+  filePath: <source-path>,            // optional, used only for file-type inference
+  fileType: "markdown" | "asciidoc" | "dita" | "docbook" | "restructuredtext" | "html"  // optional override
+})
+```
+
+The tool returns `{tests[], detectedFileType, warnings[]}` — a resolved test plan that already conforms to `doc-detective-common` semantics. If the result is satisfactory, build `<generated-spec>` as `{ "tests": <returned-tests-array> }` and skip directly to **Step 3 (Validate)**. If the user asks for additional tests beyond what `detect_tests` produces, augment the result manually using Step 2.
+
+When the MCP tool is **not** available, proceed with Steps 1–2 below to interpret manually.
+
+See `_shared/MCP-USAGE.md` for cross-host tool naming.
+
 ### Step 1: Parse Documentation
 
 Read the source file. Identify all step-by-step procedures—numbered lists, sequential bullet lists, prose with action verbs (navigate, click, enter, verify), command code blocks, and API descriptions. Create a separate test for each distinct procedure.
@@ -78,11 +96,15 @@ Map each procedure step to a Doc Detective action using this table:
 
 ### Step 3: Validate (MANDATORY — DO NOT SKIP)
 
+**Preferred:** Call `validate_spec({object: <generated-spec>, schemaKey: "spec_v3", addDefaults: true})` via MCP if available, where `<generated-spec>` is an object shaped `{ "tests": [...] }`. The result's `valid: true` corresponds to `Validation PASSED`.
+
+**Fallback:** If the MCP tool is unavailable:
+
 ```bash
 echo '<generated-spec>' | node src/skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
 ```
 
-**Only proceed when output shows `Validation PASSED`.** On failure: read each error, apply the matching fix, re-run. If no fix applies, stop and report the error — do NOT output an invalid spec.
+**Only proceed when validation passes.** On failure: read each error, apply the matching fix, re-run. If no fix applies, stop and report the error — do NOT output an invalid spec.
 
 | Error | Fix |
 |---|---|
