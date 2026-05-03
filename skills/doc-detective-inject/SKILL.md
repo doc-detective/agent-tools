@@ -2,9 +2,9 @@
 name: doc-detective-inject
 description: 'Inject test specifications into documentation source files as inline comments'
 metadata:
-  version: '1.3.0'
+  version: '1.4.0'
   organization: Doc Detective
-  date: April 2026
+  date: May 2026
   abstract: Inject Doc Detective test specifications into documentation source files as inline comments, placing test steps close to their associated content using semantic pattern matching.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'

@@ -194,11 +194,17 @@ The plugin provides `tool.execute.before` and `tool.execute.after` hooks that au
    ```
 
 3. Start OpenCode and ask about Doc Detective, or use the `init` command:
+<<<<<<< HEAD
 
    ```text
    /doc-detective-init
    ```
 
+||||||| 6e741c3
+=======
+=======
+
+>>>>>>> main
 ### Codex
 
 ```bash
@@ -234,7 +240,21 @@ The command fetches doc-detective's skills from GitHub and copies them into the 
    /doc-detective-init
    ```
 
+<<<<<<< HEAD
 ### Cursor and other agents
+||||||| 6e741c3
+<<<<<<< copilot/add-opencode-plugin
+The plugin provides `tool.execute.before` and `tool.execute.after` hooks that automatically validate test specs, block common anti-patterns, suggest running tests after doc edits, and check for Doc Detective CLI availability.
+
+### Codex, Cursor, and other agents
+=======
+### Cursor, OpenCode, and other agents
+>>>>>>> main
+=======
+The plugin provides `tool.execute.before` and `tool.execute.after` hooks that automatically validate test specs, block common anti-patterns, suggest running tests after doc edits, and check for Doc Detective CLI availability.
+
+### Cursor and other agents
+>>>>>>> main
 
 #### Option 1: Install with `npx skills`
 
@@ -378,7 +398,17 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 | **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
 | **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
 
+<<<<<<< HEAD
 Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
+||||||| 6e741c3
+<<<<<<< copilot/add-opencode-plugin
+Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
+=======
+Hooks are supported in Claude Code and Gemini CLI. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
+>>>>>>> main
+=======
+Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
+>>>>>>> main
 
 ## Inline Test Injection
 
@@ -473,6 +503,64 @@ Then execute:
 - [Doc Detective GitHub](https://github.com/doc-detective/doc-detective)
 - [Test Specification Format](https://doc-detective.com/docs/get-started/doc-detective-tests)
 - [Actions Reference](https://doc-detective.com/docs/category/actions)
+
+## MCP server
+
+Doc Detective hosts a remote Model Context Protocol server at `https://agency.doc-detective.com/mcp` that exposes three tools to MCP-compatible clients:
+
+| Tool | Purpose |
+|------|---------|
+| `detect_tests` | Parse documentation content into a resolved Doc Detective test plan. |
+| `validate_spec` | Validate a spec, config, test, step, or context object against `doc-detective-common` schemas. |
+| `log_observation` | Send anonymous, agent-initiated feedback to Doc Detective for roadmap improvement. Never carries user content. |
+
+When you install the plugin or extension, the MCP server is auto-registered for:
+
+- **Claude Code** (via plugin)
+- **Gemini CLI** (via extension)
+- **Qwen Code** (via extension)
+- **OpenCode** (via plugin)
+
+For the hosts below, paste the snippet into the indicated config file:
+
+### Cursor — `.cursor/mcp.json`
+
+```json
+{
+  "mcpServers": {
+    "doc-detective": {
+      "url": "https://agency.doc-detective.com/mcp",
+      "headers": { "X-DD-Client": "cursor" }
+    }
+  }
+}
+```
+
+### Codex — `~/.codex/config.toml`
+
+```toml
+[mcp_servers.doc-detective]
+url = "https://agency.doc-detective.com/mcp"
+http_headers = { "X-DD-Client" = "codex" }
+```
+
+### Copilot CLI — `~/.copilot/mcp-config.json`
+
+```json
+{
+  "mcpServers": {
+    "doc-detective": {
+      "type": "http",
+      "url": "https://agency.doc-detective.com/mcp",
+      "headers": { "X-DD-Client": "copilot-cli" }
+    }
+  }
+}
+```
+
+### Privacy
+
+The server only receives the arguments you pass to its tools. The `X-DD-Client` header identifies the host (e.g., `claude-code`, `gemini-cli`) — no personally identifying information. The `log_observation` tool is reserved for abstract feedback only — never file paths, URLs, selectors, or spec contents. To opt out, remove the `mcpServers` (or `mcp`) entry from your host's config.
 
 ## Repository Structure
 

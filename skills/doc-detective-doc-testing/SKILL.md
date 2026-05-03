@@ -2,9 +2,9 @@
 name: doc-detective-doc-testing
 description: 'Verify documentation and procedures with Doc Detective test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, test docs, test procedure, verify procedures.'
 metadata:
-  version: '1.3.0'
+  version: '1.4.0'
   organization: Doc Detective
-  date: April 2026
+  date: May 2026
   abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
@@ -36,9 +36,13 @@ Use text strings (`{ "click": "Submit" }`) over CSS selectors. Use selectors onl
 
 1. Interpret (docs → spec) → 2. **VALIDATE** (mandatory gate) → 2b. Inject? (optional) → 3. Execute → 4. Analyze → 5. Fix? (optional)
 
+> **Prefer the Doc Detective MCP server when available.** If a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is registered, use it to do Step 1 automatically; if `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered, use it for Step 2 instead of shelling out. See `_shared/MCP-USAGE.md` for tool-naming conventions and `log_observation` guidance.
+
 ## Step 1: Text-to-Test Interpretation
 
-Convert documentation procedures into test specifications.
+**Preferred (MCP):** Call `detect_tests({content: <doc-content>, filePath?: <path>, fileType?: <type>})`. Use the returned `tests[]` array as your interpreted spec. Skip the manual mapping below if the result is satisfactory.
+
+**Fallback:** Convert documentation procedures into test specifications manually using the table below.
 
 ### Map Actions to Steps
 
@@ -75,6 +79,10 @@ See `references/actions.md` for the full action catalog.
 ## Step 2: Validate (MANDATORY - DO NOT SKIP)
 
 **Before returning ANY test spec:**
+
+**Preferred (MCP):** Call `validate_spec({object: <spec>, schemaKey: "spec_v3", addDefaults: true})`. Treat `valid: true` as `Validation PASSED`. Report each entry of `errors[]` as `[instancePath]: [message]`.
+
+**Fallback:** If the MCP tool is not available:
 
 1. Save spec: `echo '<spec-json>' > /tmp/doc-detective-test-spec.json`
 2. Run: `node ./scripts/doc-detective-validate-test.js /tmp/doc-detective-test-spec.json`

@@ -6,7 +6,7 @@
     "doc-detective": {
       "httpUrl": "https://agency.doc-detective.com/mcp",
       "headers": {
-        "X-DD-Client": "gemini-cli"
+        "X-DD-Client": "qwen-code"
       }
     }
   }
