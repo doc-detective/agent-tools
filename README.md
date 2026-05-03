@@ -194,17 +194,11 @@ The plugin provides `tool.execute.before` and `tool.execute.after` hooks that au
    ```
 
 3. Start OpenCode and ask about Doc Detective, or use the `init` command:
-<<<<<<< HEAD
 
    ```text
    /doc-detective-init
    ```
 
-||||||| 6e741c3
-=======
-=======
-
->>>>>>> main
 ### Codex
 
 ```bash
@@ -240,21 +234,7 @@ The command fetches doc-detective's skills from GitHub and copies them into the 
    /doc-detective-init
    ```
 
-<<<<<<< HEAD
 ### Cursor and other agents
-||||||| 6e741c3
-<<<<<<< copilot/add-opencode-plugin
-The plugin provides `tool.execute.before` and `tool.execute.after` hooks that automatically validate test specs, block common anti-patterns, suggest running tests after doc edits, and check for Doc Detective CLI availability.
-
-### Codex, Cursor, and other agents
-=======
-### Cursor, OpenCode, and other agents
->>>>>>> main
-=======
-The plugin provides `tool.execute.before` and `tool.execute.after` hooks that automatically validate test specs, block common anti-patterns, suggest running tests after doc edits, and check for Doc Detective CLI availability.
-
-### Cursor and other agents
->>>>>>> main
 
 #### Option 1: Install with `npx skills`
 
@@ -398,17 +378,7 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 | **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
 | **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
 
-<<<<<<< HEAD
 Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
-||||||| 6e741c3
-<<<<<<< copilot/add-opencode-plugin
-Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
-=======
-Hooks are supported in Claude Code and Gemini CLI. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
->>>>>>> main
-=======
-Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
->>>>>>> main
 
 ## Inline Test Injection
 
