@@ -89,10 +89,26 @@ Check if an element exists. Can optionally interact with it.
 }
 ```
 
+**Composite find (click and type in one step)**:
+
+```json
+{
+  "find": {
+    "selector": "#search-input",
+    "click": true,
+    "type": {
+      "keys": ["search query", "$ENTER$"]
+    }
+  }
+}
+```
+
 **Options:**
 - `selector`: CSS selector
 - `timeout`: Wait time in ms
 - `click`: Click after finding (boolean)
+- `moveTo`: Move cursor to element before interacting (boolean)
+- `type`: Type text after finding (object with `keys`)
 - `matchText`: Verify element contains text
 
 ### dragAndDrop
