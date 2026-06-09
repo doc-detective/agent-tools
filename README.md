@@ -15,15 +15,17 @@ Agent tools for testing documentation procedures and validating that documented 
 The fastest way to install the agent tools is the Doc Detective CLI:
 
 ```bash
-npx doc-detective install-agents
+npx doc-detective install agents
 ```
 
 It detects which supported agents are installed on your machine, prompts you to choose which to configure, and invokes each agent's native install mechanism. Re-run any time to update to the latest version.
 
+> **Backwards compatibility:** The older `doc-detective install-agents` form still works as a hidden alias, so existing scripts and CI jobs don't need to change.
+
 To target a specific agent non-interactively:
 
 ```bash
-npx doc-detective install-agents --agent claude --scope project --yes
+npx doc-detective install agents --agent claude --scope project --yes
 ```
 
 Supported `--agent` ids: `claude`, `copilot`, `gemini`, `codex`, `qwen`, `opencode`.
@@ -37,6 +39,8 @@ Useful flags:
 
 Head to the per-agent sections below if you prefer the native install flow or need to troubleshoot.
 
+> **Note:** `install agents` is one subcommand in the Doc Detective CLI's broader `install` group. Other subcommands (`install runtime`, `install browsers`, `install status`, `install all`) manage the CLI's lazy-loaded runtime dependencies. See the [Doc Detective documentation](https://doc-detective.com) for details.
+
 ### Automatic prompt during npm install
 
 When you run `npm install doc-detective` in an interactive terminal, the CLI checks for supported coding agents. If it detects agents without doc-detective tools installed, you see a prompt:
@@ -46,7 +50,7 @@ Detected coding agents that may be missing doc-detective tools: Claude Code, Gem
 ? Install doc-detective agent tools now? (y/N)
 ```
 
-Answer **y** to launch `install-agents` with the detected agents pre-selected, then choose the install scope (global or project). Answer **n** to skip — the CLI prints a reminder to run `npx doc-detective install-agents` later.
+Answer **y** to launch `install agents` with the detected agents pre-selected, then choose the install scope (global or project). Answer **n** to skip — the CLI prints a reminder to run `npx doc-detective install agents` later.
 
 The prompt is skipped when:
 
@@ -59,7 +63,7 @@ To disable the prompt permanently, add `DOC_DETECTIVE_SKIP_AGENT_PROMPT=1` to yo
 ### Claude Code
 
 ```bash
-npx doc-detective install-agents --agent claude
+npx doc-detective install agents --agent claude
 ```
 
 The command auto-detects Claude Code, prompts for install scope (project or user-global) if you don't pass `--scope`, then invokes Claude Code's native plugin management. Re-run any time to update.
@@ -90,7 +94,7 @@ If the `claude` binary is not on your PATH but `~/.claude/` exists, the command 
 ### Gemini CLI
 
 ```bash
-npx doc-detective install-agents --agent gemini
+npx doc-detective install agents --agent gemini
 ```
 
 This invokes `gemini extensions install` under the hood with auto-update enabled. Gemini CLI installs extensions user-globally — the `--scope` flag has no effect for this agent.
@@ -111,7 +115,7 @@ Ask about Doc Detective, or use the `init` command to get started:
 ### Copilot CLI
 
 ```bash
-npx doc-detective install-agents --agent copilot
+npx doc-detective install agents --agent copilot
 ```
 
 The command invokes Copilot CLI's native plugin management to add the marketplace and install the plugin. Copilot CLI installs plugins user-globally — the `--scope` flag has no effect.
@@ -142,7 +146,7 @@ If the `copilot` binary is not on your PATH, install it first: `npm install -g @
 ### Qwen Code
 
 ```bash
-npx doc-detective install-agents --agent qwen
+npx doc-detective install agents --agent qwen
 ```
 
 The command invokes `qwen extensions install` non-interactively with auto-update enabled. Qwen Code installs extensions user-globally — the `--scope` flag has no effect.
@@ -165,10 +169,10 @@ Ask about Doc Detective, or use the `init` command to get started:
 
 ```bash
 # User-global (default)
-npx doc-detective install-agents --agent opencode
+npx doc-detective install agents --agent opencode
 
 # Or per-project
-npx doc-detective install-agents --agent opencode --scope project
+npx doc-detective install agents --agent opencode --scope project
 ```
 
 The command fetches the agent-tools bundle and copies skills, the runtime plugin, hooks, and agents into the appropriate scope directory (`~/.config/opencode/` or `./.opencode/`). OpenCode auto-discovers them on next launch.
@@ -203,10 +207,10 @@ The plugin provides `tool.execute.before` and `tool.execute.after` hooks that au
 
 ```bash
 # User-global (default)
-npx doc-detective install-agents --agent codex
+npx doc-detective install agents --agent codex
 
 # Or per-project
-npx doc-detective install-agents --agent codex --scope project
+npx doc-detective install agents --agent codex --scope project
 ```
 
 The command fetches doc-detective's skills from GitHub and copies them into the user's (or project's) `.agents/skills/` directory. Codex auto-discovers skills on its next launch.
