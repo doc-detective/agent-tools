@@ -13,16 +13,20 @@
 //   skills/                                          ← copied from src/skills/
 //   commands/*.md                                    ← generated from src/skills/*/SKILL.md (user-invocable: true)
 //   commands/*.toml                                  ← generated from commands/*.md
-//   hooks/                                           ← copied from src/hooks/
+//   hooks/                                           ← copied from src/hooks/ (cursor-hooks.json removed; lives only in the plugin)
+//   plugins/doc-detective/hooks/cursor-hooks.json    ← Cursor hooks (routed through cursor-hook-adapter.js)
 //   plugins/doc-detective/{agents,skills}/           ← copied from agents/, skills/
 //   plugins/doc-detective/hooks/                     ← copied from src/hooks/ (claude-hooks.json renamed to hooks.json)
 //   plugins/doc-detective/opencode-plugin.mjs        ← copied from src/hooks/opencode-plugin.mjs
 //   .claude-plugin/marketplace.json                  ← version from package.json
+//   .cursor-plugin/marketplace.json                  ← version from package.json (custom "Import from Repo" marketplace)
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers from package.json + src/mcp-servers.json
 //   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json + mcpServers pointer
 //   plugins/doc-detective/.mcp.json                  ← Codex MCP registration from src/mcp-servers.json
 //   plugins/doc-detective/README.md                  ← generated from plugin.json + skill/agent frontmatter (functionality only)
 //   plugins/doc-detective/LICENSE                     ← copied from repo-root LICENSE
+//   plugins/doc-detective/.cursor-plugin/plugin.json ← version + inline mcpServers from package.json + src/mcp-servers.json
+//   plugins/doc-detective/rules/*.mdc                ← rendered from src/rules/*.md (Cursor rules)
 //   gemini-extension.json                            ← version + mcpServers from package.json + src/mcp-servers.json
 //   qwen-extension.json                              ← version + mcpServers from package.json + src/mcp-servers.json
 //
@@ -193,6 +197,7 @@ function cleanOutputDirs() {
     "plugins/doc-detective/agents",
     "plugins/doc-detective/skills",
     "plugins/doc-detective/hooks",
+    "plugins/doc-detective/rules",
   ];
 
   for (const dir of dirs) {
@@ -218,6 +223,15 @@ function syncVersions() {
   mp.metadata.version = version;
   writeJSON(mpPath, mp);
   log("  .claude-plugin/marketplace.json");
+
+  // .cursor-plugin/marketplace.json (enables "Import from Repo" custom marketplace)
+  const cursorMpPath = path.join(ROOT, ".cursor-plugin/marketplace.json");
+  if (fs.existsSync(cursorMpPath)) {
+    const cursorMp = readJSON(cursorMpPath);
+    if (cursorMp.metadata) cursorMp.metadata.version = version;
+    writeJSON(cursorMpPath, cursorMp);
+    log("  .cursor-plugin/marketplace.json");
+  }
 
   // plugins/doc-detective/.claude-plugin/plugin.json
   const pjPath = path.join(
@@ -254,6 +268,16 @@ function syncVersions() {
   codex.version = version;
   writeJSON(codexPath, codex);
   log("  plugins/doc-detective/.codex-plugin/plugin.json");
+
+  // plugins/doc-detective/.cursor-plugin/plugin.json
+  const cursorPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.cursor-plugin/plugin.json"
+  );
+  const cursor = readJSON(cursorPath);
+  cursor.version = version;
+  writeJSON(cursorPath, cursor);
+  log("  plugins/doc-detective/.cursor-plugin/plugin.json");
 }
 
 // ─── 1b. Sync MCP server registrations across host configs ───
@@ -292,6 +316,7 @@ function syncMcpServers() {
   const geminiBlock = {};
   const qwenBlock = {};
   const codexBlock = {};
+  const cursorBlock = {};
 
   for (const [name, spec] of Object.entries(registry)) {
     // Validate registry entry shape so a malformed entry can't silently
@@ -319,6 +344,7 @@ function syncMcpServers() {
     const geminiClient = cn["gemini-cli"] || "gemini-cli";
     const qwenClient = cn["qwen-code"] || "qwen-code";
     const codexClient = cn["codex"] || "codex";
+    const cursorClient = cn["cursor"] || "cursor";
 
     claudeBlock[name] = {
       type: "http",
@@ -340,6 +366,13 @@ function syncMcpServers() {
       type: "http",
       url: spec.url,
       headers: { "X-DD-Client": codexClient },
+    };
+    // Cursor's plugin manifest accepts an inline mcpServers map using the same
+    // remote-MCP shape (type/url/headers). HTTP servers REQUIRE `type: "http"`.
+    cursorBlock[name] = {
+      type: "http",
+      url: spec.url,
+      headers: { "X-DD-Client": cursorClient },
     };
   }
 
@@ -408,6 +441,22 @@ function syncMcpServers() {
     }
     writeJSON(codexManifestPath, codexManifest);
     log("  plugins/doc-detective/.codex-plugin/plugin.json (mcpServers)");
+  }
+
+  // Cursor plugin manifest: inline mcpServers map (server auto-registers on install).
+  const cursorManifestPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.cursor-plugin/plugin.json"
+  );
+  if (fs.existsSync(cursorManifestPath)) {
+    const cursorManifest = readJSON(cursorManifestPath);
+    if (Object.keys(cursorBlock).length > 0) {
+      cursorManifest.mcpServers = cursorBlock;
+    } else {
+      delete cursorManifest.mcpServers;
+    }
+    writeJSON(cursorManifestPath, cursorManifest);
+    log("  plugins/doc-detective/.cursor-plugin/plugin.json (mcpServers)");
   }
 }
 
@@ -582,6 +631,16 @@ function syncHooks() {
   if (fs.existsSync(rootClaude)) {
     fs.unlinkSync(rootClaude);
   }
+  // The Cursor hooks config and its adapter belong only to the Cursor plugin,
+  // not the Gemini root artifact. Remove both so they aren't shipped to Gemini.
+  const rootCursor = path.join(rootHooksDir, "cursor-hooks.json");
+  if (fs.existsSync(rootCursor)) {
+    fs.unlinkSync(rootCursor);
+  }
+  const rootCursorAdapter = path.join(rootHooksDir, "scripts", "cursor-hook-adapter.js");
+  if (fs.existsSync(rootCursorAdapter)) {
+    fs.unlinkSync(rootCursorAdapter);
+  }
 
   log("  src/hooks/ -> hooks/ (gemini-hooks.json -> hooks.json)");
 
@@ -601,6 +660,20 @@ function syncHooks() {
   if (fs.existsSync(pluginGemini)) {
     fs.unlinkSync(pluginGemini);
   }
+
+  // cursor-hooks.json stays in the plugin hooks dir; the Cursor manifest
+  // references it via "hooks": "./hooks/cursor-hooks.json". The adapter script
+  // (cursor-hook-adapter.js) was copied with the rest of scripts/.
+  // The Cursor manifest references ./hooks/cursor-hooks.json, so a missing copy
+  // would silently ship a broken hooks reference. Fail the build instead
+  // (parallel to the claude-hooks.json check above).
+  const pluginCursorHooks = path.join(pluginHooksDir, "cursor-hooks.json");
+  if (!fs.existsSync(pluginCursorHooks)) {
+    throw new Error(
+      "Missing required file: src/hooks/cursor-hooks.json (Cursor plugin hooks config)"
+    );
+  }
+  log("  src/hooks/cursor-hooks.json -> plugins/doc-detective/hooks/cursor-hooks.json");
 
   log("  src/hooks/ -> plugins/doc-detective/hooks/ (claude-hooks.json -> hooks.json)");
 
@@ -779,6 +852,50 @@ function generatePluginDocs() {
   log("  plugins/doc-detective/LICENSE");
 }
 
+// ─── 6c. Render rules to per-host formats ────────────────────
+
+/**
+ * Renders the canonical, harness-neutral rule sources in src/rules/*.md into
+ * each host's native "persistent rules" format. Today this emits Cursor `.mdc`
+ * rules (frontmatter keys description/globs/alwaysApply are already
+ * .mdc-compatible, so the render is a copy with the extension changed).
+ *
+ * Single source of truth: src/rules/. The follow-up task fans the same sources
+ * out to Gemini (GEMINI.md), Codex/OpenCode (AGENTS.md), and a Claude skill.
+ */
+function renderRules() {
+  const srcRulesDir = path.join(ROOT, "src/rules");
+  if (!fs.existsSync(srcRulesDir)) {
+    log("\nNo src/rules/ — skipping rules render.");
+    return;
+  }
+
+  log("\nRendering rules...");
+
+  // Cursor: src/rules/<name>.md -> plugins/doc-detective/rules/<name>.mdc
+  const cursorRulesDir = path.join(ROOT, "plugins/doc-detective/rules");
+  fs.mkdirSync(cursorRulesDir, { recursive: true });
+  for (const entry of fs.readdirSync(srcRulesDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const base = path.basename(entry.name, ".md");
+    const content = fs.readFileSync(path.join(srcRulesDir, entry.name), "utf8");
+
+    // Validate Cursor .mdc frontmatter so a malformed rule fails the build
+    // rather than silently shipping a rule Cursor can't apply. Cursor rules
+    // require `description`; `globs` + `alwaysApply` govern when they attach.
+    const { meta } = parseFrontmatter(content);
+    const missing = ["description", "alwaysApply"].filter((k) => !(k in meta));
+    if (missing.length) {
+      throw new Error(
+        `Invalid rule src/rules/${entry.name}: missing frontmatter key(s): ${missing.join(", ")}`
+      );
+    }
+
+    fs.writeFileSync(path.join(cursorRulesDir, `${base}.mdc`), content);
+    log(`  src/rules/${entry.name} -> plugins/doc-detective/rules/${base}.mdc`);
+  }
+}
+
 // ─── 6. Build skill scripts ──────────────────────────────────
 
 function buildSkillScripts() {
@@ -830,5 +947,6 @@ generateCommands();
 generateTomls();
 syncPluginDir();
 generatePluginDocs();
+renderRules();
 
 log("\nBuild complete!");

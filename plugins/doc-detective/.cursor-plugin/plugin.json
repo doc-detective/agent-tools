@@ -1,0 +1,34 @@
+{
+  "name": "doc-detective",
+  "displayName": "Doc Detective",
+  "description": "Documentation testing and validation using Doc Detective. Test documentation procedures, convert docs to executable test specs, and validate that documented workflows match actual application behavior.",
+  "version": "1.4.0",
+  "author": {
+    "name": "Doc Detective Agency",
+    "email": "manny@doc-detective.com"
+  },
+  "homepage": "https://doc-detective.com",
+  "repository": "https://github.com/doc-detective/agent-tools",
+  "license": "AGPL3",
+  "keywords": [
+    "documentation",
+    "testing",
+    "docs-as-tests",
+    "validation",
+    "qa"
+  ],
+  "category": "Productivity",
+  "skills": "./skills/",
+  "agents": "./agents/",
+  "rules": "./rules/",
+  "hooks": "./hooks/cursor-hooks.json",
+  "mcpServers": {
+    "doc-detective": {
+      "type": "http",
+      "url": "https://agency.doc-detective.com/mcp",
+      "headers": {
+        "X-DD-Client": "cursor"
+      }
+    }
+  }
+}

@@ -132,7 +132,55 @@ What installing the plugin gives you:
 - **MCP tools.** The plugin bundles its MCP server in `plugins/doc-detective/.mcp.json`, so the remote MCP tools auto-register on install — no manual `~/.codex/config.toml` edit required.
 - **Hooks.** Codex supports lifecycle hooks, but the tool-matched guardrails (validation, anti-pattern blocking, etc.) key on Claude's `Edit`/`Write` tool names, which Codex does not use — so they do not currently fire on Codex. They run on Claude Code, Gemini CLI, and OpenCode.
 
-### Cursor and other agents
+### Cursor
+
+Doc Detective ships as a [Cursor plugin](https://cursor.com/docs/plugins) (Cursor 2.5+).
+
+> Once published to the official marketplace, install with `/add-plugin doc-detective`
+> in Cursor's Agent chat (or "Add to Cursor" on [cursor.com/marketplace](https://cursor.com/marketplace)).
+> Until then, use one of the manual methods below — they work today.
+
+**Manual install (no marketplace required):**
+
+- **Import the repo as a custom marketplace** (best for sharing with a team): in Cursor,
+  go to **Dashboard → Settings → Plugins → Add Marketplace → Import from Repo** and point
+  it at `https://github.com/doc-detective/agent-tools`. The repo's
+  `.cursor-plugin/marketplace.json` lists the Doc Detective plugin; install it from there.
+
+- **Local plugins directory** (single machine): copy (or symlink) the plugin into
+  `~/.cursor/plugins/local/`, then restart Cursor or run **Developer: Reload Window**.
+
+  ```bash
+  git clone https://github.com/doc-detective/agent-tools.git
+  cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
+  # or, for development, symlink instead of copy:
+  # ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
+  ```
+
+Then get started with a slash command:
+
+```text
+/doc-detective-init
+```
+
+What installing the plugin gives you:
+
+- **Skills.** The Doc Detective skills load into Cursor and are invocable as slash
+  commands (`/doc-detective-test`, `/doc-detective-generate`, `/doc-detective-validate`,
+  `/doc-detective-inject`, `/doc-detective-init`, `/doc-detective-install-github-action`).
+- **Agent.** The `doc-detective-specialist` subagent is available for documentation-testing tasks.
+- **Rule.** A persistent "docs as tests" rule reminds the agent to validate and test
+  documented procedures (and to use the correct `{ "action-name": ... }` spec format)
+  when you edit docs or test specs.
+- **MCP tools.** The plugin registers the Doc Detective remote MCP server inline in its
+  manifest, so the MCP tools are available without a manual `.cursor/mcp.json` edit.
+- **Hooks.** Cursor's hook protocol differs from Claude's, so the plugin routes Cursor's
+  `sessionStart` and `afterFileEdit` events through an adapter
+  (`hooks/scripts/cursor-hook-adapter.js`) that reuses the shared hook scripts —
+  giving you install detection, spec validation, formatting, and anti-pattern guidance.
+  See [docs/README.cursor.md](docs/README.cursor.md) for details.
+
+### Other agents
 
 #### Option 1: Install with `npx skills`
 
