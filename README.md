@@ -186,6 +186,25 @@ This is the method for an individual machine. It needs no marketplace and no Tea
 > ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
 > ```
 
+#### With the `cursor-agent` CLI
+
+The [Cursor CLI](https://cursor.com/docs/cli) has **no marketplace** — load the plugin with
+`--plugin-dir` (this loads the skills, agent, rule, and MCP server):
+
+```bash
+cursor-agent --plugin-dir "$PWD/agent-tools/plugins/doc-detective"
+```
+
+#### Via Claude Code skills/subagents (third-party import)
+
+Cursor can load resources from other ecosystems. In **Settings → Rules, Skills, Subagents**,
+enable **"Include third-party Plugins, Skills and other configs"** — Cursor then imports
+skills and subagents from Claude Code's `~/.claude/skills` and `~/.claude/agents` (and Codex
+configs). So if you already run Doc Detective in Claude Code (or `npx skills add
+doc-detective/agent-tools`), this toggle surfaces it in Cursor with no separate Cursor
+plugin. (It imports *everything* from those ecosystems, so the dedicated Cursor plugin above
+is more targeted.)
+
 #### Distribute to a team (Teams / Enterprise plans only)
 
 Team Marketplaces are **not available on individual (Free/Pro) plans** — if you don't see

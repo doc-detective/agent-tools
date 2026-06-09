@@ -49,12 +49,37 @@ For iterative development, symlink instead of copying so edits are picked up on 
 ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
 ```
 
-You can also drive it headlessly with the [Cursor CLI](https://cursor.com/docs/cli):
+### Using the cursor-agent CLI
+
+The [Cursor CLI](https://cursor.com/docs/cli) has **no marketplace** — there is no command
+to install plugins from the official or a team marketplace. Its only plugin-related flag is
+`--plugin-dir`, and the `mcp` subcommand manages MCP servers (via `.cursor/mcp.json`), not
+plugins. Load the plugin by pointing `--plugin-dir` at the plugin folder:
 
 ```bash
 curl -fsSL https://cursor.com/install | bash   # installs `cursor-agent`
 cursor-agent --plugin-dir "$PWD/agent-tools/plugins/doc-detective"
 ```
+
+`--plugin-dir` loads the skills, the agent, the rule, and the MCP server (verified against
+the CLI). A plugin merely sitting in `~/.cursor/plugins/local/` is only *partially* honored
+by the CLI — its MCP server loads, but skills aren't reliably picked up — so prefer
+`--plugin-dir` when using `cursor-agent`.
+
+### Use via Claude Code skills/subagents (third-party import)
+
+Cursor can load agent resources from other ecosystems directly. In
+**Settings → Rules, Skills, Subagents**, enable **"Include third-party Plugins, Skills and
+other configs"**. When enabled, Cursor imports skills and subagents from Claude Code's
+`~/.claude/skills` and `~/.claude/agents` directories (and Codex configs). So if you already
+run Doc Detective in Claude Code — or place its `skills/` and `agents/` under `~/.claude/`
+(e.g. `npx skills add doc-detective/agent-tools`) — flipping this toggle surfaces them in
+Cursor without installing the Cursor plugin separately.
+
+Note: the toggle currently imports **everything** from Claude Code and Codex (no per-item or
+per-provider filtering yet), including Claude hooks from `.claude/settings.json`. For Doc
+Detective specifically, the dedicated Cursor plugin (local install above) is the more
+targeted option.
 
 ### Team distribution (Teams / Enterprise only)
 
