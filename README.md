@@ -234,6 +234,12 @@ The command fetches doc-detective's skills from GitHub and copies them into the 
    /doc-detective-init
    ```
 
+What installing the plugin gives you:
+
+- **Skills.** Running `codex plugin marketplace add <path>` then `codex plugin add doc-detective@doc-detective` loads the Doc Detective skills into Codex.
+- **MCP tools.** The plugin bundles its MCP server in `plugins/doc-detective/.mcp.json`, so the remote MCP tools auto-register on install — no manual `~/.codex/config.toml` edit required.
+- **Hooks.** Codex supports lifecycle hooks, but the tool-matched guardrails (validation, anti-pattern blocking, etc.) key on Claude's `Edit`/`Write` tool names, which Codex does not use — so they do not currently fire on Codex. They run on Claude Code, Gemini CLI, and OpenCode.
+
 ### Cursor and other agents
 
 #### Option 1: Install with `npx skills`
@@ -490,6 +496,7 @@ When you install the plugin or extension, the MCP server is auto-registered for:
 - **Gemini CLI** (via extension)
 - **Qwen Code** (via extension)
 - **OpenCode** (via plugin)
+- **Codex** (via the plugin's bundled `.mcp.json`)
 
 For the hosts below, paste the snippet into the indicated config file:
 
@@ -507,6 +514,8 @@ For the hosts below, paste the snippet into the indicated config file:
 ```
 
 ### Codex — `~/.codex/config.toml`
+
+Installing the Codex plugin auto-registers the MCP server from its bundled `.mcp.json`. If you installed only the skills (e.g. via `npx skills`), register it manually instead:
 
 ```toml
 [mcp_servers.doc-detective]
@@ -548,6 +557,8 @@ Source content lives in `src/`. The build system (`npm run build`) generates dow
 | `commands/doc-detective/*.toml` | Generated from command .md files for Gemini CLI (build artifact) |
 | `plugins/doc-detective/` | Copied from `agents/`, `skills/`, and `hooks/` (build artifact) |
 | `plugins/doc-detective/opencode-plugin.mjs` | OpenCode plugin — wraps hook scripts as OpenCode hooks (build artifact) |
+| `plugins/doc-detective/.codex-plugin/plugin.json` | Codex plugin manifest — version synced from package.json; includes `mcpServers: "./.mcp.json"` when Codex MCP servers are enabled (build artifact) |
+| `plugins/doc-detective/.mcp.json` | Codex MCP registration generated from enabled `src/mcp-servers.json` entries; removed when none are enabled (build artifact) |
 | `.agents/plugins/marketplace.json` | Codex marketplace pointing to `plugins/doc-detective/` |
 
 > [!NOTE]
