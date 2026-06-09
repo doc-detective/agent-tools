@@ -143,7 +143,10 @@ describe('Codex plugin: bundled MCP server', function () {
       assert.strictEqual(entry.type, 'http', `${name} must declare type: http`);
       assert.strictEqual(entry.url, spec.url, `${name} url must match registry`);
       assert.ok(entry.headers, `${name} must use headers`);
-      assert.strictEqual(entry.headers['X-DD-Client'], 'codex',
+      // Mirror build.js: the client id can be overridden per host via
+      // clientNames.codex, so derive the expected value from the registry.
+      const expectedClient = (spec.clientNames && spec.clientNames.codex) || 'codex';
+      assert.strictEqual(entry.headers['X-DD-Client'], expectedClient,
         `${name} must identify the Codex client`);
     }
   });

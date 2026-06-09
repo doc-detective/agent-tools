@@ -384,7 +384,7 @@ function syncMcpServers() {
       // top-level key (e.g. snake_case `mcp_servers`) as a server name.
       writeJSON(codexMcpPath, { mcpServers: codexBlock });
       codexManifest.mcpServers = "./.mcp.json";
-      log("  plugins/doc-detective/.mcp.json (mcp_servers)");
+      log("  plugins/doc-detective/.mcp.json (mcpServers)");
     } else {
       fs.rmSync(codexMcpPath, { force: true });
       delete codexManifest.mcpServers;
