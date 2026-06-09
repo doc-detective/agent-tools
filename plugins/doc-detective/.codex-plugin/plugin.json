@@ -8,7 +8,7 @@
   },
   "homepage": "https://doc-detective.com",
   "repository": "https://github.com/doc-detective/agent-tools",
-  "license": "AGPL3",
+  "license": "AGPL-3.0-only",
   "skills": "./skills/",
   "interface": {
     "displayName": "Doc Detective",

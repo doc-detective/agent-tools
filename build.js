@@ -21,6 +21,8 @@
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers from package.json + src/mcp-servers.json
 //   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json + mcpServers pointer
 //   plugins/doc-detective/.mcp.json                  ← Codex MCP registration from src/mcp-servers.json
+//   plugins/doc-detective/README.md                  ← generated from plugin.json + skill/agent frontmatter (functionality only)
+//   plugins/doc-detective/LICENSE                     ← copied from repo-root LICENSE
 //   gemini-extension.json                            ← version + mcpServers from package.json + src/mcp-servers.json
 //   qwen-extension.json                              ← version + mcpServers from package.json + src/mcp-servers.json
 //
@@ -119,6 +121,21 @@ function getMetadataUserInvocable(content) {
   if (!fmMatch) return true;
   const m = fmMatch[1].match(/^\s+user-invocable:\s*['"]?(true|false)['"]?\s*$/m);
   return m ? m[1] === "true" : true;
+}
+
+/**
+ * Extract an indented (metadata-block) single-line field from raw frontmatter,
+ * e.g. `abstract`. Returns the trimmed value with surrounding YAML quotes
+ * stripped, or "" if absent. parseFrontmatter() only captures top-level keys,
+ * so nested metadata fields need this.
+ */
+function getMetadataField(content, field) {
+  const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmMatch) return "";
+  const re = new RegExp(`^\\s+${field}:\\s*(.+)$`, "m");
+  const m = fmMatch[1].match(re);
+  if (!m) return "";
+  return m[1].trim().replace(/^(['"])([\s\S]*)\1$/, "$2").trim();
 }
 
 /** Returns the current build date as "Month YYYY" (e.g., "March 2026"). */
@@ -642,6 +659,126 @@ function syncPluginDir() {
   }
 }
 
+// ─── 6b. Generate plugin README + LICENSE ────────────────────
+
+/**
+ * Generate plugins/doc-detective/README.md from the source of truth
+ * (plugin.json + skill/agent frontmatter) and copy the repo LICENSE into the
+ * plugin directory. The README documents *functionality* only — it omits
+ * plugin- and harness-specific installation instructions on purpose, since
+ * those live in the repo-root README and vary per host.
+ */
+function generatePluginDocs() {
+  log("\nGenerating plugin README + LICENSE...");
+
+  const pluginDir = path.join(ROOT, "plugins/doc-detective");
+  const pj = readJSON(path.join(pluginDir, ".claude-plugin/plugin.json"));
+
+  // Collect skills (from source of truth), split user-invocable vs. internal.
+  const skillsDir = path.join(ROOT, "src/skills");
+  const userSkills = [];
+  const internalSkills = [];
+  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )) {
+    if (!entry.isDirectory()) continue;
+    const skillMdPath = path.join(skillsDir, entry.name, "SKILL.md");
+    if (!fs.existsSync(skillMdPath)) continue;
+    const content = fs.readFileSync(skillMdPath, "utf8");
+    const { meta } = parseFrontmatter(content);
+    const name = meta["name"] || entry.name;
+    // Prefer the human-readable abstract; fall back to the trigger description.
+    const summary =
+      getMetadataField(content, "abstract") ||
+      (meta["description"] || "").replace(/^(['"])([\s\S]*)\1$/, "$2").trim();
+    const target = getMetadataUserInvocable(content) ? userSkills : internalSkills;
+    target.push({ name, summary });
+  }
+
+  // Collect agents.
+  const agentsDir = path.join(ROOT, "src/agents");
+  const agents = [];
+  if (fs.existsSync(agentsDir)) {
+    for (const entry of fs.readdirSync(agentsDir, { withFileTypes: true }).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    )) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      const content = fs.readFileSync(path.join(agentsDir, entry.name), "utf8");
+      const { meta } = parseFrontmatter(content);
+      const name = meta["name"] || path.basename(entry.name, ".md");
+      // Agent descriptions embed long example blocks; keep only the lead-in.
+      // The frontmatter is single-line YAML with escaped "\n" sequences (two
+      // characters: backslash + n), not real newlines — so split on either
+      // form to be robust to both representations.
+      const rawDesc = (meta["description"] || "").replace(/^(['"])([\s\S]*)\1$/, "$2");
+      const summary = rawDesc.split(/\r?\n|\\n/)[0].trim();
+      agents.push({ name, summary });
+    }
+  }
+
+  const lines = [];
+  lines.push(`# ${pj.name || "plugin"}`, "");
+  if (pj.description) lines.push(pj.description, "");
+  if (pj.homepage) {
+    lines.push(`Learn more at [${pj.homepage}](${pj.homepage}).`, "");
+  }
+
+  if (userSkills.length) {
+    lines.push("## Commands", "");
+    lines.push("Invoke these slash commands directly:", "");
+    for (const s of userSkills) lines.push(`- **\`/${s.name}\`** — ${s.summary}`);
+    lines.push("");
+  }
+
+  if (internalSkills.length) {
+    lines.push("## Supporting skills", "");
+    lines.push(
+      "Invoked automatically when relevant, not run directly:",
+      ""
+    );
+    for (const s of internalSkills) lines.push(`- **${s.name}** — ${s.summary}`);
+    lines.push("");
+  }
+
+  if (agents.length) {
+    lines.push("## Agents", "");
+    for (const a of agents) lines.push(`- **${a.name}** — ${a.summary}`);
+    lines.push("");
+  }
+
+  const mcpNames = pj.mcpServers ? Object.keys(pj.mcpServers) : [];
+  if (mcpNames.length) {
+    const label = mcpNames.length === 1 ? "server" : "servers";
+    const names = mcpNames.map((n) => `\`${n}\``).join(", ");
+    lines.push(`## MCP ${label}`, "");
+    lines.push(
+      `Bundles the ${names} MCP ${label}, giving the agent direct access to Doc Detective's documentation-testing engine.`,
+      ""
+    );
+  }
+
+  if (pj.license) {
+    lines.push("## License", "");
+    lines.push(`Licensed under ${pj.license}. See [LICENSE](./LICENSE).`, "");
+  }
+
+  const readmePath = path.join(pluginDir, "README.md");
+  fs.writeFileSync(readmePath, lines.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n");
+  log("  plugins/doc-detective/README.md");
+
+  // Copy the repo LICENSE into the plugin directory. Required: a plugin
+  // package shipped without its license is invalid, so fail the build loudly
+  // rather than emit an undocumented package.
+  const srcLicense = path.join(ROOT, "LICENSE");
+  if (!fs.existsSync(srcLicense)) {
+    throw new Error(
+      "Missing required file: LICENSE (repo-root license needed to package the plugin)"
+    );
+  }
+  fs.copyFileSync(srcLicense, path.join(pluginDir, "LICENSE"));
+  log("  plugins/doc-detective/LICENSE");
+}
+
 // ─── 6. Build skill scripts ──────────────────────────────────
 
 function buildSkillScripts() {
@@ -692,5 +829,6 @@ syncHooks();
 generateCommands();
 generateTomls();
 syncPluginDir();
+generatePluginDocs();
 
 log("\nBuild complete!");
