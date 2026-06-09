@@ -707,8 +707,11 @@ function generatePluginDocs() {
       const { meta } = parseFrontmatter(content);
       const name = meta["name"] || path.basename(entry.name, ".md");
       // Agent descriptions embed long example blocks; keep only the lead-in.
+      // The frontmatter is single-line YAML with escaped "\n" sequences (two
+      // characters: backslash + n), not real newlines — so split on either
+      // form to be robust to both representations.
       const rawDesc = (meta["description"] || "").replace(/^(['"])([\s\S]*)\1$/, "$2");
-      const summary = rawDesc.split("\\n")[0].trim();
+      const summary = rawDesc.split(/\r?\n|\\n/)[0].trim();
       agents.push({ name, summary });
     }
   }
@@ -763,14 +766,17 @@ function generatePluginDocs() {
   fs.writeFileSync(readmePath, lines.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n");
   log("  plugins/doc-detective/README.md");
 
-  // Copy the repo LICENSE into the plugin directory.
+  // Copy the repo LICENSE into the plugin directory. Required: a plugin
+  // package shipped without its license is invalid, so fail the build loudly
+  // rather than emit an undocumented package.
   const srcLicense = path.join(ROOT, "LICENSE");
-  if (fs.existsSync(srcLicense)) {
-    fs.copyFileSync(srcLicense, path.join(pluginDir, "LICENSE"));
-    log("  plugins/doc-detective/LICENSE");
-  } else {
-    log("  WARNING: repo LICENSE not found; skipping plugin LICENSE copy");
+  if (!fs.existsSync(srcLicense)) {
+    throw new Error(
+      "Missing required file: LICENSE (repo-root license needed to package the plugin)"
+    );
   }
+  fs.copyFileSync(srcLicense, path.join(pluginDir, "LICENSE"));
+  log("  plugins/doc-detective/LICENSE");
 }
 
 // ─── 6. Build skill scripts ──────────────────────────────────
