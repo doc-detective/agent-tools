@@ -621,10 +621,15 @@ function syncHooks() {
   if (fs.existsSync(rootClaude)) {
     fs.unlinkSync(rootClaude);
   }
-  // cursor-hooks.json belongs only to the Cursor plugin, not the Gemini root artifact.
+  // The Cursor hooks config and its adapter belong only to the Cursor plugin,
+  // not the Gemini root artifact. Remove both so they aren't shipped to Gemini.
   const rootCursor = path.join(rootHooksDir, "cursor-hooks.json");
   if (fs.existsSync(rootCursor)) {
     fs.unlinkSync(rootCursor);
+  }
+  const rootCursorAdapter = path.join(rootHooksDir, "scripts", "cursor-hook-adapter.js");
+  if (fs.existsSync(rootCursorAdapter)) {
+    fs.unlinkSync(rootCursorAdapter);
   }
 
   log("  src/hooks/ -> hooks/ (gemini-hooks.json -> hooks.json)");

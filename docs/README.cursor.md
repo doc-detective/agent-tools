@@ -27,7 +27,7 @@ cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
 You can also drive it headlessly with the [Cursor CLI](https://cursor.com/docs/cli):
 
 ```bash
-curl https://cursor.com/install -fsSL | bash   # installs `cursor-agent`
+curl -fsSL https://cursor.com/install | bash   # installs `cursor-agent`
 cursor-agent
 ```
 

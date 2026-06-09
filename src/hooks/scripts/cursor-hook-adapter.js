@@ -17,7 +17,7 @@
 //        ▼  translate
 //   Cursor stdout: { agent_message | additional_context | permission, … }
 //
-// Usage (from hooks-cursor.json):
+// Usage (from cursor-hooks.json):
 //   node "${CURSOR_PLUGIN_ROOT}/hooks/scripts/cursor-hook-adapter.js" <target-script>
 //
 // Reference:
@@ -108,6 +108,16 @@ function emit(obj) {
 async function main() {
   const targetScript = process.argv[2];
   if (!targetScript) process.exit(0); // misconfigured — fail open
+
+  // The target script must resolve inside this directory. The hooks config is
+  // bundled and trusted, but a local install can edit it and the adapter can be
+  // invoked directly, so reject path traversal (e.g. "../../evil.js"). Exit 1
+  // (fail open), not 2, so a misconfiguration doesn't hard-block Cursor.
+  const resolvedTarget = path.resolve(__dirname, targetScript);
+  if (resolvedTarget !== __dirname && !resolvedTarget.startsWith(__dirname + path.sep)) {
+    process.stderr.write(`cursor-hook-adapter: invalid target script "${targetScript}"\n`);
+    process.exit(1);
+  }
 
   const cursor = await readStdin();
   const event = cursor.hook_event_name || '';

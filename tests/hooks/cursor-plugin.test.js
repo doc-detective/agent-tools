@@ -196,6 +196,17 @@ describe('Cursor plugin: hook adapter behavior', function () {
     assert.strictEqual(r.code, 0);
     assert.strictEqual(r.stdout.trim(), '', 'no output for non-Doc-Detective content');
   });
+
+  it('rejects a path-traversal target script with exit 1 (fail open, no hard block)', async function () {
+    const r = await runAdapter('../../../../../../tmp/evil.js', {
+      hook_event_name: 'afterFileEdit',
+      file_path: '/tmp/x.spec.json',
+      edits: [{ old_string: '', new_string: '{}' }],
+    });
+    assert.strictEqual(r.code, 1, 'traversal must exit 1 (fail open), not 2 (block)');
+    assert.match(r.stderr, /invalid target script/);
+    assert.strictEqual(r.stdout.trim(), '', 'must not emit a hook response');
+  });
 });
 
 describe('Cursor plugin: build version sync', function () {
