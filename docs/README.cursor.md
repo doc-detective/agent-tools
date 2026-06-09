@@ -6,36 +6,42 @@ how to test it locally.
 
 ## Install
 
-### From the official marketplace (once published)
+> **Which method?** On an **individual (Free/Pro)** plan, use **Local install** below — it
+> works on every plan and needs no marketplace. The repo-import marketplace is a
+> **Teams/Enterprise**-only feature (see "Team distribution"). `/add-plugin` works once the
+> plugin is on the official marketplace.
 
-From Cursor's Agent chat:
+### Local install (any plan)
 
-```text
-/add-plugin doc-detective
-```
+Cursor loads unpacked plugins from `~/.cursor/plugins/local/<name>/`, where the folder
+contains `.cursor-plugin/plugin.json` at its root.
 
-Or install from [cursor.com/marketplace](https://cursor.com/marketplace) with **Add to Cursor**.
+1. Clone the repo:
 
-### Manual install (no official marketplace required)
+   ```bash
+   git clone https://github.com/doc-detective/agent-tools.git
+   ```
 
-Both methods below work today, before the plugin is listed on the official marketplace.
+2. Copy `plugins/doc-detective` into the local plugins directory:
 
-**A. Import the repo as a custom / team marketplace.** In Cursor, go to
-**Dashboard → Settings → Plugins → Add Marketplace → Import from Repo** and point it at
-`https://github.com/doc-detective/agent-tools`. Cursor reads the repo-root
-`.cursor-plugin/marketplace.json`, which lists the `doc-detective` plugin with
-`source: ./plugins/doc-detective`; install it from the imported marketplace. This is the
-recommended way to distribute the plugin to a team without the official marketplace.
+   ```bash
+   # macOS / Linux — remove any previous copy first to avoid double-nesting
+   rm -rf ~/.cursor/plugins/local/doc-detective
+   cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
+   ```
 
-**B. Local plugins directory (single machine).** Cursor loads unpacked plugins from
-`~/.cursor/plugins/local/<name>/` — the folder must contain `.cursor-plugin/plugin.json`
-at its root. Copy it in and restart Cursor (or run **Developer: Reload Window**):
+   ```powershell
+   # Windows (PowerShell)
+   Remove-Item -Recurse -Force "$HOME\.cursor\plugins\local\doc-detective" -ErrorAction SilentlyContinue
+   Copy-Item -Recurse agent-tools\plugins\doc-detective "$HOME\.cursor\plugins\local\doc-detective"
+   ```
 
-```bash
-git clone https://github.com/doc-detective/agent-tools.git
-cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
-# restart Cursor, or run "Developer: Reload Window"
-```
+   Confirm the manifest landed at
+   `~/.cursor/plugins/local/doc-detective/.cursor-plugin/plugin.json` (not double-nested).
+
+3. Run **Developer: Reload Window** from the Command Palette (or restart Cursor).
+
+4. In Agent chat, type `/` and confirm the `/doc-detective-*` commands appear.
 
 For iterative development, symlink instead of copying so edits are picked up on reload:
 
@@ -47,8 +53,33 @@ You can also drive it headlessly with the [Cursor CLI](https://cursor.com/docs/c
 
 ```bash
 curl -fsSL https://cursor.com/install | bash   # installs `cursor-agent`
-cursor-agent
+cursor-agent --plugin-dir "$PWD/agent-tools/plugins/doc-detective"
 ```
+
+### Team distribution (Teams / Enterprise only)
+
+> Not available on individual (Free/Pro) plans — if there's no **Team Marketplaces**
+> section in your dashboard, use the local install above.
+
+A team admin imports this repo as a custom marketplace from the **web dashboard** (not the
+in-app settings):
+
+1. [cursor.com](https://cursor.com) → **Dashboard → Settings → Plugins → Team
+   Marketplaces → Import**.
+2. Paste `https://github.com/doc-detective/agent-tools`; Cursor reads the repo-root
+   `.cursor-plugin/marketplace.json`, which lists the `doc-detective` plugin with
+   `source: ./plugins/doc-detective`.
+3. Assign access groups, mark the plugin Required or Optional, and save. (Auto-refresh
+   needs the Cursor GitHub App and runs at most every 10 minutes; re-import the URL to
+   pick up newly added plugins.)
+
+### Official marketplace (once published)
+
+```text
+/add-plugin doc-detective
+```
+
+Or "Add to Cursor" from [cursor.com/marketplace](https://cursor.com/marketplace).
 
 ## What's in the manifest
 
