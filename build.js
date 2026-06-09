@@ -664,10 +664,16 @@ function syncHooks() {
   // cursor-hooks.json stays in the plugin hooks dir; the Cursor manifest
   // references it via "hooks": "./hooks/cursor-hooks.json". The adapter script
   // (cursor-hook-adapter.js) was copied with the rest of scripts/.
+  // The Cursor manifest references ./hooks/cursor-hooks.json, so a missing copy
+  // would silently ship a broken hooks reference. Fail the build instead
+  // (parallel to the claude-hooks.json check above).
   const pluginCursorHooks = path.join(pluginHooksDir, "cursor-hooks.json");
-  if (fs.existsSync(pluginCursorHooks)) {
-    log("  src/hooks/cursor-hooks.json -> plugins/doc-detective/hooks/cursor-hooks.json");
+  if (!fs.existsSync(pluginCursorHooks)) {
+    throw new Error(
+      "Missing required file: src/hooks/cursor-hooks.json (Cursor plugin hooks config)"
+    );
   }
+  log("  src/hooks/cursor-hooks.json -> plugins/doc-detective/hooks/cursor-hooks.json");
 
   log("  src/hooks/ -> plugins/doc-detective/hooks/ (claude-hooks.json -> hooks.json)");
 
@@ -873,6 +879,18 @@ function renderRules() {
     if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
     const base = path.basename(entry.name, ".md");
     const content = fs.readFileSync(path.join(srcRulesDir, entry.name), "utf8");
+
+    // Validate Cursor .mdc frontmatter so a malformed rule fails the build
+    // rather than silently shipping a rule Cursor can't apply. Cursor rules
+    // require `description`; `globs` + `alwaysApply` govern when they attach.
+    const { meta } = parseFrontmatter(content);
+    const missing = ["description", "alwaysApply"].filter((k) => !(k in meta));
+    if (missing.length) {
+      throw new Error(
+        `Invalid rule src/rules/${entry.name}: missing frontmatter key(s): ${missing.join(", ")}`
+      );
+    }
+
     fs.writeFileSync(path.join(cursorRulesDir, `${base}.mdc`), content);
     log(`  src/rules/${entry.name} -> plugins/doc-detective/rules/${base}.mdc`);
   }
