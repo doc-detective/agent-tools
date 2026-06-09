@@ -1,0 +1,18 @@
+{
+  "name": "doc-detective",
+  "owner": {
+    "name": "Doc Detective Agency",
+    "email": "manny@doc-detective.com"
+  },
+  "metadata": {
+    "description": "Documentation testing and workflow validation tools.",
+    "version": "1.4.0"
+  },
+  "plugins": [
+    {
+      "name": "doc-detective",
+      "source": "./plugins/doc-detective",
+      "description": "Documentation testing and validation using Doc Detective. Test documentation procedures, convert docs to executable test specs, and validate that documented workflows match actual application behavior."
+    }
+  ]
+}

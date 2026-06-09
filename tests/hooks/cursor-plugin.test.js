@@ -90,6 +90,37 @@ describe('Cursor plugin: manifest', function () {
   });
 });
 
+describe('Cursor plugin: marketplace manifest', function () {
+  this.timeout(10000);
+
+  const CURSOR_MARKETPLACE = path.join(ROOT, '.cursor-plugin/marketplace.json');
+  let marketplace;
+
+  before(function () {
+    assert.ok(fs.existsSync(CURSOR_MARKETPLACE),
+      'Cursor marketplace must exist at .cursor-plugin/marketplace.json (enables Import from Repo)');
+    marketplace = JSON.parse(fs.readFileSync(CURSOR_MARKETPLACE, 'utf8'));
+  });
+
+  it('should have a name and a plugins array (schema-required)', function () {
+    assert.ok(marketplace.name, 'name is required');
+    assert.ok(Array.isArray(marketplace.plugins) && marketplace.plugins.length > 0,
+      'plugins array with at least one entry is required');
+  });
+
+  it('should list the doc-detective plugin pointing at the plugin dir', function () {
+    const entry = marketplace.plugins.find((p) => p.name === 'doc-detective');
+    assert.ok(entry, 'doc-detective entry is required');
+    assert.strictEqual(entry.source, './plugins/doc-detective',
+      'source must point at the plugin directory (which holds .cursor-plugin/plugin.json)');
+  });
+
+  it('should version-sync with package.json', function () {
+    const pkg = JSON.parse(fs.readFileSync(PKG_JSON, 'utf8'));
+    assert.strictEqual(marketplace.metadata && marketplace.metadata.version, pkg.version);
+  });
+});
+
 describe('Cursor plugin: inline MCP server', function () {
   this.timeout(10000);
 

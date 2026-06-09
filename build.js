@@ -19,6 +19,7 @@
 //   plugins/doc-detective/hooks/                     ← copied from src/hooks/ (claude-hooks.json renamed to hooks.json)
 //   plugins/doc-detective/opencode-plugin.mjs        ← copied from src/hooks/opencode-plugin.mjs
 //   .claude-plugin/marketplace.json                  ← version from package.json
+//   .cursor-plugin/marketplace.json                  ← version from package.json (custom "Import from Repo" marketplace)
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers from package.json + src/mcp-servers.json
 //   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json + mcpServers pointer
 //   plugins/doc-detective/.mcp.json                  ← Codex MCP registration from src/mcp-servers.json
@@ -222,6 +223,15 @@ function syncVersions() {
   mp.metadata.version = version;
   writeJSON(mpPath, mp);
   log("  .claude-plugin/marketplace.json");
+
+  // .cursor-plugin/marketplace.json (enables "Import from Repo" custom marketplace)
+  const cursorMpPath = path.join(ROOT, ".cursor-plugin/marketplace.json");
+  if (fs.existsSync(cursorMpPath)) {
+    const cursorMp = readJSON(cursorMpPath);
+    if (cursorMp.metadata) cursorMp.metadata.version = version;
+    writeJSON(cursorMpPath, cursorMp);
+    log("  .cursor-plugin/marketplace.json");
+  }
 
   // plugins/doc-detective/.claude-plugin/plugin.json
   const pjPath = path.join(
