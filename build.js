@@ -717,8 +717,8 @@ function generatePluginDocs() {
   }
 
   const lines = [];
-  lines.push(`# ${pj.name}`, "");
-  lines.push(pj.description, "");
+  lines.push(`# ${pj.name || "plugin"}`, "");
+  if (pj.description) lines.push(pj.description, "");
   if (pj.homepage) {
     lines.push(`Learn more at [${pj.homepage}](${pj.homepage}).`, "");
   }
