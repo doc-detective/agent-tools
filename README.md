@@ -136,32 +136,102 @@ What installing the plugin gives you:
 
 Doc Detective ships as a [Cursor plugin](https://cursor.com/docs/plugins) (Cursor 2.5+).
 
-> Once published to the official marketplace, install with `/add-plugin doc-detective`
-> in Cursor's Agent chat (or "Add to Cursor" on [cursor.com/marketplace](https://cursor.com/marketplace)).
-> Until then, use one of the manual methods below — they work today.
+#### Install locally (works on any plan — Free, Pro, Teams)
 
-**Manual install (no marketplace required):**
+This is the method for an individual machine. It needs no marketplace and no Teams plan.
 
-- **Import the repo as a custom marketplace** (best for sharing with a team): in Cursor,
-  go to **Dashboard → Settings → Plugins → Add Marketplace → Import from Repo** and point
-  it at `https://github.com/doc-detective/agent-tools`. The repo's
-  `.cursor-plugin/marketplace.json` lists the Doc Detective plugin; install it from there.
+1. Clone the repo:
 
-- **Local plugins directory** (single machine): copy (or symlink) the plugin into
-  `~/.cursor/plugins/local/`, then restart Cursor or run **Developer: Reload Window**.
+   ```bash
+   git clone https://github.com/doc-detective/agent-tools.git
+   ```
 
-  ```bash
-  git clone https://github.com/doc-detective/agent-tools.git
-  cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
-  # or, for development, symlink instead of copy:
-  # ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
-  ```
+2. Copy the plugin folder into Cursor's local plugins directory. Copy
+   `plugins/doc-detective` itself (the folder that contains `.cursor-plugin/plugin.json`):
 
-Then get started with a slash command:
+   **macOS / Linux:**
 
-```text
-/doc-detective-init
+   ```bash
+   mkdir -p ~/.cursor/plugins/local                 # create the dir on a fresh install
+   rm -rf ~/.cursor/plugins/local/doc-detective     # remove any previous copy first
+   cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
+   ```
+
+   **Windows (PowerShell):**
+
+   ```powershell
+   $dest = "$HOME\.cursor\plugins\local\doc-detective"
+   New-Item -ItemType Directory -Force -Path "$HOME\.cursor\plugins\local" | Out-Null
+   Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
+   Copy-Item -Recurse agent-tools\plugins\doc-detective $dest
+   ```
+
+   (Creating the directory first handles a fresh Cursor install; removing any previous copy
+   avoids nesting the plugin inside an existing `doc-detective/` folder.)
+
+   When done, the manifest must sit at
+   `~/.cursor/plugins/local/doc-detective/.cursor-plugin/plugin.json` (on Windows,
+   `%USERPROFILE%\.cursor\plugins\local\doc-detective\.cursor-plugin\plugin.json`) — i.e.
+   **not** double-nested under a second `doc-detective/` folder.
+
+3. Reload Cursor: open the Command Palette (`Cmd/Ctrl+Shift+P`) and run
+   **Developer: Reload Window** (or quit and reopen Cursor).
+
+4. Verify: in Agent chat, type `/` and confirm the `/doc-detective-*` commands appear.
+   Then get started:
+
+   ```text
+   /doc-detective-init
+   ```
+
+> **Developing on the plugin?** Symlink instead of copying so edits show up on reload:
+>
+> ```bash
+> mkdir -p ~/.cursor/plugins/local
+> rm -rf ~/.cursor/plugins/local/doc-detective   # clear any existing copy first
+> ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
+> ```
+
+#### With the `cursor-agent` CLI
+
+The [Cursor CLI](https://cursor.com/docs/cli) has **no marketplace** — load the plugin with
+`--plugin-dir` (this loads the skills, agent, rule, and MCP server):
+
+```bash
+cursor-agent --plugin-dir "$PWD/agent-tools/plugins/doc-detective"
 ```
+
+#### Via Claude Code skills/subagents (third-party import)
+
+Cursor can load resources from other ecosystems. In **Settings → Rules, Skills, Subagents**,
+enable **"Include third-party Plugins, Skills and other configs"** — Cursor then imports
+skills and subagents from Claude Code's `~/.claude/skills` and `~/.claude/agents` (and Codex
+configs). So if you already run Doc Detective in Claude Code (or `npx skills add
+doc-detective/agent-tools`), this toggle surfaces it in Cursor with no separate Cursor
+plugin. (It imports *everything* from those ecosystems, so the dedicated Cursor plugin above
+is more targeted.)
+
+#### Distribute to a team (Teams / Enterprise plans only)
+
+Team Marketplaces are **not available on individual (Free/Pro) plans** — if you don't see
+the option below, use the local install above. On a Teams or Enterprise plan, an admin can
+import this repo as a custom marketplace from the **web dashboard** (not the in-app
+settings):
+
+1. Go to [cursor.com](https://cursor.com) → **Dashboard → Settings → Plugins → Team
+   Marketplaces → Import**.
+2. Paste `https://github.com/doc-detective/agent-tools` and review the parsed plugins
+   (Cursor reads the repo's `.cursor-plugin/marketplace.json`).
+3. Assign access groups, mark the plugin Required or Optional, and save.
+
+(Auto-refresh needs the Cursor GitHub App and updates at most every 10 minutes; re-import
+the URL to pick up newly added plugins.)
+
+#### Official marketplace (once published)
+
+After the plugin is listed on the [Cursor marketplace](https://cursor.com/marketplace),
+install it with `/add-plugin doc-detective` in Agent chat, or "Add to Cursor" on the
+marketplace page.
 
 What installing the plugin gives you:
 

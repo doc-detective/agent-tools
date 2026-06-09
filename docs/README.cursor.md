@@ -6,49 +6,112 @@ how to test it locally.
 
 ## Install
 
-### From the official marketplace (once published)
+> **Which method?** On an **individual (Free/Pro)** plan, use **Local install** below — it
+> works on every plan and needs no marketplace. The repo-import marketplace is a
+> **Teams/Enterprise**-only feature (see "Team distribution"). `/add-plugin` works once the
+> plugin is on the official marketplace.
 
-From Cursor's Agent chat:
+### Local install (any plan)
+
+Cursor loads unpacked plugins from `~/.cursor/plugins/local/<name>/`, where the folder
+contains `.cursor-plugin/plugin.json` at its root.
+
+1. Clone the repo:
+
+   ```bash
+   git clone https://github.com/doc-detective/agent-tools.git
+   ```
+
+2. Copy `plugins/doc-detective` into the local plugins directory:
+
+   ```bash
+   # macOS / Linux — create the dir (fresh install) and clear any previous copy
+   mkdir -p ~/.cursor/plugins/local
+   rm -rf ~/.cursor/plugins/local/doc-detective
+   cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
+   ```
+
+   ```powershell
+   # Windows (PowerShell)
+   $dest = "$HOME\.cursor\plugins\local\doc-detective"
+   New-Item -ItemType Directory -Force -Path "$HOME\.cursor\plugins\local" | Out-Null
+   Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
+   Copy-Item -Recurse agent-tools\plugins\doc-detective $dest
+   ```
+
+   Confirm the manifest landed at
+   `~/.cursor/plugins/local/doc-detective/.cursor-plugin/plugin.json` (Windows:
+   `%USERPROFILE%\.cursor\plugins\local\doc-detective\.cursor-plugin\plugin.json`) — not
+   double-nested.
+
+3. Run **Developer: Reload Window** from the Command Palette (or restart Cursor).
+
+4. In Agent chat, type `/` and confirm the `/doc-detective-*` commands appear.
+
+For iterative development, symlink instead of copying so edits are picked up on reload:
+
+```bash
+mkdir -p ~/.cursor/plugins/local
+rm -rf ~/.cursor/plugins/local/doc-detective   # clear any existing copy first
+ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
+```
+
+### Using the cursor-agent CLI
+
+The [Cursor CLI](https://cursor.com/docs/cli) has **no marketplace** — there is no command
+to install plugins from the official or a team marketplace. Its only plugin-related flag is
+`--plugin-dir`, and the `mcp` subcommand manages MCP servers (via `.cursor/mcp.json`), not
+plugins. Load the plugin by pointing `--plugin-dir` at the plugin folder:
+
+```bash
+curl -fsSL https://cursor.com/install | bash   # installs `cursor-agent`
+cursor-agent --plugin-dir "$PWD/agent-tools/plugins/doc-detective"
+```
+
+`--plugin-dir` loads the skills, the agent, the rule, and the MCP server (verified against
+the CLI). A plugin merely sitting in `~/.cursor/plugins/local/` is only *partially* honored
+by the CLI — its MCP server loads, but skills aren't reliably picked up — so prefer
+`--plugin-dir` when using `cursor-agent`.
+
+### Use via Claude Code skills/subagents (third-party import)
+
+Cursor can load agent resources from other ecosystems directly. In
+**Settings → Rules, Skills, Subagents**, enable **"Include third-party Plugins, Skills and
+other configs"**. When enabled, Cursor imports skills and subagents from Claude Code's
+`~/.claude/skills` and `~/.claude/agents` directories (and Codex configs). So if you already
+run Doc Detective in Claude Code — or place its `skills/` and `agents/` under `~/.claude/`
+(e.g. `npx skills add doc-detective/agent-tools`) — flipping this toggle surfaces them in
+Cursor without installing the Cursor plugin separately.
+
+Note: the toggle currently imports **everything** from Claude Code and Codex (no per-item or
+per-provider filtering yet), including Claude hooks from `.claude/settings.json`. For Doc
+Detective specifically, the dedicated Cursor plugin (local install above) is the more
+targeted option.
+
+### Team distribution (Teams / Enterprise only)
+
+> Not available on individual (Free/Pro) plans — if there's no **Team Marketplaces**
+> section in your dashboard, use the local install above.
+
+A team admin imports this repo as a custom marketplace from the **web dashboard** (not the
+in-app settings):
+
+1. [cursor.com](https://cursor.com) → **Dashboard → Settings → Plugins → Team
+   Marketplaces → Import**.
+2. Paste `https://github.com/doc-detective/agent-tools`; Cursor reads the repo-root
+   `.cursor-plugin/marketplace.json`, which lists the `doc-detective` plugin with
+   `source: ./plugins/doc-detective`.
+3. Assign access groups, mark the plugin Required or Optional, and save. (Auto-refresh
+   needs the Cursor GitHub App and runs at most every 10 minutes; re-import the URL to
+   pick up newly added plugins.)
+
+### Official marketplace (once published)
 
 ```text
 /add-plugin doc-detective
 ```
 
-Or install from [cursor.com/marketplace](https://cursor.com/marketplace) with **Add to Cursor**.
-
-### Manual install (no official marketplace required)
-
-Both methods below work today, before the plugin is listed on the official marketplace.
-
-**A. Import the repo as a custom / team marketplace.** In Cursor, go to
-**Dashboard → Settings → Plugins → Add Marketplace → Import from Repo** and point it at
-`https://github.com/doc-detective/agent-tools`. Cursor reads the repo-root
-`.cursor-plugin/marketplace.json`, which lists the `doc-detective` plugin with
-`source: ./plugins/doc-detective`; install it from the imported marketplace. This is the
-recommended way to distribute the plugin to a team without the official marketplace.
-
-**B. Local plugins directory (single machine).** Cursor loads unpacked plugins from
-`~/.cursor/plugins/local/<name>/` — the folder must contain `.cursor-plugin/plugin.json`
-at its root. Copy it in and restart Cursor (or run **Developer: Reload Window**):
-
-```bash
-git clone https://github.com/doc-detective/agent-tools.git
-cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
-# restart Cursor, or run "Developer: Reload Window"
-```
-
-For iterative development, symlink instead of copying so edits are picked up on reload:
-
-```bash
-ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
-```
-
-You can also drive it headlessly with the [Cursor CLI](https://cursor.com/docs/cli):
-
-```bash
-curl -fsSL https://cursor.com/install | bash   # installs `cursor-agent`
-cursor-agent
-```
+Or "Add to Cursor" from [cursor.com/marketplace](https://cursor.com/marketplace).
 
 ## What's in the manifest
 
