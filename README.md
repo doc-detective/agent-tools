@@ -152,23 +152,27 @@ This is the method for an individual machine. It needs no marketplace and no Tea
    **macOS / Linux:**
 
    ```bash
-   rm -rf ~/.cursor/plugins/local/doc-detective   # remove any previous copy first
+   mkdir -p ~/.cursor/plugins/local                 # create the dir on a fresh install
+   rm -rf ~/.cursor/plugins/local/doc-detective     # remove any previous copy first
    cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
    ```
 
    **Windows (PowerShell):**
 
    ```powershell
-   Remove-Item -Recurse -Force "$HOME\.cursor\plugins\local\doc-detective" -ErrorAction SilentlyContinue
-   Copy-Item -Recurse agent-tools\plugins\doc-detective "$HOME\.cursor\plugins\local\doc-detective"
+   $dest = "$HOME\.cursor\plugins\local\doc-detective"
+   New-Item -ItemType Directory -Force -Path "$HOME\.cursor\plugins\local" | Out-Null
+   Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
+   Copy-Item -Recurse agent-tools\plugins\doc-detective $dest
    ```
 
-   (Removing any previous copy first avoids accidentally nesting the plugin inside an
-   existing `doc-detective/` folder.)
+   (Creating the directory first handles a fresh Cursor install; removing any previous copy
+   avoids nesting the plugin inside an existing `doc-detective/` folder.)
 
    When done, the manifest must sit at
-   `~/.cursor/plugins/local/doc-detective/.cursor-plugin/plugin.json` — i.e. **not**
-   double-nested under a second `doc-detective/` folder.
+   `~/.cursor/plugins/local/doc-detective/.cursor-plugin/plugin.json` (on Windows,
+   `%USERPROFILE%\.cursor\plugins\local\doc-detective\.cursor-plugin\plugin.json`) — i.e.
+   **not** double-nested under a second `doc-detective/` folder.
 
 3. Reload Cursor: open the Command Palette (`Cmd/Ctrl+Shift+P`) and run
    **Developer: Reload Window** (or quit and reopen Cursor).
@@ -183,6 +187,8 @@ This is the method for an individual machine. It needs no marketplace and no Tea
 > **Developing on the plugin?** Symlink instead of copying so edits show up on reload:
 >
 > ```bash
+> mkdir -p ~/.cursor/plugins/local
+> rm -rf ~/.cursor/plugins/local/doc-detective   # clear any existing copy first
 > ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
 > ```
 

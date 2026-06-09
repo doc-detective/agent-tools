@@ -25,19 +25,24 @@ contains `.cursor-plugin/plugin.json` at its root.
 2. Copy `plugins/doc-detective` into the local plugins directory:
 
    ```bash
-   # macOS / Linux — remove any previous copy first to avoid double-nesting
+   # macOS / Linux — create the dir (fresh install) and clear any previous copy
+   mkdir -p ~/.cursor/plugins/local
    rm -rf ~/.cursor/plugins/local/doc-detective
    cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
    ```
 
    ```powershell
    # Windows (PowerShell)
-   Remove-Item -Recurse -Force "$HOME\.cursor\plugins\local\doc-detective" -ErrorAction SilentlyContinue
-   Copy-Item -Recurse agent-tools\plugins\doc-detective "$HOME\.cursor\plugins\local\doc-detective"
+   $dest = "$HOME\.cursor\plugins\local\doc-detective"
+   New-Item -ItemType Directory -Force -Path "$HOME\.cursor\plugins\local" | Out-Null
+   Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
+   Copy-Item -Recurse agent-tools\plugins\doc-detective $dest
    ```
 
    Confirm the manifest landed at
-   `~/.cursor/plugins/local/doc-detective/.cursor-plugin/plugin.json` (not double-nested).
+   `~/.cursor/plugins/local/doc-detective/.cursor-plugin/plugin.json` (Windows:
+   `%USERPROFILE%\.cursor\plugins\local\doc-detective\.cursor-plugin\plugin.json`) — not
+   double-nested.
 
 3. Run **Developer: Reload Window** from the Command Palette (or restart Cursor).
 
@@ -46,6 +51,8 @@ contains `.cursor-plugin/plugin.json` at its root.
 For iterative development, symlink instead of copying so edits are picked up on reload:
 
 ```bash
+mkdir -p ~/.cursor/plugins/local
+rm -rf ~/.cursor/plugins/local/doc-detective   # clear any existing copy first
 ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
 ```
 
