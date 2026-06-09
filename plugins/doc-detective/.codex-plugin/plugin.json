@@ -25,5 +25,6 @@
       "Use Doc Detective to test documentation procedures.",
       "Use Doc Detective to validate that documented workflows work correctly."
     ]
-  }
+  },
+  "mcpServers": "./.mcp.json"
 }

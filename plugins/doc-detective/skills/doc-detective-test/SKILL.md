@@ -4,7 +4,7 @@ description: 'Convert documentation procedures into Doc Detective test specifica
 metadata:
   version: '1.4.0'
   organization: Doc Detective
-  date: May 2026
+  date: June 2026
   abstract: Convert documentation procedures into executable Doc Detective test specifications, run them, fix failures, and verify the documentation matches actual behavior.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
