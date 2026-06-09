@@ -289,7 +289,7 @@ With output matching:
 {
   "runShell": {
     "command": "node --version",
-    "stdout": "v18"
+    "stdout": "v22"
   }
 }
 ```
