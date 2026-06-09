@@ -153,7 +153,8 @@ describe('Codex plugin: bundled MCP server', function () {
 
   it('.mcp.json should point at the documented MCP endpoint', function () {
     const mcp = JSON.parse(fs.readFileSync(CODEX_MCP_JSON, 'utf8'));
-    const entry = mcp.mcpServers['doc-detective'];
+    const entry = mcp.mcpServers && mcp.mcpServers['doc-detective'];
+    assert.ok(entry, 'doc-detective entry must exist in .mcp.json');
     assert.strictEqual(entry.url, 'https://agency.doc-detective.com/mcp');
   });
 });
