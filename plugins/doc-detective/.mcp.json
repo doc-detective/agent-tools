@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "doc-detective": {
+      "type": "http",
+      "url": "https://agency.doc-detective.com/mcp",
+      "headers": {
+        "X-DD-Client": "codex"
+      }
+    }
+  }
+}

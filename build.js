@@ -19,7 +19,8 @@
 //   plugins/doc-detective/opencode-plugin.mjs        ← copied from src/hooks/opencode-plugin.mjs
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers from package.json + src/mcp-servers.json
-//   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json
+//   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json + mcpServers pointer
+//   plugins/doc-detective/.mcp.json                  ← Codex MCP registration from src/mcp-servers.json
 //   gemini-extension.json                            ← version + mcpServers from package.json + src/mcp-servers.json
 //   qwen-extension.json                              ← version + mcpServers from package.json + src/mcp-servers.json
 //
@@ -249,10 +250,9 @@ function syncVersions() {
  *   Claude Code  → mcpServers: { name: { type: "http", url, headers } }
  *   Gemini CLI   → mcpServers: { name: { httpUrl, headers } }
  *   Qwen Code    → mcpServers: { name: { httpUrl, headers } }   (mirrors Gemini)
- *
- * Codex (.codex-plugin/plugin.json) is intentionally untouched — the Codex
- * plugin spec doesn't accept mcpServers today; users register manually in
- * ~/.codex/config.toml (documented in README).
+ *   Codex        → bundled plugins/doc-detective/.mcp.json
+ *                  ({ mcpServers: { name: { type, url, headers } } }) referenced
+ *                  by `mcpServers: "./.mcp.json"` in .codex-plugin/plugin.json.
  *
  * OpenCode is hand-edited rather than templated — see the `mcp` block in
  * the default export of `src/hooks/opencode-plugin.mjs` (the source of truth;
@@ -274,6 +274,7 @@ function syncMcpServers() {
   const claudeBlock = {};
   const geminiBlock = {};
   const qwenBlock = {};
+  const codexBlock = {};
 
   for (const [name, spec] of Object.entries(registry)) {
     // Validate registry entry shape so a malformed entry can't silently
@@ -300,6 +301,7 @@ function syncMcpServers() {
     const claudeClient = cn["claude-code"] || "claude-code";
     const geminiClient = cn["gemini-cli"] || "gemini-cli";
     const qwenClient = cn["qwen-code"] || "qwen-code";
+    const codexClient = cn["codex"] || "codex";
 
     claudeBlock[name] = {
       type: "http",
@@ -313,6 +315,14 @@ function syncMcpServers() {
     qwenBlock[name] = {
       httpUrl: spec.url,
       headers: { "X-DD-Client": qwenClient },
+    };
+    // Codex's bundled .mcp.json uses the same remote-MCP JSON shape as Claude
+    // (type/url/headers). HTTP servers REQUIRE an explicit `type: "http"`, or
+    // Codex rejects the entry with "invalid transport".
+    codexBlock[name] = {
+      type: "http",
+      url: spec.url,
+      headers: { "X-DD-Client": codexClient },
     };
   }
 
@@ -356,6 +366,31 @@ function syncMcpServers() {
     }
     writeJSON(qwenPath, qwen);
     log("  qwen-extension.json (mcpServers)");
+  }
+
+  // Codex: bundle a .mcp.json at the plugin root and point the manifest at it.
+  // Codex consumes the `mcpServers` manifest field (a relative path to a
+  // .mcp.json) so the server auto-registers on install — matching the
+  // auto-registration the other hosts get, instead of manual config.toml edits.
+  const codexMcpPath = path.join(ROOT, "plugins/doc-detective/.mcp.json");
+  const codexManifestPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.codex-plugin/plugin.json"
+  );
+  if (fs.existsSync(codexManifestPath)) {
+    const codexManifest = readJSON(codexManifestPath);
+    if (Object.keys(codexBlock).length > 0) {
+      // The wrapper key must be camelCase `mcpServers`; Codex treats any other
+      // top-level key (e.g. snake_case `mcp_servers`) as a server name.
+      writeJSON(codexMcpPath, { mcpServers: codexBlock });
+      codexManifest.mcpServers = "./.mcp.json";
+      log("  plugins/doc-detective/.mcp.json (mcp_servers)");
+    } else {
+      fs.rmSync(codexMcpPath, { force: true });
+      delete codexManifest.mcpServers;
+    }
+    writeJSON(codexManifestPath, codexManifest);
+    log("  plugins/doc-detective/.codex-plugin/plugin.json (mcpServers)");
   }
 }
 

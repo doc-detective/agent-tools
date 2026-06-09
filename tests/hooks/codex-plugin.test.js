@@ -8,8 +8,10 @@ const { execFile } = require('child_process');
 const ROOT = path.resolve(__dirname, '../..');
 const PLUGIN_DIR = path.join(ROOT, 'plugins/doc-detective');
 const CODEX_PLUGIN_JSON = path.join(PLUGIN_DIR, '.codex-plugin/plugin.json');
+const CODEX_MCP_JSON = path.join(PLUGIN_DIR, '.mcp.json');
 const CODEX_MARKETPLACE = path.join(ROOT, '.agents/plugins/marketplace.json');
 const PKG_JSON = path.join(ROOT, 'package.json');
+const MCP_REGISTRY = path.join(ROOT, 'src/mcp-servers.json');
 
 describe('Codex plugin: manifest', function () {
   this.timeout(10000);
@@ -104,6 +106,55 @@ describe('Codex plugin: marketplace', function () {
   });
 });
 
+describe('Codex plugin: bundled MCP server', function () {
+  this.timeout(10000);
+
+  // Codex registers a plugin's MCP servers from a `.mcp.json` at the plugin
+  // root, referenced by the `mcpServers` field in .codex-plugin/plugin.json.
+  // This gives Codex the same auto-registration the other hosts get, instead
+  // of requiring a manual ~/.codex/config.toml edit.
+  // https://developers.openai.com/codex/plugins/build
+
+  it('manifest should point mcpServers at ./.mcp.json', function () {
+    const manifest = JSON.parse(fs.readFileSync(CODEX_PLUGIN_JSON, 'utf8'));
+    assert.strictEqual(manifest.mcpServers, './.mcp.json',
+      'mcpServers must be a relative path to the bundled .mcp.json');
+  });
+
+  it('should bundle a .mcp.json at the plugin root', function () {
+    assert.ok(fs.existsSync(CODEX_MCP_JSON),
+      '.mcp.json must exist at plugins/doc-detective/.mcp.json');
+  });
+
+  it('.mcp.json should register every enabled server from the registry', function () {
+    const registry = JSON.parse(fs.readFileSync(MCP_REGISTRY, 'utf8'));
+    const mcp = JSON.parse(fs.readFileSync(CODEX_MCP_JSON, 'utf8'));
+    // The wrapper key must be camelCase `mcpServers`; Codex treats any other
+    // top-level key (e.g. snake_case `mcp_servers`) as a server name.
+    assert.ok(mcp.mcpServers && typeof mcp.mcpServers === 'object',
+      '.mcp.json must use the wrapped { mcpServers: {...} } form');
+
+    for (const [name, spec] of Object.entries(registry)) {
+      if (spec.enabled === false) continue;
+      const entry = mcp.mcpServers[name];
+      assert.ok(entry, `${name} must be present in .mcp.json`);
+      // HTTP servers REQUIRE an explicit transport type, or Codex rejects the
+      // entry with "invalid transport".
+      assert.strictEqual(entry.type, 'http', `${name} must declare type: http`);
+      assert.strictEqual(entry.url, spec.url, `${name} url must match registry`);
+      assert.ok(entry.headers, `${name} must use headers`);
+      assert.strictEqual(entry.headers['X-DD-Client'], 'codex',
+        `${name} must identify the Codex client`);
+    }
+  });
+
+  it('.mcp.json should point at the documented MCP endpoint', function () {
+    const mcp = JSON.parse(fs.readFileSync(CODEX_MCP_JSON, 'utf8'));
+    const entry = mcp.mcpServers['doc-detective'];
+    assert.strictEqual(entry.url, 'https://agency.doc-detective.com/mcp');
+  });
+});
+
 describe('Codex plugin: skills directory', function () {
   this.timeout(10000);
 
@@ -138,6 +189,10 @@ describe('Codex plugin: build version sync', function () {
       const manifest = JSON.parse(fs.readFileSync(CODEX_PLUGIN_JSON, 'utf8'));
       assert.strictEqual(manifest.version, pkg.version,
         'Codex plugin version should match package.json after build');
+      assert.strictEqual(manifest.mcpServers, './.mcp.json',
+        'build should keep the mcpServers pointer in the Codex manifest');
+      assert.ok(fs.existsSync(CODEX_MCP_JSON),
+        'build should regenerate the bundled .mcp.json');
       done();
     });
   });
