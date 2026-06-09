@@ -38,10 +38,18 @@ describe('Plugin docs: generated README + LICENSE', function () {
 
   it('README should omit install/harness-specific instructions', function () {
     const md = fs.readFileSync(README, 'utf8');
-    assert.ok(
-      !/\/plugin\s+(install|marketplace)/.test(md),
-      'README must not contain plugin install instructions',
-    );
+    // Best-effort guard against the common harness-specific install patterns
+    // (Claude Code, Gemini, npm). Not exhaustive, but catches regressions where
+    // install steps leak into the functionality-only plugin README.
+    const installPatterns = [
+      /\/plugin\s+(install|marketplace)/i,
+      /marketplace\s+add/i,
+      /extensions?\s+install/i,
+      /npm\s+install/i,
+    ];
+    for (const re of installPatterns) {
+      assert.ok(!re.test(md), `README must not contain install instructions matching ${re}`);
+    }
   });
 
   it('agent summary should be truncated to its lead-in (no embedded examples)', function () {

@@ -6,7 +6,7 @@ Learn more at [https://doc-detective.com](https://doc-detective.com).
 
 ## Commands
 
-Invoke these directly (e.g. `/doc-detective-generate`):
+Invoke these slash commands directly:
 
 - **`/doc-detective-generate`** — Interpret documentation procedures into Doc Detective test specifications without executing the tests. Parses docs, maps language to actions, validates the spec, and outputs the result.
 - **`/doc-detective-init`** — Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.
@@ -29,7 +29,7 @@ Invoked automatically when relevant, not run directly:
 
 ## MCP server
 
-Bundles the Doc Detective MCP server, giving the agent direct access to Doc Detective's documentation-testing engine.
+Bundles the `doc-detective` MCP server, giving the agent direct access to Doc Detective's documentation-testing engine.
 
 ## License
 

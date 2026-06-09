@@ -725,10 +725,7 @@ function generatePluginDocs() {
 
   if (userSkills.length) {
     lines.push("## Commands", "");
-    lines.push(
-      "Invoke these directly (e.g. `/" + userSkills[0].name + "`):",
-      ""
-    );
+    lines.push("Invoke these slash commands directly:", "");
     for (const s of userSkills) lines.push(`- **\`/${s.name}\`** — ${s.summary}`);
     lines.push("");
   }
@@ -749,10 +746,13 @@ function generatePluginDocs() {
     lines.push("");
   }
 
-  if (pj.mcpServers && Object.keys(pj.mcpServers).length) {
-    lines.push("## MCP server", "");
+  const mcpNames = pj.mcpServers ? Object.keys(pj.mcpServers) : [];
+  if (mcpNames.length) {
+    const label = mcpNames.length === 1 ? "server" : "servers";
+    const names = mcpNames.map((n) => `\`${n}\``).join(", ");
+    lines.push(`## MCP ${label}`, "");
     lines.push(
-      "Bundles the Doc Detective MCP server, giving the agent direct access to Doc Detective's documentation-testing engine.",
+      `Bundles the ${names} MCP ${label}, giving the agent direct access to Doc Detective's documentation-testing engine.`,
       ""
     );
   }
