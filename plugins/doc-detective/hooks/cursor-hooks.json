@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/scripts/cursor-hook-adapter.js\" session-start-check-install.sh",
+        "timeout": 20
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/scripts/cursor-hook-adapter.js\" pre-edit-block-action-antipattern.js",
+        "timeout": 10
+      },
+      {
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/scripts/cursor-hook-adapter.js\" post-edit-validate-test-spec.js",
+        "timeout": 30
+      },
+      {
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/scripts/cursor-hook-adapter.js\" post-edit-format-test-spec.js",
+        "timeout": 15
+      },
+      {
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/scripts/cursor-hook-adapter.js\" post-edit-suggest-testing.js",
+        "timeout": 10
+      },
+      {
+        "command": "node \"${CURSOR_PLUGIN_ROOT}/hooks/scripts/cursor-hook-adapter.js\" post-edit-warn-inline-tests.js",
+        "timeout": 10
+      }
+    ]
+  }
+}
