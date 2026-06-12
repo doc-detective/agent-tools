@@ -63,10 +63,42 @@ interface Config {
   allowUnsafeSteps?: boolean;     // Default: false
   fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
   runOn?: Context[];              // Execution contexts
-  concurrentRunners?: number;     // Default: 1
+  concurrentRunners?: number | true; // Default: 1, true = CPU cores (max 4)
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
 }
 ```
+
+## Concurrent Test Runners
+
+Run multiple test contexts in parallel with the `concurrentRunners` config option or the `--concurrent-runners` CLI flag.
+
+### Configuration
+
+```json
+{ "concurrentRunners": true }
+```
+
+Set `true` to use your CPU core count (capped at 4). Set a number for explicit control:
+
+```json
+{ "concurrentRunners": 4 }
+```
+
+### CLI Flag
+
+```bash
+doc-detective runTests --concurrent-runners 4
+doc-detective runTests --concurrent-runners       # bare flag = CPU core count (capped at 4)
+```
+
+Default: `1` (runs contexts sequentially).
+
+### Limitations
+
+Keep `concurrentRunners` at `1` when:
+
+- **Using cross-context variables**: Step `variables` write to `process.env`, so tests with dependencies between contexts won't work correctly with multiple runners.
+- **Recording video**: Simultaneous `getDisplayMedia` captures can grab the wrong window. The runner logs a warning if `record` steps appear with concurrency > 1.
 
 ## Config By Project Type
 
