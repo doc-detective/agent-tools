@@ -271,6 +271,20 @@ Then in `.env` (gitignored):
 DOC_DETECTIVE_API_KEY=sk-actual-key-here
 ```
 
+### Don't Use the Deprecated `debug` Config Field
+
+The `debug` config field is deprecated and ignored. For diagnostic output, use the `debug` subcommand or `DOC_DETECTIVE_DEBUG` environment variable instead:
+
+```bash
+# Dedicated subcommand
+npx doc-detective debug
+
+# Environment variable (CI-friendly)
+DOC_DETECTIVE_DEBUG=true npx doc-detective
+```
+
+See [Fix Failing Tests](../../doc-detective-doc-testing/references/fix-failing-tests.md#environment-and-configuration-troubleshooting) for details.
+
 ## Validation
 
 After generating config, verify it:
