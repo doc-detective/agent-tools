@@ -157,7 +157,7 @@ If none available, inform user and suggest installation.
 
 ## Step 4: Analyze Results
 
-Doc Detective outputs `testResults-<timestamp>.json` with `summary` (pass/fail counts) and `specs[].tests[].steps[]` entries. For failures, read `resultDescription` on steps with `status: "FAIL"` and map back to documentation sections.
+Doc Detective outputs test results to `<output>/.doc-detective/run-<runId>/testResults.json` (the per-run artifact folder) with `summary` (pass/fail counts) and `specs[].tests[].steps[]` entries. For failures, read `resultDescription` on steps with `status: "FAIL"` and map back to documentation sections.
 
 ### Common Failure Patterns
 
