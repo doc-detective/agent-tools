@@ -344,7 +344,7 @@ With options:
 
 ### record / stopRecord
 
-Record video of test execution.
+Record video of test execution. Each `record` step must be paired with a later `stopRecord` step.
 
 Start recording:
 
@@ -357,6 +357,40 @@ Stop recording:
 ```json
 { "stopRecord": true }
 ```
+
+#### Named and overlapping recordings
+
+A single test context can have more than one recording active at the same time. Give a recording a `name` so that a later `stopRecord` can target it:
+
+```json
+{ "record": { "path": "checkout-flow.mp4", "name": "checkout" } }
+```
+
+Names must be unique among recordings that are active at the same time. A recording started without a `name` is anonymous.
+
+`stopRecord` decides which recording to stop based on its value:
+
+| Value | Stops |
+|-------|-------|
+| `true` or `null` | The most recently started active recording (LIFO) |
+| `"<name>"` | The named recording, wherever it sits in the active set |
+| `{ "name": "<name>" }` | The named recording (object form, equivalent to the string) |
+
+Stop a specific recording by name:
+
+```json
+{ "stopRecord": "checkout" }
+```
+
+```json
+{ "stopRecord": { "name": "checkout" } }
+```
+
+Reusing a `name` while a recording by that name is still active is caught before the run starts. The affected test is skipped across all contexts with a warning, rather than failing partway through.
+
+#### Auto-record every context
+
+Set `autoRecord: true` (at the config, spec, or test level, or pass `--auto-record` on the CLI) to automatically record a full video of every browser-based test context, alongside any explicit `record` steps. Precedence runs test > spec > config. The automatic recording wraps the whole context and always uses the `ffmpeg` engine. It lands in the per-run artifact folder at a deterministic path (`recordings/<specId>/<testId>/<contextId>.mp4`), so the same context maps to the same path in every run for run-over-run comparison. An untargeted `stopRecord` never stops the automatic recording; it is finalized only at the end of the context.
 
 ---
 

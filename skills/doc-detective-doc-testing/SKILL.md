@@ -102,8 +102,8 @@ These are the only valid action types:
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
-- `record` - Path string or object
-- `stopRecord` - Boolean true
+- `record` - Path string or object (object supports an optional `name`)
+- `stopRecord` - Boolean, null, a recording `name` string, or `{ name }`
 
 ### Validation Failure Handling
 
