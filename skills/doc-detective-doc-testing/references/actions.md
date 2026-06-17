@@ -314,6 +314,51 @@ Assemble and run code snippets.
 }
 ```
 
+### runBrowserScript
+
+Execute JavaScript in the browser page context. The script runs against the live page under test, so it has access to `document`, `window`, and the DOM. Use it to read computed DOM state, seed app state (such as `localStorage`), or assert on values only reachable from JS. This is distinct from `runCode`, which runs Node, Python, or Bash on the host machine.
+
+Because it requires a live page, `runBrowserScript` is a browser step, like `goTo`, `find`, and `click`.
+
+**String form** (use `return` to capture a value):
+
+```json
+{ "runBrowserScript": "return document.title;" }
+```
+
+**Object form**:
+
+```json
+{
+  "runBrowserScript": {
+    "script": "return arguments[0] + arguments[1];",
+    "args": ["foo", "bar"],
+    "output": "foobar"
+  }
+}
+```
+
+The script's return value is captured into the step's `outputs.result`, so it flows into the step-level `variables` plumbing via `$$result`:
+
+```json
+{
+  "runBrowserScript": "return window.localStorage.getItem('token');",
+  "variables": { "TOKEN": "$$result" }
+}
+```
+
+**Options:**
+- `script`: JavaScript to evaluate in the page (required in object form). Values from `args` are available via the `arguments` object (`arguments[0]`, `arguments[1]`, ...).
+- `args`: Array of strings passed positionally to the script
+- `output`: Expected content in the serialized return value (non-string values are serialized to JSON before matching). Supports a substring or a regular expression that starts and ends with `/`, like `/^https?:\/\//`.
+- `path`: File path to save the serialized return value, relative to `directory`
+- `directory`: Directory to save the return value (defaults to your media directory)
+- `maxVariation`: Allowed fraction (0–1) of difference from a previously saved value before the step fails
+- `overwrite`: `"true"` | `"false"` | `"aboveVariation"` — whether to rewrite saved output (default `"aboveVariation"`)
+- `timeout`: Max time in ms the script may run (default 60000)
+
+Running arbitrary JavaScript can modify application state. Mark a step `unsafe: true` when its script could have side effects; unsafe steps run only when allowed via the `allowUnsafeSteps` config option or the `--allow-unsafe` flag, and are skipped otherwise.
+
 ---
 
 ## Media Capture
