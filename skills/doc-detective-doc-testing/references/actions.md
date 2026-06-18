@@ -349,11 +349,11 @@ The script's return value is captured into the step's `outputs.result`, so it fl
 
 **Options:**
 - `script`: JavaScript to evaluate in the page (required in object form). Values from `args` are available via the `arguments` object (`arguments[0]`, `arguments[1]`, ...).
-- `args`: Array of strings passed positionally to the script
+- `args`: Array of values passed positionally to the script. Each item may be any JSON-serializable value (string, number, boolean, null, object, or array), matching what `executeScript` accepts.
 - `output`: Expected content in the serialized return value (non-string values are serialized to JSON before matching). Supports a substring or a regular expression that starts and ends with `/`, like `/^https?:\/\//`.
 - `path`: File path to save the serialized return value, relative to `directory`
 - `directory`: Directory to save the return value (defaults to your media directory)
-- `maxVariation`: Allowed fraction (0–1) of difference from a previously saved value before the step fails
+- `maxVariation`: Allowed fraction (0–1) of difference from a previously saved value before the step returns a warning
 - `overwrite`: `"true"` | `"false"` | `"aboveVariation"` — whether to rewrite saved output (default `"aboveVariation"`)
 - `timeout`: Max time in ms the script may run (default 60000)
 

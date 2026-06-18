@@ -99,7 +99,7 @@ These are the only valid action types:
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
 - `runShell` - `{ command: string, exitCodes?: number[] }`
-- `runBrowserScript` - JS string or `{ script: string, args?: string[], output?: string }` (runs in the browser page; return value captured into `outputs.result`)
+- `runBrowserScript` - JS string or `{ script: string, args?: any[], output?: string }` (runs in the browser page; `args` accepts any JSON-serializable values; return value captured into `outputs.result`)
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
