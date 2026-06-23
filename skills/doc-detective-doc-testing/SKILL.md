@@ -98,7 +98,9 @@ These are the only valid action types:
 - `wait` - Number (ms) or `{ selector: string, state: string }`
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
-- `runShell` - `{ command: string, exitCodes?: number[] }`
+- `runShell` - `{ command: string, exitCodes?: number[], background?: boolean, name?: string, readyWhen?: object }`
+- `runCode` - `{ language: string, code: string, background?: boolean, name?: string, readyWhen?: object }`
+- `stopProcess` - Process name string or `{ name: string, ignoreMissing?: boolean }`
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string

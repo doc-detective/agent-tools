@@ -301,6 +301,66 @@ With output matching:
 - `stderr`: Expected stderr content (partial match)
 - `workingDirectory`: Directory to run command in
 
+**Long-running background process**:
+
+Set `background: true` to start a long-lived process (such as a Docker container, dev server, or database) and keep it running while later steps execute. The step returns as soon as the process is ready rather than waiting for it to exit; stop it later with [`stopProcess`](#stopprocess).
+
+```json
+{
+  "runShell": {
+    "command": "docker run -p 8080:80 nginx",
+    "background": true,
+    "name": "web",
+    "readyWhen": {
+      "httpGet": { "url": "http://localhost:8080", "statusCodes": [200] }
+    },
+    "timeout": 30000
+  }
+}
+```
+
+**Background options:**
+- `background`: Start the command as a non-blocking background process (boolean, default `false`)
+- `name`: Identifier used to stop the process later. Required when `background` is `true`, and must contain a non-whitespace character.
+- `readyWhen`: Probe that determines when the process is ready (see [Readiness probes](#readiness-probes))
+- `timeout`: In background mode, the maximum time in ms to wait for `readyWhen` to be satisfied before the step fails (default `60000`)
+
+In background mode, the `exitCodes`, `stdout`/`stderr`, and output-saving options are ignored.
+
+#### Readiness probes
+
+When `background` is `true`, `readyWhen` holds the step until the process is ready. Provide exactly one probe:
+
+**`port`** — wait for a TCP port to accept connections:
+
+```json
+{ "readyWhen": { "port": { "port": 8080, "host": "127.0.0.1", "pollIntervalMs": 500 } } }
+```
+
+**`httpGet`** — wait for an HTTP endpoint to return an accepted status:
+
+```json
+{ "readyWhen": { "httpGet": { "url": "http://localhost:8080", "statusCodes": [200], "pollIntervalMs": 500 } } }
+```
+
+**`log`** — wait for output to match a regular expression:
+
+```json
+{ "readyWhen": { "log": { "pattern": "Server listening on", "stream": "any" } } }
+```
+
+**`delayMs`** — wait a fixed number of milliseconds:
+
+```json
+{ "readyWhen": { "delayMs": 2000 } }
+```
+
+**Probe options:**
+- `port`: `port` (1–65535, required), `host` (default `"127.0.0.1"`), `pollIntervalMs` (default `500`)
+- `httpGet`: `url` (required), `statusCodes` (default `[200]`), `pollIntervalMs` (default `500`)
+- `log`: `pattern` (regular expression source, no surrounding slashes, required), `stream` (`"stdout"` | `"stderr"` | `"any"`, default `"any"`)
+- `delayMs`: Number of milliseconds (integer, minimum `0`)
+
 ### runCode
 
 Assemble and run code snippets.
@@ -313,6 +373,41 @@ Assemble and run code snippets.
   }
 }
 ```
+
+For long-running processes, `runCode` accepts the same `background`, `name`, `readyWhen`, and `timeout` options as `runShell`:
+
+```json
+{
+  "runCode": {
+    "language": "javascript",
+    "code": "require('http').createServer((req, res) => res.end('ok')).listen(8088);",
+    "background": true,
+    "name": "api",
+    "readyWhen": { "port": { "port": 8088 } },
+    "timeout": 15000
+  }
+}
+```
+
+### stopProcess
+
+Stop a background process started by `runShell` or `runCode` with `background: true`. Reference it by the `name` it was registered under.
+
+```json
+{ "stopProcess": "web" }
+```
+
+With options:
+
+```json
+{ "stopProcess": { "name": "web", "ignoreMissing": true } }
+```
+
+**Options:**
+- `name`: Name of the background process to stop (required in object form, must contain a non-whitespace character)
+- `ignoreMissing`: When `true`, the step passes even if no process with that name is registered (boolean, default `false`)
+
+Background processes that are never explicitly stopped are torn down automatically when the run ends.
 
 ---
 
