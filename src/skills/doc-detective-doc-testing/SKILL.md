@@ -94,11 +94,13 @@ These are the only valid action types:
 - `goTo` - URL string or `{ url: string, waitUntil?: string }`
 - `click` - Text string or `{ selector: string }`
 - `find` - Text string or `{ selector: string, timeout?: number, matchText?: string }`
-- `type` - `{ keys: string, selector: string }`
+- `type` - `{ keys: string | string[], selector?: string, surface?: string | object }`
 - `wait` - Number (ms) or `{ selector: string, state: string }`
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
-- `runShell` - `{ command: string, exitCodes?: number[] }`
+- `runShell` - `{ command: string, exitCodes?: number[], background?: boolean | string | object, timeout?: number }`
+- `runCode` - `{ language: string, code: string, background?: boolean | string | object, timeout?: number }`
+- `closeSurface` - Process name string or array of names
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
