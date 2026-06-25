@@ -99,8 +99,8 @@ These are the only valid action types:
 - `wait` - Number (ms) or `{ selector: string, state: string }`
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
-- `runShell` - `{ command: string, exitCodes?: number[], background?: boolean | string | object, timeout?: number }`
-- `runCode` - `{ language: string, code: string, background?: boolean | string | object, timeout?: number }`
+- `runShell` - `{ command: string, exitCodes?: number[], background?: { name: string, waitUntil?: object }, timeout?: number }`
+- `runCode` - `{ language: string, code: string, background?: { name: string, waitUntil?: object }, timeout?: number }`
 - `closeSurface` - Process name string or array of names
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string

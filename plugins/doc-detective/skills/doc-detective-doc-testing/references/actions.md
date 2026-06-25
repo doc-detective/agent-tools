@@ -340,7 +340,7 @@ With output matching:
 
 **Long-running background process**:
 
-Set `background` to start a long-lived process (such as a Docker container, dev server, or database) and keep it running while later steps execute. The step returns as soon as the process is ready instead of waiting for it to exit; stop it later with a [`closeSurface`](#closesurface) step. `background` accepts three forms: `true` derives the process name from the base command (for example, `node -i` becomes `node`), a string sets the name explicitly, and the object form adds a `waitUntil` readiness gate. When `background` is set, the `exitCodes`, `stdout`/`stderr`, and output-saving options are ignored, and `timeout` instead bounds how long the step waits for `waitUntil`.
+Set `background` to start a long-lived process — such as a Docker container, dev server, or database — and keep it running while later steps execute. The step returns as soon as the process is ready rather than waiting for it to exit; stop it later with a [`closeSurface`](#closesurface) step. `background` is an object with a required `name`, which later `type` and `closeSurface` steps use to target the process, plus an optional `waitUntil` readiness gate. When `background` is set, the `exitCodes`, `stdout`/`stderr`, and output-saving options are ignored, and `timeout` instead bounds how long the step waits for `waitUntil`.
 
 ```json
 {
@@ -349,7 +349,7 @@ Set `background` to start a long-lived process (such as a Docker container, dev 
     "background": {
       "name": "web",
       "waitUntil": {
-        "httpGet": { "url": "http://localhost:8080", "statusCodes": [200] }
+        "httpGet": "http://localhost:8080"
       }
     },
     "timeout": 30000
@@ -357,33 +357,26 @@ Set `background` to start a long-lived process (such as a Docker container, dev 
 }
 ```
 
-Shorthand forms:
-
-```json
-{ "runShell": { "command": "npm start", "background": true } }
-{ "runShell": { "command": "npm start", "background": "dev-server" } }
-```
-
 **Background options:**
-- `background`: `true` (name derived from the base command), a string name, or an object with `name` and/or `waitUntil`
-- `name`: Unique process name within the run, used to target it from a later `type` or `closeSurface` step. Defaults to the base command.
-- `waitUntil`: One or more readiness conditions that hold the step until the process is ready (see [Readiness conditions](#readiness-conditions))
+- `background`: An object with a required `name` and an optional `waitUntil`
+- `name`: Unique process name within the run (non-empty), used to target it from a later `type` or `closeSurface` step
+- `waitUntil`: One or more readiness conditions that hold the step until the process is ready (see [Readiness conditions](#readiness-conditions)). Omit it to treat the process as ready as soon as it spawns.
 - `timeout`: In background mode, the maximum time in ms to wait for `waitUntil` to be satisfied before the step fails (default `60000`)
 
 #### Readiness conditions
 
 `waitUntil` holds the step until the process is ready. Provide any combination of the conditions below; the step proceeds only once every condition you include passes before `timeout` (they are AND-combined).
 
-**`port`** — wait for a TCP port to accept connections:
+**`port`** — wait for a TCP port to accept connections on localhost:
 
 ```json
-{ "waitUntil": { "port": { "port": 8080 } } }
+{ "waitUntil": { "port": 8080 } }
 ```
 
-**`httpGet`** — wait for an HTTP endpoint to return an accepted status:
+**`httpGet`** — wait for an HTTP GET to a URL to return a 2xx status:
 
 ```json
-{ "waitUntil": { "httpGet": { "url": "http://localhost:8080/health" } } }
+{ "waitUntil": { "httpGet": "http://localhost:8080/health" } }
 ```
 
 **`stdio`** — wait for output to match, searched across both stdout and stderr:
@@ -403,17 +396,17 @@ Shorthand forms:
 ```json
 {
   "waitUntil": {
-    "port": { "port": 5432 },
+    "port": 5432,
     "stdio": "/ready to accept/",
-    "httpGet": { "url": "http://localhost:8080/health" },
+    "httpGet": "http://localhost:8080/health",
     "delayMs": 1000
   }
 }
 ```
 
 **Condition options:**
-- `port`: Object with `port` (integer, 1–65535), optional `host` (default `127.0.0.1`), and optional `pollIntervalMs` (default `500`)
-- `httpGet`: Object with `url`, optional `statusCodes` (default `[200]`), and optional `pollIntervalMs` (default `500`); ready when the endpoint returns an accepted status
+- `port`: TCP port (integer, 1–65535); ready once the port accepts connections on localhost
+- `httpGet`: URL string; ready once an HTTP GET to it returns a 2xx status
 - `stdio`: A substring, or a `/regex/` (wrapped in slashes), matched against the process's combined stdout and stderr (string, non-empty)
 - `delayMs`: Number of milliseconds to wait (integer, minimum `0`)
 
@@ -439,7 +432,7 @@ For long-running processes, `runCode` accepts the same `background` and `timeout
   "runCode": {
     "language": "javascript",
     "code": "require('http').createServer((req, res) => res.end('ok')).listen(8088);",
-    "background": { "name": "api", "waitUntil": { "port": { "port": 8088 } } },
+    "background": { "name": "api", "waitUntil": { "port": 8088 } },
     "timeout": 15000
   }
 }
