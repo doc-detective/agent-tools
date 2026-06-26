@@ -19,7 +19,7 @@ This uses all defaults:
 - `output`: `.` (current directory)
 - `recursive`: `true`
 - `detectSteps`: `true`
-- `fileTypes`: `["markdown", "asciidoc", "html"]`
+- `fileTypes`: `["markdown", "asciidoc", "html", "dita"]`
 
 ### `detectSteps`: what it controls
 
@@ -67,7 +67,7 @@ interface Config {
   origin?: string;                // Base URL for relative links
   detectSteps?: boolean;          // Default: true (toggles markup auto-detection only)
   allowUnsafeSteps?: boolean;     // Default: false
-  fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html"]
+  fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
   runOn?: Context[];              // Execution contexts
   concurrentRunners?: number;     // Default: 1
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
@@ -109,7 +109,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 }
 ```
 
-(If you must keep `detectSteps: true` but still silence code-fence/bold auto-detection, define a custom file type that extends `markdown` with `"markup": []`.)
+(To silence code-fence/bold auto-detection, `detectSteps: false` is the supported switch. The `markup` array can't be emptied to disable patterns — the schema requires it to be non-empty — so narrow it by listing only the patterns you want instead.)
 
 ### Monorepo with Multiple Doc Locations
 
