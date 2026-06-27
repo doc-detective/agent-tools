@@ -88,6 +88,8 @@ See `references/actions.md` for the full action catalog.
 2. Run: `node ./scripts/doc-detective-validate-test.js /tmp/doc-detective-test-spec.json`
 3. Only proceed if output shows `Validation PASSED`.
 
+> **Schema-skew caveat.** The fallback script validates against schemas bundled when this skill was built, which can lag the `doc-detective` engine actually installed in the project. A spec can pass the fallback validator yet be rejected at runtime (e.g. an unknown `runShell` key). Prefer the MCP `validate_spec` (it tracks the live schema), and **always confirm a passing validation with a real `doc-detective` run** (Step 3) before trusting it. If the run reports `isn't a valid test specification. Skipping.`, the spec is wrong despite the validator passing.
+
 ### Known Actions
 
 These are the only valid action types:
@@ -98,7 +100,7 @@ These are the only valid action types:
 - `wait` - Number (ms) or `{ selector: string, state: string }`
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
-- `runShell` - `{ command: string, exitCodes?: number[] }`
+- `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[] }`. `stdio` matches stdout **or** stderr (string or `/regex/`); the object form is strict, so there is **no** `stdout`/`stderr` field — using one invalidates the spec.
 - `runBrowserScript` - JS string or `{ script: string, args?: any[], output?: string }` (runs in the browser page; `args` accepts any JSON-serializable values; return value captured into `outputs.result`)
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
