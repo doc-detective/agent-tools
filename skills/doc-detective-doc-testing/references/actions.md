@@ -289,7 +289,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 {
   "runShell": {
     "command": "node --version",
-    "stdio": "v18"
+    "stdio": "v22"
   }
 }
 ```
