@@ -92,6 +92,18 @@ run, execute, run command, type in terminal, enter in terminal
 Examples:
 - "Run `npm install`" → `{ "runShell": { "command": "npm install" } }`
 
+## CLI / command-line documentation
+
+Many docs are not UI flows — they show shell commands and their expected output. These map cleanly to `runShell`, and are often the *majority* of testable content for a CLI/SDK project. Patterns:
+
+- **Assert the exit-code contract.** A documented command that should succeed → `exitCodes: [0]`; a documented *failure* (e.g. "this errors with…") → the exit code the doc promises (e.g. `[1]` or `[2]`). This catches behavior changes the prose claims.
+- **Assert output with `stdio`.** Match a stable substring or a `/regex/` of the documented output (e.g. a summary line, an error message). Avoid asserting volatile output (timestamps, absolute paths).
+- **Test the local build, not a published package.** If the docs show `mytool …` (or `npx mytool …`) but the tool is built from this same repo, run against the local build so the test verifies *this* branch, not whatever is on the registry. Build first, then expose the command — e.g. `npm run build` then `npm link` (so both `mytool` and `npx mytool` resolve locally), and run the doc-detective step after. An unpublished package makes this safe: `npx mytool` can only resolve the link or fail loudly, never fetch a stranger.
+- **Use committed fixtures.** Replace placeholder paths in the docs (`path/to/your-file`) with real fixtures checked into the repo so the command is reproducible in CI.
+- **`workingDirectory`** scopes a command to a fixture dir without `cd`.
+
+These are mostly low-confidence under the UI-oriented scoring matrix below (no URLs, no UI elements), but for CLI docs they are the highest-value tests — score command blocks on **clear steps + defined outcome (exit code / output)** rather than UI signals.
+
 ## LLM Prompts for Procedure Extraction
 
 ### Initial Scan Prompt

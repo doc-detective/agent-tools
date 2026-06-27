@@ -96,6 +96,8 @@ Run all generated specs:
 doc-detective --input .doc-detective/doc-detective-tests/ --output .doc-detective/results/
 ```
 
+`--input` (and `--output`) on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory** — so a config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root; if you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
+
 Skip this phase if `--skip-tests` or `--dry-run` is set. If the command fails to execute, stop and report the error — do not proceed to Phase 5. After execution, collect all failing tests from the results output.
 
 ### Phase 5: Fix Loop
