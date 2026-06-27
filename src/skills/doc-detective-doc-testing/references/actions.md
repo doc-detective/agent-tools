@@ -307,11 +307,17 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 
 **Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid and Doc Detective silently skips it):
 - `command`: Shell command to execute (required)
-- `args`: Array of string arguments for the command
+- `args`: Array of string arguments for the command (default: `[]`)
 - `exitCodes`: Expected exit codes (default: `[0]`). The step fails if the actual exit code is not in this list.
 - `stdio`: Expected content in the command's **stdout or stderr** (partial match). Plain string, or a `/regex/` delimited by forward slashes.
 - `workingDirectory`: Directory to run the command in (default `"."`, relative to where Doc Detective is invoked)
-- `path` / `directory`: Save the command's output to a file for later comparison
+- `timeout`: Max time in milliseconds the command is allowed to run before the step fails (default: `60000`)
+
+These fields capture the command's output to a file and compare it against the saved copy on later runs (a snapshot test):
+- `path`: File path to save the command's output, relative to `directory`
+- `directory`: Directory to save the output in. Created if it doesn't exist; defaults to your media directory.
+- `maxVariation`: Allowed fraction of text difference (0–1) between the current output and the previously saved output before the step fails. Ignored when no saved output exists at `path` yet. (default: `0`)
+- `overwrite`: When to replace the saved output — `"true"` (always), `"false"` (never), or `"aboveVariation"` (only when the difference exceeds `maxVariation`). Note these are **strings**, not booleans. (default: `"aboveVariation"`)
 
 ### runCode
 
