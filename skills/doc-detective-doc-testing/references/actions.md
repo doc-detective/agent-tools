@@ -390,7 +390,7 @@ Reusing a `name` while a recording by that name is still active is caught before
 
 #### Auto-record every context
 
-Set `autoRecord: true` (at the config, spec, or test level, or pass `--auto-record` on the CLI) to automatically record a full video of every browser-based test context, alongside any explicit `record` steps. Precedence runs test > spec > config; on the CLI, `--no-auto-record` turns it back off to override a config file that enables it. The automatic recording wraps the whole context and always uses the `ffmpeg` engine. It lands in the per-run artifact folder at a deterministic path (`recordings/<specId>/<testId>/<contextId>.mp4`), so the same context maps to the same path in every run for run-over-run comparison. An untargeted `stopRecord` never stops the automatic recording; it is finalized only at the end of the context.
+Set `autoRecord: true` (at the config, spec, or test level, or pass `--auto-record` on the CLI) to automatically record a full video of every browser-based test context, alongside any explicit `record` steps. Precedence runs test > spec > config; on the CLI, `--no-auto-record` turns it back off to override a config file that enables it. The automatic recording wraps the whole context and always uses the `ffmpeg` engine. It lands in the per-run artifact folder (`<output>/.doc-detective/runs/<runId>/`) at a deterministic path (`specs/<specId>/tests/<testId>/contexts/<contextId>/recordings/<contextId>.mp4`), so the same context maps to the same path in every run for run-over-run comparison. An untargeted `stopRecord` never stops the automatic recording; it is finalized only at the end of the context.
 
 ---
 
