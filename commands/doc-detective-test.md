@@ -39,7 +39,7 @@ Convert documented procedures into executable Doc Detective test specifications,
 
 ## Per-Run Artifact Folders
 
-Each test run archives its results and screenshots in a dedicated folder at `<output>/.doc-detective/run-<runId>/`. The `runFolder` reporter (enabled by default) writes `testResults.json` to this location, and any auto screenshots from the run are saved alongside.
+Each test run archives its results and screenshots in a dedicated folder at `<output>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (enabled by default) writes `testResults.json` to this location, and any auto screenshots from the run are saved alongside.
 
 This folder structure enables run-over-run comparison: the same spec, test, context, and step always produce the same path within each run folder, so you can diff two run folders directly to spot changes over time.
 
@@ -48,7 +48,7 @@ This folder structure enables run-over-run comparison: the same spec, test, cont
 When `--auto-screenshot` is enabled (or `autoScreenshot: true` in config), Doc Detective captures a PNG screenshot after every browser-based step. Screenshots are saved to the per-run artifact folder at paths like:
 
 ```
-.doc-detective/run-<runId>/screenshots/<specId>/<testId>/<contextId>/01-goTo-<stepRef>.png
+.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/01-goTo-<stepRef>.png
 ```
 
 The path structure is derived from spec, test, context, and step IDs, so the same step lands on the same relative path within each run folder. The leading numeric prefix (`01-`) is the step's position within the test, helping you correlate screenshots to specific steps. This makes visual comparison across runs straightforward.
