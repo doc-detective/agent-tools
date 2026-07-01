@@ -26,6 +26,55 @@ With options:
 **Options:**
 - `waitUntil`: `"load"` | `"domcontentloaded"` | `"networkidle"` | `"commit"`
 
+**Open a new tab or window**:
+
+`goTo` is the only action that opens browser tabs and windows. Set `newTab` or `newWindow` to open the URL in a fresh surface and name it so later steps can target it. Each accepts `true` for an anonymous surface, a string to name it, or an object. `newTab` and `newWindow` are mutually exclusive, and neither can be combined with a conflicting [`surface`](#browser-windows-and-tabs) selector.
+
+```json
+{ "goTo": { "url": "https://example.com/cart", "newTab": "cart" } }
+```
+
+```json
+{
+  "goTo": {
+    "url": "https://example.com/admin",
+    "newWindow": { "name": "admin", "tab": "overview" }
+  }
+}
+```
+
+**Opener options:**
+- `newTab`: `true` (anonymous tab), a string (tab name), or `{ "name": "<name>" }`. Opens the URL in a new tab.
+- `newWindow`: `true` (anonymous window), a string (window name), or `{ "name": "<name>", "tab": "<name>" }` where `tab` names the window's first tab. Opens the URL in a new window.
+- `surface`: With `newTab`, selects the existing window the new tab opens in. Without an opener, addresses an existing window/tab (see [Browser windows and tabs](#browser-windows-and-tabs)).
+
+---
+
+## Browser windows and tabs
+
+Most browser steps — `goTo`, `click`, `find`, `dragAndDrop`, `runBrowserScript`, `record`, `screenshot`, `type`, and `closeSurface` — accept a `surface` that targets a specific window or tab instead of the active one. The targeted tab is focused before the step runs and stays focused afterward. Omit `surface` to keep the default behavior — the step acts on the active tab. A tab given without a window is searched for across every tab in the browser in creation order, including tabs the page opened itself through `target="_blank"` or `window.open`.
+
+A browser `surface` is an object with a required `browser` plus an optional `window` and/or `tab` selector:
+
+```json
+{ "click": { "selector": "button.primary", "surface": { "browser": "chrome", "tab": "cart" } } }
+```
+
+```json
+{ "find": { "selector": "#status", "surface": { "browser": "chrome", "window": "admin", "tab": -1 } } }
+```
+
+**Surface fields:**
+- `browser`: Required. One of `"chrome"`, `"firefox"`, `"safari"`, `"webkit"`, `"edge"`. Must be the browser already driving the context — targeting a different browser fails with a message (multi-browser support lands in a later phase).
+- `window` / `tab`: Optional window or tab selector. Omit `window` to use the active window; omit `tab` to use the active tab.
+
+**Window/tab selectors** accept any of these forms:
+- **Name** — the string name assigned when the surface was opened: `"cart"`.
+- **Index** — an integer in creation order; negative counts from the end, so `-1` is the newest: `-1`.
+- **Criteria** — an object matching any of `name`, `index`, `title`, or `url`. `title` and `url` match as a substring, or as a `/regex/` wrapped in forward slashes: `{ "title": "/Checkout/" }`.
+
+**Phase limits (fail with guidance):** a `browser` that isn't the active browser, a browser surface `name` (reserved), closing a whole browser, and closing the last open tab all fail with a message rather than silently doing nothing. The same specs start working when multi-browser support ships.
+
 ---
 
 ## Element Interaction
@@ -200,6 +249,22 @@ Process surfaces use their own special-key tokens, which differ from the element
 - `$DELETE$` - Delete
 - `$ARROW_UP$`, `$ARROW_DOWN$`, `$ARROW_LEFT$`, `$ARROW_RIGHT$` - Arrow keys (ANSI escape sequences)
 - `$CTRL$` followed by a letter in the next array element sends that control byte (for example, `["$CTRL$", "c"]` sends `Ctrl+C`)
+
+**Type into a specific browser tab**:
+
+Set `surface` to a browser window or tab to type into a field there (see [Browser windows and tabs](#browser-windows-and-tabs)). After typing, an optional `waitUntil` holds the step until the tab is ready, and `timeout` bounds that wait. For a browser surface, `waitUntil` accepts `networkIdleTime`, `domIdleTime`, and/or `find` (an element to wait for); for a process surface it accepts `stdio` and/or `delayMs`.
+
+```json
+{
+  "type": {
+    "keys": ["kittens", "$ENTER$"],
+    "selector": "#search",
+    "surface": { "browser": "chrome", "tab": "cart" },
+    "waitUntil": { "find": { "selector": ".results" } },
+    "timeout": 10000
+  }
+}
+```
 
 ---
 
@@ -452,7 +517,9 @@ For long-running processes, `runCode` accepts the same `background` and `timeout
 
 ### closeSurface
 
-Stop one or more background processes started by `runShell` or `runCode`. Target a process by the name it was registered under, or pass an array to close several at once. Closing a surface that isn't open — already stopped, or never started — is a no-op that passes, so `closeSurface` is safe to call unconditionally. Background processes you never close explicitly are torn down automatically when the run ends.
+Close one or more open surfaces — background processes started by `runShell` or `runCode`, or browser tabs and windows. Target a process by its registered name, or a browser tab or window with a [browser surface](#browser-windows-and-tabs). Pass an array to close several at once. Closing a surface that isn't open — already closed, or never opened — is a no-op that passes, so `closeSurface` is safe to call unconditionally. Surfaces you never close explicitly are torn down automatically when the run ends.
+
+Close a background process by name:
 
 ```json
 { "closeSurface": "web" }
@@ -461,6 +528,18 @@ Stop one or more background processes started by `runShell` or `runCode`. Target
 ```json
 { "closeSurface": ["web", "api"] }
 ```
+
+Close a browser tab (`tab`) or window and all its tabs (`window`):
+
+```json
+{ "closeSurface": { "browser": "chrome", "tab": "cart" } }
+```
+
+```json
+{ "closeSurface": { "browser": "chrome", "window": "admin" } }
+```
+
+Doc Detective refuses to close the last open tab, which would end the browser session, and refuses to close a whole browser; both fail with a message.
 
 ---
 

@@ -93,16 +93,16 @@ See `references/actions.md` for the full action catalog.
 ### Known Actions
 
 These are the only valid action types:
-- `goTo` - URL string or `{ url: string, waitUntil?: string }`
+- `goTo` - URL string or `{ url: string, waitUntil?: string, newTab?: true | string | object, newWindow?: true | string | object, surface?: object }`. `newTab`/`newWindow` open and name a browser tab/window (mutually exclusive; only `goTo` opens surfaces).
 - `click` - Text string or `{ selector: string }`
 - `find` - Text string or `{ selector: string, timeout?: number, matchText?: string }`
-- `type` - `{ keys: string | string[], selector?: string, surface?: string | object }`
+- `type` - `{ keys: string | string[], selector?: string, surface?: string | object, waitUntil?: object, timeout?: number }`. `surface` targets a process (name or `{ process }`) or a browser window/tab (`{ browser, window?, tab? }`).
 - `wait` - Number (ms) or `{ selector: string, state: string }`
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
 - `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[], background?: { name: string, waitUntil?: object }, timeout?: number }`. `stdio` matches stdout **or** stderr (string or `/regex/`); the object form is strict, so there is **no** `stdout`/`stderr` field — using one invalidates the spec.
 - `runCode` - `{ language: string, code: string, background?: { name: string, waitUntil?: object }, timeout?: number }`
-- `closeSurface` - Process name string or array of names
+- `closeSurface` - Process name string, browser surface `{ browser, window? | tab? }`, or an array of either. Closes background processes or browser tabs/windows; missing surfaces are a no-op.
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
