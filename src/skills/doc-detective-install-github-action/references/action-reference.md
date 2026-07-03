@@ -6,7 +6,7 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 
 | Input | Description | Default |
 |---|---|---|
-| `version` | Doc Detective version to install | `latest` |
+| `version` | Doc Detective version to install: a specific version number or an npm tag (like `latest`). Set to an empty string (`""`) to run whatever `doc-detective` is already resolvable in the working directory instead of installing from the registry — see [Running against a local build](#running-against-a-local-build). | `latest` |
 | `working_directory` | Directory to run Doc Detective in | `.` (repo root) |
 | `config` | Path to Doc Detective config file | (auto-detected) |
 | `input` | Input file or directory to test | (from config) |
@@ -34,6 +34,24 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 | `results` | JSON string of Doc Detective test results |
 | `pull_request_url` | URL of created PR (if `create_pr_on_change` triggered) |
 | `issue_url` | URL of created issue (if `create_issue_on_fail` triggered) |
+
+## Running against a local build
+
+By default, `version` pins the package spec passed to npx (for example, `npx doc-detective@latest`), so npx resolves Doc Detective from the npm registry. Set `version` to an empty string (`""`) to drop the `@version` suffix and run bare `npx doc-detective`, which lets npx use whatever `doc-detective` build is already available in the working directory. This is how a repository can dog-food the action against its own build under review instead of the published package.
+
+The action does not install or link a local build for you. Make `doc-detective` resolvable in earlier workflow steps before this action runs — typically by checking out the build, installing its dependencies, and linking it with `npm link`. Resolution happens relative to the `working_directory` input. If no local `doc-detective` is resolvable, npx falls back to fetching it from the registry.
+
+```yaml
+- uses: actions/checkout@v4
+- name: Build and link a local doc-detective
+  run: |
+    npm ci
+    npm run build
+    npm link
+- uses: doc-detective/github-action@v1
+  with:
+    version: ""   # run the locally linked build instead of a published release
+```
 
 ## Required Permissions by Feature
 
