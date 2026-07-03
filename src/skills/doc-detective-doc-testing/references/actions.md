@@ -77,6 +77,76 @@ A browser `surface` is an object with a required `browser` plus an optional `win
 
 ---
 
+## Native app surfaces (Windows)
+
+`startSurface` launches a native Windows desktop app and registers it as an automation surface, so the element steps you already use in the browser — `find`, `click`, `type`, `screenshot`, and `waitUntil` — can drive it once you set `surface` to `{ "app": "<name>" }`. Close the app with a [`closeSurface`](#closesurface) step. Native app surfaces run on **Windows only** in this phase; on every other platform the context is marked SKIPPED (not failed) with an actionable reason. The driver installs automatically the first time you use it.
+
+### startSurface
+
+Launch an app and register it under a name that later steps can target.
+
+```json
+{ "startSurface": { "app": "C:\\Windows\\System32\\charmap.exe" } }
+```
+
+```json
+{
+  "startSurface": {
+    "app": "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App",
+    "name": "calc",
+    "waitUntil": { "delayMs": 500 },
+    "timeout": 30000
+  }
+}
+```
+
+**Options:**
+- `app`: Required. The app to launch — an executable path, `.app` path, bundle ID, package name, or UWP AppUserModelID. The kind is inferred from the value's syntax; there is no separate type field.
+- `name`: The surface name later steps reference in `surface`. Defaults to the executable's basename (without extension) or the final segment of an ID.
+- `args`: Array of launch arguments.
+- `workingDirectory`: Directory to launch from (default `"."`).
+- `waitUntil`: Startup readiness gate — `{ delayMs?: number, find?: object }`. `delayMs` waits a fixed time; `find` waits for an element to appear.
+- `timeout`: Maximum time in ms to wait for startup (default `60000`).
+- `driverOptions`: Object of driver capability overrides passed through to the underlying driver (for example, `appium:noReset`).
+
+The mobile-oriented fields `install`, `activity`, and `device` are accepted by the schema but reserved for later mobile support and have no effect in this phase. The Windows driver also doesn't honor `env` — setting it fails at runtime — so leave these fields unset.
+
+### Targeting elements on an app surface
+
+Element steps target an app the same way they target a browser tab — through `surface` — but the value is `{ "app": "<name>" }`, optionally with a `window` selector. The element-finding fields keep the names you already use, but on an app surface they map to Windows UI Automation instead of the DOM:
+
+- `elementText` matches the element's `Name`.
+- `elementId` (and `elementTestId`) match its `AutomationId`.
+- `elementAria` matches its UIA `ControlType`.
+- `selector` is an escape hatch for native locators: a native XPath (starting with `//` or `(`), or an accessibility id (starting with `~`). CSS selectors are browser-only and are rejected on app surfaces.
+- `elementClass` and `elementAttribute` are not supported on app surfaces.
+
+```json
+{ "click": { "elementText": "Select", "surface": { "app": "charmap" } } }
+```
+
+```json
+{
+  "type": {
+    "keys": ["AB"],
+    "selector": "//Edit[@Name=\"Characters to copy :\"]",
+    "surface": { "app": "charmap" }
+  }
+}
+```
+
+```json
+{ "screenshot": { "path": "charmap.png", "surface": { "app": "charmap" } } }
+```
+
+**App surface fields:**
+- `app`: Required. The `name` from `startSurface` (or its derived default).
+- `window`: Optional window selector. Apps have windows but no tabs, so an app surface takes a window only — by name, by creation-order index (`-1` is the newest), or by criteria matching `name`, `index`, or `title` (`title` matches as a substring or `/regex/`).
+
+Gate app tests to Windows so the skip on other platforms is intentional — for example, set `runOn` platforms to `["windows"]`.
+
+---
+
 ## Element Interaction
 
 ### click
@@ -517,7 +587,7 @@ For long-running processes, `runCode` accepts the same `background` and `timeout
 
 ### closeSurface
 
-Close one or more open surfaces — background processes started by `runShell` or `runCode`, or browser tabs and windows. Target a process by its registered name, or a browser tab or window with a [browser surface](#browser-windows-and-tabs). Pass an array to close several at once. Closing a surface that isn't open — already closed, or never opened — is a no-op that passes, so `closeSurface` is safe to call unconditionally. Surfaces you never close explicitly are torn down automatically when the run ends.
+Close one or more open surfaces — background processes started by `runShell` or `runCode`, browser tabs and windows, or a [native app](#native-app-surfaces-windows). Target a process or app by its registered name, or a browser tab or window with a [browser surface](#browser-windows-and-tabs). Pass an array to close several at once. Closing a surface that isn't open — already closed, or never opened — is a no-op that passes, so `closeSurface` is safe to call unconditionally. Surfaces you never close explicitly are torn down automatically when the run ends.
 
 Close a background process by name:
 
@@ -537,6 +607,12 @@ Close a browser tab (`tab`) or window and all its tabs (`window`):
 
 ```json
 { "closeSurface": { "browser": "chrome", "window": "admin" } }
+```
+
+Close a [native app](#native-app-surfaces-windows) by its surface name:
+
+```json
+{ "closeSurface": { "app": "charmap" } }
 ```
 
 Doc Detective refuses to close the last open tab, which would end the browser session, and refuses to close a whole browser; both fail with a message.
