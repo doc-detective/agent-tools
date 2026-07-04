@@ -109,11 +109,11 @@ Launch an app and register it under a name that later steps can target.
 - `timeout`: Maximum time in ms to wait for startup (default `60000`).
 - `driverOptions`: Object of driver capability overrides passed through to the underlying driver (for example, `appium:noReset`).
 
-The mobile-oriented fields `install`, `activity`, and `device` are accepted by the schema but reserved for later mobile support and have no effect in this phase. The Windows driver also doesn't honor `env` — setting it fails at runtime — so leave these fields unset.
+The mobile-oriented fields `install`, `activity`, and `device` are accepted by the schema but reserved for later mobile support — setting any of them fails the step with a message pointing to the roadmap. The Windows driver also rejects `env`: set environment variables in the shell that launches Doc Detective, or launch the app through `runShell` instead. Leave all of these fields unset in this phase.
 
 ### Targeting elements on an app surface
 
-Element steps target an app the same way they target a browser tab — through `surface` — but the value is `{ "app": "<name>" }`, optionally with a `window` selector. The element-finding fields keep the names you already use, but on an app surface they map to Windows UI Automation instead of the DOM:
+Element steps target an app the same way they target a browser tab — through `surface` — but the value is `{ "app": "<name>" }`. The element-finding fields keep the names you already use, but on an app surface they map to Windows UI Automation instead of the DOM:
 
 - `elementText` matches the element's `Name`.
 - `elementId` (and `elementTestId`) match its `AutomationId`.
@@ -141,7 +141,7 @@ Element steps target an app the same way they target a browser tab — through `
 
 **App surface fields:**
 - `app`: Required. The `name` from `startSurface` (or its derived default).
-- `window`: Optional window selector. Apps have windows but no tabs, so an app surface takes a window only — by name, by creation-order index (`-1` is the newest), or by criteria matching `name`, `index`, or `title` (`title` matches as a substring or `/regex/`).
+- `window`: The schema accepts a `window` selector on an app surface, but per-window targeting isn't active in this phase — a step that sets it fails, so omit `window` and act on the app's active window. Window selection lands in a later part of the native app roadmap.
 
 Gate app tests to Windows so the skip on other platforms is intentional — for example, set `runOn` platforms to `["windows"]`.
 
