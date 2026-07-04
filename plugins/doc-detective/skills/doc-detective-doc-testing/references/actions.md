@@ -77,9 +77,9 @@ A browser `surface` is an object with a required `browser` plus an optional `win
 
 ---
 
-## Native app surfaces (Windows)
+## Native app surfaces (Windows and macOS)
 
-`startSurface` launches a native Windows desktop app and registers it as an automation surface, so the element steps you already use in the browser — `find`, `click`, `type`, `screenshot`, and `waitUntil` — can drive it once you set `surface` to `{ "app": "<name>" }`. Close the app with a [`closeSurface`](#closesurface) step. Native app surfaces run on **Windows only** in this phase; on every other platform the context is marked SKIPPED (not failed) with an actionable reason. The driver installs automatically the first time you use it.
+`startSurface` launches a native desktop app and registers it as an automation surface. Once you set `surface` to `{ "app": "<name>" }`, the element steps you already use in the browser — `find`, `click`, `type`, `screenshot`, and `waitUntil` — can drive it. Close the app with a [`closeSurface`](#closesurface) step. Native app surfaces run on **Windows and macOS**; on any other platform the context is marked SKIPPED (not failed) with an actionable reason. The driver for each platform installs automatically the first time you use it. On macOS, the process that runs Doc Detective also needs the Accessibility permission — see [macOS Accessibility permission](#macos-accessibility-permission).
 
 ### startSurface
 
@@ -100,24 +100,43 @@ Launch an app and register it under a name that later steps can target.
 }
 ```
 
+On macOS, launch by bundle ID or by `.app` path:
+
+```json
+{ "startSurface": { "app": "com.apple.TextEdit", "name": "textedit" } }
+```
+
+```json
+{ "startSurface": { "app": "/System/Applications/Calculator.app", "name": "calc" } }
+```
+
 **Options:**
-- `app`: Required. The app to launch — an executable path, `.app` path, bundle ID, package name, or UWP AppUserModelID. The kind is inferred from the value's syntax; there is no separate type field.
+- `app`: Required. The app to launch — on Windows, an executable path, package name, or UWP AppUserModelID; on macOS, a `.app` path or a bundle ID (`com.apple.TextEdit`). The kind is inferred from the value's syntax; there is no separate type field.
 - `name`: The surface name later steps reference in `surface`. Defaults to the executable's basename (without extension) or the final segment of an ID.
-- `args`: Array of launch arguments.
-- `workingDirectory`: Directory to launch from (default `"."`).
+- `args`: Launch arguments. On macOS they pass to the app as a real argument array; on Windows they join into a single shell-style string, so an argument that contains spaces must carry its own quotes (for example, `"\"My File.txt\""`).
+- `workingDirectory`: Directory to launch from (Windows only; default `"."`). Not supported on macOS, where the driver launches apps through LaunchServices and has no working-directory control, so a non-default value fails there with guidance — launch through `runShell` if the cwd matters.
+- `env`: Extra environment variables for the launched app. Supported on macOS; rejected by the Windows driver, where any value fails with guidance — set the variables in the shell that launches Doc Detective, or launch through `runShell` instead.
 - `waitUntil`: Startup readiness gate — `{ delayMs?: number, find?: object }`. `delayMs` waits a fixed time; `find` waits for an element to appear.
-- `timeout`: Maximum time in ms to wait for startup (default `60000`).
+- `timeout`: Maximum time in ms to wait for startup (default `60000`). The first macOS launch builds the driver's helper app and can take a few minutes, so allow extra time there.
 - `driverOptions`: Object of driver capability overrides passed through to the underlying driver (for example, `appium:noReset`).
 
-The mobile-oriented fields `install`, `activity`, and `device` are accepted by the schema but reserved for later mobile support — setting any of them fails the step with a message pointing to the roadmap. The Windows driver also rejects `env`: set environment variables in the shell that launches Doc Detective, or launch the app through `runShell` instead. Leave all of these fields unset in this phase.
+The mobile-oriented fields `install`, `activity`, and `device` are accepted by the schema but reserved for later mobile support — setting any of them fails the step with a message pointing to the roadmap. Leave them unset.
 
 ### Targeting elements on an app surface
 
-Element steps target an app the same way they target a browser tab — through `surface` — but the value is `{ "app": "<name>" }`. The element-finding fields keep the names you already use, but on an app surface they map to Windows UI Automation instead of the DOM:
+Element steps target an app through `surface`, the same way they target a browser tab, but the value is `{ "app": "<name>" }`. The element-finding fields keep the names you already use; on an app surface they map to the platform's native accessibility tree instead of the DOM.
 
+On **Windows** (UI Automation):
 - `elementText` matches the element's `Name`.
 - `elementId` (and `elementTestId`) match its `AutomationId`.
 - `elementAria` matches its UIA `ControlType`.
+
+On **macOS** (accessibility):
+- `elementText` matches the element's title, label, or value.
+- `elementId` (and `elementTestId`) match its accessibility identifier.
+- `elementAria` matches its `XCUIElementType` role (for example, `button` → `XCUIElementTypeButton`, `textbox` → `XCUIElementTypeTextField`) together with its accessible name (title or label). Pass it as a role string; the `{ role, name }` object form isn't reachable through the schema yet.
+
+On both platforms:
 - `selector` is an escape hatch for native locators: a native XPath (starting with `//` or `(`), or an accessibility id (starting with `~`). CSS selectors are browser-only and are rejected on app surfaces.
 - `elementClass` and `elementAttribute` are not supported on app surfaces.
 
@@ -136,6 +155,10 @@ Element steps target an app the same way they target a browser tab — through `
 ```
 
 ```json
+{ "click": { "elementText": "7", "surface": { "app": "calc" } } }
+```
+
+```json
 { "screenshot": { "path": "charmap.png", "surface": { "app": "charmap" } } }
 ```
 
@@ -143,7 +166,15 @@ Element steps target an app the same way they target a browser tab — through `
 - `app`: Required. The `name` from `startSurface` (or its derived default).
 - `window`: The schema accepts a `window` selector on an app surface, but per-window targeting isn't active in this phase — a step that sets it fails, so omit `window` and act on the app's active window. Window selection lands in a later part of the native app roadmap.
 
-Gate app tests to Windows so the skip on other platforms is intentional — for example, set `runOn` platforms to `["windows"]`.
+Gate app tests to the platforms they support so the skip elsewhere is intentional — for example, set `runOn` platforms to `["windows"]` for a Windows app or `["mac"]` for a macOS app.
+
+### macOS Accessibility permission
+
+macOS won't let one app control another until you grant the controlling process the Accessibility permission (part of the system's Transparency, Consent, and Control, or TCC). Doc Detective checks for it before launching an app surface: if the permission is clearly denied, the context is marked SKIPPED (not failed) with the walkthrough below; if the check is inconclusive, the run proceeds, and any accessibility-related launch error carries the same walkthrough. To grant it:
+
+> Open System Settings → Privacy & Security → Accessibility and enable the app that launches Doc Detective (your terminal, IDE, or CI runner process), then rerun.
+
+The process you enable is whichever one runs Doc Detective — your terminal, your IDE, or the CI runner's shell — not the app being automated.
 
 ---
 
@@ -587,7 +618,7 @@ For long-running processes, `runCode` accepts the same `background` and `timeout
 
 ### closeSurface
 
-Close one or more open surfaces — background processes started by `runShell` or `runCode`, browser tabs and windows, or a [native app](#native-app-surfaces-windows). Target a process or app by its registered name, or a browser tab or window with a [browser surface](#browser-windows-and-tabs). Pass an array to close several at once. Closing a surface that isn't open — already closed, or never opened — is a no-op that passes, so `closeSurface` is safe to call unconditionally. Surfaces you never close explicitly are torn down automatically when the run ends.
+Close one or more open surfaces — background processes started by `runShell` or `runCode`, browser tabs and windows, or a [native app](#native-app-surfaces-windows-and-macos). Target a process or app by its registered name, or a browser tab or window with a [browser surface](#browser-windows-and-tabs). Pass an array to close several at once. Closing a surface that isn't open — already closed, or never opened — is a no-op that passes, so `closeSurface` is safe to call unconditionally. Surfaces you never close explicitly are torn down automatically when the run ends.
 
 Close a background process by name:
 
@@ -609,7 +640,7 @@ Close a browser tab (`tab`) or window and all its tabs (`window`):
 { "closeSurface": { "browser": "chrome", "window": "admin" } }
 ```
 
-Close a [native app](#native-app-surfaces-windows) by its surface name:
+Close a [native app](#native-app-surfaces-windows-and-macos) by its surface name:
 
 ```json
 { "closeSurface": { "app": "charmap" } }

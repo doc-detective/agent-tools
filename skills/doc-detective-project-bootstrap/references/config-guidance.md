@@ -105,7 +105,7 @@ A context in `runOn` can use `requires` to declare the host capabilities it depe
 - **Array of strings** — several commands, all of which must be resolvable on `PATH`.
 - **Object** — any combination of `commands` (resolvable on `PATH`), `files` (must exist; entries expand `$VAR` and `$HOME`), and `env` (must be set to a non-empty value).
 
-All listed requirements are AND-ed — the context runs only when every one is satisfied. This pairs naturally with native app surfaces: gate a Windows app test with `runOn` platforms `["windows"]` plus a `requires` for the tooling it needs.
+All listed requirements are AND-ed — the context runs only when every one is satisfied. This pairs naturally with native app surfaces: gate an app test to the platforms it supports with `runOn` platforms (`["windows"]`, `["mac"]`, or both) plus a `requires` for the tooling it needs.
 
 ## Config By Project Type
 
