@@ -8,6 +8,7 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 |---|---|---|
 | `version` | Doc Detective version to install | `latest` |
 | `working_directory` | Directory to run Doc Detective in | `.` (repo root) |
+| `android` | Enable Android emulator support on Linux runners by granting KVM access (see [Android emulator tests](#android-emulator-tests)). `auto` scans your specs and config and enables KVM only when an `android` platform is found; `true` always enables it on Linux; `false` never does. No effect on macOS/Windows runners. | `auto` |
 | `config` | Path to Doc Detective config file | (auto-detected) |
 | `input` | Input file or directory to test | (from config) |
 | `exit_on_fail` | Fail the GitHub Actions check if any test fails | `false` |
@@ -73,9 +74,17 @@ permissions:
 
 ## Platform Limitations
 
-- **Runs on `ubuntu-latest` only.** The action installs Doc Detective on Linux.
-- **Headless browsers only.** Ubuntu runners have no display server. Firefox and Chrome automatically fall back to headless mode. Tests requiring visible browser windows will not work.
+- **Headless browsers on Linux.** Ubuntu runners have no display server. Firefox and Chrome automatically fall back to headless mode, so tests requiring visible browser windows won't work on Linux; use a macOS or Windows runner for those.
+- **Android emulator tests are Linux-only.** The `android` input enables KVM only on Linux runners. macOS and Windows runners can't accelerate the hosted emulator, so `android` contexts don't run there. See [Android emulator tests](#android-emulator-tests).
 - **Default token scope.** The default `GITHUB_TOKEN` can create PRs and issues within the same repository. For cross-repo operations or repos with strict token policies, a custom `token` input may be required.
+
+## Android emulator tests
+
+Doc Detective can run tests against the `android` platform using an on-runner emulator, but that emulator needs hardware acceleration to be usable. On hosted Linux runners, `/dev/kvm` exists but isn't accessible to the runner user, so Doc Detective's capability probe fails and every `android` context SKIPs. The `android` input resolves this by granting the runner user KVM access before tests run.
+
+With the default `android: auto`, the action scans your resolved specs and config for an `android` platform and enables KVM only when it finds one. Set `android: true` to always enable KVM on Linux, or `android: false` to leave it untouched. The input has no effect on macOS or Windows runners, where the hosted emulator can't accelerate anyway.
+
+KVM setup is best-effort. If the action can't grant access, it emits a warning and the `android` contexts SKIP; the run never fails because of it. Doc Detective bootstraps everything else the emulator needs — the SDK, system image, AVD, and UiAutomator2 driver — at test time, so a Linux workflow needs nothing beyond the default `android: auto`.
 
 ## Integrations
 
@@ -216,6 +225,29 @@ jobs:
           config: docs/.doc-detective.json
           exit_on_fail: true
 ```
+
+### Android emulator tests on Linux
+
+```yaml
+name: Doc Detective
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  doc-detective:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: doc-detective/github-action@v1
+        with:
+          android: auto   # default; scans specs/config and enables KVM if an android platform is found
+```
+
+`android: auto` is the default, so a Linux job that targets the `android` platform needs nothing beyond the action itself. Use `android: true` to always enable KVM on Linux regardless of what the scan finds.
 
 ### Using action outputs
 
