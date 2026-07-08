@@ -10,6 +10,7 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 | `working_directory` | Directory to run Doc Detective in | `.` (repo root) |
 | `config` | Path to Doc Detective config file | (auto-detected) |
 | `input` | Input file or directory to test | (from config) |
+| `cache` | Persist Doc Detective's runtime and browser cache across runs via `actions/cache`, so the dependency warm-up (webdriverio, Appium drivers, sharp, ffmpeg, browsers, geckodriver) happens once per repo instead of every run. Keyed on OS, architecture, Node major version, and the resolved Doc Detective version. `true` restores the cache before the run and saves it after; `false` disables caching entirely. Only the runtime, browsers, and `installed.json` are cached — the multi-GB `android-sdk` and `jre` are excluded. | `true` |
 | `exit_on_fail` | Fail the GitHub Actions check if any test fails | `false` |
 | `create_pr_on_change` | Create a pull request if files change during execution (e.g., updated screenshots) | `false` |
 | `pr_branch` | Branch name for the created PR | `doc-detective/updates` |
