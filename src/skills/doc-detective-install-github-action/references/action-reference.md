@@ -96,6 +96,10 @@ With the default `ios: auto`, the action scans your resolved specs and config fo
 
 Caching is best-effort. The first run compiles WDA cold and saves the cache; later runs restore it and build incrementally, so the build becomes near-instant. If a restore or save fails, the action emits a warning and WDA just builds cold — the run never fails because of it. The cache key is tied to the runner OS and Xcode version, and the XCUITest driver revalidates the installed WDA and rebuilds on a version mismatch, so a stale cache self-heals. Doc Detective bootstraps the XCUITest driver and simulator itself at test time, so a macOS workflow needs nothing beyond the default `ios: auto`.
 
+### Alternative: prebuild WebDriverAgent with the CLI
+
+As an alternative to the action's cache, you can let Doc Detective's CLI manage the WebDriverAgent build. In your setup steps, run `doc-detective install ios --yes` to compile WDA once into the Doc Detective cache, keyed by your Xcode and XCUITest driver versions. Test sessions then consume those products automatically and read-only, so a single prebuild is safe to share across parallel jobs. Set `ios: false` on the action when you do this. The two mechanisms overlap, and the action's cache takes precedence when both are active, so leaving it on means you build WDA twice. Persist the Doc Detective cache directory across runs — for example, with `actions/cache` — so the prebuild survives from one run to the next.
+
 ## Integrations
 
 The `integrations` input accepts a comma-separated list of AI tool identifiers. When `create_issue_on_fail` is enabled, the action mentions these integrations in the issue body so they can automatically respond.
@@ -281,6 +285,36 @@ jobs:
 ```
 
 iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. `ios: auto` is the default, so a macOS job that targets the `ios` platform needs nothing beyond the action itself. Use `ios: true` to always cache the WebDriverAgent build on macOS regardless of what the scan finds.
+
+### iOS tests with a CLI-managed WebDriverAgent prebuild
+
+```yaml
+name: Doc Detective
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  doc-detective:
+    runs-on: macos-latest
+    env:
+      DOC_DETECTIVE_CACHE_DIR: .dd-cache
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/cache@v4
+        with:
+          path: .dd-cache
+          key: dd-cache-${{ runner.os }}
+      - run: npx doc-detective install ios --yes   # prebuilds WebDriverAgent into the cache
+      - uses: doc-detective/github-action@v1
+        with:
+          ios: false   # let the CLI prebuild manage WDA; disable the action's own cache
+```
+
+This variant prebuilds WebDriverAgent through the Doc Detective CLI instead of the action's cache. `actions/cache` persists the cache directory across runs, `install ios --yes` compiles WDA once into it, and `ios: false` keeps the action from building or caching WDA a second time. See [iOS tests](#ios-tests) for how the two mechanisms interact.
 
 ### Using action outputs
 
