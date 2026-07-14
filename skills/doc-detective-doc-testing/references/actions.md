@@ -104,12 +104,15 @@ Check if an element exists. Can optionally interact with it.
 ```
 
 **Options:**
+- `elementText`: Find the element by its display text (the object-form equivalent of the string shorthand)
 - `selector`: CSS selector
 - `timeout`: Wait time in ms
 - `click`: Click after finding (boolean)
 - `moveTo`: Move cursor to element before interacting (boolean)
 - `type`: Type text after finding (object with `keys`)
-- `matchText`: Verify element contains text
+- `matchText`: After finding, assert the element *contains* this text (substring match; also accepts a `/regex/`)
+
+**Text matching:** When you find an element by text — the `{ "find": "Welcome" }` shorthand or the `elementText` field — the match is against the element's *whole* visible text with whitespace normalized: leading and trailing whitespace is trimmed, and internal runs of spaces, tabs, and newlines collapse to a single space. Two consequences follow. First, it's a whole-element exact match, not a substring, so a broad target with `elementText` won't match a nested heading — the container's full text is more than the heading alone. To match a substring instead, wrap the value in slashes to use a regular expression, as in `{ "find": { "elementText": "/Garden companion/" } }`. Second, text that a framework such as React, Vue, or Svelte splits across several DOM text nodes still matches, and the result is the same on Chrome and Firefox regardless of how each browser's driver reports whitespace. The same normalization applies to `elementAria` and to a selector's matched text. (`matchText`, which asserts against an already-found element, is a separate substring check and is unaffected.)
 
 ### dragAndDrop
 
