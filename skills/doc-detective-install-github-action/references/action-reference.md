@@ -9,7 +9,7 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 | `version` | Doc Detective version to install | `latest` |
 | `working_directory` | Directory to run Doc Detective in | `.` (repo root) |
 | `android` | Enable Android emulator support on Linux runners by granting KVM access (see [Android emulator tests](#android-emulator-tests)). `auto` scans your specs and config and enables KVM only when an `android` platform is found; `true` always enables it on Linux; `false` never does. No effect on macOS/Windows runners. | `auto` |
-| `ios` | Cache the WebDriverAgent (WDA) build to speed up iOS tests on macOS runners (see [iOS tests](#ios-tests)). `auto` scans your specs and config and caches only when an `ios` platform is found; `true` always caches on macOS; `false` never does. No effect off macOS. | `auto` |
+| `ios` | **Deprecated no-op.** Retained so existing workflows keep working, but it no longer caches the WebDriverAgent (WDA) build. Doc Detective (v4.28+) builds and manages WDA itself; to speed up iOS runs, prebuild with `npx doc-detective install ios --yes` and a persisted cache directory instead (see [iOS tests](#ios-tests)). | `auto` |
 | `config` | Path to Doc Detective config file | (auto-detected) |
 | `input` | Input file or directory to test | (from config) |
 | `exit_on_fail` | Fail the GitHub Actions check if any test fails | `false` |
@@ -77,7 +77,7 @@ permissions:
 
 - **Headless browsers on Linux.** Ubuntu runners have no display server. Firefox and Chrome automatically fall back to headless mode, so tests requiring visible browser windows won't work on Linux; use a macOS or Windows runner for those.
 - **Android emulator tests are Linux-only.** The `android` input enables KVM only on Linux runners. macOS and Windows runners can't accelerate the hosted emulator, so `android` contexts don't run there. See [Android emulator tests](#android-emulator-tests).
-- **iOS tests are macOS-only.** iOS simulators run only on macOS runners, so `ios` platform contexts don't run on Linux or Windows. The `ios` input caches the WebDriverAgent build to speed up those runs and has no effect off macOS. See [iOS tests](#ios-tests).
+- **iOS tests are macOS-only.** iOS simulators run only on macOS runners, so `ios` platform contexts don't run on Linux or Windows. The `ios` input is a deprecated no-op; to speed up those runs, prebuild the WebDriverAgent build with the Doc Detective CLI instead. See [iOS tests](#ios-tests).
 - **Default token scope.** The default `GITHUB_TOKEN` can create PRs and issues within the same repository. For cross-repo operations or repos with strict token policies, a custom `token` input may be required.
 
 ## Android emulator tests
@@ -90,15 +90,17 @@ KVM setup is best-effort. If the action can't grant access, it emits a warning a
 
 ## iOS tests
 
-Doc Detective runs `ios` platform tests on macOS runners through the XCUITest driver, which depends on WebDriverAgent (WDA). The first XCUITest session in a run compiles WDA from source with `xcodebuild`, which takes roughly 10 minutes on a cold, ephemeral runner and is the dominant cost of any iOS run. The `ios` input caches those WDA build products across runs so later runs restore them and skip the cold compile.
+Doc Detective runs `ios` platform tests on macOS runners through the XCUITest driver, which depends on WebDriverAgent (WDA). The first XCUITest session in a run compiles WDA from source with `xcodebuild`, which takes roughly 10 minutes on a cold, ephemeral runner and is the dominant cost of any iOS run. No extra setup is required: when no prebuilt WDA products exist, the first session builds WDA in-session. As of Doc Detective v4.28, Doc Detective builds and manages WDA itself, so the action no longer caches the build.
 
-With the default `ios: auto`, the action scans your resolved specs and config for an `ios` platform and caches WDA only when it finds one. Set `ios: true` to always cache on macOS, or `ios: false` to leave it untouched. The input has no effect off macOS, since iOS simulators are macOS-only.
+### The `ios` input is deprecated
 
-Caching is best-effort. The first run compiles WDA cold and saves the cache; later runs restore it and build incrementally, so the build becomes near-instant. If a restore or save fails, the action emits a warning and WDA just builds cold — the run never fails because of it. The cache key is tied to the runner OS and Xcode version, and the XCUITest driver revalidates the installed WDA and rebuilds on a version mismatch, so a stale cache self-heals. Doc Detective bootstraps the XCUITest driver and simulator itself at test time, so a macOS workflow needs nothing beyond the default `ios: auto`.
+The `ios` input is a deprecated no-op. It remains declared so existing workflows keep working, but it no longer caches WDA. On a macOS runner, a run that would previously have cached — `ios: true`, or the default `ios: auto` when an `ios` platform is detected in your specs — now emits a one-time migration notice pointing at the prebuild recipe below; every other case is silent. The notice is informational and never fails the run. Because the input has no effect, you can safely remove `ios` from your workflow.
 
-### Alternative: prebuild WebDriverAgent with the CLI
+### Speed up iOS tests with a CLI-managed WebDriverAgent prebuild
 
-As an alternative to the action's cache, you can let Doc Detective's CLI manage the WebDriverAgent build. In your setup steps, run `doc-detective install ios --yes` to compile WDA once into the Doc Detective cache, keyed by your Xcode and XCUITest driver versions. Test sessions then consume those products automatically and read-only, so a single prebuild is safe to share across parallel jobs. Set `ios: false` on the action when you do this. The two mechanisms overlap, and the action's cache takes precedence when both are active, so leaving it on means you build WDA twice. To persist the prebuild across runs, point both the CLI and your cache step at the same directory with `DOC_DETECTIVE_CACHE_DIR`, then restore it with `actions/cache`. Because the CLI keys its build products by Xcode and driver version, include the Xcode version in your `actions/cache` key (or add a versioned `restore-keys` fallback) so the cache refreshes when a runner image bumps Xcode. An OS-only key never re-saves once written, so later runs would keep restoring a stale prebuild and rebuild WDA cold every time.
+To skip the cold WDA compile on later runs, let Doc Detective's CLI prebuild WDA and persist its cache directory across runs. Run `npx doc-detective install ios --yes` in your setup steps to compile WDA once into the Doc Detective cache, keyed by your Xcode and XCUITest driver versions; test sessions then consume those products automatically and read-only. Point `DOC_DETECTIVE_CACHE_DIR` at a directory, restore and save that directory with `actions/cache`, and run the prebuild before the action. The managed prebuild requires Doc Detective v4.28 or later, so if you pin the action's `version` input, keep it at v4.28+ to match the prebuild.
+
+Key the cache with a rotating, run-scoped key plus a `restore-keys` fallback. An exact cache hit never re-uploads, so a static key would strand the products built for an older Xcode or driver toolchain and keep restoring a stale prebuild. A run-scoped key always saves, and `restore-keys` pulls the newest previous entry.
 
 ## Integrations
 
@@ -280,11 +282,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: doc-detective/github-action@v1
-        with:
-          ios: auto   # default; scans specs/config and caches the WebDriverAgent build if an ios platform is found
 ```
 
-iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. `ios: auto` is the default, so a macOS job that targets the `ios` platform needs nothing beyond the action itself. Use `ios: true` to always cache the WebDriverAgent build on macOS regardless of what the scan finds.
+iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required: when no prebuilt WebDriverAgent products exist, the first XCUITest session builds WDA in-session (~10 min on a cold runner). The `ios` input is a deprecated no-op, so leave it out. To skip the cold compile on later runs, use the CLI-managed prebuild below.
 
 ### iOS tests with a CLI-managed WebDriverAgent prebuild
 
@@ -301,22 +301,20 @@ jobs:
   doc-detective:
     runs-on: macos-latest
     env:
-      DOC_DETECTIVE_CACHE_DIR: .dd-cache
+      DOC_DETECTIVE_CACHE_DIR: ${{ github.workspace }}/.dd-cache
     steps:
       - uses: actions/checkout@v4
-      - id: xcode
-        run: echo "version=$(xcodebuild -version | head -1 | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
         with:
           path: .dd-cache
-          key: dd-cache-${{ runner.os }}-xcode-${{ steps.xcode.outputs.version }}
+          key: dd-cache-${{ runner.os }}-${{ github.run_id }}
+          restore-keys: |
+            dd-cache-${{ runner.os }}-
       - run: npx doc-detective install ios --yes   # prebuilds WebDriverAgent into the cache
       - uses: doc-detective/github-action@v1
-        with:
-          ios: false   # let the CLI prebuild manage WDA; disable the action's own cache
 ```
 
-This variant prebuilds WebDriverAgent through the Doc Detective CLI instead of the action's cache. `actions/cache` persists the cache directory across runs, `install ios --yes` compiles WDA once into it, and `ios: false` keeps the action from building or caching WDA a second time. The cache key includes the Xcode version so a runner image that bumps Xcode restores under a fresh key and rebuilds WDA once, rather than restoring a stale prebuild indefinitely. See [iOS tests](#ios-tests) for how the two mechanisms interact.
+This variant prebuilds WebDriverAgent through the Doc Detective CLI so later runs skip the cold `xcodebuild` compile. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at a cache directory, `actions/cache` persists it across runs, and `install ios --yes` compiles WDA once into it before the action runs; test sessions then consume those products automatically. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry — so when a runner image bumps Xcode or the driver version, the prebuild refreshes rather than restoring a stale build indefinitely. The managed prebuild requires Doc Detective v4.28 or later. See [iOS tests](#ios-tests) for details.
 
 ### Using action outputs
 
