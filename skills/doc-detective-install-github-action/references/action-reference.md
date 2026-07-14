@@ -98,7 +98,7 @@ Caching is best-effort. The first run compiles WDA cold and saves the cache; lat
 
 ### Alternative: prebuild WebDriverAgent with the CLI
 
-As an alternative to the action's cache, you can let Doc Detective's CLI manage the WebDriverAgent build. In your setup steps, run `doc-detective install ios --yes` to compile WDA once into the Doc Detective cache, keyed by your Xcode and XCUITest driver versions. Test sessions then consume those products automatically and read-only, so a single prebuild is safe to share across parallel jobs. Set `ios: false` on the action when you do this. The two mechanisms overlap, and the action's cache takes precedence when both are active, so leaving it on means you build WDA twice. Persist the Doc Detective cache directory across runs — for example, with `actions/cache` — so the prebuild survives from one run to the next.
+As an alternative to the action's cache, you can let Doc Detective's CLI manage the WebDriverAgent build. In your setup steps, run `doc-detective install ios --yes` to compile WDA once into the Doc Detective cache, keyed by your Xcode and XCUITest driver versions. Test sessions then consume those products automatically and read-only, so a single prebuild is safe to share across parallel jobs. Set `ios: false` on the action when you do this. The two mechanisms overlap, and the action's cache takes precedence when both are active, so leaving it on means you build WDA twice. To persist the prebuild across runs, point both the CLI and your cache step at the same directory with `DOC_DETECTIVE_CACHE_DIR`, then restore it with `actions/cache`. Because the CLI keys its build products by Xcode and driver version, include the Xcode version in your `actions/cache` key (or add a versioned `restore-keys` fallback) so the cache refreshes when a runner image bumps Xcode. An OS-only key never re-saves once written, so later runs would keep restoring a stale prebuild and rebuild WDA cold every time.
 
 ## Integrations
 
@@ -304,17 +304,19 @@ jobs:
       DOC_DETECTIVE_CACHE_DIR: .dd-cache
     steps:
       - uses: actions/checkout@v4
+      - id: xcode
+        run: echo "version=$(xcodebuild -version | head -1 | awk '{print $2}')" >> "$GITHUB_OUTPUT"
       - uses: actions/cache@v4
         with:
           path: .dd-cache
-          key: dd-cache-${{ runner.os }}
+          key: dd-cache-${{ runner.os }}-xcode-${{ steps.xcode.outputs.version }}
       - run: npx doc-detective install ios --yes   # prebuilds WebDriverAgent into the cache
       - uses: doc-detective/github-action@v1
         with:
           ios: false   # let the CLI prebuild manage WDA; disable the action's own cache
 ```
 
-This variant prebuilds WebDriverAgent through the Doc Detective CLI instead of the action's cache. `actions/cache` persists the cache directory across runs, `install ios --yes` compiles WDA once into it, and `ios: false` keeps the action from building or caching WDA a second time. See [iOS tests](#ios-tests) for how the two mechanisms interact.
+This variant prebuilds WebDriverAgent through the Doc Detective CLI instead of the action's cache. `actions/cache` persists the cache directory across runs, `install ios --yes` compiles WDA once into it, and `ios: false` keeps the action from building or caching WDA a second time. The cache key includes the Xcode version so a runner image that bumps Xcode restores under a fresh key and rebuilds WDA once, rather than restoring a stale prebuild indefinitely. See [iOS tests](#ios-tests) for how the two mechanisms interact.
 
 ### Using action outputs
 
