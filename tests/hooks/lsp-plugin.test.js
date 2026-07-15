@@ -134,7 +134,7 @@ describe('LSP plugin: launcher shim', function () {
     });
   });
 
-  it('resolveLocal degrades to null for an object bin without a doc-detective key', function () {
+  it('resolveLocal falls back to the default bin for an object bin without a doc-detective key', function () {
     // The bin map names other executables only — there is no doc-detective
     // path, so resolveLocal must NOT coerce the object into "[object Object]";
     // it falls back to bin/doc-detective.js, which the stub also provides.

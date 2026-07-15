@@ -62,7 +62,7 @@ function resolveLocal(startDir = process.cwd()) {
           return { command: process.execPath, args: [bin, ...LSP_ARGS] };
         }
       } catch {
-        // Malformed local install — fall through to the next strategy.
+        // Malformed local install — return null so the caller falls back to npx.
       }
       return null;
     }
