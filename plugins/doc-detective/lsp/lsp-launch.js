@@ -44,16 +44,18 @@ const isWindows = process.platform === "win32";
  * spawn spec that runs the bin with the current Node, or null when not
  * installed locally.
  */
-function resolveLocal() {
-  let dir = process.cwd();
+function resolveLocal(startDir = process.cwd()) {
+  let dir = startDir;
   for (;;) {
     const pkgDir = path.join(dir, "node_modules", "doc-detective");
     const pkgJson = path.join(pkgDir, "package.json");
     if (fs.existsSync(pkgJson)) {
       try {
         const pkg = JSON.parse(fs.readFileSync(pkgJson, "utf8"));
+        // `bin` may be a string (single bin) or a map; only a string or the
+        // `doc-detective` key is a real path — never the whole map object.
         const rel =
-          (pkg.bin && (pkg.bin["doc-detective"] || pkg.bin)) ||
+          (typeof pkg.bin === "string" ? pkg.bin : pkg.bin?.["doc-detective"]) ||
           "bin/doc-detective.js";
         const bin = path.join(pkgDir, rel);
         if (fs.existsSync(bin)) {
@@ -96,23 +98,35 @@ function resolveNpx() {
   return { command, args: ["--yes", "doc-detective", ...LSP_ARGS], shell: isWindows };
 }
 
-const target = resolveLocal() || resolveNpx();
+/* c8 ignore start - spawns the real server; the pure resolvers above are unit
+   tested, and an end-to-end stdio launch is exercised manually. */
+/** Resolve the CLI, spawn the server over inherited stdio, and mirror its fate. */
+function startServer() {
+  const target = resolveLocal() || resolveNpx();
+  const child = spawn(target.command, target.args, {
+    stdio: "inherit",
+    shell: target.shell || false,
+  });
+  child.on("error", (err) => {
+    process.stderr.write(
+      `doc-detective-lsp: failed to start (${err.message}). ` +
+        `Install doc-detective locally or globally, or ensure npx is available.\n`,
+    );
+    process.exit(1);
+  });
+  child.on("exit", (code, signal) => {
+    // Mirror the child's fate so Claude Code's restart logic sees the real result.
+    if (signal) process.kill(process.pid, signal);
+    else process.exit(code == null ? 0 : code);
+  });
+  return child;
+}
+/* c8 ignore stop */
 
-const child = spawn(target.command, target.args, {
-  stdio: "inherit",
-  shell: target.shell || false,
-});
+module.exports = { resolveLocal, resolveNpx, startServer };
 
-child.on("error", (err) => {
-  process.stderr.write(
-    `doc-detective-lsp: failed to start (${err.message}). ` +
-      `Install doc-detective locally or globally, or ensure npx is available.\n`,
-  );
-  process.exit(1);
-});
-
-child.on("exit", (code, signal) => {
-  // Mirror the child's fate so Claude Code's restart logic sees the real result.
-  if (signal) process.kill(process.pid, signal);
-  else process.exit(code == null ? 0 : code);
-});
+// Launch only when run directly (`node lsp-launch.js`), not when a test
+// `require`s this module to unit-test the resolvers — so importing it never
+// spawns a server.
+/* c8 ignore next */
+if (require.main === module) startServer();
