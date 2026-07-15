@@ -7,22 +7,28 @@
 // `lspServers` block as:
 //     { "command": "node", "args": ["${CLAUDE_PLUGIN_ROOT}/lsp/lsp-launch.js"] }
 //
-// It resolves the Doc Detective CLI in the same precedence order the
-// SessionStart install-check uses, so a workspace's pinned version always wins:
+// It resolves the Doc Detective CLI so a workspace's pinned version always wins:
 //   1. project-local install (node_modules/doc-detective) — version matches the
-//      project the author is editing
-//   2. a global `doc-detective` on PATH
-//   3. `npx --yes doc-detective` — zero-install fallback
+//      project the author is editing; launched as `node <abs bin>`.
+//   2. `npx --yes doc-detective` — launched through Node's own bundled
+//      `npx-cli.js`; npx uses a globally-installed doc-detective if present, so
+//      this also covers the "installed globally, not in this project" case.
 //
 // then execs `doc-detective lsp --stdio`, inheriting stdio so Claude Code's LSP
 // client speaks JSON-RPC directly to the server. The process stays alive for the
 // lifetime of the language server.
 //
+// SECURITY: every launch path resolves to an ABSOLUTE executable (`node` via
+// process.execPath, the bin/npx-cli.js off disk) and spawns with shell:false.
+// It never lets a shell resolve `doc-detective`/`npx` by name — on Windows cmd
+// searches the current directory first, so a planted `doc-detective.cmd` in an
+// untrusted workspace could otherwise run when the server auto-starts.
+//
 // NOTE: the `lsp` subcommand ships in doc-detective with the language-server
 // feature. Against an older published CLI the launch resolves but the subcommand
 // is unknown — expected until that release lands.
 
-const { spawn, spawnSync } = require("node:child_process");
+const { spawn } = require("node:child_process");
 const path = require("node:path");
 const fs = require("node:fs");
 
@@ -51,7 +57,7 @@ function resolveLocal() {
           "bin/doc-detective.js";
         const bin = path.join(pkgDir, rel);
         if (fs.existsSync(bin)) {
-          return { command: process.execPath, args: [bin, ...LSP_ARGS], shell: false };
+          return { command: process.execPath, args: [bin, ...LSP_ARGS] };
         }
       } catch {
         // Malformed local install — fall through to the next strategy.
@@ -64,32 +70,37 @@ function resolveLocal() {
   }
 }
 
-/** Is a global `doc-detective` available on PATH? */
-function resolveGlobal() {
-  const probe = spawnSync("doc-detective", ["--version"], {
-    stdio: "ignore",
-    shell: isWindows,
-  });
-  if (!probe.error && probe.status === 0) {
-    return { command: "doc-detective", args: LSP_ARGS, shell: isWindows };
-  }
-  return null;
-}
-
-/** Zero-install fallback via npx. */
+/**
+ * Zero-install fallback via npx, launched through Node's own bundled
+ * `npx-cli.js` (resolved next to `process.execPath`) with the current Node and
+ * shell:false — so the OS never resolves `npx`/`doc-detective` by name from the
+ * workspace cwd. npx still uses a globally-installed doc-detective if present.
+ */
 function resolveNpx() {
-  return {
-    command: "npx",
-    args: ["--yes", "doc-detective", ...LSP_ARGS],
-    shell: isWindows,
-  };
+  const npxCli = path.join(
+    path.dirname(process.execPath),
+    "node_modules",
+    "npm",
+    "bin",
+    "npx-cli.js",
+  );
+  if (fs.existsSync(npxCli)) {
+    return {
+      command: process.execPath,
+      args: [npxCli, "--yes", "doc-detective", ...LSP_ARGS],
+    };
+  }
+  /* c8 ignore next 4 - only reached on an unusual layout where npm isn't beside
+     node; last-resort PATH launch (shell needed for the .cmd shim on Windows). */
+  const command = isWindows ? "npx.cmd" : "npx";
+  return { command, args: ["--yes", "doc-detective", ...LSP_ARGS], shell: isWindows };
 }
 
-const target = resolveLocal() || resolveGlobal() || resolveNpx();
+const target = resolveLocal() || resolveNpx();
 
 const child = spawn(target.command, target.args, {
   stdio: "inherit",
-  shell: target.shell,
+  shell: target.shell || false,
 });
 
 child.on("error", (err) => {

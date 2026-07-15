@@ -8,7 +8,8 @@ on:
       - "src/lsp/**"
       - "src/lsp-servers.json"
       - "build.js"
-      - "plugins/doc-detective/**"
+      - "plugins/doc-detective/.claude-plugin/plugin.json"
+      - "plugins/doc-detective/lsp/**"
       - "tests/hooks/lsp-plugin.test.js"
   pull_request:
     branches:
@@ -17,7 +18,8 @@ on:
       - "src/lsp/**"
       - "src/lsp-servers.json"
       - "build.js"
-      - "plugins/doc-detective/**"
+      - "plugins/doc-detective/.claude-plugin/plugin.json"
+      - "plugins/doc-detective/lsp/**"
       - "tests/hooks/lsp-plugin.test.js"
 
 jobs:
