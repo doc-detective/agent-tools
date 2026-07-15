@@ -6,6 +6,8 @@
 //   src/agents/                           → agent definitions
 //   src/skills/                           → skill implementations (SKILL.md, references/, scripts/)
 //   src/mcp-servers.json                  → canonical MCP server registry (fanned out per host)
+//   src/lsp-servers.json                  → canonical LSP server registry (Claude Code only)
+//   src/lsp/                              → LSP launcher shim, bundled into the plugin
 //   package.json                          → version
 //
 // Generated/synced artifact directories (do not edit directly):
@@ -20,7 +22,8 @@
 //   plugins/doc-detective/opencode-plugin.mjs        ← copied from src/hooks/opencode-plugin.mjs
 //   .claude-plugin/marketplace.json                  ← version from package.json
 //   .cursor-plugin/marketplace.json                  ← version from package.json (custom "Import from Repo" marketplace)
-//   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers from package.json + src/mcp-servers.json
+//   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers + lspServers from package.json + src/*-servers.json
+//   plugins/doc-detective/lsp/                        ← copied from src/lsp/ (LSP launcher shim)
 //   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json + mcpServers pointer
 //   plugins/doc-detective/.mcp.json                  ← Codex MCP registration from src/mcp-servers.json
 //   plugins/doc-detective/README.md                  ← generated from plugin.json + skill/agent frontmatter (functionality only)
@@ -198,6 +201,7 @@ function cleanOutputDirs() {
     "plugins/doc-detective/skills",
     "plugins/doc-detective/hooks",
     "plugins/doc-detective/rules",
+    "plugins/doc-detective/lsp",
   ];
 
   for (const dir of dirs) {
@@ -506,6 +510,50 @@ function syncSourceToArtifacts() {
     copyDirRecursive(path.join(ROOT, "src", dir), path.join(ROOT, dir));
     log(`  src/${dir}/ -> ${dir}/`);
   }
+}
+
+// ─── 4b. Sync LSP server registration (Claude Code only) ───
+
+/**
+ * Reads src/lsp-servers.json and writes it as the `lspServers` block of the
+ * Claude Code plugin manifest, then bundles the launcher shim under the plugin.
+ *
+ * The language server is a Claude-Code-only capability, so — unlike MCP servers
+ * — no Gemini/Qwen/Codex host config gets this block. The shim
+ * (src/lsp/lsp-launch.js) resolves the doc-detective CLI (project-local →
+ * global → npx) and execs `doc-detective lsp --stdio`; the manifest points at it
+ * via `${CLAUDE_PLUGIN_ROOT}/lsp/lsp-launch.js`.
+ *
+ * Idempotent: re-running re-stamps `lspServers` and re-copies the shim.
+ */
+function syncLspServers() {
+  const registryPath = path.join(ROOT, "src/lsp-servers.json");
+  if (!fs.existsSync(registryPath)) {
+    throw new Error(
+      "Missing required file: src/lsp-servers.json (canonical LSP server registry)"
+    );
+  }
+
+  log("\nSyncing LSP server registration...");
+  const registry = readJSON(registryPath);
+
+  // Write lspServers into the Claude Code plugin manifest (preserving the
+  // mcpServers block syncMcpServers already wrote).
+  const pjPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.claude-plugin/plugin.json"
+  );
+  const pj = readJSON(pjPath);
+  pj.lspServers = registry;
+  writeJSON(pjPath, pj);
+  log("  plugins/doc-detective/.claude-plugin/plugin.json (lspServers)");
+
+  // Bundle the launcher shim into the plugin.
+  copyDirRecursive(
+    path.join(ROOT, "src/lsp"),
+    path.join(ROOT, "plugins/doc-detective/lsp")
+  );
+  log("  src/lsp/ -> plugins/doc-detective/lsp/");
 }
 
 // ─── 5. Generate command Markdown files from user-invocable skills ──────────
@@ -939,6 +987,7 @@ log("Building agent-tools...\n");
 cleanOutputDirs();
 syncVersions();
 syncMcpServers();
+syncLspServers();
 syncMetadataInSourceFiles();
 buildSkillScripts();
 syncSourceToArtifacts();

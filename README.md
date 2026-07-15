@@ -396,6 +396,18 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 
 Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
 
+## Language server (LSP)
+
+On **Claude Code**, the plugin bundles a Doc Detective language server that gives the agent live, authoring-time feedback on test specs — the same schema knowledge the runner validates against, surfaced the moment a spec is edited rather than only when it runs.
+
+| Capability | Behavior |
+|------------|----------|
+| **Diagnostics** | Schema errors are reported inline as you edit `*.spec.json` / `*.spec.yaml` and `.doc-detective.*` config files, and inside inline Doc Detective tests in Markdown/AsciiDoc/HTML/DITA. The `action`-keyed anti-pattern (using an `action` property instead of the compact action-as-key form) gets one clear message instead of a wall of schema errors. |
+| **Completion** | Action keys and their fields, with schema-aware value snippets. |
+| **Hover** | Action descriptions pulled straight from the schema. |
+
+The server activates automatically on install. It launches through `lsp/lsp-launch.js`, which resolves the Doc Detective CLI in the same order as the install check — a project-local install first (so a workspace's pinned version wins), then a global `doc-detective`, then `npx`. LSP is a Claude Code capability, so this does not apply to the other hosts.
+
 ## Inline Test Injection
 
 Inject test steps from separate spec files directly into documentation as inline comments:

@@ -17,7 +17,8 @@
     "test:doc-testing": "cd skills/doc-detective-doc-testing/scripts && ./doc-detective-test-skill.sh",
     "test:inline": "cd skills/doc-detective-inline-test-injection/scripts && ./doc-detective-test-skill.sh",
     "prepare": "husky",
-    "validate:skills": "./scripts/doc-detective-validate-skills.sh"
+    "validate:skills": "./scripts/doc-detective-validate-skills.sh",
+    "test:lsp-plugin": "mocha tests/hooks/lsp-plugin.test.js --timeout 30000"
   },
   "devDependencies": {
     "husky": "^9.1.7",

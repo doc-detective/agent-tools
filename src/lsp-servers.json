@@ -1,0 +1,21 @@
+{
+  "doc-detective": {
+    "command": "node",
+    "args": ["${CLAUDE_PLUGIN_ROOT}/lsp/lsp-launch.js"],
+    "extensionToLanguage": {
+      ".json": "doc-detective",
+      ".yaml": "doc-detective",
+      ".yml": "doc-detective",
+      ".md": "doc-detective",
+      ".markdown": "doc-detective",
+      ".mdx": "doc-detective",
+      ".adoc": "doc-detective",
+      ".asciidoc": "doc-detective",
+      ".html": "doc-detective",
+      ".htm": "doc-detective",
+      ".dita": "doc-detective"
+    },
+    "restartOnCrash": true,
+    "diagnostics": true
+  }
+}
