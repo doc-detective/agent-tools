@@ -79,23 +79,27 @@ function resolveLocal(startDir = process.cwd()) {
  * workspace cwd. npx still uses a globally-installed doc-detective if present.
  */
 function resolveNpx() {
-  const npxCli = path.join(
-    path.dirname(process.execPath),
-    "node_modules",
-    "npm",
-    "bin",
-    "npx-cli.js",
-  );
-  if (fs.existsSync(npxCli)) {
-    return {
-      command: process.execPath,
-      args: [npxCli, "--yes", "doc-detective", ...LSP_ARGS],
-    };
+  const nodeDir = path.dirname(process.execPath);
+  // npm ships beside node, but the layout differs by platform: on Windows it's
+  // <nodeDir>/node_modules/npm; on POSIX it's <nodeDir>/../lib/node_modules/npm.
+  const candidates = [
+    path.join(nodeDir, "node_modules", "npm", "bin", "npx-cli.js"),
+    path.join(nodeDir, "..", "lib", "node_modules", "npm", "bin", "npx-cli.js"),
+  ];
+  for (const npxCli of candidates) {
+    if (fs.existsSync(npxCli)) {
+      return {
+        command: process.execPath,
+        args: [npxCli, "--yes", "doc-detective", ...LSP_ARGS],
+      };
+    }
   }
-  /* c8 ignore next 4 - only reached on an unusual layout where npm isn't beside
-     node; last-resort PATH launch (shell needed for the .cmd shim on Windows). */
-  const command = isWindows ? "npx.cmd" : "npx";
-  return { command, args: ["--yes", "doc-detective", ...LSP_ARGS], shell: isWindows };
+  /* c8 ignore next 5 - only reached on an unusual layout where npm isn't beside
+     node. On POSIX `npx` resolves from PATH (execvp, not the cwd) with no shell;
+     the Windows .cmd shim needs a shell but this branch is effectively dead on a
+     standard install. */
+  if (!isWindows) return { command: "npx", args: ["--yes", "doc-detective", ...LSP_ARGS] };
+  return { command: "npx.cmd", args: ["--yes", "doc-detective", ...LSP_ARGS], shell: true };
 }
 
 /* c8 ignore start - spawns the real server; the pure resolvers above are unit
