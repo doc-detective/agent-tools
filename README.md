@@ -592,4 +592,34 @@ AGPL3
 
 ## Contributing
 
-To contribute improvements to this plugin, submit issues or pull requests to the repository.
+To contribute improvements to this plugin, open an issue or pull request in the repository.
+
+### Pull request titles
+
+This repository squash-merges pull requests, so the pull request title becomes the commit message on `main`. A GitHub Actions check validates every title against the [Conventional Commits](https://www.conventionalcommits.org/) format, so start your title with one of the supported types, followed by a colon and a short description:
+
+```
+<type>: <description>
+```
+
+You can add an optional, unrestricted scope, for example `feat(lsp): add language server`.
+
+Supported types:
+
+| Type | Use for |
+|------|---------|
+| `feat` | A new user-facing feature |
+| `fix` | A bug fix |
+| `docs` | Documentation-only changes |
+| `chore` | Maintenance work with no product impact |
+| `refactor` | Code changes that neither fix a bug nor add a feature |
+| `test` | Adding or updating tests |
+| `ci` | Changes to CI configuration or workflows |
+| `build` | Changes to the build system or dependencies |
+| `perf` | Performance improvements |
+| `style` | Formatting or style changes |
+| `revert` | Reverting a previous change |
+
+### Releases
+
+Releases are cut automatically when pull requests merge to `main`, and the merged title's type drives the version bump. `feat` triggers a minor release, `fix` triggers a patch release, and a `!` after the type (for example `feat!:`) or a `BREAKING CHANGE:` footer triggers a major release. Types such as `docs`, `chore`, and `ci` don't trigger a release. On a releasable merge, the workflow bumps the version, regenerates the build artifacts, updates `CHANGELOG.md`, tags the release, and publishes a GitHub Release.
