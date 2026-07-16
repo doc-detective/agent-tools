@@ -29,7 +29,9 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # semantic-release v25 requires Node >=22.14 (the test workflows stay on
+          # 20; only this release job runs semantic-release).
+          node-version: 22
           cache: 'npm'
           cache-dependency-path: package-lock.json
 
