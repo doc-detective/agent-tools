@@ -1,0 +1,55 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HUSKY: '0'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+
+      # Fail-safe: semantic-release derives the last version from git tags, not
+      # package.json. With no baseline tag it would cut a "first release" (v1.0.0)
+      # from full history — regressing the current 1.4.0 and stamping it into every
+      # manifest. Abort loudly instead (covers both push and manual workflow_dispatch
+      # runs) until a baseline v-tag is seeded.
+      - name: Ensure a baseline release tag exists
+        run: |
+          if [ -z "$(git tag -l 'v*')" ]; then
+            echo "::error::No baseline 'v*' git tag found. Seed one before the first release:"
+            echo "::error::  git tag -a v1.4.0 -m 'v1.4.0' <main-sha> && git push origin v1.4.0"
+            echo "::error::Without it, semantic-release would cut a regressing first release (v1.0.0)."
+            exit 1
+          fi
+
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npx semantic-release
