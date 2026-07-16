@@ -2,9 +2,9 @@
 name: doc-detective-doc-testing
 description: 'Verify documentation and procedures with Doc Detective test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, test docs, test procedure, verify procedures.'
 metadata:
-  version: '1.4.0'
+  version: '1.4.1'
   organization: Doc Detective
-  date: June 2026
+  date: July 2026
   abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
