@@ -107,6 +107,7 @@ These are the only valid action types:
 - `loadCookie` / `saveCookie` - File path string
 - `record` - Path string or object
 - `stopRecord` - Boolean true
+- `annotate` - `{ add?: [...], update?: [...], clear?: true | string[] }` (at least one). Draws persistent annotations into the page for recordings/screenshots; browser-only (skipped without a page)
 
 ### Validation Failure Handling
 
