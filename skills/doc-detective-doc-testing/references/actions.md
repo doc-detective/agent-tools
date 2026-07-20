@@ -160,9 +160,14 @@ Type text into an element. Supports special keys.
 - `$ESCAPE$` - Escape
 - `$BACKSPACE$` - Backspace
 - `$DELETE$` - Delete
-- `$ARROWUP$`, `$ARROWDOWN$`, `$ARROWLEFT$`, `$ARROWRIGHT$` - Arrow keys
+- `$ARROW_UP$`, `$ARROW_DOWN$`, `$ARROW_LEFT$`, `$ARROW_RIGHT$` - Arrow keys
 - `$HOME$`, `$END$` - Home/End
-- `$PAGEUP$`, `$PAGEDOWN$` - Page Up/Down
+- `$PAGE_UP$`, `$PAGE_DOWN$` - Page Up/Down
+- `$CTRL$`, `$SHIFT$`, `$ALT$`, `$COMMAND$` - Modifier keys
+- `$SPACE$` - Space
+- `$F1$` through `$F12$` - Function keys
+- `$INSERT$` - Insert
+- `$SUBTRACT$` - Numpad subtract
 
 ---
 
