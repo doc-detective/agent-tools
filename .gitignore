@@ -3,3 +3,5 @@ bun.lock
 *.bundled.js
 settings.local.json
 .score_cache/
+# Vale styles are fetched by `vale sync`, not committed
+.vale/styles/

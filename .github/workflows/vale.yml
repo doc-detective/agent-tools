@@ -1,0 +1,35 @@
+name: Vale
+
+# Prose lint against the Moose house voice (Voices + Direct). Advisory for
+# now: reviewdog annotates only the lines a PR adds, and errors do not fail
+# the check. Flip fail_on_error once the existing corpus is worked down.
+on:
+  pull_request:
+    paths:
+      - "**.md"
+      - "**.mdx"
+      - "**.txt"
+      - ".vale.ini"
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  vale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
+        with:
+          version: 3.20.0
+          # A fork's GITHUB_TOKEN cannot post review comments, so forks fall
+          # back to workflow annotations, which need no write access and still
+          # honor filter_mode (the local reporter would need a diff to do that).
+          reporter: ${{ github.event.pull_request.head.repo.fork && 'github-pr-annotations' || 'github-pr-review' }}
+          filter_mode: added
+          fail_on_error: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
