@@ -25,9 +25,10 @@ jobs:
       - uses: vale-cli/vale-action@518a9136acc6e6668ce7c00d367051e0941e87ff # v3.0.0
         with:
           version: 3.20.0
-          # A fork's GITHUB_TOKEN cannot post review comments, so forks get the
-          # alerts in the job log instead of silently losing them.
-          reporter: ${{ github.event.pull_request.head.repo.fork && 'local' || 'github-pr-review' }}
+          # A fork's GITHUB_TOKEN cannot post review comments, so forks fall
+          # back to workflow annotations, which need no write access and still
+          # honor filter_mode (the local reporter would need a diff to do that).
+          reporter: ${{ github.event.pull_request.head.repo.fork && 'github-pr-annotations' || 'github-pr-review' }}
           filter_mode: added
           fail_on_error: false
         env:
