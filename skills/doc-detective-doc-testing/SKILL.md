@@ -151,9 +151,15 @@ npx doc-detective --input test-spec.json
 
 If none available, inform user and suggest installation.
 
+### Run Options
+
+- **Auto screenshots:** Add `--auto-screenshot` to capture a PNG after every browser step. Images land in `.doc-detective/runs/<runId>/` nested under `specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/` at stable paths for run-over-run comparison.
+- **Per-run artifacts:** Results are archived by default at `<output>/.doc-detective/runs/<runId>/testResults.json`, alongside any screenshots from that run.
+- **Stable IDs:** Specs, tests, contexts, and steps without explicit IDs get deterministic fallbacks (file path, content hash, platform-browser) so the same test keeps the same ID across runs.
+
 ## Step 4: Analyze Results
 
-Doc Detective outputs `testResults-<timestamp>.json` with `summary` (pass/fail counts) and `specs[].tests[].steps[]` entries. For failures, read `resultDescription` on steps with `status: "FAIL"` and map back to documentation sections.
+Doc Detective outputs test results to `<output>/.doc-detective/runs/<runId>/testResults.json` (the per-run artifact folder) with `summary` (pass/fail counts) and `specs[].tests[].steps[]` entries. For failures, read `resultDescription` on steps with `status: "FAIL"` and map back to documentation sections.
 
 ### Common Failure Patterns
 
