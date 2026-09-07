@@ -93,14 +93,17 @@ See `references/actions.md` for the full action catalog.
 ### Known Actions
 
 These are the only valid action types:
-- `goTo` - URL string or `{ url: string, waitUntil?: string }`
+- `goTo` - URL string or `{ url: string, waitUntil?: string, newTab?: true | string | object, newWindow?: true | string | object, surface?: object }`. `newTab`/`newWindow` open and name a browser tab/window (mutually exclusive; only `goTo` opens surfaces).
 - `click` - Text string or `{ selector: string }`
 - `find` - Text string or `{ selector: string, timeout?: number, matchText?: string }`
-- `type` - `{ keys: string, selector: string }`
+- `type` - `{ keys: string | string[], selector?: string, surface?: string | object, waitUntil?: object, timeout?: number }`. `surface` targets a process (name or `{ process }`), a browser window/tab (`{ browser, window?, tab? }`), or a native app (`{ app, window? }`).
 - `wait` - Number (ms) or `{ selector: string, state: string }`
-- `screenshot` - Path string or `{ path: string }`
+- `screenshot` - Path string or `{ path: string, surface?: object }`. `surface` can target a browser window/tab or a native app (`{ app, window? }`).
 - `httpRequest` - `{ url: string, method: string, ... }`
-- `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[] }`. `stdio` matches stdout **or** stderr (string or `/regex/`); the object form is strict, so there is **no** `stdout`/`stderr` field — using one invalidates the spec.
+- `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[], background?: { name: string, waitUntil?: object }, timeout?: number }`. `stdio` matches stdout **or** stderr (string or `/regex/`); the object form is strict, so there is **no** `stdout`/`stderr` field — using one invalidates the spec.
+- `runCode` - `{ language: string, code: string, background?: { name: string, waitUntil?: object }, timeout?: number }`
+- `startSurface` - `{ app: string, name?: string, args?: string[], workingDirectory?: string, env?: object, waitUntil?: { delayMs?: number, find?: object }, timeout?: number, driverOptions?: object }`. Launches a native Windows or macOS desktop app as an automation surface; other platforms are SKIPPED. On macOS, launch by `.app` path or bundle ID, and grant the process running Doc Detective the Accessibility permission (System Settings → Privacy & Security → Accessibility) or the context is SKIPPED. `env` is supported on macOS but rejected on Windows; `workingDirectory` is Windows-only. `elementText`/`elementId`/`elementAria` and native XPath/`~id` selectors target elements (CSS is browser-only).
+- `closeSurface` - Process name string, browser surface `{ browser, window? | tab? }`, native app surface `{ app }`, or an array of these. Closes background processes, browser tabs/windows, or apps; missing surfaces are a no-op.
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
