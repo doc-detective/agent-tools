@@ -436,6 +436,80 @@ Wait for element:
 
 ---
 
+## Step Routing
+
+Attach routing handlers to a step to control what runs next based on its outcome. Each handler is an array of routing entries, and Doc Detective evaluates the handler that matches the step's result:
+
+- `onPass` — after the step passes
+- `onFail` — after the step fails
+- `onWarning` — after the step produces a warning
+- `onSkip` — after the step is reached but skipped (blocked as `unsafe`, or its guard `if` evaluated false)
+
+Each entry pairs an optional `if` condition with exactly one routing action (`continue`, `stop`, `retry`, or `goToStep`). The first entry whose condition holds wins; an entry with no `if` always matches. If no entry matches, the step's status default applies.
+
+Routing is opt-in. A step with no handlers uses the defaults, which reproduce today's behavior exactly: `PASS`, `WARNING`, and `SKIPPED` continue to the next step, and `FAIL` stops the test.
+
+Routing chooses flow, not the verdict. A step that fails still reports `FAIL` and still fails the test even when its `onFail` handler routes `continue`. Later steps run, but the rolled-up result stays failed.
+
+A handler fires only if the step was reached. A step that never ran because an earlier step stopped execution fires no handler.
+
+### continue and stop
+
+- `continue` — proceed to the next step. Use it to override a status default, for example to keep going after a failure.
+- `stop` — halt execution at the given scope. `stop: test` ends the current test's remaining steps. `stop: spec` ends the spec's remaining tests; `stop: run` currently behaves as `stop: spec`.
+
+```json
+{
+  "stepId": "optional-check",
+  "find": "Beta banner",
+  "onFail": [
+    { "continue": true }
+  ]
+}
+```
+
+### retry
+
+A `retry` entry re-runs the step until it no longer routes `retry` or the retry limit is hit. Each attempt re-runs the whole step, so a transient failure can recover to `PASS`.
+
+```json
+{
+  "runShell": { "command": "curl -sf https://example.com/health" },
+  "onFail": [
+    { "retry": { "limit": 3, "delay": 1000, "backoff": "exponential" } }
+  ]
+}
+```
+
+**Options:**
+- `limit`: Number of retries (1–100). This counts re-runs after the first attempt, so `limit + 1` total runs.
+- `delay`: Milliseconds to wait before each retry (default `0`).
+- `backoff`: `"fixed"` (default) or `"exponential"`.
+
+Once retries are exhausted, Doc Detective re-resolves routing with `retry` entries skipped to find the terminal action. So `onFail: [{ "retry": { "limit": 2 } }]` retries twice and then stops (the `FAIL` default), while `onFail: [{ "retry": { "limit": 1 } }, { "continue": true }]` retries once and then continues. `retry` is a no-op under `onSkip`. When a step is retried, its result carries an additive `attempts` field with the total run count.
+
+### goToStep
+
+A `goToStep` entry jumps execution to another step in the same test and continues from there:
+
+```json
+{
+  "stepId": "submit",
+  "click": "Submit",
+  "onFail": [
+    { "goToStep": "retry-login" }
+  ]
+}
+```
+
+The target matches by `stepId` within the same test; if two steps share a `stepId`, the first wins. An unknown target is a misconfiguration — Doc Detective records a `FAIL` and stops rather than report green on a typo.
+
+A `goToStep` can point at an earlier step, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number; the first run omits `visit`. A per-test visit cap bounds loops, so a self-referential jump records a `FAIL` and stops instead of hanging. As with the other handlers, a jump never changes a verdict — a backward jump that re-runs a step which failed on its first visit leaves the test failed.
+
+`goToTest` is also accepted in a step handler and validates, but at step scope it is not yet executed. To jump between tests, use a test-level handler.
+
+---
+
 ## Text vs Selector Guidelines
 
 ### Use text-based matching (preferred)
