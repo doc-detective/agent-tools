@@ -123,3 +123,55 @@ When `--fix` is enabled in the test command:
 # Custom threshold (prompt when confidence < 60%)
 /doc-detective-test docs/guide.md --fix --fix-threshold 60
 ```
+
+## Environment and Configuration Troubleshooting
+
+When failures stem from environment or configuration issues rather than test logic, use the `debug` subcommand to gather diagnostic information.
+
+### Using the Debug Command
+
+Run `doc-detective debug` to generate a diagnostic dump:
+
+```bash
+# Generate diagnostic dump (writes to .doc-detective/)
+npx doc-detective debug
+
+# Include full environment variables (redacted)
+npx doc-detective debug --include-env
+```
+
+The dump includes:
+- System and OS information
+- Doc Detective and tool versions
+- Detected browsers and their components (browser binary, webdriver, Appium driver)
+- Container detection (Docker, Kubernetes)
+- Environment variables referenced in config and documentation files
+- Effective configuration (or raw config with validation errors)
+
+### Using the Environment Variable
+
+Set `DOC_DETECTIVE_DEBUG=true` to trigger diagnostics on the default run path:
+
+```bash
+# CI-friendly: emit diagnostics instead of running tests
+DOC_DETECTIVE_DEBUG=true npx doc-detective
+```
+
+Useful in CI pipelines when tests fail unexpectedly. The env-var path omits the full `process.env` dump for security.
+
+### Secret Redaction
+
+Diagnostic output automatically redacts sensitive values:
+- By name: `TOKEN`, `SECRET`, `KEY`, `PASSWORD`, `*_URL`, `*_DSN`, `WEBHOOK`
+- By value shape: URL credentials, JWTs, GitHub tokens, AWS keys
+
+Output is safe to paste in bug reports or support requests. Redaction is best-effort.
+
+### Common Environment Issues
+
+| Symptom | Diagnostic Check | Resolution |
+|---------|------------------|------------|
+| Browser actions fail | Check browser components in dump | Run `doc-detective install` |
+| Config validation errors | Look for `CONFIG INVALID` banner | Fix config syntax per error message |
+| Missing env vars | Review referenced env vars section | Set required variables or update `.env` |
+| Container detection issues | Check container signals | Verify container runtime and mounts |
