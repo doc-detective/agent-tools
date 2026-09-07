@@ -262,7 +262,7 @@ Perform HTTP requests for API testing.
 
 ### runShell
 
-Execute native shell commands.
+Execute native shell commands. By default, commands run in `bash` on every platform, including Windows, so the same POSIX syntax works everywhere. On Windows, `bash` resolves to Git Bash; if Git for Windows isn't installed, Doc Detective downloads a portable copy the first time a test needs one.
 
 ```json
 {
@@ -307,6 +307,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 
 **Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid and Doc Detective silently skips it):
 - `command`: Shell command to execute (required)
+- `shell`: Shell to run the command in — `bash` (default), `cmd`, or `powershell`. `cmd` and `powershell` are Windows-only; gate those steps to Windows with a `runOn` context (for example, `"runOn": [{ "platforms": ["windows"] }]`) if the spec also runs elsewhere. If unset, falls back to the config-level `shell`, which also defaults to `bash`.
 - `args`: Array of string arguments for the command
 - `exitCodes`: Expected exit codes (default: `[0]`). The step fails if the actual exit code is not in this list.
 - `stdio`: Expected content in the command's **stdout or stderr** (partial match). Plain string, or a `/regex/` delimited by forward slashes.
