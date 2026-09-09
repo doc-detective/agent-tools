@@ -35,6 +35,15 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 | `pull_request_url` | URL of created PR (if `create_pr_on_change` triggered) |
 | `issue_url` | URL of created issue (if `create_issue_on_fail` triggered) |
 
+## Reports
+
+The action attaches results to the workflow run on every run, whether tests pass or fail. This is always on and requires no configuration or permissions beyond the base `contents: read`.
+
+- **Job summary:** a Markdown summary of the results (derived from the JSON) is written to the workflow run's summary page.
+- **Artifact:** a `doc-detective-report` artifact is uploaded to the run. It bundles the JSON results (`doc-detective-results.json`), the Markdown summary (`doc-detective-summary.md`), and, when Doc Detective produces one (4.10.0 and later), the HTML report. Download it from the run's summary page.
+
+The JSON in the artifact is the same data returned by the `results` output. Reports attach before the `exit_on_fail` check, so they are available even when tests fail.
+
 ## Required Permissions by Feature
 
 ### Base (run tests only)
