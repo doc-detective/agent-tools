@@ -354,7 +354,7 @@ Installs a Doc Detective GitHub Actions workflow for automated documentation tes
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--trigger <event>` | `pull_request` | Workflow trigger (`pull_request`, `push`, `schedule`, etc.) |
-| `--exit-on-fail` | false | Fail CI when tests fail |
+| `--no-exit-on-fail` | false | Let CI pass when tests fail. By default, failing tests fail the check. |
 | `--create-pr-on-change` | false | Open a PR when files change during test execution |
 | `--create-issue-on-fail` | false | Create a GitHub issue when tests fail |
 | `--integrations <list>` | (none) | Comma-separated integrations to mention in issues |

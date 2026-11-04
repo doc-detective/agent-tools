@@ -16,7 +16,7 @@ The absolute minimum config is an empty object:
 
 This uses all defaults:
 - `input`: `.` (current directory)
-- `output`: `.` (current directory)
+- `outputDir`: `.` (current directory)
 - `recursive`: `true`
 - `detectSteps`: `true`
 - `fileTypes`: `["markdown", "asciidoc", "html", "dita"]`
@@ -29,12 +29,12 @@ Set **`detectSteps: false`** when your suite is built from explicit inline steps
 
 ### Standard Minimal Config
 
-For most projects, specify `input`, `output`, and — for an explicit-step suite — `detectSteps: false`:
+For most projects, specify `input`, `outputDir`, and — for an explicit-step suite — `detectSteps: false`:
 
 ```json
 {
   "input": "docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false
 }
 ```
@@ -46,7 +46,8 @@ Only add fields when:
 | Scenario | Add Field |
 |----------|-----------|
 | Docs not in root or `docs/` | `input` |
-| Want results in specific location | `output` |
+| Want run folders and reports in a specific location | `outputDir` |
+| Want the JSON results at an exact path | `output` (a file, not a folder) |
 | Multiple doc directories | `input` (array) |
 | Non-default file types only | `fileTypes` |
 | Using environment variables | `loadVariables` |
@@ -61,7 +62,8 @@ From `doc-detective-common`, key fields:
 ```typescript
 interface Config {
   input?: string | string[];      // Default: "."
-  output?: string;                // Default: "."
+  output?: string;                // JSON results file; no default
+  outputDir?: string;             // Run folders and reports. Default: "."
   recursive?: boolean;            // Default: true
   loadVariables?: string;         // Path to .env file
   origin?: string;                // Base URL for relative links
@@ -81,7 +83,7 @@ interface Config {
 ```json
 {
   "input": "docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false
 }
 ```
@@ -91,7 +93,7 @@ interface Config {
 ```json
 {
   "input": ["pages", "app"],
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false,
   "fileTypes": ["markdown"]
 }
@@ -104,12 +106,12 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 ```json
 {
   "input": "docs/src/content/docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false
 }
 ```
 
-(To silence code-fence/bold auto-detection, `detectSteps: false` is the supported switch. The `markup` array can't be emptied to disable patterns — the schema requires it to be non-empty — so narrow it by listing only the patterns you want instead.)
+(To silence code-fence/bold auto-detection, `detectSteps: false` is the supported switch. The `markup` array can't be emptied to disable patterns, because the schema requires it to be non-empty. Narrow it by listing only the patterns you want instead.)
 
 ### Monorepo with Multiple Doc Locations
 
@@ -119,7 +121,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
     "packages/*/docs",
     "docs"
   ],
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false
 }
 ```
@@ -129,7 +131,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 ```json
 {
   "input": "docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false,
   "loadVariables": ".env.test"
 }
@@ -140,7 +142,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 ```json
 {
   "input": "docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false,
   "origin": "https://api.example.com"
 }
@@ -151,7 +153,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 ```json
 {
   "input": "content",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false,
   "fileTypes": ["dita"],
   "processDitaMaps": true
@@ -203,11 +205,11 @@ When merging with existing config:
 
 ```javascript
 // Existing
-{ "output": "custom-output" }
+{ "outputDir": "custom-output" }
 
 // Bootstrap would set ".doc-detective/results"
 // Result: Keep existing
-{ "output": "custom-output" }
+{ "outputDir": "custom-output" }
 ```
 
 ## Anti-Patterns to Avoid
@@ -218,7 +220,7 @@ When merging with existing config:
 ```json
 {
   "input": ".",
-  "output": ".",
+  "outputDir": ".",
   "recursive": true,
   "detectSteps": true,
   "logLevel": "info",
@@ -298,7 +300,7 @@ DOC_DETECTIVE_API_KEY=sk-actual-key-here
 After generating config, verify it:
 
 ```bash
-# Test config loads correctly
+# Test config loads correctly: exits 0 when it's valid and tests resolve, 2 otherwise
 npx doc-detective --config .doc-detective.json --dry-run
 
 # Or validate with JSON Schema

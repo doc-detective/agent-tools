@@ -1,6 +1,6 @@
 # Doc Detective GitHub Action Reference
 
-Complete reference for `doc-detective/github-action@v1`. Use this to configure workflow files without needing to fetch external documentation.
+Complete reference for `doc-detective/github-action@v2`. Use this to configure workflow files without needing to fetch external documentation.
 
 ## Action Inputs
 
@@ -10,7 +10,7 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 | `working_directory` | Directory to run Doc Detective in | `.` (repo root) |
 | `config` | Path to Doc Detective config file | (auto-detected) |
 | `input` | Input file or directory to test | (from config) |
-| `exit_on_fail` | Fail the GitHub Actions check if any test fails | `false` |
+| `exit_on_fail` | Fail the GitHub Actions check if any test fails. Set to `false` to report failures without failing the check. | `true` |
 | `create_pr_on_change` | Create a pull request if files change during execution (e.g., updated screenshots) | `false` |
 | `pr_branch` | Branch name for the created PR | `doc-detective/updates` |
 | `pr_title` | Title for the created PR | `Doc Detective: Updated files` |
@@ -108,7 +108,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
 ```
 
 ### With PR creation for file changes
@@ -128,9 +128,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         with:
-          exit_on_fail: true
           create_pr_on_change: true
           pr_labels: doc-detective,automated
           pr_reviewers: octocat
@@ -154,9 +153,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         with:
-          exit_on_fail: true
           create_issue_on_fail: true
           issue_labels: doc-detective,test-failure
           integrations: claude,copilot
@@ -182,9 +180,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         with:
-          exit_on_fail: true
           create_pr_on_change: true
           pr_labels: doc-detective,nightly
           create_issue_on_fail: true
@@ -210,11 +207,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         with:
           working_directory: docs
           config: docs/.doc-detective.json
-          exit_on_fail: true
 ```
 
 ### Using action outputs
@@ -235,7 +231,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         id: doc-detective
         with:
           exit_on_fail: false

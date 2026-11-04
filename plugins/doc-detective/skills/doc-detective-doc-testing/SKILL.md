@@ -4,7 +4,7 @@ description: 'Verify documentation and procedures with Doc Detective test specif
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
@@ -139,31 +139,38 @@ For multi-file specs, offer injection separately per source file. Return the ful
 
 ## Step 3: Execute Tests
 
-**Only execute after validation passes.** Try in order until one succeeds:
+**Only execute after validation passes.** Use the first runner that's available:
 
 ```bash
 # 1. Global CLI
-doc-detective --input test-spec.json
+doc-detective --input test-spec.json --output results.json
 # 2. Docker
-docker run -v "$(pwd):/app" docdetective/doc-detective-latest --input /app/doc-detective-test-spec.json
+docker run -v "$(pwd):/app" docdetective/docdetective --input /app/test-spec.json --output /app/results.json
 # 3. NPX
-npx doc-detective --input test-spec.json
+npx doc-detective --input test-spec.json --output results.json
 ```
 
-If none available, inform user and suggest installation.
+Move to the next runner only when the command itself isn't available. If none are available, inform the user and suggest installation. Otherwise, act on the exit code:
+
+| Exit code | Meaning | Next step |
+|---|---|---|
+| `0` | All tests passed, warned, or were skipped | Report the results |
+| `1` | At least one test failed | A normal outcome, not a crash: read the results file (Step 4) |
+| `2` | Nothing valid was tested, because of bad usage, bad config, no tests, or an internal error | There are no results to read, so fix the problem named on stderr |
+
+Logs go to stderr and results go to stdout. `--output <file>` writes the JSON results to exactly that path. `--output-dir <dir>` sets where run folders and reports go. To read results from stdout instead of a file, pass `--json`.
 
 ## Step 4: Analyze Results
 
-Doc Detective outputs `testResults-<timestamp>.json` with `summary` (pass/fail counts) and `specs[].tests[].steps[]` entries. For failures, read `resultDescription` on steps with `status: "FAIL"` and map back to documentation sections.
+The results document has `summary` (pass/fail counts per level) and `specs[].tests[].contexts[].steps[]` entries. For failures, read `resultDescription` on steps with `result: "FAIL"` and map back to documentation sections. Steps after a failure in the same context report `result: "SKIPPED"`.
 
 ### Common Failure Patterns
 
 | Error | Likely cause |
 |---|---|
-| "Element not found" | Text changed, element removed, wrong selector |
-| "Timeout" | Page slow to load, element not visible |
-| "Navigation failed" | URL changed, redirect, auth required |
-| "Unexpected status code" | API endpoint changed, auth issue |
+| "No elements matched selector or text." | Text changed, element removed, wrong selector, page slow to load |
+| "Couldn't open URL" or "Invalid or unresolvable URL" | URL changed, server down, auth required |
+| "Returned 404. Expected one of [200,201]." | API endpoint changed, auth issue |
 
 ## Step 5: Fix Failing Tests (Optional)
 

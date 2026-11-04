@@ -30,7 +30,7 @@ const MAX_ITERATIONS = 3;
  */
 const ERROR_PATTERNS = [
   {
-    pattern: /Element.*not found|selector.*not found|Cannot find/i,
+    pattern: /No elements matched|Element.*not found|selector.*not found|Cannot find/i,
     type: 'element_not_found',
     strategies: [
       { name: 'update_text', confidence: 70, description: 'Element text may have changed' },
@@ -47,7 +47,7 @@ const ERROR_PATTERNS = [
     ]
   },
   {
-    pattern: /navigation|redirect|url.*changed|net::ERR/i,
+    pattern: /Couldn't open URL|unresolvable URL|navigation|redirect|url.*changed|net::ERR/i,
     type: 'navigation',
     strategies: [
       { name: 'update_url', confidence: 90, description: 'URL may have changed' },
@@ -132,6 +132,7 @@ function loadJson(filePath) {
  */
 function analyzeFailure(failure) {
   const { testId, stepId, error, step } = failure;
+  const position = { testIndex: failure.testIndex, stepIndex: failure.stepIndex, contentPath: failure.contentPath };
   const proposals = [];
 
   // Match error against known patterns
@@ -139,6 +140,7 @@ function analyzeFailure(failure) {
     if (pattern.pattern.test(error)) {
       for (const strategy of pattern.strategies) {
         proposals.push({
+          ...position,
           testId,
           stepId,
           errorType: pattern.type,
@@ -156,6 +158,7 @@ function analyzeFailure(failure) {
   // If no pattern matched, provide generic low-confidence fix
   if (proposals.length === 0) {
     proposals.push({
+      ...position,
       testId,
       stepId,
       errorType: 'unknown',
@@ -266,7 +269,8 @@ function generateFix(strategy, originalStep, error) {
       return null;
   }
 
-  return fix;
+  // A strategy that couldn't change anything isn't a fix
+  return JSON.stringify(fix) === JSON.stringify(originalStep) ? null : fix;
 }
 
 /**
@@ -291,24 +295,38 @@ function extractSelector(step) {
  * Extract failures from Doc Detective results
  */
 function extractFailures(results) {
-  const failures = [];
+  if (!Array.isArray(results?.specs)) {
+    throw new Error('Not a Doc Detective results file: expected a "specs" array. Write one with: doc-detective --output <file>');
+  }
 
-  const tests = results.tests || results.results?.tests || [];
-  
-  for (const test of tests) {
-    if (test.status === 'FAIL' || test.status === 'failed') {
-      const steps = test.steps || [];
-      for (const step of steps) {
-        if (step.status === 'FAIL' || step.status === 'failed') {
+  const failures = [];
+  const seen = new Set();
+
+  for (const spec of results.specs) {
+    (spec.tests || []).forEach((test, testIndex) => {
+      for (const context of test.contexts || []) {
+        (context.steps || []).forEach((resultStep, stepIndex) => {
+          if (resultStep.result !== 'FAIL') return;
+
+          // The same step can fail in several contexts, but it only needs one fix
+          const key = JSON.stringify([spec.contentPath, test.testId, resultStep.stepId, stepIndex]);
+          if (seen.has(key)) return;
+          seen.add(key);
+
+          // What's left after the fields the runner adds is the step as authored
+          const { result, resultDescription, stepId, location, durationMs, outputs, assertions, ...step } = resultStep;
           failures.push({
-            testId: test.testId || test.id,
-            stepId: step.stepId || step.id,
-            error: step.error || step.message || 'Unknown error',
-            step: step.step || step.action
+            testId: test.testId,
+            stepId,
+            testIndex,
+            stepIndex,
+            contentPath: spec.contentPath,
+            error: resultDescription || 'Unknown error',
+            step
           });
-        }
+        });
       }
-    }
+    });
   }
 
   return failures;
@@ -317,33 +335,43 @@ function extractFailures(results) {
 /**
  * Apply fix to spec
  */
-function applyFix(spec, proposal) {
+function applyFix(spec, proposal, specFile) {
   if (!proposal.proposedFix) return false;
 
   const tests = spec.tests || [];
-  
-  for (const test of tests) {
-    if (test.testId === proposal.testId) {
-      const steps = test.steps || [];
-      
-      for (let i = 0; i < steps.length; i++) {
-        if (steps[i].stepId === proposal.stepId || i === parseInt(proposal.stepId, 10)) {
-          if (proposal.proposedFix._insertBefore) {
-            // Insert a new step before
-            const newStep = { ...proposal.proposedFix };
-            delete newStep._insertBefore;
-            steps.splice(i, 0, newStep);
-          } else {
-            // Replace the step
-            steps[i] = { ...steps[i], ...proposal.proposedFix };
-          }
-          return true;
-        }
-      }
-    }
+
+  // Results can cover many files, and IDs only need to be unique within one.
+  const sameFile = proposal.contentPath && resolve(proposal.contentPath) === resolve(specFile);
+  if (proposal.contentPath && !sameFile) return false;
+
+  // The CLI generates IDs for tests and steps that have none, and they appear
+  // only in results. Fall back to position, but only within the same file.
+  const positional = tests[proposal.testIndex];
+  const test = tests.find(t => t.testId === proposal.testId)
+    || (sameFile && positional && !positional.testId ? positional : null);
+  if (!test) return false;
+
+  const steps = test.steps || [];
+  let i = steps.findIndex(s => s.stepId === proposal.stepId);
+  if (i < 0) {
+    const candidate = steps[proposal.stepIndex];
+    // ponytail: same-action check only, a test filter that shifts positions onto the same action still mismatches
+    const sameAction = candidate && !candidate.stepId
+      && Object.keys(proposal.originalStep || {}).some(key => key in candidate);
+    if (!sameAction) return false;
+    i = proposal.stepIndex;
   }
 
-  return false;
+  if (proposal.proposedFix._insertBefore) {
+    // Insert a new step before
+    const newStep = { ...proposal.proposedFix };
+    delete newStep._insertBefore;
+    steps.splice(i, 0, newStep);
+  } else {
+    // Replace the step
+    steps[i] = { ...steps[i], ...proposal.proposedFix };
+  }
+  return true;
 }
 
 /**
@@ -473,8 +501,9 @@ Examples:
     const spec = loadJson(options.specFile);
     let appliedCount = 0;
     
-    for (const proposal of autoApplicable) {
-      if (applyFix(spec, proposal)) {
+    // Last step first, so an inserted step can't shift a later fix's position
+    for (const proposal of [...autoApplicable].sort((a, b) => b.stepIndex - a.stepIndex)) {
+      if (applyFix(spec, proposal, options.specFile)) {
         appliedCount++;
       }
     }

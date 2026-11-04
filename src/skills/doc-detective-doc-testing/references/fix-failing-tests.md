@@ -4,7 +4,7 @@ When tests fail, analyze the failures and generate fixes with confidence scores.
 
 ## Fix Tool
 
-Use the fix-tests tool to analyze failures and propose fixes:
+Use the fix-tests tool to analyze failures and propose fixes. It reads the file that `doc-detective --output results.json` writes, and takes each failure from `specs[].tests[].contexts[].steps[]` where `result` is `FAIL`. Doc Detective exits `1` when a test fails, and still writes that file.
 
 ```bash
 # Analyze failures and show proposed fixes (dry-run)
@@ -46,7 +46,7 @@ For each failing step, analyze:
     "errorType": "element_not_found",
     "action": "click",
     "target": "Submit",
-    "resultDescription": "Element 'Submit' not found within timeout",
+    "resultDescription": "No elements matched selector or text.",
     "potentialCauses": [
       "Button text changed",
       "Element not yet visible",
@@ -96,7 +96,7 @@ Track fix attempts for reporting. Each entry records the step, original/fixed va
 
 ## Re-run and Iterate
 
-Save updated spec → run validator → execute tests → check results. If all pass, report success. If still failing, iterate up to max attempts, then report "needs manual review."
+Save updated spec → run validator → execute tests → read the results file (exit `1` means tests failed, not that the run crashed). If all pass, report success. If still failing, iterate up to max attempts, then report "needs manual review."
 
 ## Common Fix Patterns
 

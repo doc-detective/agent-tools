@@ -328,22 +328,34 @@ EOF
     echo ""
     echo "--- Test 10c: fix-tests handles passing results ---"
     if [ -f "./scripts/fix-tests.js" ]; then
-        # Create passing results file
+        # Results shape written by doc-detective --output
         cat > "$TEST_OUTPUT_DIR/passing-results.json" << 'EOF'
 {
-  "tests": [
+  "summary": { "steps": { "pass": 1, "fail": 0, "warning": 0, "skipped": 0 } },
+  "specs": [
     {
-      "testId": "test-1",
-      "status": "PASS",
-      "steps": [
-        { "stepId": "step-1", "status": "PASS" }
+      "specId": "spec-1",
+      "tests": [
+        {
+          "testId": "test-1",
+          "result": "PASS",
+          "contexts": [
+            {
+              "contextId": "default",
+              "result": "PASS",
+              "steps": [
+                { "goTo": { "url": "https://example.com" }, "stepId": "step-1", "result": "PASS", "resultDescription": "Opened URL and all wait conditions met." }
+              ]
+            }
+          ]
+        }
       ]
     }
   ]
 }
 EOF
         OUTPUT=$(node ./scripts/fix-tests.js "$TEST_OUTPUT_DIR/passing-results.json" --dry-run 2>&1 || true)
-        if echo "$OUTPUT" | grep -qiE "No failures found|0.*failure"; then
+        if echo "$OUTPUT" | grep -qiE "No failures found"; then
             pass "fix-tests correctly reports no failures for passing results"
         else
             fail "fix-tests should report no failures for passing results" "$OUTPUT"
@@ -356,26 +368,130 @@ EOF
     echo ""
     echo "--- Test 10d: fix-tests proposes fixes for failures ---"
     if [ -f "./scripts/fix-tests.js" ]; then
-        # Create failing results file
+        # Captured from a real CLI 5 run: a failed find, then a skipped step
         cat > "$TEST_OUTPUT_DIR/failing-results.json" << 'EOF'
 {
-  "tests": [
+  "summary": { "steps": { "pass": 1, "fail": 1, "warning": 0, "skipped": 1 } },
+  "specs": [
     {
-      "testId": "test-1",
-      "status": "FAIL",
-      "steps": [
-        { "stepId": "step-1", "status": "PASS" },
-        { "stepId": "step-2", "status": "FAIL", "error": "Element 'Submit' not found", "step": { "click": "Submit" } }
+      "specId": "spec-1",
+      "contentPath": "spec-1.json",
+      "tests": [
+        {
+          "testId": "test-1",
+          "result": "FAIL",
+          "contexts": [
+            {
+              "contextId": "default",
+              "result": "FAIL",
+              "steps": [
+                { "goTo": { "url": "https://example.com" }, "stepId": "step-1", "result": "PASS", "resultDescription": "Opened URL and all wait conditions met." },
+                { "find": "Submit", "stepId": "step-2", "outputs": { "found": false }, "result": "FAIL", "resultDescription": "No elements matched selector or text." },
+                { "click": "Submit", "stepId": "step-3", "result": "SKIPPED", "resultDescription": "Skipped due to previous failure in context." }
+              ]
+            }
+          ]
+        }
       ]
     }
   ]
 }
 EOF
         OUTPUT=$(node ./scripts/fix-tests.js "$TEST_OUTPUT_DIR/failing-results.json" --dry-run 2>&1 || true)
-        if echo "$OUTPUT" | grep -qiE "failure|element_not_found|confidence"; then
+        if echo "$OUTPUT" | grep -q "element_not_found" && echo "$OUTPUT" | grep -q "test-1 → Step: step-2" && echo "$OUTPUT" | grep -q "Found 1 failure"; then
             pass "fix-tests proposes fixes for failures"
         else
             fail "fix-tests should propose fixes for failures" "$OUTPUT"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
+    # Test 10e: fix-tests applies a fix to a spec whose IDs the CLI generated,
+    # once per step when the step fails in several contexts
+    echo ""
+    echo "--- Test 10e: fix-tests applies a fix by position ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        cat > "$TEST_OUTPUT_DIR/no-ids-spec.json" << 'EOF'
+{ "tests": [ { "steps": [ { "find": { "elementText": "Slow", "timeout": 5000 } } ] } ] }
+EOF
+        cat > "$TEST_OUTPUT_DIR/no-ids-results.json" << 'EOF'
+{
+  "specs": [
+    {
+      "specId": "no-ids-spec.json",
+      "contentPath": "no-ids-spec.json",
+      "tests": [
+        {
+          "testId": "no-ids-spec.json~abc",
+          "contexts": [
+            { "contextId": "chrome", "steps": [ { "find": { "elementText": "Slow", "timeout": 5000 }, "stepId": "no-ids-spec.json~abc~s1", "location": { "line": 1 }, "result": "FAIL", "resultDescription": "Timed out waiting for element." } ] },
+            { "contextId": "firefox", "steps": [ { "find": { "elementText": "Slow", "timeout": 5000 }, "stepId": "no-ids-spec.json~abc~s1", "location": { "line": 1 }, "result": "FAIL", "resultDescription": "Timed out waiting for element." } ] }
+          ]
+        }
+      ]
+    }
+  ]
+}
+EOF
+        OUTPUT=$(cd "$TEST_OUTPUT_DIR" && node "$SKILL_DIR/scripts/fix-tests.js" no-ids-results.json --spec no-ids-spec.json 2>&1 || true)
+        EXPECTED='{"tests":[{"steps":[{"find":{"elementText":"Slow","timeout":10000}}]}]}'
+        ACTUAL=$(node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))))" "$TEST_OUTPUT_DIR/no-ids-spec.json")
+        if [ "$ACTUAL" = "$EXPECTED" ]; then
+            pass "fix-tests applies one fix by position, without result fields"
+        else
+            fail "fix-tests should apply one fix by position" "$ACTUAL / $OUTPUT"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
+    # Test 10g: fix-tests won't apply a proposal from another file, even when
+    # the test and step IDs match
+    echo ""
+    echo "--- Test 10g: fix-tests ignores proposals from another file ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        SPEC_JSON='{"tests":[{"testId":"shared","steps":[{"stepId":"s1","find":{"elementText":"Slow","timeout":5000}}]}]}'
+        echo "$SPEC_JSON" > "$TEST_OUTPUT_DIR/this-spec.json"
+        cat > "$TEST_OUTPUT_DIR/other-results.json" << 'EOF'
+{
+  "specs": [
+    {
+      "contentPath": "other-spec.json",
+      "tests": [
+        {
+          "testId": "shared",
+          "contexts": [
+            { "contextId": "chrome", "steps": [ { "find": { "elementText": "Slow", "timeout": 5000 }, "stepId": "s1", "result": "FAIL", "resultDescription": "Timed out waiting for element." } ] }
+          ]
+        }
+      ]
+    }
+  ]
+}
+EOF
+        OUTPUT=$(cd "$TEST_OUTPUT_DIR" && node "$SKILL_DIR/scripts/fix-tests.js" other-results.json --spec this-spec.json 2>&1 || true)
+        ACTUAL=$(node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))))" "$TEST_OUTPUT_DIR/this-spec.json")
+        if [ "$ACTUAL" = "$SPEC_JSON" ]; then
+            pass "fix-tests ignores a proposal from another file"
+        else
+            fail "fix-tests should ignore a proposal from another file" "$ACTUAL / $OUTPUT"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
+    # Test 10f: fix-tests rejects a file that isn't a results document
+    echo ""
+    echo "--- Test 10f: fix-tests rejects unrecognized results ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        echo '{ "tests": [ { "testId": "t", "status": "FAIL" } ] }' > "$TEST_OUTPUT_DIR/not-results.json"
+        if OUTPUT=$(node ./scripts/fix-tests.js "$TEST_OUTPUT_DIR/not-results.json" --dry-run 2>&1); then
+            fail "fix-tests should exit non-zero on unrecognized results" "$OUTPUT"
+        elif echo "$OUTPUT" | grep -q "specs"; then
+            pass "fix-tests rejects unrecognized results"
+        else
+            fail "fix-tests should name the missing specs array" "$OUTPUT"
         fi
     else
         skip "fix-tests not built (run build-skill.sh first)"
