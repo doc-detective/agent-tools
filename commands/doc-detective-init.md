@@ -75,7 +75,7 @@ Generate `.doc-detective.json` following the "smallest reasonable config" princi
 | `--ci` + existing config | Use existing config unchanged |
 
 ```json
-{ "input": "docs", "output": ".doc-detective/results", "detectSteps": false }
+{ "input": "docs", "outputDir": ".doc-detective/results", "detectSteps": false }
 ```
 
 If `--dry-run`, print the config that would be written and skip file creation. If config cannot be created or the user rejects the merge, stop and report — do not proceed. See `skills/doc-detective-project-bootstrap/references/config-guidance.md` for full options.

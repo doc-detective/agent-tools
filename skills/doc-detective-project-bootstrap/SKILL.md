@@ -71,7 +71,7 @@ Generate `.doc-detective.json` following the "smallest reasonable config" princi
 If no config exists, create silently with minimal defaults. If a config exists: read it, merge new fields, show a diff, and prompt the user to confirm. If the user rejects the merge, stop and report — do not proceed.
 
 ```json
-{ "input": ["docs/**/*.md"], "output": ".doc-detective/results" }
+{ "input": ["docs/**/*.md"], "outputDir": ".doc-detective/results" }
 ```
 
 ### Phase 3: Generate Tests

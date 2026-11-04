@@ -82,13 +82,13 @@ Act on the exit code:
 - `1`: At least one test failed. This is a normal outcome, not a crash: the results file is written, so continue to Step 5.
 - `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. There are no results to read.
 
-Read the results file. Record each test as `pass` or `fail` from `specs[].tests[].result`. Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`.
+Read the results file. Record each test's `specs[].tests[].result` value as written: `PASS`, `WARNING`, `SKIPPED`, or `FAIL`. Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`.
 
 ### Step 5: Process Results
 
-**If all tests pass:**
-- If `--inject` is set: run `/doc-detective-inject` on the source file with the passing spec. If inject fails, report: `Error: injection failed: <reason>`. Otherwise report: `All tests passed. Injected into <path>.`
-- If `--inject` is not set: report: `All tests passed.`
+**If no tests failed:**
+- If `--inject` is set and at least one test has the result `PASS`: run `/doc-detective-inject` on the source file with only those tests. If inject fails, report: `Error: injection failed: <reason>`. Otherwise report: `<n> passed, <n> warned, <n> skipped. Injected into <path>.`
+- Otherwise, report: `<n> passed, <n> warned, <n> skipped.`
 - Stop.
 
 **If any tests fail and `--fix` is not set:**

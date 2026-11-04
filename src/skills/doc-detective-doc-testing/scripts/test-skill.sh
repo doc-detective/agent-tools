@@ -446,6 +446,41 @@ EOF
         skip "fix-tests not built (run build-skill.sh first)"
     fi
 
+    # Test 10g: fix-tests won't apply a proposal from another file, even when
+    # the test and step IDs match
+    echo ""
+    echo "--- Test 10g: fix-tests ignores proposals from another file ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        SPEC_JSON='{"tests":[{"testId":"shared","steps":[{"stepId":"s1","find":{"elementText":"Slow","timeout":5000}}]}]}'
+        echo "$SPEC_JSON" > "$TEST_OUTPUT_DIR/this-spec.json"
+        cat > "$TEST_OUTPUT_DIR/other-results.json" << 'EOF'
+{
+  "specs": [
+    {
+      "contentPath": "other-spec.json",
+      "tests": [
+        {
+          "testId": "shared",
+          "contexts": [
+            { "contextId": "chrome", "steps": [ { "find": { "elementText": "Slow", "timeout": 5000 }, "stepId": "s1", "result": "FAIL", "resultDescription": "Timed out waiting for element." } ] }
+          ]
+        }
+      ]
+    }
+  ]
+}
+EOF
+        OUTPUT=$(cd "$TEST_OUTPUT_DIR" && node "$SKILL_DIR/scripts/fix-tests.js" other-results.json --spec this-spec.json 2>&1 || true)
+        ACTUAL=$(node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))))" "$TEST_OUTPUT_DIR/this-spec.json")
+        if [ "$ACTUAL" = "$SPEC_JSON" ]; then
+            pass "fix-tests ignores a proposal from another file"
+        else
+            fail "fix-tests should ignore a proposal from another file" "$ACTUAL / $OUTPUT"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
     # Test 10f: fix-tests rejects a file that isn't a results document
     echo ""
     echo "--- Test 10f: fix-tests rejects unrecognized results ---"

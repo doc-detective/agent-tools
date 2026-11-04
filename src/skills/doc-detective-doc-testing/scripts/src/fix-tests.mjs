@@ -340,9 +340,12 @@ function applyFix(spec, proposal, specFile) {
 
   const tests = spec.tests || [];
 
+  // Results can cover many files, and IDs only need to be unique within one.
+  const sameFile = proposal.contentPath && resolve(proposal.contentPath) === resolve(specFile);
+  if (proposal.contentPath && !sameFile) return false;
+
   // The CLI generates IDs for tests and steps that have none, and they appear
   // only in results. Fall back to position, but only within the same file.
-  const sameFile = proposal.contentPath && resolve(proposal.contentPath) === resolve(specFile);
   const positional = tests[proposal.testIndex];
   const test = tests.find(t => t.testId === proposal.testId)
     || (sameFile && positional && !positional.testId ? positional : null);
