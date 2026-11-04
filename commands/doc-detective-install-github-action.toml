@@ -18,7 +18,7 @@ Install and configure the Doc Detective GitHub Action for automated documentatio
 |--------|---------|-------------|
 | `--trigger <event>` | `pull_request` | Workflow trigger event (`pull_request`, `push`, `schedule`, etc.) |
 | `--no-exit-on-fail` | false | Let the CI check pass when Doc Detective tests fail. By default, failing tests fail the check. |
-| `--exit-on-fail` | true | Deprecated: failing the check is now the default |
+| `--exit-on-fail` | true | Deprecated, because failing the check is now the default |
 | `--create-pr-on-change` | false | Create a PR when files change during test execution (e.g., updated screenshots) |
 | `--create-issue-on-fail` | false | Create a GitHub issue when tests fail |
 | `--integrations <list>` | (none) | Comma-separated integrations to mention in issues (`doc-sentinel`, `promptless`, `dosu`, `claude`, `opencode`, `copilot`, `cursor`) |

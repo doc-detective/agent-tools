@@ -65,7 +65,7 @@ Each action name IS the JSON key. Never use an `"action"` property.
 1. **Action name IS the key** — Use `{ "goTo": "url" }`, never `{ "action": "goTo", "url": "..." }`
 2. **Prefer text over selectors** — Use `{ "click": "Submit" }` not `{ "click": "#submit-btn" }`
 3. **Always validate specs** — Run the validate-test script before returning any test specification
-4. **Execution fallback chain** — Try `doc-detective`, then `docker run docdetective/docdetective`, then `npx doc-detective`
+4. **Execution fallback chain.** Try `doc-detective`, then `docker run docdetective/docdetective`, then `npx doc-detective`
 
 ## Hooks
 

@@ -91,7 +91,7 @@ Run all generated specs (try global CLI, then Docker, then npx — same fallback
 doc-detective --input .doc-detective/doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
-If no runner is available, stop and inform the user. Exit `1` means at least one test failed: that's a normal outcome, not a crash, so collect the failing tests from `.doc-detective/results/results.json` and continue to Phase 5. Exit `2` means nothing valid was tested or the CLI couldn't proceed, so stop and report the error from stderr.
+If no runner is available, stop and inform the user. Exit `1` means at least one test failed. That's a normal outcome, not a crash. Collect the failing tests from `.doc-detective/results/results.json` and continue to Phase 5. Exit `2` means nothing valid was tested or the CLI couldn't proceed, so stop and report the error from stderr.
 
 ### Phase 5: Fix Loop
 

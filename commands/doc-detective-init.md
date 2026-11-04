@@ -96,13 +96,13 @@ Run all generated specs:
 doc-detective --input .doc-detective/doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
-`--input`, `--output`, and `--output-dir` on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory** — so a config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root; if you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
+`--input`, `--output`, and `--output-dir` on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory**. A config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root. If you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
 
 Skip this phase if `--skip-tests` or `--dry-run` is set. Act on the exit code:
 
 - `0`: All tests passed, warned, or were skipped.
 - `1`: At least one test failed. This is a normal outcome, not a crash: collect the failing tests from `.doc-detective/results/results.json`, and continue to Phase 5.
-- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr — do not proceed to Phase 5.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. Don't proceed to Phase 5.
 
 ### Phase 5: Fix Loop
 

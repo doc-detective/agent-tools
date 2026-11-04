@@ -111,7 +111,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 }
 ```
 
-(To silence code-fence/bold auto-detection, `detectSteps: false` is the supported switch. The `markup` array can't be emptied to disable patterns — the schema requires it to be non-empty — so narrow it by listing only the patterns you want instead.)
+(To silence code-fence/bold auto-detection, `detectSteps: false` is the supported switch. The `markup` array can't be emptied to disable patterns, because the schema requires it to be non-empty. Narrow it by listing only the patterns you want instead.)
 
 ### Monorepo with Multiple Doc Locations
 

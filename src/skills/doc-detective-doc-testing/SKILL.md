@@ -155,7 +155,7 @@ Move to the next runner only when the command itself isn't available. If none ar
 |---|---|---|
 | `0` | All tests passed, warned, or were skipped | Report the results |
 | `1` | At least one test failed | A normal outcome, not a crash: read the results file (Step 4) |
-| `2` | Nothing valid was tested: bad usage, bad config, no tests, or an internal error | No results to read: fix the problem named on stderr |
+| `2` | Nothing valid was tested, because of bad usage, bad config, no tests, or an internal error | There are no results to read, so fix the problem named on stderr |
 
 Logs go to stderr and results go to stdout. `--output <file>` writes the JSON results to exactly that path. `--output-dir <dir>` sets where run folders and reports go. To read results from stdout instead of a file, pass `--json`.
 
