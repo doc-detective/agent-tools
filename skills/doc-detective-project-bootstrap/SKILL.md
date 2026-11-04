@@ -4,7 +4,7 @@ description: Initialize Doc Detective in a repository by detecting documentation
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Initialize Doc Detective in a repository by detecting documentation, generating minimal configuration, creating tests for identified procedures, and iteratively running and fixing tests with confidence-based suggestions. Supports interactive and CI modes.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
   user-invocable: 'false'
@@ -87,16 +87,16 @@ For each procedure-heavy file identified in Phase 1:
 Run all generated specs (try global CLI, then Docker, then npx — same fallback chain as the `doc-testing` skill):
 
 ```bash
-doc-detective --input .doc-detective/doc-detective-tests/ --output .doc-detective/results/
+doc-detective --input .doc-detective/doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
-If no runner is available, stop and inform the user. After execution, collect all failing tests from `testResults-<timestamp>.json`.
+If no runner is available, stop and inform the user. Exit `1` means at least one test failed: that's a normal outcome, not a crash, so collect the failing tests from `.doc-detective/results/results.json` and continue to Phase 5. Exit `2` means nothing valid was tested or the CLI couldn't proceed, so stop and report the error from stderr.
 
 ### Phase 5: Fix Loop
 
 Skip this phase if no tests failed. For each failing test, repeat up to 3 times:
 
-1. Read the step's `resultDescription` to identify the failure.
+1. In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`.
 2. Propose a fix and assign a confidence score: **High (80–100)** — exact match found; **Medium (50–79)** — probable fix; **Low (0–49)** — uncertain.
 3. Apply: if ≥ threshold apply automatically; if < threshold show fix, ask user to apply/skip/edit; if < 50% always ask regardless of threshold.
 4. Re-run the test. If it passes, move to the next failing test.
@@ -124,6 +124,5 @@ The injection tool selects the correct comment format automatically.
 2. If in `--ci` mode, default to yes — proceed without prompting.
 3. Invoke `/doc-detective-install-github-action` with matching flags:
    - Pass `--ci` if bootstrap was called with `--ci`.
-   - For `--exit-on-fail`:
-     - In `--ci` mode, pass `--exit-on-fail` by default.
-     - In interactive mode, ask the user and pass it only if they opt in.
+   - Don't pass `--exit-on-fail`: it's deprecated, because failing the check is now the default.
+   - In interactive mode, ask the user whether failing tests should fail the check, and pass `--no-exit-on-fail` only if they say no.

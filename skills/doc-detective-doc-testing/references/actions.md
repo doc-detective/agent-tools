@@ -160,14 +160,9 @@ Type text into an element. Supports special keys.
 - `$ESCAPE$` - Escape
 - `$BACKSPACE$` - Backspace
 - `$DELETE$` - Delete
-- `$ARROW_UP$`, `$ARROW_DOWN$`, `$ARROW_LEFT$`, `$ARROW_RIGHT$` - Arrow keys
+- `$ARROWUP$`, `$ARROWDOWN$`, `$ARROWLEFT$`, `$ARROWRIGHT$` - Arrow keys
 - `$HOME$`, `$END$` - Home/End
-- `$PAGE_UP$`, `$PAGE_DOWN$` - Page Up/Down
-- `$CTRL$`, `$SHIFT$`, `$ALT$`, `$COMMAND$` - Modifier keys
-- `$SPACE$` - Space
-- `$F1$` through `$F12$` - Function keys
-- `$INSERT$` - Insert
-- `$SUBTRACT$` - Numpad subtract
+- `$PAGEUP$`, `$PAGEDOWN$` - Page Up/Down
 
 ---
 
@@ -294,7 +289,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 {
   "runShell": {
     "command": "node --version",
-    "stdio": "v22"
+    "stdio": "v18"
   }
 }
 ```

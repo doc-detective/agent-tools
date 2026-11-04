@@ -4,7 +4,7 @@ description: 'Validate Doc Detective test specifications or configuration files'
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Validate Doc Detective test specifications or configuration files to ensure they are correctly structured.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
   user-invocable: 'true'
@@ -85,8 +85,8 @@ The MCP tool returns `{valid, errors[], normalizedObject, schemaKey, schemaVersi
 ```bash
 # Option 1
 echo '<spec-json>' | node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
-# Option 2
-npx doc-detective validate --input <spec-file>
+# Option 2: exits 0 when the spec is valid, 2 when it isn't. Names the invalid file, but not the field.
+npx doc-detective --dry-run --input <spec-file>
 ```
 
 See `_shared/MCP-USAGE.md` for tool-naming conventions across hosts and `log_observation` guidance when validation friction is unrecoverable.
@@ -110,7 +110,8 @@ See `_shared/MCP-USAGE.md` for tool-naming conventions across hosts and `log_obs
 
 - `input`: must be a string or string array of valid glob patterns or file paths
 - `recursive`: must be a boolean
-- `output`: must be a valid directory path string
+- `output`: must be a string: the path of the JSON results file, not a folder
+- `outputDir`: must be a string: the folder for run folders and reports
 - `logLevel`: must be one of `silent`, `error`, `warning`, `info`, `debug`
 - `browser`: must be an object (not a string)
 - `env`: must be an object or `.env` file path string

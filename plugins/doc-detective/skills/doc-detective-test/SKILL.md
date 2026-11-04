@@ -4,7 +4,7 @@ description: 'Convert documentation procedures into Doc Detective test specifica
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Convert documentation procedures into executable Doc Detective test specifications, run them, fix failures, and verify the documentation matches actual behavior.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
@@ -78,7 +78,19 @@ Run `/doc-detective-validate` on the generated spec. If validation fails, stop a
 
 ### Step 4: Execute Tests
 
-Run all tests in the spec. Record each test result as `pass` or `fail` with the failure reason.
+Run all tests in the spec, writing results to a file:
+
+```bash
+doc-detective --input <spec-file> --output <results-file>
+```
+
+Act on the exit code:
+
+- `0`: All tests passed, warned, or were skipped.
+- `1`: At least one test failed. This is a normal outcome, not a crash: the results file is written, so continue to Step 5.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. There are no results to read.
+
+Read the results file. Record each test as `pass` or `fail` from `specs[].tests[].result`. Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`.
 
 ### Step 5: Process Results
 
@@ -104,7 +116,7 @@ For each failing test, repeat until the test passes or `--max-fix-attempts` is r
    - If confidence ≥ `--fix-threshold`: apply the fix immediately.
    - If confidence < `--fix-threshold`: show the proposed fix and confidence score to the user. If the user approves, apply the fix. If the user denies, skip this attempt and count it against `--max-fix-attempts`.
 3. Apply the fix to the test spec.
-4. Re-run the fixed test.
+4. Re-run the fixed test, and read the results file again. Exit `1` means the test still fails; exit `2` means the fix made the spec invalid, so revert it or correct it.
 5. If the test passes, mark it resolved. If it still fails, generate a new fix and repeat from step 1.
 
 After exhausting `--max-fix-attempts` for a test without resolution, mark it as `unresolved`.
@@ -120,8 +132,8 @@ Running `/doc-detective-test docs/login.md` against a login procedure:
 
 ```
 Results: 2 passed, 2 failed
-  ✗ signin: Element "Sign In" not found
-  ✗ verify: Navigation timeout
+  ✗ signin: No elements matched selector or text.
+  ✗ verify: Couldn't open URL
 Run with --fix to attempt automatic repairs.
 ```
 

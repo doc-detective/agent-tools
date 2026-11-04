@@ -4,7 +4,7 @@ description: 'Initialize Doc Detective in a repository with documentation detect
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.
   references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
@@ -100,12 +100,16 @@ For each procedure-containing file identified in Phase 1:
 Run all generated specs:
 
 ```bash
-doc-detective --input .doc-detective/doc-detective-tests/ --output .doc-detective/results/
+doc-detective --input .doc-detective/doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
-`--input` (and `--output`) on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory** — so a config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root; if you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
+`--input`, `--output`, and `--output-dir` on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory** — so a config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root; if you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
 
-Skip this phase if `--skip-tests` or `--dry-run` is set. If the command fails to execute, stop and report the error — do not proceed to Phase 5. After execution, collect all failing tests from the results output.
+Skip this phase if `--skip-tests` or `--dry-run` is set. Act on the exit code:
+
+- `0`: All tests passed, warned, or were skipped.
+- `1`: At least one test failed. This is a normal outcome, not a crash: collect the failing tests from `.doc-detective/results/results.json`, and continue to Phase 5.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr — do not proceed to Phase 5.
 
 ### Phase 5: Fix Loop
 
@@ -113,7 +117,7 @@ Skip this phase if `--skip-fix-loop` is set.
 
 For each failing test, repeat up to 3 times:
 
-1. Read the step's `resultDescription` to identify the failure.
+1. In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`.
 2. Propose a fix and assign a confidence score: **High (80–100)** — exact alternative identified; **Medium (50–79)** — likely correct but uncertain; **Low (0–49)** — best guess with significant uncertainty.
 3. Apply the fix based on confidence:
 
@@ -136,9 +140,8 @@ Report all "needs manual review" tests to the user before completing.
 2. If in `--ci` mode, default to yes — proceed without prompting.
 3. Invoke `/doc-detective-install-github-action` with matching flags:
    - Pass `--ci` if init was called with `--ci`.
-   - For `--exit-on-fail`:
-     - In `--ci` mode, pass `--exit-on-fail` by default.
-     - In interactive mode, ask the user and pass it only if they opt in.
+   - Don't pass `--exit-on-fail`: it's deprecated, because failing the check is now the default.
+   - In interactive mode, ask the user whether failing tests should fail the check, and pass `--no-exit-on-fail` only if they say no.
 
 ## Related Commands
 

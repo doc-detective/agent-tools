@@ -4,7 +4,7 @@ description: 'Install and configure the Doc Detective GitHub Action workflow for
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Install and configure the Doc Detective GitHub Action workflow for automated documentation testing in CI. Detects project context, creates workflow file, and configures action inputs including PR creation, issue creation, and integrations.
   references: https://doc-detective.com, https://github.com/doc-detective/github-action
   user-invocable: 'true'
@@ -26,7 +26,8 @@ Install and configure the Doc Detective GitHub Action for automated documentatio
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--trigger <event>` | `pull_request` | Workflow trigger event (`pull_request`, `push`, `schedule`, etc.) |
-| `--exit-on-fail` | false | Fail the CI check when Doc Detective tests fail |
+| `--no-exit-on-fail` | false | Let the CI check pass when Doc Detective tests fail. By default, failing tests fail the check. |
+| `--exit-on-fail` | true | Deprecated: failing the check is now the default |
 | `--create-pr-on-change` | false | Create a PR when files change during test execution (e.g., updated screenshots) |
 | `--create-issue-on-fail` | false | Create a GitHub issue when tests fail |
 | `--integrations <list>` | (none) | Comma-separated integrations to mention in issues (`doc-sentinel`, `promptless`, `dosu`, `claude`, `opencode`, `copilot`, `cursor`) |
@@ -35,7 +36,7 @@ Install and configure the Doc Detective GitHub Action for automated documentatio
 ```bash
 /doc-detective-install-github-action
 /doc-detective-install-github-action --ci
-/doc-detective-install-github-action --trigger push --exit-on-fail
+/doc-detective-install-github-action --trigger push --no-exit-on-fail
 /doc-detective-install-github-action --create-pr-on-change --create-issue-on-fail --integrations claude,copilot
 ```
 
@@ -93,7 +94,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         with:
           # Inputs configured per options
 ```
@@ -104,7 +105,7 @@ jobs:
 |---|---|
 | Existing config found | Set `config` input to the config file path |
 | Config not at repo root | Set `working_directory` to the config's parent directory |
-| `--exit-on-fail` | Set `exit_on_fail: true` |
+| `--no-exit-on-fail` | Set `exit_on_fail: false`. Otherwise, omit the input: it defaults to `true`. |
 | `--create-pr-on-change` | Set `create_pr_on_change: true`, add `contents: write` and `pull-requests: write` permissions |
 | `--create-issue-on-fail` | Set `create_issue_on_fail: true`, add `issues: write` permission |
 | `--integrations` provided | Set `integrations` input to the comma-separated list |
@@ -149,7 +150,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
 ```
 
 ### With PR creation on file changes
@@ -169,9 +170,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         with:
-          exit_on_fail: true
           create_pr_on_change: true
 ```
 
@@ -193,9 +193,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         with:
-          exit_on_fail: true
           create_issue_on_fail: true
           integrations: claude,copilot
 ```
@@ -220,10 +219,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: doc-detective/github-action@v2
         with:
           config: docs/.doc-detective.json
-          exit_on_fail: true
           create_pr_on_change: true
           pr_labels: doc-detective,automated
           create_issue_on_fail: true
