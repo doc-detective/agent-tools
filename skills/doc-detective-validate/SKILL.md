@@ -6,7 +6,7 @@ metadata:
   organization: Doc Detective
   date: July 2026
   abstract: Validate Doc Detective test specifications or configuration files to ensure they are correctly structured.
-  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
   user-invocable: 'true'
 ---
 

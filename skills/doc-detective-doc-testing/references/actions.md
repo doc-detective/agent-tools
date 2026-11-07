@@ -1,6 +1,6 @@
 # Doc Detective Actions Reference
 
-Quick reference for all Doc Detective actions. For comprehensive documentation, see https://doc-detective.com/docs/category/actions.
+Quick reference for all Doc Detective actions. For comprehensive documentation, see https://docs.doc-detective.com/docs/get-started/concepts#action.
 
 ## Navigation & Browser
 
