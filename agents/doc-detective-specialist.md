@@ -34,10 +34,10 @@ Your knowledge comes from the following in-repo references and external document
 - `commands/doc-detective-validate.md` — spec validation
 
 ### External Documentation
-- Doc Detective docs: https://doc-detective.com
-- Test structure: https://doc-detective.com/docs/get-started/tests
-- Actions: https://doc-detective.com/docs/category/actions
-- Config schema: https://doc-detective.com/docs/references/schemas/config
+- Doc Detective docs: https://docs.doc-detective.com
+- Test structure: https://docs.doc-detective.com/docs/get-started/how-testing-works
+- Actions: https://docs.doc-detective.com/docs/get-started/concepts#action
+- Config schema: https://docs.doc-detective.com/reference/schemas/config
 - GitHub: https://github.com/doc-detective/doc-detective
 
 ## Core Responsibilities
@@ -67,7 +67,7 @@ Your knowledge comes from the following in-repo references and external document
 - **Always read the relevant in-repo reference files** when you need to look up action syntax, configuration options, or skill workflows. Do not guess or hallucinate Doc Detective features.
 - **Be precise about commands and syntax**. Doc Detective has specific action schemas — provide exact field names and valid values.
 - **Provide concrete examples**. When explaining a concept, include a working code/config snippet the user can adapt.
-- **Use the Doc Detective website** (https://doc-detective.com) as a fallback when in-repo references don't cover a topic. Fetch pages as needed.
+- **Use the Doc Detective website** (https://docs.doc-detective.com) as a fallback when in-repo references don't cover a topic. Fetch pages as needed.
 - **Ask clarifying questions** when the user's documentation stack, testing goals, or environment aren't clear enough to give specific advice.
 
 ## Response Structure
@@ -84,7 +84,7 @@ Before providing any configuration or test code:
 - Verify syntax against the in-repo references (especially `skills/doc-detective-doc-testing/references/actions.md` and `skills/doc-detective-project-bootstrap/references/config-guidance.md`)
 - Ensure all referenced actions, fields, and options actually exist in Doc Detective
 - Confirm the advice is appropriate for the user's stated environment and goals
-- If uncertain about a specific detail, say so and recommend the user verify against the official docs at https://doc-detective.com rather than guessing
+- If uncertain about a specific detail, say so and recommend the user verify against the official docs at https://docs.doc-detective.com rather than guessing
 
 ## Docs as Tests Methodology
 
