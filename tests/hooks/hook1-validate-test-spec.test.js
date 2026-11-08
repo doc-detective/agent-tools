@@ -4,6 +4,7 @@ const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
+const { execFile } = require('child_process');
 const { runHook, parseOutput } = require('./helpers');
 
 describe('Hook 1: post-edit-validate-test-spec', function () {
@@ -95,5 +96,66 @@ describe('Hook 1: post-edit-validate-test-spec', function () {
       tool_input: { filePath: '/tmp/readme.txt' },
     });
     assert.strictEqual(result.code, 0);
+  });
+});
+
+describe('Bundled validator: doc-detective-validate-test.js', function () {
+  this.timeout(30000);
+
+  const SCRIPTS_DIR = path.resolve(__dirname, '../../src/skills/doc-detective-doc-testing/scripts');
+  const BUNDLE = path.join(SCRIPTS_DIR, 'doc-detective-validate-test.js');
+  let tmpDir;
+
+  beforeEach(function () {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'validator-'));
+  });
+
+  afterEach(function () {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function validate(steps, script = BUNDLE) {
+    const filePath = path.join(tmpDir, 'spec.json');
+    fs.writeFileSync(filePath, JSON.stringify({ tests: [{ testId: 't', steps }] }));
+    return new Promise((resolve) => {
+      execFile('node', [script, filePath], { timeout: 25000 }, (err, stdout, stderr) => {
+        resolve({ code: err ? err.code : 0, stdout, stderr });
+      });
+    });
+  }
+
+  // Step shapes that CLI 5 rejects but older bundles accepted.
+  const invalidShapes = [
+    { wait: { selector: '#x', state: 'visible' } },
+    { goTo: { url: 'https://example.com', waitUntil: 'networkidle' } },
+    { find: { selector: '#x', matchText: 'Hi' } },
+    { click: {} },
+  ];
+
+  for (const step of invalidShapes) {
+    it(`rejects ${JSON.stringify(step)}`, async function () {
+      const result = await validate([step]);
+      assert.strictEqual(result.code, 1, result.stdout + result.stderr);
+      assert.ok(result.stdout.includes('Validation FAILED'));
+    });
+  }
+
+  it('accepts swipe and annotate steps', async function () {
+    const result = await validate([
+      { swipe: 'up' },
+      { annotate: { add: [{ outline: '#submit-button' }] } },
+    ]);
+    assert.strictEqual(result.code, 0, result.stdout + result.stderr);
+    assert.ok(result.stdout.includes('Validation PASSED'));
+  });
+
+  it('fails loudly when doc-detective-common cannot load', async function () {
+    // An unbundled copy outside any node_modules tree can't resolve common.
+    const copy = path.join(tmpDir, 'validate-test.mjs');
+    fs.copyFileSync(path.join(SCRIPTS_DIR, 'src/validate-test.mjs'), copy);
+    const result = await validate([{ goTo: 'https://example.com' }], copy);
+    assert.notStrictEqual(result.code, 0, result.stdout + result.stderr);
+    assert.ok(!result.stdout.includes('Validation PASSED'));
+    assert.ok(result.stderr.includes('doc-detective-common'));
   });
 });
