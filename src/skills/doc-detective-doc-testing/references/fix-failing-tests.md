@@ -103,7 +103,7 @@ Save updated spec → run validator → execute tests → read the results file 
 | Failure | Fix Strategy | Typical Confidence |
 |---------|--------------|-------------------|
 | Element text changed | Search page for similar text | 70-90% |
-| Element not visible | Add wait step before action | 80-95% |
+| Element not visible | Add a `find` step with `timeout` before the action | 80-95% |
 | Timeout | Increase timeout value | 90% |
 | Selector invalid | Switch to text-based match | 75-85% |
 | Navigation redirect | Update URL to final destination | 85-95% |
