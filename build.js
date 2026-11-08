@@ -11,6 +11,7 @@
 //   package.json                          → version
 //
 // Generated/synced artifact directories (do not edit directly):
+//   src/hooks/scripts/known-actions.json             ← doc-detective-common stepActions
 //   agents/                                          ← copied from src/agents/
 //   skills/                                          ← copied from src/skills/
 //   commands/*.md                                    ← generated from src/skills/*/SKILL.md (user-invocable: true)
@@ -55,6 +56,7 @@
 const fs = require("fs");
 const path = require("path");
 const { execSync } = require("child_process");
+const { stepActions } = require("doc-detective-common");
 
 const ROOT = __dirname;
 const SKIP_SCRIPTS = process.argv.includes("--no-scripts");
@@ -662,6 +664,11 @@ function syncHooks() {
   if (!fs.existsSync(srcHooksDir)) {
     throw new Error("Missing required directory: src/hooks");
   }
+
+  // Hooks run without node_modules, so the action list is generated here from
+  // doc-detective-common rather than required at runtime.
+  writeJSON(path.join(srcHooksDir, "scripts/known-actions.json"), stepActions);
+  log("  doc-detective-common stepActions -> src/hooks/scripts/known-actions.json");
 
   // Copy to root-level hooks/ artifact (Gemini extension reads hooks/hooks.json here)
   const rootHooksDir = path.join(ROOT, "hooks");

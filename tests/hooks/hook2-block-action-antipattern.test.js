@@ -64,13 +64,10 @@ describe('Hook 2: pre-edit-block-action-antipattern', function () {
     assert.ok(result.stderr.includes('httpRequest'));
   });
 
-  it('should detect all known action names', async function () {
-    const actions = [
-      'checkLink', 'click', 'dragAndDrop', 'find', 'goTo', 'httpRequest',
-      'loadCookie', 'loadVariables', 'record', 'runCode', 'runShell',
-      'saveCookie', 'screenshot', 'stopRecord', 'type', 'wait',
-    ];
-    for (const action of actions) {
+  it('should detect every action in doc-detective-common stepActions', async function () {
+    const { stepActions } = require('doc-detective-common');
+    assert.ok(stepActions.length > 0);
+    for (const action of stepActions) {
       const result = await runHook('pre-edit-block-action-antipattern.js', {
         tool_input: {
           file_path: '/tmp/spec.json',

@@ -226,7 +226,7 @@ EOF
     echo ""
     echo "--- Test 7: Invalid type action fails validation ---"
     if cat << 'EOF' | node ./scripts/doc-detective-validate-test.js --stdin > /dev/null 2>&1
-{ "tests": [{ "testId": "test-1", "steps": [{ "type": "should be object with keys" }] }] }
+{ "tests": [{ "testId": "test-1", "steps": [{ "type": { "selector": "#input" } }] }] }
 EOF
     then
         fail "Invalid type action should be rejected"

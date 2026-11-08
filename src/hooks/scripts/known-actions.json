@@ -1,0 +1,23 @@
+[
+  "annotate",
+  "checkLink",
+  "click",
+  "closeSurface",
+  "dragAndDrop",
+  "find",
+  "goTo",
+  "httpRequest",
+  "loadCookie",
+  "loadVariables",
+  "record",
+  "runBrowserScript",
+  "runCode",
+  "runShell",
+  "saveCookie",
+  "screenshot",
+  "startSurface",
+  "stopRecord",
+  "swipe",
+  "type",
+  "wait"
+]

@@ -5,14 +5,28 @@ on:
     branches:
       - main
     paths:
-      - "src/skills/**"
+      - "src/**"
       - "skills/**"
+      - "agents/**"
+      - "commands/**"
+      - "hooks/**"
+      - "plugins/doc-detective/**"
+      - "build.js"
+      - "package.json"
+      - "package-lock.json"
   pull_request:
     branches:
       - main
     paths:
-      - "src/skills/**"
+      - "src/**"
       - "skills/**"
+      - "agents/**"
+      - "commands/**"
+      - "hooks/**"
+      - "plugins/doc-detective/**"
+      - "build.js"
+      - "package.json"
+      - "package-lock.json"
 
 jobs:
   validate:
@@ -25,8 +39,21 @@ jobs:
         with:
           node-version: 20
 
+      # build.js reads the action list from doc-detective-common.
+      - name: Install dependencies
+        run: npm ci
+
       - name: Build artifacts from src/
         run: npm run build:no-scripts
+
+      # build.js stamps the current month into frontmatter `date:` lines, so
+      # those lines are ignored. Any other difference means src/ wasn't built.
+      - name: Check built output matches src/
+        run: |
+          git diff --exit-code -I '^ *date: ' -- skills agents commands hooks plugins/doc-detective || {
+            echo "::error::Built output differs from src/. Run \`npm run build\` and commit the result."
+            exit 1
+          }
 
       - name: Set up Go
         uses: actions/setup-go@v5
