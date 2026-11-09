@@ -154,11 +154,11 @@ Move to the next runner only when the command itself isn't available. If none ar
 
 | Exit code | Meaning | Next step |
 |---|---|---|
-| `0` | All tests passed, warned, or were skipped | Report the results |
+| `0` | No test failed, and at least one passed or warned | Report the results |
 | `1` | At least one test failed | A normal outcome, not a crash: read the results file (Step 4) |
-| `2` | Nothing valid was tested, because of bad usage, bad config, no tests, or an internal error | There are no results to read, so fix the problem named on stderr |
+| `2` | Nothing valid was tested, because of bad usage, bad config, no tests, every test skipped, or an internal error | Fix the problem named on stderr. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason |
 
-Logs go to stderr and results go to stdout. `--output <file>` writes the JSON results to exactly that path. `--output-dir <dir>` sets where run folders and reports go. To read results from stdout instead of a file, pass `--json`.
+Logs, warnings, and the paths of report files go to stderr. The terminal summary goes to stdout. `--output <file>` writes the JSON results to exactly that path. `--output-dir <dir>` sets where run folders and reports go. To read results from stdout instead of a file, pass `--json`. Then stdout holds only the JSON results.
 
 ## Step 4: Analyze Results
 
