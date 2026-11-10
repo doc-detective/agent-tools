@@ -54,6 +54,10 @@ Only add fields when:
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
 | Run **only** explicit inline/spec steps (no prose auto-detection) | `detectSteps: false` (default is `true`) |
+| Skip the screenshot after every step, or the recording of every context | `autoScreenshot: false`, `autoRecord: false` (both default to `true`) |
+| Show a variable's value in output because it isn't secret | `publicVariables` (names, `*` matches any characters) |
+
+Every run writes a run folder under `<outputDir>/.doc-detective/runs/`. With the defaults, it holds a screenshot after each step that drives a browser, app, or device. It also holds a recording of each such context when the host can record it. Add `.doc-detective/` to `.gitignore` so run output stays out of commits.
 
 ## Configuration Schema Reference
 
@@ -73,6 +77,9 @@ interface Config {
   runOn?: Context[];              // Execution contexts
   concurrentRunners?: number;     // Default: 1
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
+  autoScreenshot?: boolean;       // Default: true
+  autoRecord?: boolean;           // Default: true
+  publicVariables?: string[];     // Variable names to show unmasked
 }
 ```
 
@@ -294,6 +301,8 @@ Then in `.env` (gitignored):
 ```
 DOC_DETECTIVE_API_KEY=sk-actual-key-here
 ```
+
+Doc Detective masks the values of variables it uses as `***NAME***` in logs, reports, and results files. A secret kept in a variable stays out of run output too.
 
 ## Validation
 

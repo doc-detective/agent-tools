@@ -6,25 +6,26 @@ Complete reference for `doc-detective/github-action@v2`. Use this to configure w
 
 | Input | Description | Default |
 |---|---|---|
-| `version` | Doc Detective version to install | `latest` |
+| `version` | The Doc Detective version, range, or npm tag to install. `""` runs the `doc-detective` already resolvable in the working directory. | `5` |
 | `working_directory` | Directory to run Doc Detective in | `.` (repo root) |
-| `config` | Path to Doc Detective config file | (auto-detected) |
+| `android` | Set up KVM for the Android emulator on Linux runners: `auto` (only when a spec has an `android` platform), `true`, or `false` | `auto` |
+| `config` | Path to Doc Detective config file | (auto-detected: `.doc-detective.json`, `.yaml`, or `.yml`) |
 | `input` | Input file or directory to test | (from config) |
-| `exit_on_fail` | Fail the GitHub Actions check if any test fails. Set to `false` to report failures without failing the check. | `true` |
+| `exit_on_fail` | Fail the job if any test fails. Set to `false` to report failures without failing the job. The job still fails when nothing valid was tested. | `true` |
 | `create_pr_on_change` | Create a pull request if files change during execution (e.g., updated screenshots) | `false` |
-| `pr_branch` | Branch name for the created PR | `doc-detective/updates` |
-| `pr_title` | Title for the created PR | `Doc Detective: Updated files` |
+| `pr_branch` | Branch name for the created PR | `doc-detective-<timestamp>` |
+| `pr_title` | Title for the created PR | `Doc Detective Changes` |
 | `pr_body` | Body text for the created PR | (default message) |
-| `pr_labels` | Comma-separated labels for the created PR | (none) |
+| `pr_labels` | Comma-separated labels for the created PR | `doc-detective` |
 | `pr_assignees` | Comma-separated assignees for the created PR | (none) |
 | `pr_reviewers` | Comma-separated reviewers for the created PR | (none) |
 | `create_issue_on_fail` | Create a GitHub issue when tests fail | `false` |
-| `issue_title` | Title for the created issue | `Doc Detective: Test failures` |
-| `issue_body` | Body text for the created issue | (default message with failure details) |
-| `issue_labels` | Comma-separated labels for the created issue | (none) |
+| `issue_title` | Title for the created issue | `Doc Detective Failure` |
+| `issue_body` | Body text for the created issue | (default message with the results) |
+| `issue_labels` | Comma-separated labels for the created issue | `doc-detective` |
 | `issue_assignees` | Comma-separated assignees for the created issue | (none) |
-| `integrations` | Comma-separated integration identifiers to mention in issues | (none) |
-| `prompt` | Custom prompt for AI integrations mentioned in issues | (none) |
+| `issue_mentions` | Comma-separated tools to mention in issues. Replaces the deprecated `integrations`. | (none) |
+| `issue_prompt` | Text that follows each mention. Replaces the deprecated `prompt`. | `Investigate potential causes of the failures reported in this Doc Detective test output and suggest fixes.` |
 | `token` | GitHub token for API operations (PR/issue creation) | `${{ github.token }}` |
 
 ## Action Outputs
@@ -73,13 +74,18 @@ permissions:
 
 ## Platform Limitations
 
-- **Runs on `ubuntu-latest` only.** The action installs Doc Detective on Linux.
-- **Headless browsers only.** Ubuntu runners have no display server. Firefox and Chrome automatically fall back to headless mode. Tests requiring visible browser windows will not work.
+- **Headless browsers on Ubuntu.** Ubuntu runners have no display server, so Firefox and Chrome fall back to headless mode. For tests that need a visible browser window, use a `macos-latest` or `windows-latest` runner.
 - **Default token scope.** The default `GITHUB_TOKEN` can create PRs and issues within the same repository. For cross-repo operations or repos with strict token policies, a custom `token` input may be required.
 
-## Integrations
+## Run Files and Secrets
 
-The `integrations` input accepts a comma-separated list of AI tool identifiers. When `create_issue_on_fail` is enabled, the action mentions these integrations in the issue body so they can automatically respond.
+By default, Doc Detective takes a screenshot after every step that drives a browser, app, or device. It also records each such context when the runner can. The action writes the results file and the run folder that holds these files to `${{ runner.temp }}`. They stay out of the repository and out of `create_pr_on_change` pull requests. To keep them, upload them from `${{ runner.temp }}` with `actions/upload-artifact` in a later step.
+
+Doc Detective masks the values of variables it uses, such as `$API_TOKEN`, as `***NAME***` in logs, results, and the issues the action creates. Pass secrets to the job as environment variables, and reference them as `$NAME` in specs.
+
+## Issue Mentions
+
+The `issue_mentions` input accepts a comma-separated list of AI tool identifiers. When `create_issue_on_fail` is enabled, the action mentions these tools in the issue body so they can automatically respond.
 
 Supported identifiers:
 - `doc-sentinel` — Doc Detective's own monitoring bot
@@ -157,7 +163,7 @@ jobs:
         with:
           create_issue_on_fail: true
           issue_labels: doc-detective,test-failure
-          integrations: claude,copilot
+          issue_mentions: claude,copilot
 ```
 
 ### Scheduled nightly run with all features
@@ -186,7 +192,7 @@ jobs:
           pr_labels: doc-detective,nightly
           create_issue_on_fail: true
           issue_labels: doc-detective,nightly-failure
-          integrations: claude,copilot
+          issue_mentions: claude,copilot
 ```
 
 ### Custom config and working directory

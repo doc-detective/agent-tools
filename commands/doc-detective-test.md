@@ -82,7 +82,7 @@ Act on the exit code:
 - `1`: At least one test failed. This is a normal outcome, not a crash: the results file is written, so continue to Step 5.
 - `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. There are no results to read.
 
-Read the results file. Record each test's `specs[].tests[].result` value as written: `PASS`, `WARNING`, `SKIPPED`, or `FAIL`. Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`.
+Read the results file. Record each test's `specs[].tests[].result` value as written: `PASS`, `WARNING`, `SKIPPED`, or `FAIL`. Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`. A `***NAME***` value in the results is a masked variable that the step ran with. Keep the spec's `$NAME`, and never copy the masked value into a fix.
 
 ### Step 5: Process Results
 
