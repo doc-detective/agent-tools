@@ -17,14 +17,20 @@ With options:
 ```json
 {
   "goTo": {
-    "url": "https://example.com",
-    "waitUntil": "networkidle"
+    "url": "https://example.com/dashboard",
+    "waitUntil": {
+      "networkIdleTime": 500,
+      "find": { "selector": "[data-testid='dashboard-loaded']" }
+    }
   }
 }
 ```
 
 **Options:**
-- `waitUntil`: `"load"` | `"domcontentloaded"` | `"networkidle"` | `"commit"`
+- `waitUntil`: Object, not a string such as `"networkidle"`. All fields are optional. The network and DOM checks run on every `goTo`, even without `waitUntil`, using the defaults below.
+  - `networkIdleTime`: Milliseconds with no new network requests (default `500`, `0` for no wait)
+  - `domIdleTime`: Milliseconds with no DOM changes (default `1000`, `0` for no wait)
+  - `find`: Element that must exist before the step continues. Takes the element fields of the [`find` action](#find), such as `selector` and `elementText`.
 
 ---
 
@@ -78,13 +84,24 @@ Check if an element exists. Can optionally interact with it.
 }
 ```
 
-**Find and match text**:
+**Find an element with specific text**:
 
 ```json
 {
   "find": {
     "selector": ".status",
-    "matchText": "Success"
+    "elementText": "Success"
+  }
+}
+```
+
+**Find an element whose text contains a substring** (regular expression):
+
+```json
+{
+  "find": {
+    "selector": ".status",
+    "elementText": "/Success/"
   }
 }
 ```
@@ -105,11 +122,11 @@ Check if an element exists. Can optionally interact with it.
 
 **Options:**
 - `selector`: CSS selector
-- `timeout`: Wait time in ms
+- `timeout`: Maximum time in ms to wait for the element to exist (default `5000`). The step fails if the element isn't found in time.
 - `click`: Click after finding (boolean)
 - `moveTo`: Move cursor to element before interacting (boolean)
 - `type`: Type text after finding (object with `keys`)
-- `matchText`: Verify element contains text
+- `elementText`: Text the element must have, matched against its full visible text with whitespace normalized. Wrap in slashes (`/Success/`) to match part of the text by regular expression. This field replaces `matchText`, which fails validation.
 
 ### dragAndDrop
 
@@ -421,23 +438,22 @@ Fixed duration:
 { "wait": 2000 }
 ```
 
-Wait for element:
+**Options:**
+- Duration in ms (number), or a variable such as `"$WAIT_DURATION"`
+- `true` to wait the default 5000 ms
+
+`wait` has no object form. To wait for an element to appear, use `find` with a `timeout`:
 
 ```json
 {
-  "wait": {
-    "selector": ".loading",
-    "state": "hidden"
+  "find": {
+    "selector": ".results",
+    "timeout": 10000
   }
 }
 ```
 
-**Options:**
-- Duration in ms (number)
-- Or object with:
-  - `selector`: Element to wait for
-  - `state`: `"visible"` | `"hidden"` | `"attached"` | `"detached"`
-  - `timeout`: Max wait time in ms
+`find` waits for an element to exist, not to disappear. To wait past a loading indicator, find the element that appears when loading finishes. Prefer `find` with a `timeout` over a fixed `wait`: a duration that's long enough locally can be too short on a slower CI runner.
 
 ---
 

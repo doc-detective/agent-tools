@@ -94,11 +94,11 @@ See `references/actions.md` for the full action catalog.
 ### Known Actions
 
 These are the only valid action types:
-- `goTo` - URL string or `{ url: string, waitUntil?: string }`
+- `goTo` - URL string or `{ url: string, waitUntil?: { networkIdleTime?: number, domIdleTime?: number, find?: object } }`
 - `click` - Text string or `{ selector: string }`
-- `find` - Text string or `{ selector: string, timeout?: number, matchText?: string }`
+- `find` - Text string or `{ selector: string, timeout?: number, elementText?: string }`
 - `type` - `{ keys: string, selector: string }`
-- `wait` - Number (ms) or `{ selector: string, state: string }`
+- `wait` - Number (ms), `true` (5000 ms), or a variable string such as `"$WAIT_DURATION"`. No object form: to wait for an element, use `find` with `timeout`.
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
 - `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[] }`. `stdio` matches stdout **or** stderr (string or `/regex/`); the object form is strict, so there is **no** `stdout`/`stderr` field — using one invalidates the spec.
