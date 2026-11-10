@@ -78,7 +78,7 @@ If no config exists, create silently with minimal defaults. If a config exists: 
 
 For each procedure-heavy file identified in Phase 1:
 
-1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, write output to `.doc-detective/doc-detective-tests/<name>-spec.json` where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens.
+1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, write output to `doc-detective-tests/<name>-spec.json` where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens. Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
 2. Track the source file for each test (`_sourceFile` field) to support Phase 6 injection.
 3. Validate each spec before proceeding. If a spec cannot be fixed, skip it and report it to the user.
 
@@ -87,7 +87,7 @@ For each procedure-heavy file identified in Phase 1:
 Run all generated specs (try global CLI, then Docker, then npx — same fallback chain as the `doc-testing` skill):
 
 ```bash
-doc-detective --input .doc-detective/doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
+doc-detective --input doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
 If no runner is available, stop and inform the user. Exit `1` means at least one test failed. That's a normal outcome, not a crash. Collect the failing tests from `.doc-detective/results/results.json` and continue to Phase 5. Exit `2` means nothing valid was tested or the CLI couldn't proceed, so stop and report the error from stderr.
