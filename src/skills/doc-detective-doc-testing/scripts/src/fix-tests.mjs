@@ -143,6 +143,7 @@ function analyzeFailure(failure) {
           ...position,
           testId,
           stepId,
+          error,
           errorType: pattern.type,
           strategy: strategy.name,
           confidence: strategy.confidence,
@@ -198,11 +199,8 @@ function generateFix(strategy, originalStep, error) {
     }
 
     case 'add_wait':
-      // Insert a wait before the step
-      return {
-        _insertBefore: true,
-        wait: { selector: extractSelector(originalStep), state: 'visible', timeout: 10000 }
-      };
+      // Insert a wait before the step. `wait` takes only a duration in CLI 5.
+      return { _insertBefore: true, wait: 10000 };
 
     case 'increase_timeout':
       if (fix.find && typeof fix.find === 'object') {
@@ -238,16 +236,18 @@ function generateFix(strategy, originalStep, error) {
       const expectedMatch = error.match(/got "([^"]+)"|actual: "([^"]+)"/i);
       if (expectedMatch) {
         const actualText = expectedMatch[1] || expectedMatch[2];
-        if (fix.find && typeof fix.find === 'object' && fix.find.matchText) {
-          fix.find.matchText = actualText;
+        if (fix.find?.elementText) {
+          fix.find.elementText = actualText;
         }
       }
       break;
     }
 
     case 'wait_for_clickable':
+      // `click` finds its element first, so a longer timeout gives it time to
+      // become clickable.
       if (fix.click && typeof fix.click === 'object') {
-        fix.click.waitForClickable = true;
+        fix.click.timeout = (fix.click.timeout || 5000) * 2;
       }
       break;
 
@@ -362,14 +362,16 @@ function applyFix(spec, proposal, specFile) {
     i = proposal.stepIndex;
   }
 
-  if (proposal.proposedFix._insertBefore) {
-    // Insert a new step before
-    const newStep = { ...proposal.proposedFix };
-    delete newStep._insertBefore;
-    steps.splice(i, 0, newStep);
+  // Build the fix from the spec's own step. The results copy has variables
+  // expanded and secrets masked, and neither belongs in the spec.
+  const fix = generateFix(proposal.strategy, steps[i], proposal.error);
+  if (!fix) return false;
+
+  if (fix._insertBefore) {
+    delete fix._insertBefore;
+    steps.splice(i, 0, fix);
   } else {
-    // Replace the step
-    steps[i] = { ...steps[i], ...proposal.proposedFix };
+    steps[i] = fix;
   }
   return true;
 }
