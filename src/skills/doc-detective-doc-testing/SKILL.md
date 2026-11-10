@@ -163,6 +163,8 @@ Logs go to stderr and results go to stdout. `--output <file>` writes the JSON re
 
 The results document has `summary` (pass/fail counts per level) and `specs[].tests[].contexts[].steps[]` entries. For failures, read `resultDescription` on steps with `result: "FAIL"` and map back to documentation sections. Steps after a failure in the same context report `result: "SKIPPED"`.
 
+Results and logs show the values of variables the run used, such as `$PASSWORD`, as `***NAME***`. The step ran with the real value. When you fix a spec, keep its `$NAME` reference, and never copy a masked value into it. By default, the run also saves a screenshot after each step that drives a browser, app, or device, and a recording of each such context. They're in the run folder that the results' `runDir` names. Look at the screenshot of a failed step to see what the page showed.
+
 ### Common Failure Patterns
 
 | Error | Likely cause |

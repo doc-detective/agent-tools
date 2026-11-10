@@ -100,7 +100,7 @@ jobs:
 | `--no-exit-on-fail` | Set `exit_on_fail: false`. Otherwise, omit the input: it defaults to `true`. |
 | `--create-pr-on-change` | Set `create_pr_on_change: true`, add `contents: write` and `pull-requests: write` permissions |
 | `--create-issue-on-fail` | Set `create_issue_on_fail: true`, add `issues: write` permission |
-| `--integrations` provided | Set `integrations` input to the comma-separated list |
+| `--integrations` provided | Set the `issue_mentions` input to the comma-separated list. Don't use the deprecated `integrations` input. |
 | `--trigger schedule` | Use cron syntax; suggest `cron: '0 6 * * 1'` (Monday 6 AM UTC) and prompt for customization unless `--ci` |
 
 If not in `--ci` mode, present the generated workflow to the user for confirmation before writing. Explain each enabled feature and the permissions it requires.
@@ -123,6 +123,8 @@ Summarize what was created and list any manual steps needed:
   - If using a custom `token` input: Remind the user to add the secret to the repository settings.
   - If the repository has branch protection rules: Note that PRs created by the action use the default `GITHUB_TOKEN` and may need approval before merging.
   - General: Confirm that GitHub Actions is enabled for the repository.
+  - Run files: By default, Doc Detective takes a screenshot after each browser, app, or device step and records each such context. The action keeps these files and the results file in `${{ runner.temp }}`, out of the repository. To keep them, add an `actions/upload-artifact` step that uploads from `${{ runner.temp }}`.
+  - Secrets: Pass secrets to the job as environment variables, and reference them as `$NAME` in specs. Doc Detective shows their values as `***NAME***` in logs, results, and the issues the action creates.
 
 ## Examples
 
@@ -188,7 +190,7 @@ jobs:
       - uses: doc-detective/github-action@v2
         with:
           create_issue_on_fail: true
-          integrations: claude,copilot
+          issue_mentions: claude,copilot
 ```
 
 ### Full-featured with custom config
@@ -218,7 +220,7 @@ jobs:
           pr_labels: doc-detective,automated
           create_issue_on_fail: true
           issue_labels: doc-detective,test-failure
-          integrations: claude,copilot
+          issue_mentions: claude,copilot
 ```
 
 ## Related Commands
