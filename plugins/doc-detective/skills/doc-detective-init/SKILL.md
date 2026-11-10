@@ -92,7 +92,7 @@ If `--dry-run`, print the config that would be written and skip file creation. I
 
 For each procedure-containing file identified in Phase 1:
 
-1. Invoke `/doc-detective-generate <file-path> --output .doc-detective/doc-detective-tests/<name>-spec.json`, where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens (e.g., `login-guide.md` → `login-guide`).
+1. Invoke `/doc-detective-generate <file-path> --output doc-detective-tests/<name>-spec.json`, where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens (e.g., `login-guide.md` → `login-guide`). Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
 2. Confirm each spec passes validation before continuing. If a spec cannot be fixed, skip it and report it to the user.
 3. If `--dry-run`, print each spec without writing to disk.
 
@@ -101,7 +101,7 @@ For each procedure-containing file identified in Phase 1:
 Run all generated specs:
 
 ```bash
-doc-detective --input .doc-detective/doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
+doc-detective --input doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
 `--input`, `--output`, and `--output-dir` on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory**. A config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root. If you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
