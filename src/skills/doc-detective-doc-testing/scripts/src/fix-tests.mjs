@@ -34,7 +34,6 @@ const ERROR_PATTERNS = [
     type: 'element_not_found',
     strategies: [
       { name: 'update_text', confidence: 70, description: 'Element text may have changed' },
-      { name: 'add_wait', confidence: 60, description: 'Element may need more time to load' },
       { name: 'update_selector', confidence: 50, description: 'Selector may need adjustment' }
     ]
   },
@@ -42,8 +41,7 @@ const ERROR_PATTERNS = [
     pattern: /timeout|timed out|exceeded/i,
     type: 'timeout',
     strategies: [
-      { name: 'increase_timeout', confidence: 85, description: 'Increase wait time' },
-      { name: 'add_explicit_wait', confidence: 75, description: 'Add explicit wait for element' }
+      { name: 'increase_timeout', confidence: 85, description: 'Increase wait time' }
     ]
   },
   {
@@ -73,8 +71,7 @@ const ERROR_PATTERNS = [
     pattern: /click.*failed|not clickable|intercepted/i,
     type: 'click_failed',
     strategies: [
-      { name: 'wait_for_clickable', confidence: 75, description: 'Wait for element to be clickable' },
-      { name: 'scroll_into_view', confidence: 65, description: 'Element may need scrolling' }
+      { name: 'wait_for_clickable', confidence: 75, description: 'Wait for element to be clickable' }
     ]
   }
 ];
@@ -143,6 +140,7 @@ function analyzeFailure(failure) {
           ...position,
           testId,
           stepId,
+          error,
           errorType: pattern.type,
           strategy: strategy.name,
           confidence: strategy.confidence,
@@ -197,13 +195,6 @@ function generateFix(strategy, originalStep, error) {
       break;
     }
 
-    case 'add_wait':
-      // Insert a wait before the step
-      return {
-        _insertBefore: true,
-        wait: { selector: extractSelector(originalStep), state: 'visible', timeout: 10000 }
-      };
-
     case 'increase_timeout':
       if (fix.find && typeof fix.find === 'object') {
         fix.find.timeout = (fix.find.timeout || 5000) * 2;
@@ -213,12 +204,6 @@ function generateFix(strategy, originalStep, error) {
         fix.wait = fix.wait * 2;
       }
       break;
-
-    case 'add_explicit_wait':
-      return {
-        _insertBefore: true,
-        wait: 5000
-      };
 
     case 'update_url': {
       // Try to extract the actual URL from error
@@ -238,27 +223,20 @@ function generateFix(strategy, originalStep, error) {
       const expectedMatch = error.match(/got "([^"]+)"|actual: "([^"]+)"/i);
       if (expectedMatch) {
         const actualText = expectedMatch[1] || expectedMatch[2];
-        if (fix.find && typeof fix.find === 'object' && fix.find.matchText) {
-          fix.find.matchText = actualText;
+        if (fix.find?.elementText) {
+          fix.find.elementText = actualText;
         }
       }
       break;
     }
 
     case 'wait_for_clickable':
+      // `click` finds its element first, so a longer timeout gives it time to
+      // become clickable.
       if (fix.click && typeof fix.click === 'object') {
-        fix.click.waitForClickable = true;
+        fix.click.timeout = (fix.click.timeout || 5000) * 2;
       }
       break;
-
-    case 'scroll_into_view':
-      return {
-        _insertBefore: true,
-        runCode: {
-          language: 'javascript',
-          code: `document.querySelector('${extractSelector(originalStep)}')?.scrollIntoView({ behavior: 'smooth', block: 'center' });`
-        }
-      };
 
     case 'update_selector':
     case 'update_expected_status':
@@ -271,24 +249,6 @@ function generateFix(strategy, originalStep, error) {
 
   // A strategy that couldn't change anything isn't a fix
   return JSON.stringify(fix) === JSON.stringify(originalStep) ? null : fix;
-}
-
-/**
- * Extract selector from a step
- */
-function extractSelector(step) {
-  if (!step) return '*';
-  
-  if (step.click) {
-    return typeof step.click === 'string' ? `text="${step.click}"` : step.click.selector || '*';
-  }
-  if (step.find) {
-    return typeof step.find === 'string' ? `text="${step.find}"` : step.find.selector || '*';
-  }
-  if (step.type && step.type.selector) {
-    return step.type.selector;
-  }
-  return '*';
 }
 
 /**
@@ -362,15 +322,12 @@ function applyFix(spec, proposal, specFile) {
     i = proposal.stepIndex;
   }
 
-  if (proposal.proposedFix._insertBefore) {
-    // Insert a new step before
-    const newStep = { ...proposal.proposedFix };
-    delete newStep._insertBefore;
-    steps.splice(i, 0, newStep);
-  } else {
-    // Replace the step
-    steps[i] = { ...steps[i], ...proposal.proposedFix };
-  }
+  // Build the fix from the spec's own step. The results copy has variables
+  // expanded and secrets masked, and neither belongs in the spec.
+  const fix = generateFix(proposal.strategy, steps[i], proposal.error);
+  if (!fix) return false;
+
+  steps[i] = fix;
   return true;
 }
 
@@ -501,8 +458,7 @@ Examples:
     const spec = loadJson(options.specFile);
     let appliedCount = 0;
     
-    // Last step first, so an inserted step can't shift a later fix's position
-    for (const proposal of [...autoApplicable].sort((a, b) => b.stepIndex - a.stepIndex)) {
+    for (const proposal of autoApplicable) {
       if (applyFix(spec, proposal, options.specFile)) {
         appliedCount++;
       }
