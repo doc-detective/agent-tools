@@ -540,6 +540,41 @@ EOF
         skip "fix-tests not built (run build-skill.sh first)"
     fi
 
+    # Test 10j: each error type proposes its top strategy, and every fix
+    # edits its own step in place
+    echo ""
+    echo "--- Test 10j: fix-tests ranks and applies each strategy ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        cat > "$TEST_OUTPUT_DIR/rank-spec.json" << 'EOF'
+{ "tests": [ { "testId": "t", "steps": [
+  { "stepId": "s1", "find": { "elementText": "Slow", "timeout": 5000 } },
+  { "stepId": "s2", "click": "Sign in" },
+  { "stepId": "s3", "click": { "selector": "#submit" } },
+  { "stepId": "s4", "find": { "elementText": "Welcome", "timeout": 5000 } }
+] } ] }
+EOF
+        cat > "$TEST_OUTPUT_DIR/rank-results.json" << 'EOF'
+{ "specs": [ { "contentPath": "rank-spec.json", "tests": [ { "testId": "t", "contexts": [ { "contextId": "chrome", "steps": [
+  { "find": { "elementText": "Slow", "timeout": 5000 }, "stepId": "s1", "result": "FAIL", "resultDescription": "Timed out waiting for element." },
+  { "click": "Sign in", "stepId": "s2", "result": "FAIL", "resultDescription": "No elements matched. Found \"Log in\"." },
+  { "click": { "selector": "#submit" }, "stepId": "s3", "result": "FAIL", "resultDescription": "Element is not clickable at point (10, 20)." },
+  { "find": { "elementText": "Welcome", "timeout": 5000 }, "stepId": "s4", "result": "FAIL", "resultDescription": "Expected \"Welcome\" but got \"Welcome back\"." }
+] } ] } ] } ] }
+EOF
+        OUTPUT=$(cd "$TEST_OUTPUT_DIR" && node "$SKILL_DIR/scripts/fix-tests.js" rank-results.json --spec rank-spec.json --auto-fix 2>&1 || true)
+        STRATEGIES=$(echo "$OUTPUT" | grep -o "Strategy: [a-z_]*" | tr '\n' ' ')
+        EXPECTED_STRATEGIES="Strategy: increase_timeout Strategy: update_text Strategy: wait_for_clickable Strategy: update_expected_text "
+        EXPECTED='{"tests":[{"testId":"t","steps":[{"stepId":"s1","find":{"elementText":"Slow","timeout":10000}},{"stepId":"s2","click":"Log in"},{"stepId":"s3","click":{"selector":"#submit","timeout":10000}},{"stepId":"s4","find":{"elementText":"Welcome back","timeout":5000}}]}]}'
+        ACTUAL=$(node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))))" "$TEST_OUTPUT_DIR/rank-spec.json")
+        if [ "$STRATEGIES" = "$EXPECTED_STRATEGIES" ] && [ "$ACTUAL" = "$EXPECTED" ]; then
+            pass "fix-tests ranks and applies each strategy"
+        else
+            fail "fix-tests should rank and apply each strategy" "$STRATEGIES / $ACTUAL / $OUTPUT"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
     # Test 10f: fix-tests rejects a file that isn't a results document
     echo ""
     echo "--- Test 10f: fix-tests rejects unrecognized results ---"
