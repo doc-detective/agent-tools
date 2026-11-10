@@ -108,9 +108,9 @@ doc-detective --input doc-detective-tests/ --output-dir .doc-detective/results/ 
 
 Skip this phase if `--skip-tests` or `--dry-run` is set. Act on the exit code:
 
-- `0`: All tests passed, warned, or were skipped.
+- `0`: No test failed, and at least one passed or warned.
 - `1`: At least one test failed. This is a normal outcome, not a crash: collect the failing tests from `.doc-detective/results/results.json`, and continue to Phase 5.
-- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. Don't proceed to Phase 5.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. When every test skipped, stderr gives the first skip reason. Don't proceed to Phase 5.
 
 ### Phase 5: Fix Loop
 
