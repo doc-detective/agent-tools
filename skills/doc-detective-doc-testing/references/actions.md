@@ -345,7 +345,7 @@ The `type` step can also send keystrokes to a running background process — for
 
 **Process surface options:**
 - `surface`: Name of the target process, or `{ "process": "<name>" }`. A process surface can't be combined with element-finding fields like `selector`.
-- `waitUntil`: After the keys are sent, wait until the process is ready. Accepts `stdio` (substring or `/regex/` matched against combined stdout and stderr) and/or `delayMs` (fixed wait). Requires a `surface`.
+- `waitUntil`: After the keys are sent, wait until the process is ready. Accepts `stdio` (substring or `/regex/` matched against combined stdout and stderr) and/or `delayMs` (fixed wait). (`port` and `httpGet` are not supported for process surfaces.) Requires a `surface`.
 - `timeout`: Maximum time in ms to wait for `waitUntil` after sending the keys (default `5000`)
 - `inputDelay`: Delay in ms between each keystroke sent to the process (default `100`)
 
