@@ -2,11 +2,11 @@
 name: doc-detective-doc-testing
 description: 'Verify documentation and procedures with Doc Detective test specifications. MANDATORY: Read SKILL.md first. Format: {"goTo":"url"} {"find":"text"} {"click":"text"} - action IS the key. NEVER {"action":"goTo"}. Keywords: test spec, Doc Detective, test JSON, test documentation, test docs, test procedure, verify procedures.'
 metadata:
-  version: '1.4.0'
+  version: '1.4.1'
   organization: Doc Detective
-  date: June 2026
+  date: November 2026
   abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
-  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
 ---
 
@@ -88,6 +88,8 @@ See `references/actions.md` for the full action catalog.
 2. Run: `node ./scripts/doc-detective-validate-test.js /tmp/doc-detective-test-spec.json`
 3. Only proceed if output shows `Validation PASSED`.
 
+> **Schema-skew caveat.** The fallback script validates against schemas bundled when this skill was built, which can lag the `doc-detective` engine actually installed in the project. A spec can pass the fallback validator yet be rejected at runtime (e.g. an unknown `runShell` key). Prefer the MCP `validate_spec` (it tracks the live schema), and **always confirm a passing validation with a real `doc-detective` run** (Step 3) before trusting it. If the run reports `isn't a valid test specification. Skipping.`, the spec is wrong despite the validator passing.
+
 ### Known Actions
 
 These are the only valid action types:
@@ -98,7 +100,7 @@ These are the only valid action types:
 - `wait` - Number (ms) or `{ selector: string, state: string }`
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
-- `runShell` - `{ command: string, exitCodes?: number[] }`
+- `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[] }`. `stdio` matches stdout **or** stderr (string or `/regex/`); the object form is strict, so there is **no** `stdout`/`stderr` field — using one invalidates the spec.
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
@@ -177,9 +179,9 @@ Before returning any test spec:
 
 ## External Resources
 
-- Main docs: https://doc-detective.com
-- Test structure: https://doc-detective.com/docs/get-started/tests
-- Actions: https://doc-detective.com/docs/category/actions
+- Main docs: https://docs.doc-detective.com
+- Test structure: https://docs.doc-detective.com/docs/get-started/how-testing-works
+- Actions: https://docs.doc-detective.com/docs/get-started/concepts#action
 - GitHub: https://github.com/doc-detective/doc-detective
 
 ## Scripts

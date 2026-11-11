@@ -244,7 +244,125 @@ What installing the plugin gives you:
 - **MCP tools.** The plugin bundles its MCP server in `plugins/doc-detective/.mcp.json`, so the remote MCP tools auto-register on install — no manual `~/.codex/config.toml` edit required.
 - **Hooks.** Codex supports lifecycle hooks, but the tool-matched guardrails (validation, anti-pattern blocking, etc.) key on Claude's `Edit`/`Write` tool names, which Codex does not use — so they do not currently fire on Codex. They run on Claude Code, Gemini CLI, and OpenCode.
 
-### Cursor and other agents
+### Cursor
+
+Doc Detective ships as a [Cursor plugin](https://cursor.com/docs/plugins) (Cursor 2.5+).
+
+#### Install locally (works on any plan — Free, Pro, Teams)
+
+This is the method for an individual machine. It needs no marketplace and no Teams plan.
+
+1. Clone the repo:
+
+   ```bash
+   git clone https://github.com/doc-detective/agent-tools.git
+   ```
+
+2. Copy the plugin folder into Cursor's local plugins directory. Copy
+   `plugins/doc-detective` itself (the folder that contains `.cursor-plugin/plugin.json`):
+
+   **macOS / Linux:**
+
+   ```bash
+   mkdir -p ~/.cursor/plugins/local                 # create the dir on a fresh install
+   rm -rf ~/.cursor/plugins/local/doc-detective     # remove any previous copy first
+   cp -r agent-tools/plugins/doc-detective ~/.cursor/plugins/local/doc-detective
+   ```
+
+   **Windows (PowerShell):**
+
+   ```powershell
+   $dest = "$HOME\.cursor\plugins\local\doc-detective"
+   New-Item -ItemType Directory -Force -Path "$HOME\.cursor\plugins\local" | Out-Null
+   Remove-Item -Recurse -Force $dest -ErrorAction SilentlyContinue
+   Copy-Item -Recurse agent-tools\plugins\doc-detective $dest
+   ```
+
+   (Creating the directory first handles a fresh Cursor install; removing any previous copy
+   avoids nesting the plugin inside an existing `doc-detective/` folder.)
+
+   When done, the manifest must sit at
+   `~/.cursor/plugins/local/doc-detective/.cursor-plugin/plugin.json` (on Windows,
+   `%USERPROFILE%\.cursor\plugins\local\doc-detective\.cursor-plugin\plugin.json`) — i.e.
+   **not** double-nested under a second `doc-detective/` folder.
+
+3. Reload Cursor: open the Command Palette (`Cmd/Ctrl+Shift+P`) and run
+   **Developer: Reload Window** (or quit and reopen Cursor).
+
+4. Verify: in Agent chat, type `/` and confirm the `/doc-detective-*` commands appear.
+   Then get started:
+
+   ```text
+   /doc-detective-init
+   ```
+
+> **Developing on the plugin?** Symlink instead of copying so edits show up on reload:
+>
+> ```bash
+> mkdir -p ~/.cursor/plugins/local
+> rm -rf ~/.cursor/plugins/local/doc-detective   # clear any existing copy first
+> ln -s "$PWD/agent-tools/plugins/doc-detective" ~/.cursor/plugins/local/doc-detective
+> ```
+
+#### With the `cursor-agent` CLI
+
+The [Cursor CLI](https://cursor.com/docs/cli) has **no marketplace** — load the plugin with
+`--plugin-dir` (this loads the skills, agent, rule, and MCP server):
+
+```bash
+cursor-agent --plugin-dir "$PWD/agent-tools/plugins/doc-detective"
+```
+
+#### Via Claude Code skills/subagents (third-party import)
+
+Cursor can load resources from other ecosystems. In **Settings → Rules, Skills, Subagents**,
+enable **"Include third-party Plugins, Skills and other configs"** — Cursor then imports
+skills and subagents from Claude Code's `~/.claude/skills` and `~/.claude/agents` (and Codex
+configs). So if you already run Doc Detective in Claude Code (or `npx skills add
+doc-detective/agent-tools`), this toggle surfaces it in Cursor with no separate Cursor
+plugin. (It imports *everything* from those ecosystems, so the dedicated Cursor plugin above
+is more targeted.)
+
+#### Distribute to a team (Teams / Enterprise plans only)
+
+Team Marketplaces are **not available on individual (Free/Pro) plans** — if you don't see
+the option below, use the local install above. On a Teams or Enterprise plan, an admin can
+import this repo as a custom marketplace from the **web dashboard** (not the in-app
+settings):
+
+1. Go to [cursor.com](https://cursor.com) → **Dashboard → Settings → Plugins → Team
+   Marketplaces → Import**.
+2. Paste `https://github.com/doc-detective/agent-tools` and review the parsed plugins
+   (Cursor reads the repo's `.cursor-plugin/marketplace.json`).
+3. Assign access groups, mark the plugin Required or Optional, and save.
+
+(Auto-refresh needs the Cursor GitHub App and updates at most every 10 minutes; re-import
+the URL to pick up newly added plugins.)
+
+#### Official marketplace (once published)
+
+After the plugin is listed on the [Cursor marketplace](https://cursor.com/marketplace),
+install it with `/add-plugin doc-detective` in Agent chat, or "Add to Cursor" on the
+marketplace page.
+
+What installing the plugin gives you:
+
+- **Skills.** The Doc Detective skills load into Cursor and are invocable as slash
+  commands (`/doc-detective-test`, `/doc-detective-generate`, `/doc-detective-validate`,
+  `/doc-detective-inject`, `/doc-detective-init`, `/doc-detective-install-github-action`).
+- **Agent.** The `doc-detective-specialist` subagent is available for documentation-testing tasks.
+- **Rule.** A persistent "docs as tests" rule reminds the agent to validate and test
+  documented procedures (and to use the correct `{ "action-name": ... }` spec format)
+  when you edit docs or test specs.
+- **MCP tools.** The plugin registers the Doc Detective remote MCP server inline in its
+  manifest, so the MCP tools are available without a manual `.cursor/mcp.json` edit.
+- **Hooks.** Cursor's hook protocol differs from Claude's, so the plugin routes Cursor's
+  `sessionStart` and `afterFileEdit` events through an adapter
+  (`hooks/scripts/cursor-hook-adapter.js`) that reuses the shared hook scripts —
+  giving you install detection, spec validation, formatting, and anti-pattern guidance.
+  See [docs/README.cursor.md](docs/README.cursor.md) for details.
+
+### Other agents
 
 #### Option 1: Install with `npx skills`
 
@@ -390,6 +508,18 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 
 Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
 
+## Language server (LSP)
+
+On **Claude Code**, the plugin bundles a Doc Detective language server that gives the agent live, authoring-time feedback on test specs — the same schema knowledge the runner validates against, surfaced the moment a spec is edited rather than only when it runs.
+
+| Capability | Behavior |
+|------------|----------|
+| **Diagnostics** | Schema errors are reported inline as you edit `*.spec.json` / `*.spec.yaml` and `.doc-detective.*` config files, and inside inline Doc Detective tests in Markdown/AsciiDoc/HTML/DITA. The `action`-keyed anti-pattern (using an `action` property instead of the compact action-as-key form) gets one clear message instead of a wall of schema errors. |
+| **Completion** | Action keys and their fields, with schema-aware value snippets. |
+| **Hover** | Action descriptions pulled straight from the schema. |
+
+The server activates automatically on install. It launches through `lsp/lsp-launch.js`, which resolves the Doc Detective CLI in the same order as the install check — a project-local install first (so a workspace's pinned version wins), then a global `doc-detective`, then `npx`. LSP is a Claude Code capability, so this does not apply to the other hosts.
+
 ## Inline Test Injection
 
 Inject test steps from separate spec files directly into documentation as inline comments:
@@ -479,10 +609,10 @@ Then execute:
 
 ## Resources
 
-- [Doc Detective Documentation](https://doc-detective.com)
+- [Doc Detective Documentation](https://docs.doc-detective.com)
 - [Doc Detective GitHub](https://github.com/doc-detective/doc-detective)
-- [Test Specification Format](https://doc-detective.com/docs/get-started/doc-detective-tests)
-- [Actions Reference](https://doc-detective.com/docs/category/actions)
+- [Test Specification Format](https://docs.doc-detective.com/reference/schemas/specification)
+- [Actions Reference](https://docs.doc-detective.com/docs/get-started/concepts#action)
 
 ## MCP server
 
@@ -574,4 +704,34 @@ AGPL3
 
 ## Contributing
 
-To contribute improvements to this plugin, submit issues or pull requests to the repository.
+To contribute improvements to this plugin, open an issue or pull request in the repository.
+
+### Pull request titles
+
+This repository squash-merges pull requests, so the pull request title becomes the commit message on `main`. A GitHub Actions check validates every title against the [Conventional Commits](https://www.conventionalcommits.org/) format, so start your title with one of the supported types, followed by a colon and a short description:
+
+```
+<type>: <description>
+```
+
+You can add an optional, unrestricted scope, for example `feat(lsp): add language server`.
+
+Supported types:
+
+| Type | Use for |
+|------|---------|
+| `feat` | A new user-facing feature |
+| `fix` | A bug fix |
+| `docs` | Documentation-only changes |
+| `chore` | Maintenance work with no product impact |
+| `refactor` | Code changes that neither fix a bug nor add a feature |
+| `test` | Adding or updating tests |
+| `ci` | Changes to CI configuration or workflows |
+| `build` | Changes to the build system or dependencies |
+| `perf` | Performance improvements |
+| `style` | Formatting or style changes |
+| `revert` | Reverting a previous change |
+
+### Releases
+
+Releases are cut automatically when pull requests merge to `main`, and the merged title's type drives the version bump. `feat` triggers a minor release, `fix` triggers a patch release, and a `!` after the type (for example `feat!:`) or a `BREAKING CHANGE:` footer triggers a major release. Types such as `docs`, `chore`, and `ci` don't trigger a release, and neither does `perf`: this repository's release config turns off the patch release that `perf` gets by default. On a releasable merge, the workflow bumps the version, regenerates the build artifacts, updates `CHANGELOG.md`, tags the release, and publishes a GitHub Release.

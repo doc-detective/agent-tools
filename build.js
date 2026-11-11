@@ -6,6 +6,8 @@
 //   src/agents/                           → agent definitions
 //   src/skills/                           → skill implementations (SKILL.md, references/, scripts/)
 //   src/mcp-servers.json                  → canonical MCP server registry (fanned out per host)
+//   src/lsp-servers.json                  → canonical LSP server registry (Claude Code only)
+//   src/lsp/                              → LSP launcher shim, bundled into the plugin
 //   package.json                          → version
 //
 // Generated/synced artifact directories (do not edit directly):
@@ -13,14 +15,21 @@
 //   skills/                                          ← copied from src/skills/
 //   commands/*.md                                    ← generated from src/skills/*/SKILL.md (user-invocable: true)
 //   commands/*.toml                                  ← generated from commands/*.md
-//   hooks/                                           ← copied from src/hooks/
+//   hooks/                                           ← copied from src/hooks/ (cursor-hooks.json removed; lives only in the plugin)
+//   plugins/doc-detective/hooks/cursor-hooks.json    ← Cursor hooks (routed through cursor-hook-adapter.js)
 //   plugins/doc-detective/{agents,skills}/           ← copied from agents/, skills/
 //   plugins/doc-detective/hooks/                     ← copied from src/hooks/ (claude-hooks.json renamed to hooks.json)
 //   plugins/doc-detective/opencode-plugin.mjs        ← copied from src/hooks/opencode-plugin.mjs
 //   .claude-plugin/marketplace.json                  ← version from package.json
-//   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers from package.json + src/mcp-servers.json
+//   .cursor-plugin/marketplace.json                  ← version from package.json (custom "Import from Repo" marketplace)
+//   plugins/doc-detective/.claude-plugin/plugin.json ← version + mcpServers + lspServers from package.json + src/*-servers.json
+//   plugins/doc-detective/lsp/                        ← copied from src/lsp/ (LSP launcher shim)
 //   plugins/doc-detective/.codex-plugin/plugin.json  ← version from package.json + mcpServers pointer
 //   plugins/doc-detective/.mcp.json                  ← Codex MCP registration from src/mcp-servers.json
+//   plugins/doc-detective/README.md                  ← generated from plugin.json + skill/agent frontmatter (functionality only)
+//   plugins/doc-detective/LICENSE                     ← copied from repo-root LICENSE
+//   plugins/doc-detective/.cursor-plugin/plugin.json ← version + inline mcpServers from package.json + src/mcp-servers.json
+//   plugins/doc-detective/rules/*.mdc                ← rendered from src/rules/*.md (Cursor rules)
 //   gemini-extension.json                            ← version + mcpServers from package.json + src/mcp-servers.json
 //   qwen-extension.json                              ← version + mcpServers from package.json + src/mcp-servers.json
 //
@@ -121,6 +130,21 @@ function getMetadataUserInvocable(content) {
   return m ? m[1] === "true" : true;
 }
 
+/**
+ * Extract an indented (metadata-block) single-line field from raw frontmatter,
+ * e.g. `abstract`. Returns the trimmed value with surrounding YAML quotes
+ * stripped, or "" if absent. parseFrontmatter() only captures top-level keys,
+ * so nested metadata fields need this.
+ */
+function getMetadataField(content, field) {
+  const fmMatch = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if (!fmMatch) return "";
+  const re = new RegExp(`^\\s+${field}:\\s*(.+)$`, "m");
+  const m = fmMatch[1].match(re);
+  if (!m) return "";
+  return m[1].trim().replace(/^(['"])([\s\S]*)\1$/, "$2").trim();
+}
+
 /** Returns the current build date as "Month YYYY" (e.g., "March 2026"). */
 function getCurrentDate() {
   const d = new Date();
@@ -176,6 +200,8 @@ function cleanOutputDirs() {
     "plugins/doc-detective/agents",
     "plugins/doc-detective/skills",
     "plugins/doc-detective/hooks",
+    "plugins/doc-detective/rules",
+    "plugins/doc-detective/lsp",
   ];
 
   for (const dir of dirs) {
@@ -201,6 +227,15 @@ function syncVersions() {
   mp.metadata.version = version;
   writeJSON(mpPath, mp);
   log("  .claude-plugin/marketplace.json");
+
+  // .cursor-plugin/marketplace.json (enables "Import from Repo" custom marketplace)
+  const cursorMpPath = path.join(ROOT, ".cursor-plugin/marketplace.json");
+  if (fs.existsSync(cursorMpPath)) {
+    const cursorMp = readJSON(cursorMpPath);
+    if (cursorMp.metadata) cursorMp.metadata.version = version;
+    writeJSON(cursorMpPath, cursorMp);
+    log("  .cursor-plugin/marketplace.json");
+  }
 
   // plugins/doc-detective/.claude-plugin/plugin.json
   const pjPath = path.join(
@@ -237,6 +272,16 @@ function syncVersions() {
   codex.version = version;
   writeJSON(codexPath, codex);
   log("  plugins/doc-detective/.codex-plugin/plugin.json");
+
+  // plugins/doc-detective/.cursor-plugin/plugin.json
+  const cursorPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.cursor-plugin/plugin.json"
+  );
+  const cursor = readJSON(cursorPath);
+  cursor.version = version;
+  writeJSON(cursorPath, cursor);
+  log("  plugins/doc-detective/.cursor-plugin/plugin.json");
 }
 
 // ─── 1b. Sync MCP server registrations across host configs ───
@@ -275,6 +320,7 @@ function syncMcpServers() {
   const geminiBlock = {};
   const qwenBlock = {};
   const codexBlock = {};
+  const cursorBlock = {};
 
   for (const [name, spec] of Object.entries(registry)) {
     // Validate registry entry shape so a malformed entry can't silently
@@ -302,6 +348,7 @@ function syncMcpServers() {
     const geminiClient = cn["gemini-cli"] || "gemini-cli";
     const qwenClient = cn["qwen-code"] || "qwen-code";
     const codexClient = cn["codex"] || "codex";
+    const cursorClient = cn["cursor"] || "cursor";
 
     claudeBlock[name] = {
       type: "http",
@@ -323,6 +370,13 @@ function syncMcpServers() {
       type: "http",
       url: spec.url,
       headers: { "X-DD-Client": codexClient },
+    };
+    // Cursor's plugin manifest accepts an inline mcpServers map using the same
+    // remote-MCP shape (type/url/headers). HTTP servers REQUIRE `type: "http"`.
+    cursorBlock[name] = {
+      type: "http",
+      url: spec.url,
+      headers: { "X-DD-Client": cursorClient },
     };
   }
 
@@ -392,6 +446,22 @@ function syncMcpServers() {
     writeJSON(codexManifestPath, codexManifest);
     log("  plugins/doc-detective/.codex-plugin/plugin.json (mcpServers)");
   }
+
+  // Cursor plugin manifest: inline mcpServers map (server auto-registers on install).
+  const cursorManifestPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.cursor-plugin/plugin.json"
+  );
+  if (fs.existsSync(cursorManifestPath)) {
+    const cursorManifest = readJSON(cursorManifestPath);
+    if (Object.keys(cursorBlock).length > 0) {
+      cursorManifest.mcpServers = cursorBlock;
+    } else {
+      delete cursorManifest.mcpServers;
+    }
+    writeJSON(cursorManifestPath, cursorManifest);
+    log("  plugins/doc-detective/.cursor-plugin/plugin.json (mcpServers)");
+  }
 }
 
 // ─── 2. Sync metadata (version + date) in source files ───────
@@ -440,6 +510,50 @@ function syncSourceToArtifacts() {
     copyDirRecursive(path.join(ROOT, "src", dir), path.join(ROOT, dir));
     log(`  src/${dir}/ -> ${dir}/`);
   }
+}
+
+// ─── 4b. Sync LSP server registration (Claude Code only) ───
+
+/**
+ * Reads src/lsp-servers.json and writes it as the `lspServers` block of the
+ * Claude Code plugin manifest, then bundles the launcher shim under the plugin.
+ *
+ * The language server is a Claude-Code-only capability, so — unlike MCP servers
+ * — no Gemini/Qwen/Codex host config gets this block. The shim
+ * (src/lsp/lsp-launch.js) resolves the doc-detective CLI (project-local →
+ * global → npx) and execs `doc-detective lsp --stdio`; the manifest points at it
+ * via `${CLAUDE_PLUGIN_ROOT}/lsp/lsp-launch.js`.
+ *
+ * Idempotent: re-running re-stamps `lspServers` and re-copies the shim.
+ */
+function syncLspServers() {
+  const registryPath = path.join(ROOT, "src/lsp-servers.json");
+  if (!fs.existsSync(registryPath)) {
+    throw new Error(
+      "Missing required file: src/lsp-servers.json (canonical LSP server registry)"
+    );
+  }
+
+  log("\nSyncing LSP server registration...");
+  const registry = readJSON(registryPath);
+
+  // Write lspServers into the Claude Code plugin manifest (preserving the
+  // mcpServers block syncMcpServers already wrote).
+  const pjPath = path.join(
+    ROOT,
+    "plugins/doc-detective/.claude-plugin/plugin.json"
+  );
+  const pj = readJSON(pjPath);
+  pj.lspServers = registry;
+  writeJSON(pjPath, pj);
+  log("  plugins/doc-detective/.claude-plugin/plugin.json (lspServers)");
+
+  // Bundle the launcher shim into the plugin.
+  copyDirRecursive(
+    path.join(ROOT, "src/lsp"),
+    path.join(ROOT, "plugins/doc-detective/lsp")
+  );
+  log("  src/lsp/ -> plugins/doc-detective/lsp/");
 }
 
 // ─── 5. Generate command Markdown files from user-invocable skills ──────────
@@ -565,6 +679,16 @@ function syncHooks() {
   if (fs.existsSync(rootClaude)) {
     fs.unlinkSync(rootClaude);
   }
+  // The Cursor hooks config and its adapter belong only to the Cursor plugin,
+  // not the Gemini root artifact. Remove both so they aren't shipped to Gemini.
+  const rootCursor = path.join(rootHooksDir, "cursor-hooks.json");
+  if (fs.existsSync(rootCursor)) {
+    fs.unlinkSync(rootCursor);
+  }
+  const rootCursorAdapter = path.join(rootHooksDir, "scripts", "cursor-hook-adapter.js");
+  if (fs.existsSync(rootCursorAdapter)) {
+    fs.unlinkSync(rootCursorAdapter);
+  }
 
   log("  src/hooks/ -> hooks/ (gemini-hooks.json -> hooks.json)");
 
@@ -584,6 +708,20 @@ function syncHooks() {
   if (fs.existsSync(pluginGemini)) {
     fs.unlinkSync(pluginGemini);
   }
+
+  // cursor-hooks.json stays in the plugin hooks dir; the Cursor manifest
+  // references it via "hooks": "./hooks/cursor-hooks.json". The adapter script
+  // (cursor-hook-adapter.js) was copied with the rest of scripts/.
+  // The Cursor manifest references ./hooks/cursor-hooks.json, so a missing copy
+  // would silently ship a broken hooks reference. Fail the build instead
+  // (parallel to the claude-hooks.json check above).
+  const pluginCursorHooks = path.join(pluginHooksDir, "cursor-hooks.json");
+  if (!fs.existsSync(pluginCursorHooks)) {
+    throw new Error(
+      "Missing required file: src/hooks/cursor-hooks.json (Cursor plugin hooks config)"
+    );
+  }
+  log("  src/hooks/cursor-hooks.json -> plugins/doc-detective/hooks/cursor-hooks.json");
 
   log("  src/hooks/ -> plugins/doc-detective/hooks/ (claude-hooks.json -> hooks.json)");
 
@@ -642,6 +780,170 @@ function syncPluginDir() {
   }
 }
 
+// ─── 6b. Generate plugin README + LICENSE ────────────────────
+
+/**
+ * Generate plugins/doc-detective/README.md from the source of truth
+ * (plugin.json + skill/agent frontmatter) and copy the repo LICENSE into the
+ * plugin directory. The README documents *functionality* only — it omits
+ * plugin- and harness-specific installation instructions on purpose, since
+ * those live in the repo-root README and vary per host.
+ */
+function generatePluginDocs() {
+  log("\nGenerating plugin README + LICENSE...");
+
+  const pluginDir = path.join(ROOT, "plugins/doc-detective");
+  const pj = readJSON(path.join(pluginDir, ".claude-plugin/plugin.json"));
+
+  // Collect skills (from source of truth), split user-invocable vs. internal.
+  const skillsDir = path.join(ROOT, "src/skills");
+  const userSkills = [];
+  const internalSkills = [];
+  for (const entry of fs.readdirSync(skillsDir, { withFileTypes: true }).sort((a, b) =>
+    a.name.localeCompare(b.name)
+  )) {
+    if (!entry.isDirectory()) continue;
+    const skillMdPath = path.join(skillsDir, entry.name, "SKILL.md");
+    if (!fs.existsSync(skillMdPath)) continue;
+    const content = fs.readFileSync(skillMdPath, "utf8");
+    const { meta } = parseFrontmatter(content);
+    const name = meta["name"] || entry.name;
+    // Prefer the human-readable abstract; fall back to the trigger description.
+    const summary =
+      getMetadataField(content, "abstract") ||
+      (meta["description"] || "").replace(/^(['"])([\s\S]*)\1$/, "$2").trim();
+    const target = getMetadataUserInvocable(content) ? userSkills : internalSkills;
+    target.push({ name, summary });
+  }
+
+  // Collect agents.
+  const agentsDir = path.join(ROOT, "src/agents");
+  const agents = [];
+  if (fs.existsSync(agentsDir)) {
+    for (const entry of fs.readdirSync(agentsDir, { withFileTypes: true }).sort((a, b) =>
+      a.name.localeCompare(b.name)
+    )) {
+      if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+      const content = fs.readFileSync(path.join(agentsDir, entry.name), "utf8");
+      const { meta } = parseFrontmatter(content);
+      const name = meta["name"] || path.basename(entry.name, ".md");
+      // Agent descriptions embed long example blocks; keep only the lead-in.
+      // The frontmatter is single-line YAML with escaped "\n" sequences (two
+      // characters: backslash + n), not real newlines — so split on either
+      // form to be robust to both representations.
+      const rawDesc = (meta["description"] || "").replace(/^(['"])([\s\S]*)\1$/, "$2");
+      const summary = rawDesc.split(/\r?\n|\\n/)[0].trim();
+      agents.push({ name, summary });
+    }
+  }
+
+  const lines = [];
+  lines.push(`# ${pj.name || "plugin"}`, "");
+  if (pj.description) lines.push(pj.description, "");
+  if (pj.homepage) {
+    lines.push(`Learn more at [${pj.homepage}](${pj.homepage}).`, "");
+  }
+
+  if (userSkills.length) {
+    lines.push("## Commands", "");
+    lines.push("Invoke these slash commands directly:", "");
+    for (const s of userSkills) lines.push(`- **\`/${s.name}\`** — ${s.summary}`);
+    lines.push("");
+  }
+
+  if (internalSkills.length) {
+    lines.push("## Supporting skills", "");
+    lines.push(
+      "Invoked automatically when relevant, not run directly:",
+      ""
+    );
+    for (const s of internalSkills) lines.push(`- **${s.name}** — ${s.summary}`);
+    lines.push("");
+  }
+
+  if (agents.length) {
+    lines.push("## Agents", "");
+    for (const a of agents) lines.push(`- **${a.name}** — ${a.summary}`);
+    lines.push("");
+  }
+
+  const mcpNames = pj.mcpServers ? Object.keys(pj.mcpServers) : [];
+  if (mcpNames.length) {
+    const label = mcpNames.length === 1 ? "server" : "servers";
+    const names = mcpNames.map((n) => `\`${n}\``).join(", ");
+    lines.push(`## MCP ${label}`, "");
+    lines.push(
+      `Bundles the ${names} MCP ${label}, giving the agent direct access to Doc Detective's documentation-testing engine.`,
+      ""
+    );
+  }
+
+  if (pj.license) {
+    lines.push("## License", "");
+    lines.push(`Licensed under ${pj.license}. See [LICENSE](./LICENSE).`, "");
+  }
+
+  const readmePath = path.join(pluginDir, "README.md");
+  fs.writeFileSync(readmePath, lines.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n");
+  log("  plugins/doc-detective/README.md");
+
+  // Copy the repo LICENSE into the plugin directory. Required: a plugin
+  // package shipped without its license is invalid, so fail the build loudly
+  // rather than emit an undocumented package.
+  const srcLicense = path.join(ROOT, "LICENSE");
+  if (!fs.existsSync(srcLicense)) {
+    throw new Error(
+      "Missing required file: LICENSE (repo-root license needed to package the plugin)"
+    );
+  }
+  fs.copyFileSync(srcLicense, path.join(pluginDir, "LICENSE"));
+  log("  plugins/doc-detective/LICENSE");
+}
+
+// ─── 6c. Render rules to per-host formats ────────────────────
+
+/**
+ * Renders the canonical, harness-neutral rule sources in src/rules/*.md into
+ * each host's native "persistent rules" format. Today this emits Cursor `.mdc`
+ * rules (frontmatter keys description/globs/alwaysApply are already
+ * .mdc-compatible, so the render is a copy with the extension changed).
+ *
+ * Single source of truth: src/rules/. The follow-up task fans the same sources
+ * out to Gemini (GEMINI.md), Codex/OpenCode (AGENTS.md), and a Claude skill.
+ */
+function renderRules() {
+  const srcRulesDir = path.join(ROOT, "src/rules");
+  if (!fs.existsSync(srcRulesDir)) {
+    log("\nNo src/rules/ — skipping rules render.");
+    return;
+  }
+
+  log("\nRendering rules...");
+
+  // Cursor: src/rules/<name>.md -> plugins/doc-detective/rules/<name>.mdc
+  const cursorRulesDir = path.join(ROOT, "plugins/doc-detective/rules");
+  fs.mkdirSync(cursorRulesDir, { recursive: true });
+  for (const entry of fs.readdirSync(srcRulesDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith(".md")) continue;
+    const base = path.basename(entry.name, ".md");
+    const content = fs.readFileSync(path.join(srcRulesDir, entry.name), "utf8");
+
+    // Validate Cursor .mdc frontmatter so a malformed rule fails the build
+    // rather than silently shipping a rule Cursor can't apply. Cursor rules
+    // require `description`; `globs` + `alwaysApply` govern when they attach.
+    const { meta } = parseFrontmatter(content);
+    const missing = ["description", "alwaysApply"].filter((k) => !(k in meta));
+    if (missing.length) {
+      throw new Error(
+        `Invalid rule src/rules/${entry.name}: missing frontmatter key(s): ${missing.join(", ")}`
+      );
+    }
+
+    fs.writeFileSync(path.join(cursorRulesDir, `${base}.mdc`), content);
+    log(`  src/rules/${entry.name} -> plugins/doc-detective/rules/${base}.mdc`);
+  }
+}
+
 // ─── 6. Build skill scripts ──────────────────────────────────
 
 function buildSkillScripts() {
@@ -685,6 +987,7 @@ log("Building agent-tools...\n");
 cleanOutputDirs();
 syncVersions();
 syncMcpServers();
+syncLspServers();
 syncMetadataInSourceFiles();
 buildSkillScripts();
 syncSourceToArtifacts();
@@ -692,5 +995,7 @@ syncHooks();
 generateCommands();
 generateTomls();
 syncPluginDir();
+generatePluginDocs();
+renderRules();
 
 log("\nBuild complete!");

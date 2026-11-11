@@ -1,13 +1,13 @@
 {
   "name": "doc-detective",
   "description": "Documentation testing and validation using Doc Detective. Test documentation procedures, convert docs to executable test specs, and validate that documented workflows match actual application behavior.",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "author": {
     "name": "Doc Detective Agency"
   },
   "homepage": "https://doc-detective.com",
   "repository": "https://github.com/doc-detective/agent-tools",
-  "license": "AGPL3",
+  "license": "AGPL-3.0-only",
   "mcpServers": {
     "doc-detective": {
       "type": "http",
@@ -15,6 +15,29 @@
       "headers": {
         "X-DD-Client": "claude-code"
       }
+    }
+  },
+  "lspServers": {
+    "doc-detective": {
+      "command": "node",
+      "args": [
+        "${CLAUDE_PLUGIN_ROOT}/lsp/lsp-launch.js"
+      ],
+      "extensionToLanguage": {
+        ".json": "doc-detective",
+        ".yaml": "doc-detective",
+        ".yml": "doc-detective",
+        ".md": "doc-detective",
+        ".markdown": "doc-detective",
+        ".mdx": "doc-detective",
+        ".adoc": "doc-detective",
+        ".asciidoc": "doc-detective",
+        ".html": "doc-detective",
+        ".htm": "doc-detective",
+        ".dita": "doc-detective"
+      },
+      "restartOnCrash": true,
+      "diagnostics": true
     }
   }
 }
