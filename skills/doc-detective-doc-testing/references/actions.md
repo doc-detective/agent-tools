@@ -799,14 +799,14 @@ A step handler doesn't jump between tests. If a step entry with `goToTest` match
 
 Attach routing handlers to a test to control what runs next based on its outcome. Each handler is an array of routing entries. Doc Detective evaluates the handler that matches the test's result:
 
-- `onPass` — after the test passes
-- `onFail` — after the test fails
-- `onWarning` — after the test produces a warning
-- `onSkip` — after the test is skipped
+- `onPass`: after the test passes
+- `onFail`: after the test fails
+- `onWarning`: after the test produces a warning
+- `onSkip`: after the test is skipped
 
-Each entry pairs an optional `if` condition with exactly one routing action. The first entry whose condition holds wins. If none match, the test's default flow applies.
+Each entry pairs an optional `if` condition with exactly one routing action. The first entry whose condition holds wins. If none match, the test's default flow applies. An `if` uses the same expressions as step routing (see [Step Routing](#step-routing)), and at test scope it can read `$$platform`.
 
-Routing is opt-in. A test without these handlers runs in document order, unchanged.
+Routing is opt-in. A test without these handlers runs in document order.
 
 ### goToTest
 
@@ -821,6 +821,10 @@ A `goToTest` entry jumps execution to another test in the same spec and continue
   ],
   "onPass": [
     { "goToTest": "dashboard-checks" }
+  ],
+  "onFail": [
+    { "if": "$$platform == windows", "goToTest": "windows-cleanup" },
+    { "stop": "spec" }
   ]
 }
 ```
@@ -829,20 +833,20 @@ When `login` passes, Doc Detective jumps to the test with `testId` `dashboard-ch
 
 **Target resolution:**
 
-- The target matches by `testId` within the same spec. Cross-spec jumps are not supported.
+- The target matches by `testId` within the same spec. A `goToTest` can't jump to another spec.
 - If two tests share a `testId`, the first wins.
-- An unknown target — usually a typo'd `testId` — is a misconfiguration. Doc Detective records a FAIL and stops the spec so the mistake can't silently report green.
+- An unknown target, usually a typo'd `testId`, is a misconfiguration. Doc Detective records a FAIL and stops the spec so the mistake can't silently report green.
 
 **Backward jumps and re-runs:**
 
-A `goToTest` can point at an earlier test, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number; the first run omits `visit`. A per-spec visit cap bounds loops: exceeding it records a FAIL and stops, so a self-referential jump can't hang.
+A `goToTest` can point at an earlier test, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number, and the first run omits `visit`. A visit cap of `100 × (number of tests) + 100` test runs per spec bounds loops. A self-referential jump hits the cap, records a FAIL, and stops instead of hanging.
 
 A jump never changes a verdict. Each visited test's result stands on its own, so if a backward jump re-runs a test that failed on its first visit, the spec stays failed.
 
 ### Other test-level actions
 
-- `continue` (the default) — proceed to the next test in document order.
-- `stop` — stop running tests. `stop: spec` stops the spec's remaining tests. `stop: test` is a no-op because the test has already finished. `stop: run` currently behaves as `stop: spec`.
+- `{ "continue": true }` (the default): proceed to the next test in document order.
+- `{ "stop": "spec" }`: stop the spec's remaining tests. `{ "stop": "run" }` behaves the same as `"spec"`, and `{ "stop": "test" }` does nothing because the test has already finished.
 
 `retry` and `goToStep` are step-level actions and don't apply at the test level.
 
