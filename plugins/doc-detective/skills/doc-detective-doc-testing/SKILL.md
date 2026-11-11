@@ -102,11 +102,13 @@ These are the only valid action types:
 - `screenshot` - Path string or `{ path: string }`
 - `httpRequest` - `{ url: string, method: string, ... }`
 - `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[] }`. `stdio` matches stdout **or** stderr (string or `/regex/`); the object form is strict, so there is **no** `stdout`/`stderr` field — using one invalidates the spec.
+- `runBrowserScript` - JS string or `{ script: string, args?: any[], output?: string }` (runs in the browser page; `args` accepts any JSON-serializable values; return value captured into `outputs.result`)
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
 - `record` - Path string or object
 - `stopRecord` - Boolean true
+- `annotate` - `{ add?: [...], update?: [...], clear?: true | string[] }` (at least one). Draws persistent annotations into the page for recordings/screenshots; browser-only (skipped without a page)
 
 ### Validation Failure Handling
 
