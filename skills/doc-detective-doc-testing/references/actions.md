@@ -904,6 +904,63 @@ A step handler doesn't jump between tests. If a step entry with `goToTest` match
 
 ---
 
+## Test Routing (`goToTest`)
+
+Attach routing handlers to a test to control what runs next based on its outcome. Each handler is an array of routing entries. Doc Detective evaluates the handler that matches the test's result:
+
+- `onPass`: after the test passes
+- `onFail`: after the test fails
+- `onWarning`: after the test produces a warning
+- `onSkip`: after the test is skipped
+
+Each entry pairs an optional `if` condition with exactly one routing action. The first entry whose condition holds wins. If none match, the test's default flow applies. An `if` uses the same expressions as step routing (see [Step Routing](#step-routing)), and at test scope it can read `$$platform`.
+
+Routing is opt-in. A test without these handlers runs in document order.
+
+### goToTest
+
+A `goToTest` entry jumps execution to another test in the same spec and continues from there:
+
+```json
+{
+  "testId": "login",
+  "steps": [
+    { "goTo": "https://example.com/login" },
+    { "find": "Sign In" }
+  ],
+  "onPass": [
+    { "goToTest": "dashboard-checks" }
+  ],
+  "onFail": [
+    { "if": "$$platform == windows", "goToTest": "windows-cleanup" },
+    { "stop": "spec" }
+  ]
+}
+```
+
+When `login` passes, Doc Detective jumps to the test with `testId` `dashboard-checks` and runs the spec forward from there. Any tests between the two are skipped.
+
+**Target resolution:**
+
+- The target matches by `testId` within the same spec. A `goToTest` can't jump to another spec.
+- If two tests share a `testId`, the first wins.
+- An unknown target, usually a typo'd `testId`, is a misconfiguration. Doc Detective records a FAIL and stops the spec so the mistake can't silently report green.
+
+**Backward jumps and re-runs:**
+
+A `goToTest` can point at an earlier test, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number, and the first run omits `visit`. A visit cap of `100 × (number of tests) + 100` test runs per spec bounds loops. A self-referential jump hits the cap, records a FAIL, and stops instead of hanging.
+
+A jump never changes a verdict. Each visited test's result stands on its own. If a backward jump re-runs a test that failed on its first visit, the spec stays failed.
+
+### Other test-level actions
+
+- `{ "continue": true }` (the default): proceed to the next test in document order.
+- `{ "stop": "spec" }`: stop the spec's remaining tests. `{ "stop": "run" }` behaves the same as `"spec"`, and `{ "stop": "test" }` does nothing because the test has already finished.
+
+`retry` and `goToStep` are step-level actions and don't apply at the test level.
+
+---
+
 ## Text vs Selector Guidelines
 
 ### Use text-based matching (preferred)
