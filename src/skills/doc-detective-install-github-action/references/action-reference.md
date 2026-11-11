@@ -39,7 +39,7 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 
 By default, `version` pins the package spec passed to npx (for example, `npx doc-detective@latest`), so npx resolves Doc Detective from the npm registry. Set `version` to an empty string (`""`) to drop the `@version` suffix and run bare `npx doc-detective`, which lets npx use whatever `doc-detective` build is already available in the working directory. This is how a repository can dog-food the action against its own build under review instead of the published package.
 
-The action does not install or link a local build for you. Make `doc-detective` resolvable in earlier workflow steps before this action runs — typically by checking out the build, installing its dependencies, and linking it with `npm link`. Resolution happens relative to the `working_directory` input. If no local `doc-detective` is resolvable, npx falls back to fetching it from the registry.
+The action does not install or link a local build for you. Make `doc-detective` resolvable in earlier workflow steps before this action runs — typically by checking out the build, installing its dependencies, and linking it with `npm link`. npx looks for the package from the `working_directory` input, and a global link made with `npm link` is visible from any directory. If no local `doc-detective` is resolvable, npx silently falls back to the latest published release, so confirm the link is in place (for example, with `npm ls -g doc-detective`) before relying on it.
 
 ```yaml
 - uses: actions/checkout@v4
