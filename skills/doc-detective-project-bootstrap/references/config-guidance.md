@@ -51,6 +51,7 @@ Only add fields when:
 | Non-default file types only | `fileTypes` |
 | Using environment variables | `loadVariables` |
 | Running in CI | `runOn` for context |
+| Running test contexts in parallel | `concurrentRunners` |
 | Need relative URL resolution | `origin` |
 | Run **only** explicit inline/spec steps (no prose auto-detection) | `detectSteps: false` (default is `true`) |
 | Turn off post-run hints | `hints: { "enabled": false }` |
@@ -105,18 +106,17 @@ Set `true` to use your CPU core count (capped at 4). Set a number for explicit c
 ### CLI Flag
 
 ```bash
-doc-detective runTests --concurrent-runners 4
-doc-detective runTests --concurrent-runners       # bare flag = CPU core count (capped at 4)
+npx doc-detective --concurrent-runners 4
+npx doc-detective --concurrent-runners true   # CPU core count (capped at 4)
 ```
 
 Default: `1` (runs contexts sequentially).
 
 ### Limitations
 
-Keep `concurrentRunners` at `1` when:
+Keep `concurrentRunners` at `1` when tests share variables across contexts. A step's `variables` field writes to `process.env`, so a context that reads a value another context sets can run before that value exists.
 
-- **Using cross-context variables**: Step `variables` write to `process.env`, so tests with dependencies between contexts won't work correctly with multiple runners.
-- **Recording video**: Simultaneous `getDisplayMedia` captures can grab the wrong window. The runner logs a warning if `record` steps appear with concurrency > 1.
+Recordings don't need this: the `browser` engine records each context's own window, and Doc Detective runs `ffmpeg` recordings, which capture the whole display, one at a time on its own.
 
 ## Config By Project Type
 
