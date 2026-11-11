@@ -569,7 +569,7 @@ Wait for element:
 
 ## Step Assertions
 
-Every step asserts its own action result: if the action fails, the step fails. To check more than that built-in result, add a step-level `assertions` field. Doc Detective evaluates these custom assertions after the action runs and folds them into the step's status.
+Every step asserts its own action result, so if the action fails, the step fails. To check more than that built-in result, add a step-level `assertions` field. Doc Detective evaluates these custom assertions after the action runs and folds them into the step's status.
 
 Set `assertions` to a single condition expression or an array of expressions. Each expression resolves to true or false, and an array passes only when every expression passes (logical AND).
 
@@ -599,7 +599,7 @@ Set `assertions` to a single condition expression or an array of expressions. Ea
 **Status rules:** A step passes only when both its implicit and custom assertions pass. Custom assertions can introduce a failure, but they can't rescue a step that has already failed:
 
 - If the action's implicit check fails, Doc Detective skips the custom assertions and the step stays FAIL.
-- If the step was skipped, or the action errored before producing a result, Doc Detective skips the custom assertions and the step keeps its original status.
+- If the step was skipped, or the action errored before producing a result, Doc Detective skips the custom assertions. The step keeps its original status.
 - An expression that can't be resolved fails closed, so the assertion fails and the step fails.
 
 **Namespace:** The `$$outputs.*` namespace is distinct from the bare `$$name` expressions used to set the step-level `variables` and `outputs` objects. Assertions can reference only the current step's `$$outputs.*` and `$$platform`. A `$$steps.*` reference always fails closed, so the step fails, and Doc Detective logs a warning.
