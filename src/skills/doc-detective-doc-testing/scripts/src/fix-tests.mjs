@@ -274,7 +274,11 @@ function extractFailures(results) {
           seen.add(key);
 
           // What's left after the fields the runner adds is the step as authored
-          const { result, resultDescription, stepId, location, durationMs, outputs, assertions, ...step } = resultStep;
+          const {
+            result, resultDescription, resultCode, resultHint, stepId, location,
+            startedAt, durationMs, attempts, outputs, assertions, autoScreenshotPath,
+            ...step
+          } = resultStep;
           failures.push({
             testId: test.testId,
             stepId,

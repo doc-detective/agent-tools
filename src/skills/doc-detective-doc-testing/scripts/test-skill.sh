@@ -575,6 +575,28 @@ EOF
         skip "fix-tests not built (run build-skill.sh first)"
     fi
 
+    # Test 10k: a proposal shows the step as authored, without the fields the
+    # CLI 5 runner adds to a step result (shape from a real 5.0.0-v5-rc.16 run)
+    echo ""
+    echo "--- Test 10k: fix-tests proposals leave out runner fields ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        cat > "$TEST_OUTPUT_DIR/runner-fields-results.json" << 'EOF'
+{ "specs": [ { "contentPath": "runner-fields-spec.json", "tests": [ { "testId": "t", "contexts": [ { "contextId": "chrome", "steps": [
+  { "stepId": "s1", "description": "Find it", "find": { "selector": "#missing", "timeout": 3000 }, "location": { "line": 1 }, "outputs": {}, "assertions": [], "result": "FAIL", "resultDescription": "Couldn't find an element within `timeout` (3000 ms).", "startedAt": "2026-11-11T06:40:40.000Z", "durationMs": 3012, "attempts": 1, "autoScreenshotPath": "screenshots/01-find-s1.png", "resultCode": "assertion", "resultHint": "Did you mean `#missing-btn`?" }
+] } ] } ] } ] }
+EOF
+        OUTPUT=$(node ./scripts/fix-tests.js "$TEST_OUTPUT_DIR/runner-fields-results.json" --dry-run 2>&1 || true)
+        if ! echo "$OUTPUT" | grep -q '"selector": "#missing"'; then
+            fail "fix-tests should propose a fix for the failed step" "$OUTPUT"
+        elif echo "$OUTPUT" | grep -qE '"(startedAt|attempts|autoScreenshotPath|resultCode|resultHint)"'; then
+            fail "fix-tests proposals should leave out runner fields" "$OUTPUT"
+        else
+            pass "fix-tests proposals leave out runner fields"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
     # Test 10f: fix-tests rejects a file that isn't a results document
     echo ""
     echo "--- Test 10f: fix-tests rejects unrecognized results ---"
