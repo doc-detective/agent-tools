@@ -487,18 +487,12 @@ With options:
 
 ### record / stopRecord
 
-Record video of test execution. The `engine` field controls how recording is captured: `browser` records the Chrome viewport and is safe under concurrency, while `ffmpeg` records the screen and works for any application. If omitted, Doc Detective uses `browser` when a visible Chrome context is available and falls back to `ffmpeg` otherwise.
+Record video of test execution. The `engine` field controls how Doc Detective captures it. `browser` records the Chrome viewport and is safe under concurrency. `ffmpeg` records the screen and works for any application. If you omit `engine`, Doc Detective uses `browser` when a visible Chrome context is available and `ffmpeg` otherwise. On Android and iOS contexts, recording captures the device screen and `engine` doesn't apply.
 
 Start recording:
 
 ```json
 { "record": "test-execution.webm" }
-```
-
-Stop recording:
-
-```json
-{ "stopRecord": true }
 ```
 
 Select the recording engine with a shorthand string:
@@ -526,8 +520,14 @@ Configure the `ffmpeg` engine in detail:
 - `path`: Output file path. Supported extensions: `.mp4`, `.webm`, `.gif`
 - `engine`: Recording engine, as a string (`"browser"` or `"ffmpeg"`) or an object for full control. Defaults to `browser` when a visible Chrome context is available, otherwise `ffmpeg`.
 - `engine.name`: `"browser"` (Chrome viewport, concurrency-safe) or `"ffmpeg"` (screen capture, any application)
-- `engine.target`: What the `ffmpeg` engine captures — `"display"` (full screen, default), `"window"` (active window), or `"viewport"` (browser content area). Ignored by the `browser` engine. `window` and `viewport` are best-effort (captured full-screen, then cropped).
-- `engine.fps`: Capture frame rate for the `ffmpeg` engine (default: `30`)
+- `engine.target`: What the `ffmpeg` engine captures: `"display"` (full screen), `"window"` (active window), or `"viewport"` (browser content area). Defaults to `"window"` when the recording targets an app surface and `"display"` otherwise. `window` and `viewport` are best-effort: Doc Detective captures the full screen, then crops. The `browser` engine ignores this field.
+- `engine.fps`: Capture frame rate for the `ffmpeg` engine (default: `30`). The `browser` engine ignores this field.
+
+Stop recording:
+
+```json
+{ "stopRecord": true }
+```
 
 ---
 
