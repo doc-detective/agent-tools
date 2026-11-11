@@ -330,7 +330,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 These fields capture the command's output to a file and compare it against the saved copy on later runs (a snapshot test):
 - `path`: File path to save the command's output, relative to `directory`. Use an extension that matches the output, such as `.txt` for plain text or `.json` for JSON.
 - `directory`: Directory to save the output in. Created if it doesn't exist; defaults to your media directory.
-- `maxVariation`: Allowed fraction of text difference (0–1) between the current output and the previously saved output before the step fails. Ignored when no saved output exists at `path` yet. (default: `0`)
+- `maxVariation`: Allowed fraction of text difference (0–1) between the current output and the previously saved output. A larger difference makes the step a `WARNING`, not a `FAIL`. Ignored when no saved output exists at `path` yet. (default: `0`)
 - `overwrite`: When to replace the saved output — `"true"` (always), `"false"` (never), or `"aboveVariation"` (only when the difference exceeds `maxVariation`). Note these are **strings**, not booleans. (default: `"aboveVariation"`)
 
 ### runCode
