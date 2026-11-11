@@ -46,6 +46,28 @@ Click or tap an element.
 { "click": { "selector": "button.primary" } }
 ```
 
+**Long-press / press-and-hold** (`duration` in ms):
+
+```json
+{ "click": { "elementText": "Save", "duration": 800 } }
+```
+
+`duration` holds the press: a long-press (touch-and-hold) on mobile app surfaces, and press-and-hold of the button on desktop apps and browsers. Omit it for a normal click.
+
+**Right- or middle-click** (`button`):
+
+```json
+{ "click": { "selector": "#menu", "button": "right" } }
+```
+
+**Options:**
+- `selector` / `elementText` (and the other element locators): the element to click
+- `duration`: hold time in ms for a long-press or press-and-hold (integer ≥ 1; omit for a normal click)
+- `button`: `"left"` (default) | `"right"` | `"middle"`
+- `surface`: target a specific app surface, browser window, or tab instead of the active one
+
+A long-press uses the primary button, so combining `duration` with a non-`left` `button` fails the step. Touch surfaces (Android and iOS) have no right or middle button, and macOS app surfaces support `right` but not `middle`.
+
 ### find
 
 Check if an element exists. Can optionally interact with it.
@@ -103,12 +125,23 @@ Check if an element exists. Can optionally interact with it.
 }
 ```
 
+**Find and long-press** (pass an object to `click` to set `duration` or `button`):
+
+```json
+{
+  "find": {
+    "elementText": "List item",
+    "click": { "duration": 800 }
+  }
+}
+```
+
 **Options:**
 - `elementText`: Find the element by its display text (the object-form equivalent of the string shorthand, as in `{ "find": { "elementText": "Welcome" } }`)
 - `elementAria`: Find the element by its computed accessible name
 - `selector`: CSS selector
 - `timeout`: Wait time in ms
-- `click`: Click after finding (boolean)
+- `click`: Click after finding. Set `true`, or an object with `duration` (long-press hold in ms) and/or `button` (`"left"` | `"right"` | `"middle"`)
 - `moveTo`: Move cursor to element before interacting (boolean)
 - `type`: Type text after finding (object with `keys`)
 - `matchText`: After finding, assert the element *contains* this text (substring match; also accepts a `/regex/`)
@@ -119,6 +152,8 @@ Check if an element exists. Can optionally interact with it.
 - **Split text still matches.** Text that a framework such as React, Vue, or Svelte splits across several DOM text nodes still matches, and the result is the same on Chrome and Firefox regardless of how each browser's driver reports whitespace.
 - **Same rules elsewhere.** The same normalization applies to `elementAria` and to a selector's matched text.
 - **`matchText` is separate.** `matchText` asserts against an already-found element with a substring check and is unaffected.
+
+On mobile app surfaces, `find` scrolls the surface down to bring an off-screen element into view. It scrolls downward only, up to five times within the step's `timeout`. `click` and element-targeted `type` inherit this because they find the element first. Desktop app surfaces don't scroll, since their accessibility trees expose off-screen elements directly.
 
 ### dragAndDrop
 
@@ -132,6 +167,51 @@ Drag element from source to target.
   }
 }
 ```
+
+`dragAndDrop` moves one element onto another. To scroll or swipe a surface without a target element, use [`swipe`](#swipe).
+
+### swipe
+
+Scroll or swipe a surface. Works on browser and app surfaces, including mobile apps. `swipe` is the movement-only counterpart to `dragAndDrop`. Where `dragAndDrop` moves an element onto a target element, `swipe` moves the surface itself, by direction or between two pixel points.
+
+**Direction shorthand.** A string names the direction the finger moves. `"up"` moves content up to reveal what's below; `"left"` reveals content to the right (the next carousel card):
+
+```json
+{ "swipe": "up" }
+```
+
+**Directional with distance.** `distance` is a fraction of the surface's height (`up`/`down`) or width (`left`/`right`):
+
+```json
+{
+  "swipe": {
+    "direction": "up",
+    "distance": 0.8,
+    "surface": { "app": "myapp" }
+  }
+}
+```
+
+**Point-to-point.** Drag from one pixel coordinate to another. Points are literal pixels measured from the top-left corner (`0, 0`) of the app window or the browser viewport:
+
+```json
+{
+  "swipe": {
+    "from": { "x": 200, "y": 600 },
+    "to": { "x": 200, "y": 200 },
+    "duration": 250
+  }
+}
+```
+
+**Options:**
+- `direction`: `"up"` | `"down"` | `"left"` | `"right"` (required for the directional form)
+- `distance`: Fraction of the surface to travel, greater than `0` up to `1` (default `0.5`)
+- `from` / `to`: Start and end points as `{ "x": <px>, "y": <px> }`, both required for the point-to-point form (pixels from the top-left corner)
+- `duration`: Movement time in ms (integer ≥ 1; default `500`)
+- `surface`: Target a specific app surface, browser window, or tab instead of the active one. Object form only; the `"up"` string shorthand always swipes the active surface.
+
+Use `direction` (with `distance`) or `from`/`to`, never both. Prefer the directional form, whose fractional `distance` works at any resolution. Use the point-to-point form, in absolute pixels, only when you need a precise gesture path.
 
 ---
 
@@ -177,6 +257,37 @@ Type text into an element. Supports special keys.
 - `$F1$` through `$F12$` - Function keys
 - `$INSERT$` - Insert
 - `$SUBTRACT$` - Numpad subtract
+
+#### Mobile device keys
+
+On a mobile app surface, `type` also presses the device's own buttons. These device keys don't need element criteria, so send them on their own:
+
+```json
+{ "type": "$BACK$" }
+```
+
+This example is Android-only: iOS rejects `$BACK$`, as the platform notes below explain.
+
+- `$BACK$` - System back button
+- `$HOME$` - Device home button
+- `$APP_SWITCH$` - App switcher / recents
+- `$VOLUME_UP$`, `$VOLUME_DOWN$` - Volume buttons
+
+On a mobile app surface, `$HOME$` presses the device home button. In a browser or desktop text field, it still moves the cursor to the start of the line.
+
+Typing plain text and editing keys works differently on each platform:
+
+- **Android** types criteria-less text into the currently focused element, so you can send `{ "type": "search text" }` right after focusing a field. It maps the editing keys above to device key events and accepts `$BACK$`, `$HOME$`, `$APP_SWITCH$`, and the volume keys.
+- **iOS** still requires element criteria to type text. Target the field with `elementText` (or another locator) and pass `keys`, which takes a string or an array of strings. iOS folds `$ENTER$`, `$TAB$`, `$BACKSPACE$`, and `$DELETE$` into the typed text and presses `$HOME$` and the volume keys as physical buttons. It rejects `$BACK$`, because iOS has no system back button, so click the app's own back control instead. It also rejects `$APP_SWITCH$`, because XCUITest exposes no app-switcher button.
+
+```json
+{
+  "type": {
+    "keys": ["search text", "$ENTER$"],
+    "elementText": "Search field"
+  }
+}
+```
 
 ---
 
