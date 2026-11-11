@@ -585,7 +585,7 @@ Set `assertions` to a single condition expression or an array of expressions. Ea
 
 **Reference the step's outputs:** Custom assertions read the current step's outputs through the `$$outputs.*` namespace, plus `$$platform` for the operating system (`linux`, `mac`, or `windows`). Available outputs depend on the action: `runShell` and `runCode` expose `$$outputs.exitCode`, `$$outputs.stdio.stdout`, and `$$outputs.stdio.stderr`, while `checkLink` exposes `$$outputs.statusCode`.
 
-**Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus three word operators. `contains` checks for a substring, `oneOf` checks membership in a list such as `[0, 1]`, and `matches` tests a regular expression. Write string values without quotes, as in `$$platform != windows`.
+**Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus three word operators. `contains` checks for a substring, `oneOf` checks membership in a list such as `[0, 1]`, and `matches` tests a regular expression pattern, as in `$$outputs.stdio.stdout matches "^hello"`. String values work quoted or bare, so `$$platform != windows` and `$$platform != "windows"` are equivalent.
 
 ```json
 {
