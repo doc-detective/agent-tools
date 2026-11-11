@@ -104,11 +104,13 @@ These are the only valid action types:
 - `runCode` - `{ language: string, code: string, background?: { name: string, waitUntil?: object }, timeout?: number }`
 - `startSurface` - `{ app: string, name?: string, args?: string[], workingDirectory?: string, env?: object, waitUntil?: { delayMs?: number, find?: object }, timeout?: number, driverOptions?: object }`. Launches a native Windows or macOS desktop app as an automation surface; other platforms are SKIPPED. On macOS, launch by `.app` path or bundle ID, and grant the process running Doc Detective the Accessibility permission (System Settings → Privacy & Security → Accessibility) or the context is SKIPPED. `env` is supported on macOS but rejected on Windows; `workingDirectory` is Windows-only. `elementText`/`elementId`/`elementAria` and native XPath/`~id` selectors target elements (CSS is browser-only).
 - `closeSurface` - Process name string, browser surface `{ browser, window? | tab? }`, native app surface `{ app }`, or an array of these. Closes background processes, browser tabs/windows, or apps; missing surfaces are a no-op.
+- `runBrowserScript` - JS string or `{ script: string, args?: any[], output?: string }` (runs in the browser page; `args` accepts any JSON-serializable values; return value captured into `outputs.result`)
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
 - `record` - Path string or object
 - `stopRecord` - Boolean true
+- `annotate` - `{ add?: [...], update?: [...], clear?: true | string[] }` (at least one). Draws persistent annotations into the page for recordings/screenshots; browser-only (skipped without a page)
 
 ### Validation Failure Handling
 
