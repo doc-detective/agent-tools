@@ -250,5 +250,5 @@ When docs describe submitting forms:
 ## Related Resources
 
 - Doc Detective actions: ../../../doc-detective-doc-testing/references/actions.md
-- Test structure: https://doc-detective.com/docs/get-started/tests
-- Detected tests: https://doc-detective.com/docs/get-started/tests#detected-tests
+- Test structure: https://docs.doc-detective.com/docs/get-started/how-testing-works
+- Detected tests: https://docs.doc-detective.com/docs/test-docs/detected

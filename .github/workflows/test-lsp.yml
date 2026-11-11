@@ -1,0 +1,45 @@
+name: Test LSP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/lsp/**"
+      - "src/lsp-servers.json"
+      - "build.js"
+      - "plugins/doc-detective/.claude-plugin/plugin.json"
+      - "plugins/doc-detective/lsp/**"
+      - "tests/hooks/lsp-plugin.test.js"
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "src/lsp/**"
+      - "src/lsp-servers.json"
+      - "build.js"
+      - "plugins/doc-detective/.claude-plugin/plugin.json"
+      - "plugins/doc-detective/lsp/**"
+      - "tests/hooks/lsp-plugin.test.js"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build artifacts
+        run: npm run build:no-scripts
+
+      - name: Validate LSP plugin wiring
+        run: npm run test:lsp-plugin
