@@ -461,7 +461,19 @@ Attach routing handlers to a step to control what runs next based on its outcome
 
 Each entry pairs an optional `if` condition with exactly one routing action (`continue`, `stop`, `retry`, or `goToStep`). The first entry whose condition holds wins; an entry with no `if` always matches. If no entry matches, the step's status default applies.
 
-Routing is opt-in. A step with no handlers uses the defaults, which reproduce today's behavior exactly: `PASS`, `WARNING`, and `SKIPPED` continue to the next step, and `FAIL` stops the test.
+An `if` is a condition expression, or an array of expressions that must all hold. It can read the step's own outputs through `$$outputs.*` and the operating system through `$$platform` (`linux`, `mac`, or `windows`), with the operators `==`, `!=`, `>`, `>=`, `<`, `<=`, `contains`, `oneOf`, and `matches`:
+
+```json
+{
+  "runShell": { "command": "./scripts/smoke-test.sh" },
+  "onFail": [
+    { "if": "$$outputs.exitCode == 2", "continue": true },
+    { "stop": "test" }
+  ]
+}
+```
+
+Routing is opt-in. A step with no handlers uses the defaults: `PASS`, `WARNING`, and `SKIPPED` continue to the next step, and `FAIL` stops the test.
 
 Routing chooses flow, not the verdict. A step that fails still reports `FAIL` and still fails the test even when its `onFail` handler routes `continue`. Later steps run, but the rolled-up result stays failed.
 
@@ -470,7 +482,7 @@ A handler fires only if the step was reached. A step that never ran because an e
 ### continue and stop
 
 - `continue` — proceed to the next step. Use it to override a status default, for example to keep going after a failure.
-- `stop` — halt execution at the given scope. `stop: test` ends the current test's remaining steps. `stop: spec` ends the spec's remaining tests; `stop: run` currently behaves as `stop: spec`.
+- `stop` — halt execution at the given scope. `{ "stop": "test" }` ends the current test's remaining steps. `{ "stop": "spec" }` ends the spec's remaining tests, and `{ "stop": "run" }` behaves the same as `"spec"`.
 
 ```json
 {
@@ -500,7 +512,7 @@ A `retry` entry re-runs the step until it no longer routes `retry` or the retry 
 - `delay`: Milliseconds to wait before each retry (default `0`).
 - `backoff`: `"fixed"` (default) or `"exponential"`.
 
-Once retries are exhausted, Doc Detective re-resolves routing with `retry` entries skipped to find the terminal action. So `onFail: [{ "retry": { "limit": 2 } }]` retries twice and then stops (the `FAIL` default), while `onFail: [{ "retry": { "limit": 1 } }, { "continue": true }]` retries once and then continues. `retry` is a no-op under `onSkip`. When a step is retried, its result carries an additive `attempts` field with the total run count.
+Once retries are exhausted, Doc Detective re-resolves routing with `retry` entries skipped to find the terminal action. So `onFail: [{ "retry": { "limit": 2 } }]` retries twice and then stops (the `FAIL` default), while `onFail: [{ "retry": { "limit": 1 } }, { "continue": true }]` retries once and then continues. `retry` is a no-op under `onSkip`. When a step is retried, its result includes an `attempts` field with the total run count.
 
 ### goToStep
 
@@ -518,9 +530,9 @@ A `goToStep` entry jumps execution to another step in the same test and continue
 
 The target matches by `stepId` within the same test; if two steps share a `stepId`, the first wins. An unknown target is a misconfiguration — Doc Detective records a `FAIL` and stops rather than report green on a typo.
 
-A `goToStep` can point at an earlier step, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number; the first run omits `visit`. A per-test visit cap bounds loops, so a self-referential jump records a `FAIL` and stops instead of hanging. As with the other handlers, a jump never changes a verdict — a backward jump that re-runs a step which failed on its first visit leaves the test failed.
+A `goToStep` can point at an earlier step, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number; the first run omits `visit`. A visit cap of `1000 × (number of steps) + 1000` step runs per test bounds loops, so a self-referential jump records a `FAIL` and stops instead of hanging. As with the other handlers, a jump never changes a verdict — a backward jump that re-runs a step which failed on its first visit leaves the test failed.
 
-`goToTest` is also accepted in a step handler and validates, but at step scope it is not yet executed. To jump between tests, use a test-level handler.
+A step handler doesn't jump between tests. If a step entry with `goToTest` matches, Doc Detective applies the step's status default instead and ignores the later entries. To jump between tests, use a test-level handler.
 
 ---
 
