@@ -386,7 +386,7 @@ Stop recording:
 
 ### annotate
 
-Draw annotations onto the page so they persist across steps, survive navigation, and appear in any recordings and screenshots taken while they're visible. Unlike a screenshot's own `annotations`, which last only for that capture, these stay on screen until an `annotate` step clears them, their `duration` elapses, or the context ends. Browser only: on an app-only context with no page to draw into, the step is skipped rather than failed.
+Draw annotations onto the page so they persist across steps, survive navigation, and appear in any recordings and screenshots taken while they're visible. A screenshot's own `annotations` last only for that capture. These stay on screen until an `annotate` step clears them, their `duration` elapses, or the context ends. Browser only: on an app-only context with no page to draw into, the step is skipped rather than failed.
 
 The value is an object with **at least one** of `add`, `update`, or `clear`:
 
@@ -399,7 +399,7 @@ The value is an object with **at least one** of `add`, `update`, or `clear`:
 ```
 
 - `add`: Array of annotation objects to draw. Give an annotation an `id` to update or clear it later; adding one with an id already on screen replaces it.
-- `update`: Array of annotation objects to change, each matched by `id` (`id` is required on every entry). Each entry replaces the annotation with that id. Updating an id that isn't on screen fails the step.
+- `update`: Array of annotation objects to change, each matched by `id` (`id` is required on every entry). Each entry replaces the annotation with that id. Updating an id that isn't on screen fails the step. An update is a full replacement, so fields you leave out reset to their defaults: repeat `track`, `transition`, `style`, and any other field you want to keep.
 - `clear`: `true` clears every annotation; an array of id strings clears just those. Clearing an id that isn't on screen does nothing.
 
 `clear` runs before `add`, so `{ "clear": ["a"], "add": [{ "id": "a", ... }] }` replaces `a`.
@@ -413,21 +413,27 @@ The value is an object with **at least one** of `add`, `update`, or `clear`:
 | `badge` | Mark the target with a small numbered/lettered marker (`label` sets the characters) |
 | `callout` | Label the target with a text box and leader line (`label` sets the text) |
 | `blur` | Obscure the target to redact it; pair with `all` to redact every match |
-| `text` | Place a standalone text box (`label` sets the text) |
+| `text` | Place a standalone text box at a fixed position (`label` sets the text; the target must be `{ "position": ... }`) |
 
-A **target** is a string (display text or selector), a detailed find object (`selector`, `elementText`, `elementId`, `elementTestId`, `elementClass`, `elementAttribute`, `elementAria` — at least one; `selector`/`elementClass`/`elementAttribute` are browser-only), or `{ "position": ... }` for a fixed spot. A `text` box has no element, so target it by position, e.g. `{ "text": { "position": "top-right" }, "label": "Demo data" }`.
+A **target** takes one of three forms:
+
+- A string: display text or a selector.
+- A detailed find object with at least one of `selector`, `elementText`, `elementId`, `elementTestId`, `elementClass`, `elementAttribute`, or `elementAria`. `selector`, `elementClass`, and `elementAttribute` are browser-only.
+- `{ "position": ... }` for a fixed spot.
+
+A `text` box has no element, so target it by position, for example `{ "text": { "position": "top-right" }, "label": "Demo data" }`.
 
 Shared annotation fields:
 - `label`: Text to display. Required by `badge`, `callout`, and `text`; ignored by the others.
 - `id`: Handle (pattern `^[A-Za-z0-9_-]+$`) so a later `annotate` step can update or clear this annotation.
-- `style`: Visual overrides, all optional. `color` and `background` are CSS color strings (hex, rgb, or named; `background` also takes `transparent`); `fontFamily` is a string; `opacity` is 0–1; `strokeWidth`, `fontSize`, `radius`, `padding`, `maxWidth`, and `intensity` are numbers in pixels (except `intensity`, blur strength ≥ 1). Anything unset falls back to the resolved theme.
-- `position`: Placement relative to the target — a named region (`top`, `bottom`, `left`, `right`, `center`, `top-left`, `top-right`, `bottom-left`, `bottom-right`), an absolute point `{ "x": number, "y": number }`, or a nudge `{ "offset": { "x": number, "y": number } }`.
+- `style`: Visual overrides, all optional. `color` and `background` are CSS color strings (hex, rgb, or named), and `background` also takes `transparent`. `fontFamily` is a string, and `opacity` is 0–1. `strokeWidth`, `fontSize`, `radius`, `padding`, and `maxWidth` are numbers in pixels, and `intensity` is the blur strength (≥ 1). Anything unset falls back to the resolved theme.
+- `position`: Placement relative to the target. Use a named region (`top`, `bottom`, `left`, `right`, `center`, `top-left`, `top-right`, `bottom-left`, `bottom-right`), an absolute point `{ "x": number, "y": number }`, or a nudge `{ "offset": { "x": number, "y": number } }`.
 - `all`: If `true`, annotate every match instead of only the first. Most useful with `blur`.
 
 Fields that apply to recordings and are inert in still screenshots:
 - `track`: Follow the element as the page scrolls or reflows.
-- `transition`: How the annotation enters and leaves — `enter` (`none`, `fade`, `pop`, `draw`), `exit` (`none`, `fade`), and `durationMs`.
-- `duration`: Milliseconds to stay up before clearing itself, with no paired `clear` step.
+- `transition`: How the annotation enters and leaves: `enter` (`none`, `fade`, `pop`, `draw`), `exit` (`none`, `fade`), and `durationMs`, the animation length.
+- `duration`: Milliseconds the annotation stays visible before it clears itself, with no paired `clear` step. This is its lifespan, not the animation length in `transition.durationMs`.
 
 Narrate a recording, moving the same annotations from field to field:
 
@@ -454,7 +460,7 @@ Narrate a recording, moving the same annotations from field to field:
 }
 ```
 
-Redact every match for a whole recording. Set `transition.enter` to `none` on a redaction blur — an annotation that fades in leaves the content readable for the length of the animation, and every frame is in the recording:
+Redact every match for a whole recording. Set `transition.enter` to `none` on a redaction blur. An annotation that fades in leaves the content readable while it animates, and every frame lands in the recording:
 
 ```json
 {
@@ -472,7 +478,7 @@ Redact every match for a whole recording. Set `transition.enter` to `none` on a 
 }
 ```
 
-**Output:** `$$annotationCount` — the number of annotations on screen after the step.
+**Output:** `$$annotationCount`, the number of annotations on screen after the step.
 
 ---
 
