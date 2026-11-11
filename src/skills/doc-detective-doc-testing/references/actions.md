@@ -454,10 +454,10 @@ Wait for element:
 
 Attach routing handlers to a step to control what runs next based on its outcome. Each handler is an array of routing entries, and Doc Detective evaluates the handler that matches the step's result:
 
-- `onPass` — after the step passes
-- `onFail` — after the step fails
-- `onWarning` — after the step produces a warning
-- `onSkip` — after the step is reached but skipped (blocked as `unsafe`, or its guard `if` evaluated false)
+- `onPass`: after the step passes
+- `onFail`: after the step fails
+- `onWarning`: after the step produces a warning
+- `onSkip`: after the step is reached but skipped (blocked as `unsafe`, or its guard `if` evaluated false)
 
 Each entry pairs an optional `if` condition with exactly one routing action (`continue`, `stop`, `retry`, or `goToStep`). The first entry whose condition holds wins; an entry with no `if` always matches. If no entry matches, the step's status default applies.
 
@@ -481,8 +481,8 @@ A handler fires only if the step was reached. A step that never ran because an e
 
 ### continue and stop
 
-- `continue` — proceed to the next step. Use it to override a status default, for example to keep going after a failure.
-- `stop` — halt execution at the given scope. `{ "stop": "test" }` ends the current test's remaining steps. `{ "stop": "spec" }` ends the spec's remaining tests, and `{ "stop": "run" }` behaves the same as `"spec"`.
+- `continue`: proceed to the next step. Use it to override a status default, for example to keep going after a failure.
+- `stop`: halt execution at the given scope. `{ "stop": "test" }` ends the current test's remaining steps. `{ "stop": "spec" }` ends the spec's remaining tests, and `{ "stop": "run" }` behaves the same as `"spec"`.
 
 ```json
 {
@@ -528,9 +528,9 @@ A `goToStep` entry jumps execution to another step in the same test and continue
 }
 ```
 
-The target matches by `stepId` within the same test; if two steps share a `stepId`, the first wins. An unknown target is a misconfiguration — Doc Detective records a `FAIL` and stops rather than report green on a typo.
+The target matches by `stepId` within the same test; if two steps share a `stepId`, the first wins. An unknown target is a misconfiguration, so Doc Detective records a `FAIL` and stops rather than report green on a typo.
 
-A `goToStep` can point at an earlier step, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number; the first run omits `visit`. A visit cap of `1000 × (number of steps) + 1000` step runs per test bounds loops, so a self-referential jump records a `FAIL` and stops instead of hanging. As with the other handlers, a jump never changes a verdict — a backward jump that re-runs a step which failed on its first visit leaves the test failed.
+A `goToStep` can point at an earlier step, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number; the first run omits `visit`. A visit cap of `1000 × (number of steps) + 1000` step runs per test bounds loops. A self-referential jump hits the cap, records a `FAIL`, and stops instead of hanging. As with the other handlers, a jump never changes a verdict. A backward jump that re-runs a step which failed on its first visit leaves the test failed.
 
 A step handler doesn't jump between tests. If a step entry with `goToTest` matches, Doc Detective applies the step's status default instead and ignores the later entries. To jump between tests, use a test-level handler.
 
