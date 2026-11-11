@@ -387,7 +387,7 @@ Perform HTTP requests for API testing.
 
 ### runShell
 
-Execute native shell commands.
+Execute native shell commands. By default, commands run in `bash` on every platform, including Windows, so the same POSIX syntax works everywhere. On Windows, `bash` resolves to Git Bash. If Git for Windows isn't installed, Doc Detective downloads a portable copy the first time a test needs one.
 
 ```json
 {
@@ -432,6 +432,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 
 **Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid and Doc Detective silently skips it):
 - `command`: Shell command to execute (required)
+- `shell`: Shell to run the command in: `bash` (default), `cmd`, or `powershell`. `cmd` and `powershell` are Windows-only; gate those steps to Windows with a `runOn` context (for example, `"runOn": [{ "platforms": ["windows"] }]`) if the spec also runs elsewhere. If unset, falls back to the config-level `shell`, which also defaults to `bash`.
 - `args`: Array of string arguments for the command (default: `[]`)
 - `exitCodes`: Expected exit codes (default: `[0]`). The step fails if the actual exit code is not in this list.
 - `stdio`: Expected content in the command's **stdout or stderr** (partial match). Plain string, or a `/regex/` delimited by forward slashes.
@@ -456,6 +457,52 @@ Assemble and run code snippets.
   }
 }
 ```
+
+### runBrowserScript
+
+Execute JavaScript in the browser page context. The script runs against the live page under test, so it has access to `document`, `window`, and the DOM. Use it to read computed DOM state, seed app state (such as `localStorage`), or assert on values only reachable from JS. This is distinct from `runCode`, which runs Node, Python, or Bash on the host machine.
+
+Like `goTo`, `find`, and `click`, it needs a live page, so it runs only in a browser context.
+
+**String form** (use `return` to capture a value):
+
+```json
+{ "runBrowserScript": "return document.title;" }
+```
+
+**Object form**:
+
+```json
+{
+  "runBrowserScript": {
+    "script": "return arguments[0] + arguments[1];",
+    "args": ["foo", "bar"],
+    "output": "foobar"
+  }
+}
+```
+
+The script's return value is captured into the step's `outputs.result`, so it flows into the step-level `variables` plumbing via `$$result`:
+
+```json
+{
+  "runBrowserScript": "return window.localStorage.getItem('token');",
+  "variables": { "TOKEN": "$$result" }
+}
+```
+
+**Options:**
+- `script`: JavaScript to evaluate in the page (required in object form). Values from `args` are available via the `arguments` object (`arguments[0]`, `arguments[1]`, ...).
+- `args`: Array of values passed positionally to the script. Each item may be any JSON-serializable value (string, number, boolean, null, object, or array).
+- `output`: Expected content in the serialized return value (non-string values are serialized to JSON before matching). Supports a substring or a regular expression that starts and ends with `/`, like `/^https?:\/\//`.
+- `path`: File path to save the serialized return value, relative to `directory`
+- `directory`: Directory to save the return value (defaults to your media directory)
+- `maxVariation`: Allowed fraction (0–1) of difference from a previously saved value before the step returns a warning
+- `overwrite`: Whether to rewrite saved output: `"true"`, `"false"`, or `"aboveVariation"` (default `"aboveVariation"`)
+- `timeout`: Max time in ms the script may run (default 60000)
+- `surface`: The browser window or tab to run the script in. Omit it to run in the active tab.
+
+Running arbitrary JavaScript can modify application state. Mark a step `unsafe: true` when its script could have side effects. Unsafe steps run only when the `allowUnsafeSteps` config option or the `--allow-unsafe` flag allows them, and are skipped otherwise.
 
 ---
 
@@ -487,7 +534,7 @@ With options:
 
 ### record / stopRecord
 
-Record video of test execution.
+Record video of test execution. The `engine` field controls how Doc Detective captures it. `browser` records the Chrome viewport and is safe under concurrency. `ffmpeg` records the screen and works for any application. If you omit `engine`, Doc Detective uses `browser` when a visible Chrome context is available and `ffmpeg` otherwise. On Android and iOS contexts, recording captures the device screen and `engine` doesn't apply.
 
 Start recording:
 
@@ -495,11 +542,176 @@ Start recording:
 { "record": "test-execution.webm" }
 ```
 
+Select the recording engine with a shorthand string:
+
+```json
+{ "record": { "path": "test-execution.mp4", "engine": "ffmpeg" } }
+```
+
+Configure the `ffmpeg` engine in detail:
+
+```json
+{
+  "record": {
+    "path": "test-execution.mp4",
+    "engine": {
+      "name": "ffmpeg",
+      "target": "window",
+      "fps": 60
+    }
+  }
+}
+```
+
+**Options:**
+- `path`: Output file path. Supported extensions: `.mp4`, `.webm`, `.gif`
+- `engine`: Recording engine, as a string (`"browser"` or `"ffmpeg"`) or an object for full control. Defaults to `browser` when a visible Chrome context is available, otherwise `ffmpeg`.
+- `engine.name`: `"browser"` (Chrome viewport, concurrency-safe) or `"ffmpeg"` (screen capture, any application)
+- `engine.target`: What the `ffmpeg` engine captures: `"display"` (full screen), `"window"` (active window), or `"viewport"` (browser content area). Defaults to `"window"` when the recording targets an app surface and `"display"` otherwise. `window` and `viewport` are best-effort: Doc Detective captures the full screen, then crops. The `browser` engine ignores this field.
+- `engine.fps`: Capture frame rate for the `ffmpeg` engine (default: `30`). The `browser` engine ignores this field.
+
 Stop recording:
 
 ```json
 { "stopRecord": true }
 ```
+
+Each `record` step must be paired with a later `stopRecord` step.
+
+#### Named and overlapping recordings
+
+A single test context can have more than one recording active at the same time. Give a recording a `name` so that a later `stopRecord` can target it:
+
+```json
+{ "record": { "path": "checkout-flow.mp4", "name": "checkout" } }
+```
+
+Names must be unique among recordings that are active at the same time. A recording started without a `name` is anonymous.
+
+`stopRecord` decides which recording to stop based on its value:
+
+| Value | Stops |
+|-------|-------|
+| `true` or `null` | The most recently started active recording (LIFO) |
+| `"<name>"` | The named recording, wherever it sits in the active set |
+| `{ "name": "<name>" }` | The named recording (object form, equivalent to the string) |
+
+Stop a specific recording by name:
+
+```json
+{ "stopRecord": "checkout" }
+```
+
+```json
+{ "stopRecord": { "name": "checkout" } }
+```
+
+Doc Detective catches a reused `name` before the run starts when a recording by that name is still active. It skips the affected test across all contexts with a warning, rather than failing partway through.
+
+#### Auto-record every context
+
+Set `autoRecord: true` at the config, spec, or test level, or pass `--auto-record` on the CLI. Doc Detective then records a full video of every browser-based test context, alongside any explicit `record` steps. Pass `--no-auto-record` to override a config file that enables it.
+
+- **Precedence:** test > spec > config.
+- **Engine:** always `ffmpeg`. The recording wraps the whole context.
+- **Path:** `<output>/.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/recordings/<contextId>.mp4`. The same context maps to the same path in every run, for run-over-run comparison.
+- **Stopping:** An untargeted `stopRecord` never stops the automatic recording. Doc Detective finalizes it at the end of the context.
+
+### annotate
+
+Draw annotations onto the page so they persist across steps, survive navigation, and appear in any recordings and screenshots taken while they're visible. A screenshot's own `annotations` last only for that capture. These stay on screen until an `annotate` step clears them, their `duration` elapses, or the context ends. Browser only: on an app-only context with no page to draw into, the step is skipped rather than failed.
+
+The value is an object with **at least one** of `add`, `update`, or `clear`:
+
+```json
+{ "annotate": { "add": [{ "outline": "#submit-button" }] } }
+```
+
+```json
+{ "annotate": { "clear": true } }
+```
+
+- `add`: Array of annotation objects to draw. Give an annotation an `id` to update or clear it later; adding one with an id already on screen replaces it.
+- `update`: Array of annotation objects to change, each matched by `id` (`id` is required on every entry). Each entry replaces the annotation with that id. Updating an id that isn't on screen fails the step. An update is a full replacement, so fields you leave out reset to their defaults: repeat `track`, `transition`, `style`, and any other field you want to keep.
+- `clear`: `true` clears every annotation; an array of id strings clears just those. Clearing an id that isn't on screen does nothing.
+
+`clear` runs before `add`, so `{ "clear": ["a"], "add": [{ "id": "a", ... }] }` replaces `a`.
+
+**Annotation object.** Each annotation names **exactly one** type, whose value is the target it points at:
+
+| Type | Purpose |
+|------|---------|
+| `outline` | Draw a box around the target |
+| `arrow` | Point an arrow at the target |
+| `badge` | Mark the target with a small numbered/lettered marker (`label` sets the characters) |
+| `callout` | Label the target with a text box and leader line (`label` sets the text) |
+| `blur` | Obscure the target to redact it; pair with `all` to redact every match |
+| `text` | Place a standalone text box at a fixed position (`label` sets the text; the target must be `{ "position": ... }`) |
+
+A **target** takes one of three forms:
+
+- A string: display text or a selector.
+- A detailed find object with at least one of `selector`, `elementText`, `elementId`, `elementTestId`, `elementClass`, `elementAttribute`, or `elementAria`. `selector`, `elementClass`, and `elementAttribute` are browser-only.
+- `{ "position": ... }` for a fixed spot.
+
+A `text` box has no element, so target it by position, for example `{ "text": { "position": "top-right" }, "label": "Demo data" }`.
+
+Shared annotation fields:
+- `label`: Text to display. Required by `badge`, `callout`, and `text`; ignored by the others.
+- `id`: Handle (pattern `^[A-Za-z0-9_-]+$`) so a later `annotate` step can update or clear this annotation.
+- `style`: Visual overrides, all optional. `color` and `background` are CSS color strings (hex, rgb, or named), and `background` also takes `transparent`. `fontFamily` is a string, and `opacity` is 0–1. `strokeWidth`, `fontSize`, `radius`, `padding`, and `maxWidth` are numbers in pixels, and `intensity` is the blur strength (≥ 1). Anything unset falls back to the resolved theme.
+- `position`: Placement relative to the target. Use a named region (`top`, `bottom`, `left`, `right`, `center`, `top-left`, `top-right`, `bottom-left`, `bottom-right`), an absolute point `{ "x": number, "y": number }`, or a nudge `{ "offset": { "x": number, "y": number } }`.
+- `all`: If `true`, annotate every match instead of only the first. Most useful with `blur`.
+
+Fields that apply to recordings and are inert in still screenshots:
+- `track`: Follow the element as the page scrolls or reflows.
+- `transition`: How the annotation enters and leaves: `enter` (`none`, `fade`, `pop`, `draw`), `exit` (`none`, `fade`), and `durationMs`, the animation length.
+- `duration`: Milliseconds the annotation stays visible before it clears itself, with no paired `clear` step. This is its lifespan, not the animation length in `transition.durationMs`.
+
+Narrate a recording, moving the same annotations from field to field:
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        { "record": "sso-setup.webm" },
+        { "annotate": { "add": [
+          { "id": "step", "badge": "#idp", "label": "1" },
+          { "id": "guide", "callout": "#idp", "label": "Pick your provider first", "position": "right", "track": true }
+        ] } },
+        { "click": "#idp" },
+        { "annotate": { "update": [
+          { "id": "step", "badge": "#metadata-url", "label": "2" },
+          { "id": "guide", "callout": "#metadata-url", "label": "Paste the metadata URL" }
+        ] } },
+        { "annotate": { "clear": true } },
+        { "stopRecord": true }
+      ]
+    }
+  ]
+}
+```
+
+Redact every match for a whole recording. Set `transition.enter` to `none` on a redaction blur. An annotation that fades in leaves the content readable while it animates, and every frame lands in the recording:
+
+```json
+{
+  "annotate": {
+    "add": [
+      {
+        "id": "redact",
+        "blur": { "selector": ".account-id" },
+        "all": true,
+        "track": true,
+        "transition": { "enter": "none" }
+      }
+    ]
+  }
+}
+```
+
+**Output:** `$$annotationCount`, the number of annotations on screen after the step.
 
 ---
 
@@ -567,54 +779,42 @@ Wait for element:
 
 ---
 
-## Conditional Execution (`if`)
+## Step Assertions
 
-Add an `if` condition to a spec, test, or step to run it only when the condition holds. When the condition is false, Doc Detective marks that unit SKIPPED instead of running it.
+Every step asserts its own action result, so if the action fails, the step fails. To check more than that built-in result, add a step-level `assertions` field. Doc Detective evaluates these custom assertions after the action runs and folds them into the step's status.
 
-An `if` decides *whether* a unit runs—it never produces a pass or a fail. A skipped unit was reached but not run, which is distinct from a FAIL, and skipping a step doesn't stop the steps that follow.
-
-`if` is opt-in. A spec, test, or step without an `if` behaves exactly as it does today.
-
-Set `if` to a single condition expression or an array of expressions. An array passes only when every expression passes (logical AND).
+Set `assertions` to a single condition expression or an array of expressions. Each expression resolves to true or false, and an array passes only when every expression passes (logical AND).
 
 ```json
 {
-  "if": "$$platform != windows",
-  "runShell": { "command": "./scripts/setup.sh" }
-}
-```
-
-**Where you can use it:**
-
-- **Spec-level `if`**: when false, every test in the spec is skipped and none run.
-- **Test-level `if`**: when false, that test is skipped across all its contexts; sibling tests are unaffected.
-- **Step-level `if`**: when false, that step is skipped before its action runs; later steps still run.
-
-**What conditions can reference:**
-
-- `$$platform` — the operating system (`linux`, `mac`, or `windows`) — at every scope.
-- `$$steps.<stepId>.outputs.*` — a prior step's outputs — at step scope only. Give the earlier step a `stepId`, then read its outputs in a later step's `if`:
-
-```json
-{
-  "steps": [
-    { "stepId": "build", "runShell": { "command": "npm run build" } },
-    {
-      "if": "$$steps.build.outputs.exitCode == 0",
-      "runShell": { "command": "npm run deploy" }
-    }
+  "runShell": { "command": "node -e \"console.log('hello world')\"" },
+  "assertions": [
+    "$$outputs.exitCode == 0",
+    "$$outputs.stdio.stdout contains \"hello\""
   ]
 }
 ```
 
-A spec- or test-level `if` can't reference `$$steps.*`. Step outputs don't exist before any step has run, so such a condition always fails closed and the spec or test is always skipped. Use `$$steps.*` only in a step-level `if`.
+**Reference the step's outputs:** Custom assertions read the current step's outputs through the `$$outputs.*` namespace, plus `$$platform` for the operating system (`linux`, `mac`, or `windows`). Available outputs depend on the action: `runShell` and `runCode` expose `$$outputs.exitCode`, `$$outputs.stdio.stdout`, and `$$outputs.stdio.stderr`, while `checkLink` exposes `$$outputs.statusCode`.
 
-**Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus the word operators `contains`, `oneOf`, and `matches`.
+**Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus three word operators. `contains` checks for a substring, `oneOf` checks membership in a list such as `[0, 1]`, and `matches` tests a regular expression pattern, as in `$$outputs.stdio.stdout matches "^hello"`. String values work quoted or bare, so `$$platform != windows` and `$$platform != "windows"` are equivalent.
 
-**Evaluation rules:**
+```json
+{
+  "assertions": [
+    "$$outputs.exitCode oneOf [0, 1]",
+    "$$platform != windows"
+  ]
+}
+```
 
-- An empty or absent `if` counts as no condition, so the unit runs.
-- A condition that can't be resolved fails closed: the `if` evaluates to false and the unit is skipped. A step-level `if` that references a prior step which was itself skipped also fails closed, since a skipped step records no outputs.
+**Status rules:** A step passes only when both its implicit and custom assertions pass. Custom assertions can introduce a failure, but they can't rescue a step that has already failed:
+
+- If the action's implicit check fails, Doc Detective skips the custom assertions and the step stays FAIL.
+- If the step was skipped, or the action errored before producing a result, Doc Detective skips the custom assertions. The step keeps its original status.
+- An expression that can't be resolved fails closed, so the assertion fails and the step fails.
+
+**Namespace:** The `$$outputs.*` namespace is distinct from the bare `$$name` expressions used to set the step-level `variables` and `outputs` objects. Assertions can reference only the current step's `$$outputs.*` and `$$platform`. A `$$steps.*` reference always fails closed, so the step fails, and Doc Detective logs a warning.
 
 ---
 
@@ -701,6 +901,63 @@ The target matches by `stepId` within the same test; if two steps share a `stepI
 A `goToStep` can point at an earlier step, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number; the first run omits `visit`. A visit cap of `1000 × (number of steps) + 1000` step runs per test bounds loops. A self-referential jump hits the cap, records a `FAIL`, and stops instead of hanging. As with the other handlers, a jump never changes a verdict. A backward jump that re-runs a step which failed on its first visit leaves the test failed.
 
 A step handler doesn't jump between tests. If a step entry with `goToTest` matches, Doc Detective applies the step's status default instead and ignores the later entries. To jump between tests, use a test-level handler.
+
+---
+
+## Test Routing (`goToTest`)
+
+Attach routing handlers to a test to control what runs next based on its outcome. Each handler is an array of routing entries. Doc Detective evaluates the handler that matches the test's result:
+
+- `onPass`: after the test passes
+- `onFail`: after the test fails
+- `onWarning`: after the test produces a warning
+- `onSkip`: after the test is skipped
+
+Each entry pairs an optional `if` condition with exactly one routing action. The first entry whose condition holds wins. If none match, the test's default flow applies. An `if` uses the same expressions as step routing (see [Step Routing](#step-routing)), and at test scope it can read `$$platform`.
+
+Routing is opt-in. A test without these handlers runs in document order.
+
+### goToTest
+
+A `goToTest` entry jumps execution to another test in the same spec and continues from there:
+
+```json
+{
+  "testId": "login",
+  "steps": [
+    { "goTo": "https://example.com/login" },
+    { "find": "Sign In" }
+  ],
+  "onPass": [
+    { "goToTest": "dashboard-checks" }
+  ],
+  "onFail": [
+    { "if": "$$platform == windows", "goToTest": "windows-cleanup" },
+    { "stop": "spec" }
+  ]
+}
+```
+
+When `login` passes, Doc Detective jumps to the test with `testId` `dashboard-checks` and runs the spec forward from there. Any tests between the two are skipped.
+
+**Target resolution:**
+
+- The target matches by `testId` within the same spec. A `goToTest` can't jump to another spec.
+- If two tests share a `testId`, the first wins.
+- An unknown target, usually a typo'd `testId`, is a misconfiguration. Doc Detective records a FAIL and stops the spec so the mistake can't silently report green.
+
+**Backward jumps and re-runs:**
+
+A `goToTest` can point at an earlier test, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number, and the first run omits `visit`. A visit cap of `100 × (number of tests) + 100` test runs per spec bounds loops. A self-referential jump hits the cap, records a FAIL, and stops instead of hanging.
+
+A jump never changes a verdict. Each visited test's result stands on its own. If a backward jump re-runs a test that failed on its first visit, the spec stays failed.
+
+### Other test-level actions
+
+- `{ "continue": true }` (the default): proceed to the next test in document order.
+- `{ "stop": "spec" }`: stop the spec's remaining tests. `{ "stop": "run" }` behaves the same as `"spec"`, and `{ "stop": "test" }` does nothing because the test has already finished.
+
+`retry` and `goToStep` are step-level actions and don't apply at the test level.
 
 ---
 
