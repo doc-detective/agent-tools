@@ -1,7 +1,8 @@
 {
   "name": "agent-tools",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "private": true,
+  "repository": "github:doc-detective/agent-tools",
   "engines": {
     "node": ">=20"
   },
@@ -17,10 +18,20 @@
     "test:doc-testing": "cd skills/doc-detective-doc-testing/scripts && ./doc-detective-test-skill.sh",
     "test:inline": "cd skills/doc-detective-inline-test-injection/scripts && ./doc-detective-test-skill.sh",
     "prepare": "husky",
-    "validate:skills": "./scripts/doc-detective-validate-skills.sh"
+    "validate:skills": "./scripts/doc-detective-validate-skills.sh",
+    "test:lsp-plugin": "mocha tests/hooks/lsp-plugin.test.js --timeout 30000",
+    "semantic-release": "semantic-release"
   },
   "devDependencies": {
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/commit-analyzer": "^13.0.1",
+    "@semantic-release/exec": "^7.1.0",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^12.0.8",
+    "@semantic-release/npm": "^13.1.5",
+    "@semantic-release/release-notes-generator": "^14.1.1",
     "husky": "^9.1.7",
-    "mocha": "^11.7.5"
+    "mocha": "^11.7.5",
+    "semantic-release": "^25.0.5"
   }
 }
