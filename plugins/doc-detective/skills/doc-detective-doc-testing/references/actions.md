@@ -547,6 +547,47 @@ Stop recording:
 { "stopRecord": true }
 ```
 
+Each `record` step must be paired with a later `stopRecord` step.
+
+#### Named and overlapping recordings
+
+A single test context can have more than one recording active at the same time. Give a recording a `name` so that a later `stopRecord` can target it:
+
+```json
+{ "record": { "path": "checkout-flow.mp4", "name": "checkout" } }
+```
+
+Names must be unique among recordings that are active at the same time. A recording started without a `name` is anonymous.
+
+`stopRecord` decides which recording to stop based on its value:
+
+| Value | Stops |
+|-------|-------|
+| `true` or `null` | The most recently started active recording (LIFO) |
+| `"<name>"` | The named recording, wherever it sits in the active set |
+| `{ "name": "<name>" }` | The named recording (object form, equivalent to the string) |
+
+Stop a specific recording by name:
+
+```json
+{ "stopRecord": "checkout" }
+```
+
+```json
+{ "stopRecord": { "name": "checkout" } }
+```
+
+Doc Detective catches a reused `name` before the run starts when a recording by that name is still active. It skips the affected test across all contexts with a warning, rather than failing partway through.
+
+#### Auto-record every context
+
+Set `autoRecord: true` at the config, spec, or test level, or pass `--auto-record` on the CLI, to record a full video of every browser-based test context alongside any explicit `record` steps. Pass `--no-auto-record` to override a config file that enables it.
+
+- **Precedence:** test > spec > config.
+- **Engine:** always `ffmpeg`. The recording wraps the whole context.
+- **Path:** `<output>/.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/recordings/<contextId>.mp4`. The same context maps to the same path in every run, for run-over-run comparison.
+- **Stopping:** An untargeted `stopRecord` never stops the automatic recording. Doc Detective finalizes it at the end of the context.
+
 ### annotate
 
 Draw annotations onto the page so they persist across steps, survive navigation, and appear in any recordings and screenshots taken while they're visible. A screenshot's own `annotations` last only for that capture. These stay on screen until an `annotate` step clears them, their `duration` elapses, or the context ends. Browser only: on an app-only context with no page to draw into, the step is skipped rather than failed.
