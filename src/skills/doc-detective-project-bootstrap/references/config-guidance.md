@@ -53,6 +53,7 @@ Only add fields when:
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
 | Run **only** explicit inline/spec steps (no prose auto-detection) | `detectSteps: false` (default is `true`) |
+| Turn off post-run hints | `hints: { "enabled": false }` |
 
 ## Configuration Schema Reference
 
@@ -71,6 +72,17 @@ interface Config {
   runOn?: Context[];              // Execution contexts
   concurrentRunners?: number;     // Default: 1
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
+  hints?: { enabled: boolean };   // Default: { enabled: true }
+}
+```
+
+### Hints
+
+After a test run, Doc Detective may print one short, contextual hint with code samples and links. Hints are shown only on a TTY at the default `info` log level. Disable hints via config or the `--no-hints` CLI flag:
+
+```json
+{
+  "hints": { "enabled": false }
 }
 ```
 

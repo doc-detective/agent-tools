@@ -53,6 +53,7 @@ Only add fields when:
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
 | Run **only** explicit inline/spec steps (no prose auto-detection) | `detectSteps: false` (default is `true`) |
+| Turn off post-run hints | `hints: { "enabled": false }` |
 
 ## Configuration Schema Reference
 
