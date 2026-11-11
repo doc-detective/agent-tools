@@ -2,11 +2,11 @@
 name: doc-detective-init
 description: 'Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop'
 metadata:
-  version: '1.4.0'
+  version: '1.4.1'
   organization: Doc Detective
-  date: June 2026
+  date: November 2026
   abstract: Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.
-  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
 user-invocable: true
 ---
@@ -103,6 +103,8 @@ Run all generated specs:
 ```bash
 doc-detective --input .doc-detective/doc-detective-tests/ --output .doc-detective/results/
 ```
+
+`--input` (and `--output`) on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory** — so a config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root; if you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
 
 Skip this phase if `--skip-tests` or `--dry-run` is set. If the command fails to execute, stop and report the error — do not proceed to Phase 5. After execution, collect all failing tests from the results output.
 
