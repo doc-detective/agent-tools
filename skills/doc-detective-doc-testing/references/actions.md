@@ -779,6 +779,64 @@ Wait for element:
 
 ---
 
+## Conditional Execution (`if`)
+
+Add an `if` condition to a spec, test, or step to run it only when the condition holds. When the condition is false, Doc Detective marks that unit SKIPPED instead of running it.
+
+An `if` decides *whether* a unit runs. It never produces a pass or a fail. A skipped unit was reached but not run, which is distinct from a FAIL, and skipping a step doesn't stop the steps that follow.
+
+`if` is opt-in. A spec, test, or step without an `if` runs unconditionally.
+
+Set `if` to a single condition expression or an array of expressions. An array passes only when every expression passes (logical AND).
+
+```json
+{
+  "if": "$$platform != windows",
+  "runShell": { "command": "./scripts/setup.sh" }
+}
+```
+
+```json
+{
+  "if": ["$$platform != windows", "$$steps.build.outputs.exitCode == 0"],
+  "runShell": { "command": "npm run deploy" }
+}
+```
+
+**Where you can use it:**
+
+- **Spec-level `if`**: when false, every test in the spec is skipped and none run.
+- **Test-level `if`**: when false, that test is skipped across all its contexts. Sibling tests are unaffected.
+- **Step-level `if`**: when false, that step is skipped before its action runs. Later steps still run.
+
+**What conditions can reference:**
+
+- `$$platform`, the operating system (`linux`, `mac`, or `windows`), at every scope.
+- `$$steps.<stepId>.outputs.*`, a prior step's outputs, at step scope only. Give the earlier step a `stepId`, then read its outputs in a later step's `if`:
+
+```json
+{
+  "steps": [
+    { "stepId": "build", "runShell": { "command": "npm run build" } },
+    {
+      "if": "$$steps.build.outputs.exitCode == 0",
+      "runShell": { "command": "npm run deploy" }
+    }
+  ]
+}
+```
+
+A spec- or test-level `if` can't reference `$$steps.*`. Step outputs don't exist before any step has run, so such a condition always evaluates to false. The spec or test is always skipped. Use `$$steps.*` only in a step-level `if`.
+
+**Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus the word operators `contains`, `oneOf`, and `matches`, as described in [Step Assertions](#step-assertions).
+
+**Evaluation rules:**
+
+- An empty or absent `if` counts as no condition, so the unit runs.
+- A condition that can't be resolved fails closed: the `if` evaluates to false and the unit is skipped. A step-level `if` that references a prior step that was itself skipped also fails closed, since a skipped step records no outputs.
+
+---
+
 ## Step Assertions
 
 Every step asserts its own action result, so if the action fails, the step fails. To check more than that built-in result, add a step-level `assertions` field. Doc Detective evaluates these custom assertions after the action runs and folds them into the step's status.
