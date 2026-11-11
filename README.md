@@ -20,7 +20,7 @@ npx doc-detective install agents
 
 It detects which supported agents are installed on your machine, prompts you to choose which to configure, and invokes each agent's native install mechanism. Re-run any time to update to the latest version.
 
-> **Backwards compatibility:** The older `doc-detective install-agents` form still works as a hidden alias, so existing scripts and CI jobs don't need to change.
+> **Backwards compatibility:** The older `doc-detective install-agents` form still works as a legacy alias, so existing scripts and CI jobs don't need to change.
 
 To target a specific agent non-interactively:
 
@@ -28,7 +28,7 @@ To target a specific agent non-interactively:
 npx doc-detective install agents --agent claude --scope project --yes
 ```
 
-Supported `--agent` ids: `claude`, `copilot`, `gemini`, `codex`, `qwen`, `opencode`.
+Supported `--agent` ids: `claude`, `copilot`, `gemini`, `codex`, `qwen`, `opencode`. Repeat `--agent` to target several agents in one run. Cursor isn't one of them; see [Cursor](#cursor).
 
 Useful flags:
 
@@ -39,7 +39,7 @@ Useful flags:
 
 Head to the per-agent sections below if you prefer the native install flow or need to troubleshoot.
 
-> **Note:** `install agents` is one subcommand in the Doc Detective CLI's broader `install` group. Other subcommands (`install runtime`, `install browsers`, `install status`, `install all`) manage the CLI's lazy-loaded runtime dependencies. See the [Doc Detective documentation](https://doc-detective.com) for details.
+> **Note:** `install agents` is one subcommand in the Doc Detective CLI's broader `install` group. Other subcommands (`install runtime`, `install browsers`, `install status`, `install all`) manage the CLI's lazy-loaded runtime dependencies. See the [`install` command reference](https://docs.doc-detective.com/reference/reference/cli/install) for details.
 
 ### Automatic prompt during npm install
 
