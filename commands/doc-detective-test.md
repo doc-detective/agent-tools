@@ -26,8 +26,8 @@ Convert documented procedures into executable Doc Detective test specifications,
 | `--fix-threshold <n>` | `80` | Confidence threshold (0–100) for auto-applying fixes |
 | `--max-fix-attempts <n>` | `3` | Maximum fix iterations per failing test |
 | `--inject` | `false` | Inject passing tests into source file after completion |
-| `--auto-screenshot` | `false` | Capture a screenshot after every browser-based step |
-| `--no-auto-screenshot` | - | Disable auto screenshots (overrides config file) |
+| `--auto-screenshot` | `false` | Pass `--auto-screenshot` to Doc Detective to capture a screenshot after every browser-driven step |
+| `--no-auto-screenshot` | - | Pass `--no-auto-screenshot` to Doc Detective to turn off auto screenshots that the config file enables |
 
 ```
 /doc-detective-test docs/login.md --fix
@@ -39,19 +39,19 @@ Convert documented procedures into executable Doc Detective test specifications,
 
 ## Per-Run Artifact Folders
 
-Each test run archives its results and screenshots in a dedicated folder at `<output>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (enabled by default) writes `testResults.json` to this location, and any auto screenshots from the run are saved alongside.
+Each test run archives its results and screenshots in a dedicated folder at `<output>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (on by default) writes `testResults.json` to this location, in addition to the flat `testResults-<timestamp>.json` in the output directory, and any auto screenshots from the run are saved alongside.
 
-This folder structure enables run-over-run comparison: the same spec, test, context, and step always produce the same path within each run folder, so you can diff two run folders directly to spot changes over time.
+The same spec, test, context, and step always produce the same path within each run folder, so you can diff two run folders directly to spot changes over time.
 
 ## Auto Screenshots
 
-When `--auto-screenshot` is enabled (or `autoScreenshot: true` in config), Doc Detective captures a PNG screenshot after every browser-based step. Screenshots are saved to the per-run artifact folder at paths like:
+When `--auto-screenshot` is enabled (or `autoScreenshot: true` in config), Doc Detective captures a PNG screenshot after every browser-driven step that doesn't already define its own `screenshot`. Screenshots are saved to the per-run artifact folder at paths like:
 
 ```
 .doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/01-goTo-<stepRef>.png
 ```
 
-The path structure is derived from spec, test, context, and step IDs, so the same step lands on the same relative path within each run folder. The leading numeric prefix (`01-`) is the step's position within the test, helping you correlate screenshots to specific steps. This makes visual comparison across runs straightforward.
+The file name is the step's position within the test (`01`), its action (`goTo`), and its `stepId` with the leading `<testId>~` removed (`<stepRef>`). Because the path derives from spec, test, context, and step IDs, the same step lands on the same relative path within each run folder.
 
 Auto screenshots can be configured at three levels with test > spec > config precedence:
 
@@ -112,7 +112,7 @@ Run `/doc-detective-validate` on the generated spec. If validation fails, stop a
 
 ### Step 4: Execute Tests
 
-Run all tests in the spec. Record each test result as `pass` or `fail` with the failure reason.
+Run all tests in the spec. If `--auto-screenshot` or `--no-auto-screenshot` is set, pass the same flag to Doc Detective. Record each test result as `pass` or `fail` with the failure reason.
 
 ### Step 5: Process Results
 

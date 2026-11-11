@@ -153,7 +153,7 @@ If none available, inform user and suggest installation.
 
 ### Run Options
 
-- **Auto screenshots:** Add `--auto-screenshot` to capture a PNG after every browser step. Images land in `.doc-detective/runs/<runId>/` nested under `specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/` at stable paths for run-over-run comparison.
+- **Auto screenshots:** Add `--auto-screenshot` to capture a PNG after every browser-driven step that has no explicit `screenshot`. Images land in `.doc-detective/runs/<runId>/` nested under `specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/` at stable paths for run-over-run comparison.
 - **Per-run artifacts:** Results are archived by default at `<output>/.doc-detective/runs/<runId>/testResults.json`, alongside any screenshots from that run.
 - **Stable IDs:** Specs, tests, contexts, and steps without explicit IDs get deterministic fallbacks (file path, content hash, platform-browser) so the same test keeps the same ID across runs.
 
