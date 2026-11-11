@@ -39,19 +39,19 @@ Convert documented procedures into executable Doc Detective test specifications,
 
 ## Per-Run Artifact Folders
 
-Each test run archives its results and screenshots in a dedicated folder at `<output>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (on by default) writes `testResults.json` to this location, in addition to the flat `testResults-<timestamp>.json` in the output directory, and any auto screenshots from the run are saved alongside.
+Each test run archives its results and screenshots in a dedicated folder at `<output>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (on by default) writes `testResults.json` there, alongside any auto screenshots from the run. Doc Detective still writes the flat `testResults-<timestamp>.json` to the output directory too.
 
-The same spec, test, context, and step always produce the same path within each run folder, so you can diff two run folders directly to spot changes over time.
+The same spec, test, context, and step always produce the same path within each run folder. Diff two run folders to spot changes over time.
 
 ## Auto Screenshots
 
 When `--auto-screenshot` is enabled (or `autoScreenshot: true` in config), Doc Detective captures a PNG screenshot after every browser-driven step that doesn't already define its own `screenshot`. Screenshots are saved to the per-run artifact folder at paths like:
 
 ```
-.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/01-goTo-<stepRef>.png
+.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/01-goTo-s4f2a91c.png
 ```
 
-The file name is the step's position within the test (`01`), its action (`goTo`), and its `stepId` with the leading `<testId>~` removed (`<stepRef>`). Because the path derives from spec, test, context, and step IDs, the same step lands on the same relative path within each run folder.
+The file name is the step's position within the test (`01`), its action (`goTo`), and its `stepId` with the leading `<testId>~` removed (`s4f2a91c`). Because the path derives from spec, test, context, and step IDs, the same step lands on the same relative path within each run folder.
 
 Auto screenshots can be configured at three levels with test > spec > config precedence:
 
