@@ -380,11 +380,11 @@ The script's return value is captured into the step's `outputs.result`, so it fl
 - `path`: File path to save the serialized return value, relative to `directory`
 - `directory`: Directory to save the return value (defaults to your media directory)
 - `maxVariation`: Allowed fraction (0–1) of difference from a previously saved value before the step returns a warning
-- `overwrite`: `"true"` | `"false"` | `"aboveVariation"` — whether to rewrite saved output (default `"aboveVariation"`)
+- `overwrite`: Whether to rewrite saved output: `"true"`, `"false"`, or `"aboveVariation"` (default `"aboveVariation"`)
 - `timeout`: Max time in ms the script may run (default 60000)
 - `surface`: The browser window or tab to run the script in. Omit it to run in the active tab.
 
-Running arbitrary JavaScript can modify application state. Mark a step `unsafe: true` when its script could have side effects; unsafe steps run only when allowed via the `allowUnsafeSteps` config option or the `--allow-unsafe` flag, and are skipped otherwise.
+Running arbitrary JavaScript can modify application state. Mark a step `unsafe: true` when its script could have side effects. Unsafe steps run only when the `allowUnsafeSteps` config option or the `--allow-unsafe` flag allows them, and are skipped otherwise.
 
 ---
 
