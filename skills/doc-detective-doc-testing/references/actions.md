@@ -209,7 +209,7 @@ Scroll or swipe a surface. Works on browser and app surfaces, including mobile a
 - `distance`: Fraction of the surface to travel, greater than `0` up to `1` (default `0.5`)
 - `from` / `to`: Start and end points as `{ "x": <px>, "y": <px> }`, both required for the point-to-point form (pixels from the top-left corner)
 - `duration`: Movement time in ms (integer ≥ 1; default `500`)
-- `surface`: Target a specific app surface, browser window, or tab instead of the active one
+- `surface`: Target a specific app surface, browser window, or tab instead of the active one. Object form only; the `"up"` string shorthand always swipes the active surface.
 
 Use `direction` (with `distance`) or `from`/`to`, never both — the directional and point-to-point forms are mutually exclusive. Prefer the directional form (fractional `distance`) for resilient, resolution-independent scrolling, and reach for the point-to-point form (absolute pixels) only when you need a precise gesture path.
 
@@ -266,6 +266,8 @@ On a mobile app surface, `type` also presses the device's own buttons. These dev
 { "type": "$BACK$" }
 ```
 
+This example is Android-only: iOS rejects `$BACK$`, as the platform notes below explain.
+
 - `$BACK$` - System back button
 - `$HOME$` - Device home button
 - `$APP_SWITCH$` - App switcher / recents
@@ -276,7 +278,7 @@ On a mobile app surface, `type` also presses the device's own buttons. These dev
 Typing plain text and editing keys works differently on each platform:
 
 - **Android** types criteria-less text into the currently focused element, so you can send `{ "type": "search text" }` right after focusing a field. It maps the editing keys above to device key events and accepts `$BACK$`, `$HOME$`, `$APP_SWITCH$`, and the volume keys.
-- **iOS** still requires element criteria to type text — target the field with `elementText` (or another locator) and pass `keys`. It folds `$ENTER$`, `$TAB$`, `$BACKSPACE$`, and `$DELETE$` into the typed text, presses `$HOME$` and the volume keys as physical buttons, but rejects `$BACK$` (iOS has no system back button — click the app's own back control) and `$APP_SWITCH$` (XCUITest exposes no app-switcher button).
+- **iOS** still requires element criteria to type text — target the field with `elementText` (or another locator) and pass `keys`, which takes a string or an array of strings. It folds `$ENTER$`, `$TAB$`, `$BACKSPACE$`, and `$DELETE$` into the typed text, presses `$HOME$` and the volume keys as physical buttons, but rejects `$BACK$` (iOS has no system back button — click the app's own back control) and `$APP_SWITCH$` (XCUITest exposes no app-switcher button).
 
 ```json
 {
