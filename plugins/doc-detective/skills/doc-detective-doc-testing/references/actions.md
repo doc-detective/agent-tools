@@ -737,6 +737,45 @@ Wait for element:
 
 ---
 
+## Step Assertions
+
+Every step asserts its own action result, so if the action fails, the step fails. To check more than that built-in result, add a step-level `assertions` field. Doc Detective evaluates these custom assertions after the action runs and folds them into the step's status.
+
+Set `assertions` to a single condition expression or an array of expressions. Each expression resolves to true or false, and an array passes only when every expression passes (logical AND).
+
+```json
+{
+  "runShell": { "command": "node -e \"console.log('hello world')\"" },
+  "assertions": [
+    "$$outputs.exitCode == 0",
+    "$$outputs.stdio.stdout contains \"hello\""
+  ]
+}
+```
+
+**Reference the step's outputs:** Custom assertions read the current step's outputs through the `$$outputs.*` namespace, plus `$$platform` for the operating system (`linux`, `mac`, or `windows`). Available outputs depend on the action: `runShell` and `runCode` expose `$$outputs.exitCode`, `$$outputs.stdio.stdout`, and `$$outputs.stdio.stderr`, while `checkLink` exposes `$$outputs.statusCode`.
+
+**Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus three word operators. `contains` checks for a substring, `oneOf` checks membership in a list such as `[0, 1]`, and `matches` tests a regular expression pattern, as in `$$outputs.stdio.stdout matches "^hello"`. String values work quoted or bare, so `$$platform != windows` and `$$platform != "windows"` are equivalent.
+
+```json
+{
+  "assertions": [
+    "$$outputs.exitCode oneOf [0, 1]",
+    "$$platform != windows"
+  ]
+}
+```
+
+**Status rules:** A step passes only when both its implicit and custom assertions pass. Custom assertions can introduce a failure, but they can't rescue a step that has already failed:
+
+- If the action's implicit check fails, Doc Detective skips the custom assertions and the step stays FAIL.
+- If the step was skipped, or the action errored before producing a result, Doc Detective skips the custom assertions. The step keeps its original status.
+- An expression that can't be resolved fails closed, so the assertion fails and the step fails.
+
+**Namespace:** The `$$outputs.*` namespace is distinct from the bare `$$name` expressions used to set the step-level `variables` and `outputs` objects. Assertions can reference only the current step's `$$outputs.*` and `$$platform`. A `$$steps.*` reference always fails closed, so the step fails, and Doc Detective logs a warning.
+
+---
+
 ## Step Routing
 
 Attach routing handlers to a step to control what runs next based on its outcome. Each handler is an array of routing entries, and Doc Detective evaluates the handler that matches the step's result:
