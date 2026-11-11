@@ -51,8 +51,10 @@ Only add fields when:
 | Non-default file types only | `fileTypes` |
 | Using environment variables | `loadVariables` |
 | Running in CI | `runOn` for context |
+| Running test contexts in parallel | `concurrentRunners` |
 | Need relative URL resolution | `origin` |
 | Run **only** explicit inline/spec steps (no prose auto-detection) | `detectSteps: false` (default is `true`) |
+| Turn off post-run hints | `hints: { "enabled": false }` |
 
 ## Configuration Schema Reference
 
@@ -69,8 +71,9 @@ interface Config {
   allowUnsafeSteps?: boolean;     // Default: false
   fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
   runOn?: Context[];              // Execution contexts
-  concurrentRunners?: number;     // Default: 1
+  concurrentRunners?: number | true; // Default: 1, true = CPU cores (max 4)
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
+  hints?: { enabled: boolean };   // Default: { enabled: true }
 }
 ```
 
@@ -106,6 +109,47 @@ A context in `runOn` can use `requires` to declare the host capabilities it depe
 - **Object** — any combination of `commands` (resolvable on `PATH`), `files` (must exist; entries expand `$VAR` and `$HOME`), and `env` (must be set to a non-empty value).
 
 All listed requirements are AND-ed — the context runs only when every one is satisfied. This pairs naturally with native app surfaces: gate an app test to the platforms it supports with `runOn` platforms (`["windows"]`, `["mac"]`, or both) plus a `requires` for the tooling it needs.
+
+### Hints
+
+After a test run, Doc Detective may print one short, contextual hint with code samples and links. Hints are shown only on a TTY at the default `info` log level. Disable hints via config or the `--no-hints` CLI flag:
+
+```json
+{
+  "hints": { "enabled": false }
+}
+```
+
+## Concurrent Test Runners
+
+Run multiple test contexts in parallel with the `concurrentRunners` config option or the `--concurrent-runners` CLI flag.
+
+### Configuration
+
+```json
+{ "concurrentRunners": true }
+```
+
+Set `true` to use your CPU core count (capped at 4). Set a number for explicit control:
+
+```json
+{ "concurrentRunners": 4 }
+```
+
+### CLI Flag
+
+```bash
+npx doc-detective --concurrent-runners 4
+npx doc-detective --concurrent-runners true   # CPU core count (capped at 4)
+```
+
+Default: `1` (runs contexts sequentially).
+
+### Limitations
+
+Keep `concurrentRunners` at `1` when tests share variables across contexts. A step's `variables` field writes to `process.env`, so a context that reads a value another context sets can run before that value exists.
+
+Recordings don't need this: the `browser` engine records each context's own window, and Doc Detective runs `ffmpeg` recordings, which capture the whole display, one at a time on its own.
 
 ## Config By Project Type
 
@@ -340,7 +384,7 @@ npx ajv validate -s https://raw.githubusercontent.com/doc-detective/common/refs/
 
 ## Related Resources
 
-- Config schema: https://doc-detective.com/docs/references/schemas/config
-- File types: https://doc-detective.com/docs/get-started/tests#detected-tests
-- Contexts: https://doc-detective.com/docs/get-started/config/contexts
+- Config schema: https://docs.doc-detective.com/reference/schemas/config
+- File types: https://docs.doc-detective.com/docs/test-docs/detected
+- Contexts: https://docs.doc-detective.com/docs/test-docs/platforms-and-browsers
 - doc-detective-common: https://github.com/doc-detective/doc-detective-common
