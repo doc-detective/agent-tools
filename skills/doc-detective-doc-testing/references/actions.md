@@ -826,7 +826,7 @@ Set `if` to a single condition expression or an array of expressions. An array p
 }
 ```
 
-A spec- or test-level `if` can't reference `$$steps.*`. Step outputs don't exist before any step has run, so such a condition always evaluates to false and the spec or test is always skipped. Use `$$steps.*` only in a step-level `if`.
+A spec- or test-level `if` can't reference `$$steps.*`. Step outputs don't exist before any step has run, so such a condition always evaluates to false. The spec or test is always skipped. Use `$$steps.*` only in a step-level `if`.
 
 **Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus the word operators `contains`, `oneOf`, and `matches`, as described in [Step Assertions](#step-assertions).
 
