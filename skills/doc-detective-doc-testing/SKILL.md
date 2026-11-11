@@ -4,9 +4,9 @@ description: 'Verify documentation and procedures with Doc Detective test specif
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
-  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
 ---
 
@@ -180,9 +180,9 @@ Before returning any test spec:
 
 ## External Resources
 
-- Main docs: https://doc-detective.com
-- Test structure: https://doc-detective.com/docs/get-started/tests
-- Actions: https://doc-detective.com/docs/category/actions
+- Main docs: https://docs.doc-detective.com
+- Test structure: https://docs.doc-detective.com/docs/get-started/how-testing-works
+- Actions: https://docs.doc-detective.com/docs/get-started/concepts#action
 - GitHub: https://github.com/doc-detective/doc-detective
 
 ## Scripts

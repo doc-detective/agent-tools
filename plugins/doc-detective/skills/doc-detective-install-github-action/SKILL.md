@@ -4,9 +4,9 @@ description: 'Install and configure the Doc Detective GitHub Action workflow for
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Install and configure the Doc Detective GitHub Action workflow for automated documentation testing in CI. Detects project context, creates workflow file, and configures action inputs including PR creation, issue creation, and integrations.
-  references: https://doc-detective.com, https://github.com/doc-detective/github-action
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/github-action
   user-invocable: 'true'
 user-invocable: true
 ---
