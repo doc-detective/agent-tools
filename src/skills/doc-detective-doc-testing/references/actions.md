@@ -581,7 +581,7 @@ Doc Detective catches a reused `name` before the run starts when a recording by 
 
 #### Auto-record every context
 
-Set `autoRecord: true` at the config, spec, or test level, or pass `--auto-record` on the CLI, to record a full video of every browser-based test context alongside any explicit `record` steps. Pass `--no-auto-record` to override a config file that enables it.
+Set `autoRecord: true` at the config, spec, or test level, or pass `--auto-record` on the CLI. Doc Detective then records a full video of every browser-based test context, alongside any explicit `record` steps. Pass `--no-auto-record` to override a config file that enables it.
 
 - **Precedence:** test > spec > config.
 - **Engine:** always `ffmpeg`. The recording wraps the whole context.
