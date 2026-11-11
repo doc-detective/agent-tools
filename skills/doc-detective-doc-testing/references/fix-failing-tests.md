@@ -130,10 +130,10 @@ When failures stem from environment or configuration issues rather than test log
 
 ### Using the Debug Command
 
-Run `doc-detective debug` to generate a diagnostic dump:
+Run `doc-detective debug` to print a diagnostic dump and exit without running tests. It also saves the dump as `debug-<timestamp>.txt` and `debug-<timestamp>.json` in `.doc-detective/`:
 
 ```bash
-# Generate diagnostic dump (writes to .doc-detective/)
+# Print a diagnostic dump
 npx doc-detective debug
 
 # Include full environment variables (redacted)
@@ -150,7 +150,7 @@ The dump includes:
 
 ### Using the Environment Variable
 
-Set `DOC_DETECTIVE_DEBUG=true` to trigger diagnostics on the default run path:
+Set `DOC_DETECTIVE_DEBUG=true` to print the same dump from the default command. Doc Detective then exits without running tests:
 
 ```bash
 # CI-friendly: emit diagnostics instead of running tests
