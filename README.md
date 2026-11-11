@@ -497,10 +497,10 @@ Then execute:
 
 ## Resources
 
-- [Doc Detective Documentation](https://doc-detective.com)
+- [Doc Detective Documentation](https://docs.doc-detective.com)
 - [Doc Detective GitHub](https://github.com/doc-detective/doc-detective)
-- [Test Specification Format](https://doc-detective.com/docs/get-started/doc-detective-tests)
-- [Actions Reference](https://doc-detective.com/docs/category/actions)
+- [Test Specification Format](https://docs.doc-detective.com/reference/schemas/specification)
+- [Actions Reference](https://docs.doc-detective.com/docs/get-started/concepts#action)
 
 ## MCP server
 

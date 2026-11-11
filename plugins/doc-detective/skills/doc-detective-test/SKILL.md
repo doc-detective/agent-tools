@@ -6,7 +6,7 @@ metadata:
   organization: Doc Detective
   date: July 2026
   abstract: Convert documentation procedures into executable Doc Detective test specifications, run them, fix failures, and verify the documentation matches actual behavior.
-  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
 user-invocable: true
 ---
