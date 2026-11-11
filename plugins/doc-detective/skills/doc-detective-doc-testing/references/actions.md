@@ -841,7 +841,7 @@ When `login` passes, Doc Detective jumps to the test with `testId` `dashboard-ch
 
 A `goToTest` can point at an earlier test, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number, and the first run omits `visit`. A visit cap of `100 × (number of tests) + 100` test runs per spec bounds loops. A self-referential jump hits the cap, records a FAIL, and stops instead of hanging.
 
-A jump never changes a verdict. Each visited test's result stands on its own, so if a backward jump re-runs a test that failed on its first visit, the spec stays failed.
+A jump never changes a verdict. Each visited test's result stands on its own. If a backward jump re-runs a test that failed on its first visit, the spec stays failed.
 
 ### Other test-level actions
 
