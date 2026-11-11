@@ -1,6 +1,6 @@
 # Doc Detective Actions Reference
 
-Quick reference for all Doc Detective actions. For comprehensive documentation, see https://doc-detective.com/docs/category/actions.
+Quick reference for all Doc Detective actions. For comprehensive documentation, see https://docs.doc-detective.com/docs/get-started/concepts#action.
 
 ## Navigation & Browser
 
@@ -104,12 +104,21 @@ Check if an element exists. Can optionally interact with it.
 ```
 
 **Options:**
+- `elementText`: Find the element by its display text (the object-form equivalent of the string shorthand, as in `{ "find": { "elementText": "Welcome" } }`)
+- `elementAria`: Find the element by its computed accessible name
 - `selector`: CSS selector
 - `timeout`: Wait time in ms
 - `click`: Click after finding (boolean)
 - `moveTo`: Move cursor to element before interacting (boolean)
 - `type`: Type text after finding (object with `keys`)
-- `matchText`: Verify element contains text
+- `matchText`: After finding, assert the element *contains* this text (substring match; also accepts a `/regex/`)
+
+**Text matching:** When you find an element by text — the `{ "find": "Welcome" }` shorthand or the `elementText` field — the match is against the element's *whole* visible text with whitespace normalized: leading and trailing whitespace is trimmed, and internal runs of spaces, tabs, and newlines collapse to a single space.
+
+- **Whole-element exact match, not a substring.** A broad target with `elementText` won't match a nested heading, because the container's full text is more than the heading alone. To match a substring instead, wrap the value in slashes to use a regular expression, as in `{ "find": { "elementText": "/Garden companion/" } }`.
+- **Split text still matches.** Text that a framework such as React, Vue, or Svelte splits across several DOM text nodes still matches, and the result is the same on Chrome and Firefox regardless of how each browser's driver reports whitespace.
+- **Same rules elsewhere.** The same normalization applies to `elementAria` and to a selector's matched text.
+- **`matchText` is separate.** `matchText` asserts against an already-found element with a substring check and is unaffected.
 
 ### dragAndDrop
 
@@ -160,9 +169,14 @@ Type text into an element. Supports special keys.
 - `$ESCAPE$` - Escape
 - `$BACKSPACE$` - Backspace
 - `$DELETE$` - Delete
-- `$ARROWUP$`, `$ARROWDOWN$`, `$ARROWLEFT$`, `$ARROWRIGHT$` - Arrow keys
+- `$ARROW_UP$`, `$ARROW_DOWN$`, `$ARROW_LEFT$`, `$ARROW_RIGHT$` - Arrow keys
 - `$HOME$`, `$END$` - Home/End
-- `$PAGEUP$`, `$PAGEDOWN$` - Page Up/Down
+- `$PAGE_UP$`, `$PAGE_DOWN$` - Page Up/Down
+- `$CTRL$`, `$SHIFT$`, `$ALT$`, `$COMMAND$` - Modifier keys
+- `$SPACE$` - Space
+- `$F1$` through `$F12$` - Function keys
+- `$INSERT$` - Insert
+- `$SUBTRACT$` - Numpad subtract
 
 ---
 
@@ -283,23 +297,35 @@ With exit code validation:
 }
 ```
 
-With output matching:
+With output matching (`stdio` matches against **stdout OR stderr** — there is no separate `stdout`/`stderr` field):
 
 ```json
 {
   "runShell": {
     "command": "node --version",
-    "stdout": "v18"
+    "stdio": "v22"
   }
 }
 ```
 
-**Options:**
-- `command`: Shell command to execute
-- `exitCodes`: Expected exit codes (default: [0])
-- `stdout`: Expected stdout content (partial match)
-- `stderr`: Expected stderr content (partial match)
-- `workingDirectory`: Directory to run command in
+`stdio` also accepts a regular expression — wrap the pattern in forward slashes:
+
+```json
+{
+  "runShell": {
+    "command": "node --version",
+    "stdio": "/^v\\d+\\./"
+  }
+}
+```
+
+**Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid and Doc Detective silently skips it):
+- `command`: Shell command to execute (required)
+- `args`: Array of string arguments for the command
+- `exitCodes`: Expected exit codes (default: `[0]`). The step fails if the actual exit code is not in this list.
+- `stdio`: Expected content in the command's **stdout or stderr** (partial match). Plain string, or a `/regex/` delimited by forward slashes.
+- `workingDirectory`: Directory to run the command in (default `"."`, relative to where Doc Detective is invoked)
+- `path` / `directory`: Save the command's output to a file for later comparison
 
 ### runCode
 
