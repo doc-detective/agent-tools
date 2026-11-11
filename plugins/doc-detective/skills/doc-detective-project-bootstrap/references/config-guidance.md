@@ -71,6 +71,7 @@ interface Config {
   allowUnsafeSteps?: boolean;     // Default: false
   fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
   runOn?: Context[];              // Execution contexts
+  shell?: "bash"|"cmd"|"powershell"; // Default: "bash" on every platform, incl. Windows (where bash resolves to Git Bash, auto-installed if absent). Default shell for runShell steps and runCode; cmd/powershell are Windows-only. A runShell step's own shell field overrides this.
   concurrentRunners?: number | true; // Default: 1, true = CPU cores (max 4)
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
   hints?: { enabled: boolean };   // Default: { enabled: true }
