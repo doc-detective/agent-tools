@@ -18,12 +18,18 @@ This uses all defaults:
 - `input`: `.` (current directory)
 - `output`: `.` (current directory)
 - `recursive`: `true`
-- `detectSteps`: `false`
+- `detectSteps`: `true`
 - `fileTypes`: `["markdown", "asciidoc", "html", "dita"]`
+
+### `detectSteps`: what it controls
+
+`detectSteps` defaults to **`true`** and toggles only **markup auto-detection** — the steps Doc Detective infers from prose (hyperlinks → `checkLink`, `**bold**` → `find`, fenced ` ```bash `/` ```json ` blocks → `runCode`, etc.). It does **not** gate explicit inline `{/* test */}` / `<!-- step -->` statements, which are always honored.
+
+Set **`detectSteps: false`** when your suite is built from explicit inline steps (or standalone spec files) and you do not want a docs page's own code fences and bold text scooped up as extra, often invalid, auto-detected steps.
 
 ### Standard Minimal Config
 
-For most projects, specify only `input`, `output`, and `detectSteps`:
+For most projects, specify `input`, `output`, and — for an explicit-step suite — `detectSteps: false`:
 
 ```json
 {
@@ -46,7 +52,8 @@ Only add fields when:
 | Using environment variables | `loadVariables` |
 | Running in CI | `runOn` for context |
 | Need relative URL resolution | `origin` |
-| Want to detect testable procedures from markup syntax | `detectSteps` |
+| Run **only** explicit inline/spec steps (no prose auto-detection) | `detectSteps: false` (default is `true`) |
+| Turn off post-run hints | `hints: { "enabled": false }` |
 
 ## Configuration Schema Reference
 
@@ -59,12 +66,23 @@ interface Config {
   recursive?: boolean;            // Default: true
   loadVariables?: string;         // Path to .env file
   origin?: string;                // Base URL for relative links
-  detectSteps?: boolean;          // Default: false
+  detectSteps?: boolean;          // Default: true (toggles markup auto-detection only)
   allowUnsafeSteps?: boolean;     // Default: false
   fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
   runOn?: Context[];              // Execution contexts
   concurrentRunners?: number;     // Default: 1
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
+  hints?: { enabled: boolean };   // Default: { enabled: true }
+}
+```
+
+### Hints
+
+After a test run, Doc Detective may print one short, contextual hint with code samples and links. Hints are shown only on a TTY at the default `info` log level. Disable hints via config or the `--no-hints` CLI flag:
+
+```json
+{
+  "hints": { "enabled": false }
 }
 ```
 
@@ -90,6 +108,20 @@ interface Config {
   "fileTypes": ["markdown"]
 }
 ```
+
+### MDX with inline tests only (Astro Starlight, Docusaurus, etc.)
+
+The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* test */}` / `{/* step */}` markers, so MDX inline tests need no special setup. With `detectSteps: false`, markup auto-detection is off, so the docs' own ` ```bash `/` ```json ` fences and `**bold**` are left alone and only the explicit inline steps run:
+
+```json
+{
+  "input": "docs/src/content/docs",
+  "output": ".doc-detective/results",
+  "detectSteps": false
+}
+```
+
+(To silence code-fence/bold auto-detection, `detectSteps: false` is the supported switch. The `markup` array can't be emptied to disable patterns — the schema requires it to be non-empty — so narrow it by listing only the patterns you want instead.)
 
 ### Monorepo with Multiple Doc Locations
 
@@ -242,6 +274,8 @@ When merging with existing config:
 }
 ```
 
+> **`input` resolves relative to the config file's directory**, not the current working directory. A config at `sub/.doc-detective.json` with `"input": "docs"` scans `sub/docs`. If a run reports "No tests detected," verify this — keep the config at the repo root, or pass `--input` on the CLI (which resolves from the cwd).
+
 ### Don't Commit Sensitive Data
 
 ❌ Bad:
@@ -285,7 +319,7 @@ npx ajv validate -s https://raw.githubusercontent.com/doc-detective/common/refs/
 
 ## Related Resources
 
-- Config schema: https://doc-detective.com/docs/references/schemas/config
-- File types: https://doc-detective.com/docs/get-started/tests#detected-tests
-- Contexts: https://doc-detective.com/docs/get-started/config/contexts
+- Config schema: https://docs.doc-detective.com/reference/schemas/config
+- File types: https://docs.doc-detective.com/docs/test-docs/detected
+- Contexts: https://docs.doc-detective.com/docs/test-docs/platforms-and-browsers
 - doc-detective-common: https://github.com/doc-detective/doc-detective-common

@@ -396,6 +396,18 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 
 Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
 
+## Language server (LSP)
+
+On **Claude Code**, the plugin bundles a Doc Detective language server that gives the agent live, authoring-time feedback on test specs — the same schema knowledge the runner validates against, surfaced the moment a spec is edited rather than only when it runs.
+
+| Capability | Behavior |
+|------------|----------|
+| **Diagnostics** | Schema errors are reported inline as you edit `*.spec.json` / `*.spec.yaml` and `.doc-detective.*` config files, and inside inline Doc Detective tests in Markdown/AsciiDoc/HTML/DITA. The `action`-keyed anti-pattern (using an `action` property instead of the compact action-as-key form) gets one clear message instead of a wall of schema errors. |
+| **Completion** | Action keys and their fields, with schema-aware value snippets. |
+| **Hover** | Action descriptions pulled straight from the schema. |
+
+The server activates automatically on install. It launches through `lsp/lsp-launch.js`, which resolves the Doc Detective CLI in the same order as the install check — a project-local install first (so a workspace's pinned version wins), then a global `doc-detective`, then `npx`. LSP is a Claude Code capability, so this does not apply to the other hosts.
+
 ## Inline Test Injection
 
 Inject test steps from separate spec files directly into documentation as inline comments:
@@ -485,10 +497,10 @@ Then execute:
 
 ## Resources
 
-- [Doc Detective Documentation](https://doc-detective.com)
+- [Doc Detective Documentation](https://docs.doc-detective.com)
 - [Doc Detective GitHub](https://github.com/doc-detective/doc-detective)
-- [Test Specification Format](https://doc-detective.com/docs/get-started/doc-detective-tests)
-- [Actions Reference](https://doc-detective.com/docs/category/actions)
+- [Test Specification Format](https://docs.doc-detective.com/reference/schemas/specification)
+- [Actions Reference](https://docs.doc-detective.com/docs/get-started/concepts#action)
 
 ## MCP server
 
@@ -580,4 +592,34 @@ AGPL3
 
 ## Contributing
 
-To contribute improvements to this plugin, submit issues or pull requests to the repository.
+To contribute improvements to this plugin, open an issue or pull request in the repository.
+
+### Pull request titles
+
+This repository squash-merges pull requests, so the pull request title becomes the commit message on `main`. A GitHub Actions check validates every title against the [Conventional Commits](https://www.conventionalcommits.org/) format, so start your title with one of the supported types, followed by a colon and a short description:
+
+```
+<type>: <description>
+```
+
+You can add an optional, unrestricted scope, for example `feat(lsp): add language server`.
+
+Supported types:
+
+| Type | Use for |
+|------|---------|
+| `feat` | A new user-facing feature |
+| `fix` | A bug fix |
+| `docs` | Documentation-only changes |
+| `chore` | Maintenance work with no product impact |
+| `refactor` | Code changes that neither fix a bug nor add a feature |
+| `test` | Adding or updating tests |
+| `ci` | Changes to CI configuration or workflows |
+| `build` | Changes to the build system or dependencies |
+| `perf` | Performance improvements |
+| `style` | Formatting or style changes |
+| `revert` | Reverting a previous change |
+
+### Releases
+
+Releases are cut automatically when pull requests merge to `main`, and the merged title's type drives the version bump. `feat` triggers a minor release, `fix` triggers a patch release, and a `!` after the type (for example `feat!:`) or a `BREAKING CHANGE:` footer triggers a major release. Types such as `docs`, `chore`, and `ci` don't trigger a release, and neither does `perf`: this repository's release config turns off the patch release that `perf` gets by default. On a releasable merge, the workflow bumps the version, regenerates the build artifacts, updates `CHANGELOG.md`, tags the release, and publishes a GitHub Release.
