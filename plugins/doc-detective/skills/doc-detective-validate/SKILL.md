@@ -4,7 +4,7 @@ description: 'Validate Doc Detective test specifications or configuration files'
 metadata:
   version: '1.4.1'
   organization: Doc Detective
-  date: July 2026
+  date: November 2026
   abstract: Validate Doc Detective test specifications or configuration files to ensure they are correctly structured.
   references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
   user-invocable: 'true'
