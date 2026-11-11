@@ -1,6 +1,6 @@
 # Doc Detective Actions Reference
 
-Quick reference for all Doc Detective actions. For comprehensive documentation, see https://doc-detective.com/docs/category/actions.
+Quick reference for all Doc Detective actions. For comprehensive documentation, see https://docs.doc-detective.com/docs/get-started/concepts#action.
 
 ## Navigation & Browser
 
@@ -163,9 +163,14 @@ Type text into an element. Supports special keys.
 - `$ESCAPE$` - Escape
 - `$BACKSPACE$` - Backspace
 - `$DELETE$` - Delete
-- `$ARROWUP$`, `$ARROWDOWN$`, `$ARROWLEFT$`, `$ARROWRIGHT$` - Arrow keys
+- `$ARROW_UP$`, `$ARROW_DOWN$`, `$ARROW_LEFT$`, `$ARROW_RIGHT$` - Arrow keys
 - `$HOME$`, `$END$` - Home/End
-- `$PAGEUP$`, `$PAGEDOWN$` - Page Up/Down
+- `$PAGE_UP$`, `$PAGE_DOWN$` - Page Up/Down
+- `$CTRL$`, `$SHIFT$`, `$ALT$`, `$COMMAND$` - Modifier keys
+- `$SPACE$` - Space
+- `$F1$` through `$F12$` - Function keys
+- `$INSERT$` - Insert
+- `$SUBTRACT$` - Numpad subtract
 
 ---
 
@@ -292,7 +297,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 {
   "runShell": {
     "command": "node --version",
-    "stdio": "v18"
+    "stdio": "v22"
   }
 }
 ```
