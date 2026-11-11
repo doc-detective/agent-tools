@@ -1,6 +1,6 @@
 # Doc Detective Actions Reference
 
-Quick reference for all Doc Detective actions. For comprehensive documentation, see https://doc-detective.com/docs/category/actions.
+Quick reference for all Doc Detective actions. For comprehensive documentation, see https://docs.doc-detective.com/docs/get-started/concepts#action.
 
 ## Navigation & Browser
 
@@ -160,9 +160,14 @@ Type text into an element. Supports special keys.
 - `$ESCAPE$` - Escape
 - `$BACKSPACE$` - Backspace
 - `$DELETE$` - Delete
-- `$ARROWUP$`, `$ARROWDOWN$`, `$ARROWLEFT$`, `$ARROWRIGHT$` - Arrow keys
+- `$ARROW_UP$`, `$ARROW_DOWN$`, `$ARROW_LEFT$`, `$ARROW_RIGHT$` - Arrow keys
 - `$HOME$`, `$END$` - Home/End
-- `$PAGEUP$`, `$PAGEDOWN$` - Page Up/Down
+- `$PAGE_UP$`, `$PAGE_DOWN$` - Page Up/Down
+- `$CTRL$`, `$SHIFT$`, `$ALT$`, `$COMMAND$` - Modifier keys
+- `$SPACE$` - Space
+- `$F1$` through `$F12$` - Function keys
+- `$INSERT$` - Insert
+- `$SUBTRACT$` - Numpad subtract
 
 ---
 
@@ -283,23 +288,35 @@ With exit code validation:
 }
 ```
 
-With output matching:
+With output matching (`stdio` matches against **stdout OR stderr** — there is no separate `stdout`/`stderr` field):
 
 ```json
 {
   "runShell": {
     "command": "node --version",
-    "stdout": "v18"
+    "stdio": "v22"
   }
 }
 ```
 
-**Options:**
-- `command`: Shell command to execute
-- `exitCodes`: Expected exit codes (default: [0])
-- `stdout`: Expected stdout content (partial match)
-- `stderr`: Expected stderr content (partial match)
-- `workingDirectory`: Directory to run command in
+`stdio` also accepts a regular expression — wrap the pattern in forward slashes:
+
+```json
+{
+  "runShell": {
+    "command": "node --version",
+    "stdio": "/^v\\d+\\./"
+  }
+}
+```
+
+**Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid and Doc Detective silently skips it):
+- `command`: Shell command to execute (required)
+- `args`: Array of string arguments for the command
+- `exitCodes`: Expected exit codes (default: `[0]`). The step fails if the actual exit code is not in this list.
+- `stdio`: Expected content in the command's **stdout or stderr** (partial match). Plain string, or a `/regex/` delimited by forward slashes.
+- `workingDirectory`: Directory to run the command in (default `"."`, relative to where Doc Detective is invoked)
+- `path` / `directory`: Save the command's output to a file for later comparison
 
 ### runCode
 
