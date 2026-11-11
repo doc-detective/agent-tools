@@ -2,11 +2,11 @@
 name: doc-detective-inline-test-injection
 description: 'Inject Doc Detective test specs into documentation source files as inline comments'
 metadata:
-  version: '1.4.0'
+  version: '1.4.1'
   organization: Doc Detective
-  date: June 2026
+  date: November 2026
   abstract: Inject Doc Detective test specifications directly into documentation files as inline comments. Supports Markdown, MDX, HTML, AsciiDoc, and XML/DITA formats with automatic format detection and semantic step matching.
-  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
 user-invocable: false
 ---
@@ -54,6 +54,8 @@ Select comment syntax by file extension:
 | AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | `// (step {...})` |
 
 If the extension is unrecognized, stop and report: `Error: unsupported file type: <extension>`.
+
+> **MDX `*/` hazard.** The MDX comment `{/* … */}` ends at the first `*/`. If a step's serialized JSON contains the substring `*/`, it closes the comment early and breaks the MDX/Astro build. This bites globs (`**/dir/**` contains `*/`) and some regexes. Before injecting into `.mdx`, scan each step's JSON for `*/`; if present, rewrite the payload to avoid it (e.g. `test/dir/**` instead of `**/dir/**`). There is no way to escape `*/` inside a `{/* … */}` JSX comment, so the payload itself must not contain it. Markdown/HTML `<!-- … -->` comments are not affected.
 
 ### Step 3: Match Steps to Content
 
@@ -110,9 +112,22 @@ Insert `<!-- test end -->` after each test's last step comment.
 <!-- test end -->
 ```
 
+## Running injected tests: `detectSteps` and markup noise
+
+Once tests are injected, Doc Detective finds them when it scans the source files (point the config `input` at the docs directory). Two behaviors trip people up:
+
+- **Explicit inline statements are always detected.** The `{/* test */}` / `{/* step */}` markers you inject are honored **regardless of the `detectSteps` config value** — `detectSteps` does *not* gate them.
+- **`detectSteps` only toggles *markup auto-detection*** — the implicit steps Doc Detective infers from prose (hyperlinks → `checkLink`, `**bold**` → `find`, fenced ` ```bash `/` ```json ` blocks → `runCode`, etc.). Its schema **default is `true`**.
+
+So for a suite built from explicit inline steps, set **`detectSteps: false`**. This is the reliable way to silence the noise: a docs page's own code fences and bold text are otherwise scooped up as extra (often invalid) auto-detected steps. To keep auto-detection on but tailor *which* patterns fire, override the file type's `markup` array with your own pattern list (the schema requires it to be non-empty, so disabling everything is done via `detectSteps: false`, not an empty `markup`).
+
 ## Configuration
 
 If `.doc-detective.json` or `.doc-detective.yaml` exists in the working directory, its `markupPatterns` field overrides the default content patterns used in Step 3. See [references/markup-patterns.md](references/markup-patterns.md) for the pattern schema and examples.
+
+> **MDX support.** `.mdx` is not in the default `fileTypes` *name* list, but the built-in `markdown` file type already covers the `.mdx` extension and recognizes the `{/* … */}` inline markers — so MDX inline tests work without extra config. To suppress markup auto-detection on MDX (code fences as `runCode`, etc.) while keeping inline statements, set `detectSteps: false`.
+
+> **Config `input` resolves relative to the config file's directory** (not the current working directory). A config at `sub/dir/.doc-detective.json` with `"input": "docs"` looks in `sub/dir/docs`. If a run reports "No tests detected," check this first — or pass `--input` on the CLI, which resolves from the cwd.
 
 ## Related Skills
 
