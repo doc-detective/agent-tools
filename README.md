@@ -32,10 +32,10 @@ Supported `--agent` ids: `claude`, `copilot`, `gemini`, `codex`, `qwen`, `openco
 
 Useful flags:
 
-- `--scope project` or `--scope global` — skip the scope prompt.
-- `--yes` — non-interactive; requires `--agent` and `--scope`.
-- `--force` — reinstall even if already up to date.
-- `--dry-run` — print the actions that would be taken without executing them.
+- `--scope project` or `--scope global`: skip the scope prompt.
+- `--yes`: run without prompts. Requires `--agent` and `--scope`.
+- `--force`: reinstall even if already up to date.
+- `--dry-run`: print the actions that would be taken without executing them.
 
 Head to the per-agent sections below if you prefer the native install flow or need to troubleshoot.
 
@@ -50,7 +50,7 @@ Detected coding agents that may be missing doc-detective tools: Claude Code, Gem
 ? Install doc-detective agent tools now? (y/N)
 ```
 
-Answer **y** to launch `install agents` with the detected agents pre-selected, then choose the install scope (global or project). Answer **n** to skip — the CLI prints a reminder to run `npx doc-detective install agents` later.
+Answer **y** to launch `install agents` with the detected agents pre-selected, then choose the install scope (global or project). Answer **n** to skip, and the CLI prints a reminder to run `npx doc-detective install agents` later.
 
 The prompt is skipped when:
 
@@ -66,11 +66,11 @@ To disable the prompt permanently, add `DOC_DETECTIVE_SKIP_AGENT_PROMPT=1` to yo
 npx doc-detective install agents --agent claude
 ```
 
-The command auto-detects Claude Code, prompts for install scope (project or user-global) if you don't pass `--scope`, then invokes Claude Code's native plugin management. Re-run any time to update.
+The command auto-detects Claude Code and invokes its native plugin management. Without `--scope`, it first asks whether to install for the project or user-global. Re-run any time to update.
 
-If the `claude` binary is not on your PATH but `~/.claude/` exists, the command edits your settings file directly and Claude Code will prompt to complete the install on its next launch.
+If the `claude` binary is not on your PATH but `~/.claude/` exists, the command edits your settings file directly. Claude Code then prompts you to complete the install on its next launch.
 
-#### Fallback: install from inside Claude Code
+#### Install from inside Claude Code
 
 1. Open Claude Code:
 
@@ -97,9 +97,9 @@ If the `claude` binary is not on your PATH but `~/.claude/` exists, the command 
 npx doc-detective install agents --agent gemini
 ```
 
-This invokes `gemini extensions install` under the hood with auto-update enabled. Gemini CLI installs extensions user-globally — the `--scope` flag has no effect for this agent.
+This invokes `gemini extensions install` under the hood with auto-update enabled. Gemini CLI installs extensions user-globally, so the `--scope` flag has no effect for this agent.
 
-#### Fallback: `gemini extensions install`
+#### Install with `gemini extensions install`
 
 ```bash
 gemini extensions install https://github.com/doc-detective/agent-tools.git --auto-update
@@ -118,11 +118,11 @@ Ask about Doc Detective, or use the `init` command to get started:
 npx doc-detective install agents --agent copilot
 ```
 
-The command invokes Copilot CLI's native plugin management to add the marketplace and install the plugin. Copilot CLI installs plugins user-globally — the `--scope` flag has no effect.
+The command invokes Copilot CLI's native plugin management to add the marketplace and install the plugin. Copilot CLI installs plugins user-globally, so the `--scope` flag has no effect.
 
 If the `copilot` binary is not on your PATH, install it first: `npm install -g @github/copilot` (or see the [Copilot CLI install docs](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli)). You must also be logged in with `copilot login`.
 
-#### Fallback: install from inside Copilot CLI
+#### Install from inside Copilot CLI
 
 1. Open Copilot CLI:
 
@@ -149,9 +149,9 @@ If the `copilot` binary is not on your PATH, install it first: `npm install -g @
 npx doc-detective install agents --agent qwen
 ```
 
-The command invokes `qwen extensions install` non-interactively with auto-update enabled. Qwen Code installs extensions user-globally — the `--scope` flag has no effect.
+The command invokes `qwen extensions install` non-interactively with auto-update enabled. Qwen Code installs extensions user-globally, so the `--scope` flag has no effect.
 
-#### Fallback: `qwen extensions install`
+#### Install with `qwen extensions install`
 
 ```bash
 qwen extensions install https://github.com/doc-detective/agent-tools
@@ -177,9 +177,9 @@ npx doc-detective install agents --agent opencode --scope project
 
 The command fetches the agent-tools bundle and copies skills, the runtime plugin, hooks, and agents into the appropriate scope directory (`~/.config/opencode/` or `./.opencode/`). OpenCode auto-discovers them on next launch.
 
-The plugin provides `tool.execute.before` and `tool.execute.after` hooks that automatically validate test specs, block common anti-patterns, suggest running tests after doc edits, and check for Doc Detective CLI availability.
+The plugin provides `tool.execute.before` and `tool.execute.after` hooks. They validate test specs, block common anti-patterns, suggest running tests after doc edits, and check that the Doc Detective CLI is available.
 
-#### Fallback: manual install
+#### Install manually
 
 1. Clone the repository:
 
@@ -215,7 +215,7 @@ npx doc-detective install agents --agent codex --scope project
 
 The command fetches doc-detective's skills from GitHub and copies them into the user's (or project's) `.agents/skills/` directory. Codex auto-discovers skills on its next launch.
 
-#### Fallback: manual install
+#### Install manually
 
 1. Clone the repo and copy the plugin and marketplace into your project:
 
