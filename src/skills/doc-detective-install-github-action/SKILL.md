@@ -93,6 +93,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - uses: doc-detective/github-action@v2
         with:
           # Inputs configured per options
@@ -102,8 +105,8 @@ jobs:
 
 | Condition | Action |
 |---|---|
-| Existing config found | Set `config` input to the config file path |
-| Config not at repo root | Set `working_directory` to the config's parent directory |
+| Existing config found at repo root | Set `config` to the config file name |
+| Existing config found outside repo root | Set `working_directory` to the config's parent directory, and set `config` to the file name only. `config` resolves against `working_directory`, so `working_directory: docs` with `config: docs/.doc-detective.json` points at `docs/docs/.doc-detective.json`. |
 | `--no-exit-on-fail` | Set `exit_on_fail: false`. Otherwise, omit the input: it defaults to `true`. |
 | `--create-pr-on-change` | Set `create_pr_on_change: true`, add `contents: write` and `pull-requests: write` permissions |
 | `--create-issue-on-fail` | Set `create_issue_on_fail: true`, add `issues: write` permission |
@@ -127,10 +130,11 @@ Summarize what was created and list any manual steps needed:
 - **Created**: Path to the workflow file and a summary of configured features.
 - **Manual steps** (if applicable):
   - If `--create-pr-on-change`: Remind the user that the default `GITHUB_TOKEN` works for PR creation, but if the repo requires specific token permissions, they may need to configure a custom token.
+  - If `--create-pr-on-change`: Tell the user that each run force-pushes one branch, `doc-detective-changes` by default, and updates its open PR. Nobody should commit to that branch by hand, and a branch protection rule that blocks force-pushes to it stops the PR. Also tell them the PR commits every changed file by default, including images that `screenshot` steps save, which can show unreleased UI or customer data. Suggest setting `pr_paths` to the folders the PR should update.
   - If using a custom `token` input: Remind the user to add the secret to the repository settings.
   - If the repository has branch protection rules: Note that PRs created by the action use the default `GITHUB_TOKEN` and may need approval before merging.
   - General: Confirm that GitHub Actions is enabled for the repository.
-  - Run files: By default, Doc Detective takes a screenshot after each browser, app, or device step and records each such context. The action keeps these files and the results file in `${{ runner.temp }}`, out of the repository. To keep them, add an `actions/upload-artifact` step that uploads from `${{ runner.temp }}`.
+  - Run files: By default, Doc Detective takes a screenshot after each browser, app, or device step and records each such context. They go in the run folder, `.doc-detective/runs/<runId>/`, under the config's `outputDir`. The action keeps the run folder and reports out of git through `.git/info/exclude`. To keep them after the job, add an `actions/upload-artifact` step with `include-hidden-files: true`. Its `path` is the run folder relative to the repo root. With the config in `working_directory` and no `outputDir` set, that's `<working_directory>/.doc-detective/runs/`, for example `docs/.doc-detective/runs/`. See [references/action-reference.md](references/action-reference.md#run-files-and-secrets).
   - Secrets: Pass secrets to the job as environment variables, and reference them as `$NAME` in specs. Doc Detective shows their values as `***NAME***` in logs, results, and the issues the action creates.
 
 ## Examples
@@ -151,6 +155,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - uses: doc-detective/github-action@v2
 ```
 
@@ -171,6 +178,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - uses: doc-detective/github-action@v2
         with:
           create_pr_on_change: true
@@ -194,6 +204,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - uses: doc-detective/github-action@v2
         with:
           create_issue_on_fail: true
@@ -220,9 +233,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
       - uses: doc-detective/github-action@v2
         with:
-          config: docs/.doc-detective.json
+          working_directory: docs
+          config: .doc-detective.json
           create_pr_on_change: true
           pr_labels: doc-detective,automated
           create_issue_on_fail: true
