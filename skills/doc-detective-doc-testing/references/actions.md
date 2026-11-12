@@ -76,9 +76,9 @@ A browser `surface` is an object with a required `browser` plus an optional `win
 
 ---
 
-## Native app surfaces (Windows and macOS)
+## Native app surfaces
 
-`startSurface` launches a native desktop app and registers it as an automation surface. Once you set `surface` to `{ "app": "<name>" }`, the element steps you already use in the browser can drive it: `find`, `click`, `type`, `screenshot`, and `waitUntil`. Close the app with a [`closeSurface`](#closesurface) step. Native app surfaces run on **Windows and macOS**. On any other platform, the context is marked SKIPPED (not failed) with an actionable reason. The driver for each platform installs automatically the first time you use it. On macOS, the process that runs Doc Detective also needs the Accessibility permission (see [macOS Accessibility permission](#macos-accessibility-permission)).
+`startSurface` launches a native app and registers it as an automation surface. Once you set `surface` to `{ "app": "<name>" }`, the element steps you already use in the browser can drive it: `find`, `click`, `type`, `screenshot`, and `waitUntil`. Close the app with a [`closeSurface`](#closesurface) step. Native app surfaces run on **Windows, macOS, Android, and iOS**. On any other platform, the context is marked SKIPPED (not failed) with an actionable reason. The driver for each platform installs automatically the first time you use it. On macOS, the process that runs Doc Detective also needs the Accessibility permission (see [macOS Accessibility permission](#macos-accessibility-permission)).
 
 ### startSurface
 
@@ -794,7 +794,7 @@ Running arbitrary JavaScript can modify application state. Mark a step `unsafe: 
 
 ### closeSurface
 
-Close one or more open surfaces. A surface can be a background process started by `runShell` or `runCode`, a browser tab or window, or a [native app](#native-app-surfaces-windows-and-macos). Target a process or app by its registered name, or a browser tab or window with a [browser surface](#browser-windows-and-tabs). Pass an array to close several at once. Closing a surface that isn't open (already closed, or never opened) is a no-op that passes, so `closeSurface` is safe to call unconditionally. Surfaces you never close explicitly are torn down automatically when the run ends.
+Close one or more open surfaces. A surface can be a background process started by `runShell` or `runCode`, a browser tab or window, or a [native app](#native-app-surfaces). Target a process or app by its registered name, or a browser tab or window with a [browser surface](#browser-windows-and-tabs). Pass an array to close several at once. Closing a surface that isn't open (already closed, or never opened) is a no-op that passes, so `closeSurface` is safe to call unconditionally. Surfaces you never close explicitly are torn down automatically when the run ends.
 
 Close a background process by name:
 
@@ -816,7 +816,7 @@ Close a browser tab (`tab`) or window and all its tabs (`window`):
 { "closeSurface": { "browser": "chrome", "window": "admin" } }
 ```
 
-Close a [native app](#native-app-surfaces-windows-and-macos) by its surface name:
+Close a [native app](#native-app-surfaces) by its surface name:
 
 ```json
 { "closeSurface": { "app": "charmap" } }
