@@ -52,7 +52,7 @@ With options:
 
 ## Browser windows and tabs
 
-Most browser steps accept a `surface` that targets a specific window or tab instead of the active one: `goTo`, `click`, `find`, `dragAndDrop`, `runBrowserScript`, `record`, `screenshot`, `type`, and `closeSurface`. The targeted tab is focused before the step runs and stays focused afterward. Omit `surface` to keep the default behavior, where the step acts on the active tab. A tab given without a window is searched for across every tab in the browser in creation order. That includes tabs the page opened itself through `target="_blank"` or `window.open`.
+Most browser steps accept a `surface` that targets a specific window or tab instead of the active one. These steps take it: `goTo`, `click`, `find`, `dragAndDrop`, `runBrowserScript`, `record`, `screenshot`, `type`, and `closeSurface`. The targeted tab is focused before the step runs and stays focused afterward. Omit `surface` to keep the default behavior, where the step acts on the active tab. A tab given without a window is searched for across every tab in the browser in creation order. That includes tabs the page opened itself through `target="_blank"` or `window.open`.
 
 A browser `surface` is an object with a required `browser` plus an optional `window` and/or `tab` selector:
 
