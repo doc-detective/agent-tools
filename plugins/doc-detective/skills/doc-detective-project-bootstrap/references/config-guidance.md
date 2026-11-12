@@ -79,7 +79,7 @@ interface Config {
 
 ### Gating contexts with `requires`
 
-A context in `runOn` can use `requires` to declare the host capabilities it depends on. Doc Detective checks every requirement before running the context, and if any is missing the context is marked SKIPPED — the same non-failing outcome as a platform mismatch — instead of failing the run. Since `requires` can stand on its own, a `runOn` entry may omit `platforms` and `browsers` and gate purely on capabilities.
+A context in `runOn` can use `requires` to declare the host capabilities it depends on. Doc Detective checks every requirement before running the context. If any is missing, the context is marked SKIPPED (the same non-failing outcome as a platform mismatch) instead of failing the run. Since `requires` can stand on its own, a `runOn` entry may omit `platforms` and `browsers` and gate purely on capabilities.
 
 `requires` accepts three progressive forms:
 
@@ -104,11 +104,14 @@ A context in `runOn` can use `requires` to declare the host capabilities it depe
 ```
 
 **Forms:**
-- **String** — a single command that must be resolvable on `PATH`.
-- **Array of strings** — several commands, all of which must be resolvable on `PATH`.
-- **Object** — any combination of `commands` (resolvable on `PATH`), `files` (must exist; entries expand `$VAR` and `$HOME`), and `env` (must be set to a non-empty value).
+- **String**: a single command that must be resolvable on `PATH`.
+- **Array of strings**: several commands, all of which must be resolvable on `PATH`.
+- **Object**: any combination of these keys:
+  - `commands`: resolvable on `PATH`.
+  - `files`: must exist; entries expand `$VAR` and `$HOME`.
+  - `env`: must be set to a non-empty value.
 
-All listed requirements are AND-ed — the context runs only when every one is satisfied. This pairs naturally with native app surfaces: gate an app test to the platforms it supports with `runOn` platforms (`["windows"]`, `["mac"]`, or both) plus a `requires` for the tooling it needs.
+All listed requirements are AND-ed: the context runs only when every one is satisfied. This pairs naturally with native app surfaces. Gate an app test to the platforms it supports with `runOn` platforms (`["windows"]`, `["mac"]`, or both). Add a `requires` for the tooling it needs.
 
 ### Hints
 
