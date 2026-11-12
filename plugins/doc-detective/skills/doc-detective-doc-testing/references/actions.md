@@ -65,21 +65,14 @@ A browser `surface` is an object with a required `browser` plus an optional `win
 ```
 
 **Surface fields:**
-- `browser`: Required. One of `"chrome"`, `"firefox"`, `"safari"`, `"webkit"`, `"edge"`. Must be the browser already driving the context. Targeting a different browser fails with a message (multi-browser support lands in a later phase).
+- `browser`: Required. One of `"chrome"`, `"firefox"`, `"safari"`, `"webkit"`, `"edge"`. A `goTo` step opens that browser if it isn't open yet. Other steps fail with a message until it's open.
+- `name`: Optional browser surface name. Defaults to the engine name. Give distinct names to drive several browsers at once, including two of the same engine. With more than one browser of an engine open, a step that omits `name` fails and asks you to name one.
 - `window` / `tab`: Optional window or tab selector. Omit `window` to use the active window; omit `tab` to use the active tab.
 
 **Window/tab selectors** accept any of these forms:
 - **Name**: The string name assigned when the surface was opened: `"cart"`.
 - **Index**: An integer in creation order; negative counts from the end, so `-1` is the newest: `-1`.
 - **Criteria**: An object matching any of `name`, `index`, `title`, or `url`. `title` and `url` match as a substring, or as a `/regex/` wrapped in forward slashes: `{ "title": "/Checkout/" }`.
-
-**Phase limits (fail with guidance):** these all fail with a message rather than silently doing nothing:
-- a `browser` that isn't the active browser
-- a browser surface `name` (reserved)
-- closing a whole browser
-- closing the last open tab
-
-The same specs start working when multi-browser support ships.
 
 ---
 
@@ -120,13 +113,13 @@ On macOS, launch by bundle ID or by `.app` path:
 - `app`: Required. The app to launch. On Windows, an executable path, package name, or UWP AppUserModelID. On macOS, a `.app` path or a bundle ID (`com.apple.TextEdit`). The kind is inferred from the value's syntax; there is no separate type field.
 - `name`: The surface name later steps reference in `surface`. Defaults to the executable's basename (without extension) or the final segment of an ID.
 - `args`: Launch arguments. On macOS they pass to the app as a real argument array. On Windows they join into a single shell-style string, so an argument that contains spaces must carry its own quotes (for example, `"\"My File.txt\""`).
-- `workingDirectory`: Directory to launch from (Windows only; default `"."`). Not supported on macOS, where the driver launches apps through LaunchServices and has no working-directory control. A non-default value fails there with guidance. Launch through `runShell` if the cwd matters.
-- `env`: Extra environment variables for the launched app. Supported on macOS. The Windows driver rejects it: any value fails with guidance. Set the variables in the shell that launches Doc Detective, or launch through `runShell` instead.
+- `workingDirectory`: Not supported by any app driver. A non-default value fails the step with guidance. Launch through `runShell` if the working directory matters.
+- `env`: Extra environment variables for the launched app. Supported on macOS. On Windows, any value fails the step with guidance. Set the variables in the shell that launches Doc Detective, or launch through `runShell` instead.
 - `waitUntil`: Startup readiness gate: `{ delayMs?: number, find?: object }`. `delayMs` waits a fixed time; `find` waits for an element to appear.
 - `timeout`: Maximum time in ms to wait for startup (default `60000`). The first macOS launch builds the driver's helper app and can take a few minutes, so allow extra time there.
 - `driverOptions`: Object of driver capability overrides passed through to the underlying driver (for example, `appium:noReset`).
 
-The mobile-oriented fields `install`, `activity`, and `device` are accepted by the schema but reserved for later mobile support. Setting any of them fails the step with a message pointing to the roadmap. Leave them unset.
+The mobile fields `install`, `activity`, and `device` apply only to Android and iOS targets. On Windows and macOS, setting any of them fails the step with guidance.
 
 ### Targeting elements on an app surface
 
@@ -140,7 +133,7 @@ On **Windows** (UI Automation):
 On **macOS** (accessibility):
 - `elementText` matches the element's title, label, or value.
 - `elementId` (and `elementTestId`) match its accessibility identifier.
-- `elementAria` matches its `XCUIElementType` role (for example, `button` → `XCUIElementTypeButton`, `textbox` → `XCUIElementTypeTextField`) together with its accessible name (title or label). Pass it as a role string; the `{ role, name }` object form isn't reachable through the schema yet.
+- `elementAria` matches its `XCUIElementType` role (for example, `button` → `XCUIElementTypeButton`, `textbox` → `XCUIElementTypeTextField`) together with its accessible name (title or label). Pass it as a role string.
 
 On both platforms:
 - `selector` is an escape hatch for native locators: a native XPath (starting with `//` or `(`), or an accessibility id (starting with `~`). CSS selectors are browser-only and are rejected on app surfaces.
@@ -170,7 +163,7 @@ On both platforms:
 
 **App surface fields:**
 - `app`: Required. The `name` from `startSurface` (or its derived default).
-- `window`: The schema accepts a `window` selector on an app surface, but per-window targeting isn't active in this phase. A step that sets it fails, so omit `window` and act on the app's active window. Window selection lands in a later part of the native app roadmap.
+- `window`: Which app window to act on, such as a dialog the app opened. Omit it to use the active window. Takes a name, an index in creation order (`-1` is the newest), or `{ name, index, title }` criteria. On Windows, only `-1` and `title` criteria work; other index selectors fail with guidance.
 
 Gate app tests to the platforms they support so the skip elsewhere is intentional. For example, set `runOn` platforms to `["windows"]` for a Windows app or `["mac"]` for a macOS app.
 
@@ -829,7 +822,7 @@ Close a [native app](#native-app-surfaces-windows-and-macos) by its surface name
 { "closeSurface": { "app": "charmap" } }
 ```
 
-Doc Detective refuses to close the last open tab, which would end the browser session. It also refuses to close a whole browser. Both fail with a message.
+A browser surface with no `window` or `tab` closes that whole browser, for example `{ "closeSurface": { "browser": "chrome" } }`. A browser with an active recording refuses to close until you `stopRecord`. Doc Detective also refuses to close the last open tab, because that would end the session. Close the whole browser instead.
 
 ---
 
