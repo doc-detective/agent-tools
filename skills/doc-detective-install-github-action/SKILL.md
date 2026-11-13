@@ -241,7 +241,9 @@ jobs:
         with:
           working_directory: docs
           config: .doc-detective.json
-          create_pr_on_change: true
+          # Open PRs only from pushes to main. On pull_request, the PR would
+          # carry the source PR's changes and share one pr_branch.
+          create_pr_on_change: ${{ github.event_name == 'push' }}
           pr_labels: doc-detective,automated
           create_issue_on_fail: true
           issue_labels: doc-detective,test-failure
