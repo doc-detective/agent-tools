@@ -1,6 +1,6 @@
 {
   "dependencies": {
-    "doc-detective-common": "5.0.0-v5-rc.16"
+    "doc-detective-common": "^5.0.0"
   },
   "devDependencies": {
     "esbuild": "^0.27.2"
