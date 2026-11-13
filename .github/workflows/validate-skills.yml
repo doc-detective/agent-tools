@@ -43,17 +43,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # build:no-scripts only copies the committed bundles, so rebuild them
+      # first: a changed scripts/src/*.mjs then shows up as drift.
+      - name: Build skill script bundles
+        run: npm run build:doc-testing
+
       - name: Build artifacts from src/
         run: npm run build:no-scripts
 
       # build.js stamps the current month into frontmatter `date:` lines, so
-      # those lines are ignored. Any other difference means src/ wasn't built.
+      # those lines are ignored. Any other difference, or a generated file
+      # that isn't committed, means src/ wasn't built.
       - name: Check built output matches src/
         run: |
-          git diff --exit-code -I '^ *date: ' -- skills agents commands hooks plugins/doc-detective || {
+          untracked="$(git ls-files --others --exclude-standard -- skills agents commands hooks plugins/doc-detective)"
+          if ! git diff --exit-code -I '^ *date: ' -- skills agents commands hooks plugins/doc-detective || [ -n "$untracked" ]; then
+            [ -n "$untracked" ] && printf 'Untracked generated files:\n%s\n' "$untracked"
             echo "::error::Built output differs from src/. Run \`npm run build\` and commit the result."
             exit 1
-          }
+          fi
 
       - name: Set up Go
         uses: actions/setup-go@v5

@@ -60,7 +60,10 @@ jobs:
       # (`v1`, `v2`), so point it at each stable release: v2.3.1 moves v2.
       # semantic-release tags the release commit it leaves at HEAD, so no
       # stable tag there means no release was cut, or it was a prerelease.
+      # Only on main: a manual run against an old release tag would otherwise
+      # find that tag at HEAD and move the major tag back to it.
       - name: Move the major version tag
+        if: github.ref == 'refs/heads/main'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
