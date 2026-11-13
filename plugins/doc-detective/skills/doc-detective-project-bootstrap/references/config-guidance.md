@@ -152,8 +152,8 @@ Set `true` to use your CPU core count (capped at 4). Set a number for explicit c
 ### CLI Flag
 
 ```bash
-npx doc-detective --concurrent-runners 4
-npx doc-detective --concurrent-runners true   # CPU core count (capped at 4)
+npx doc-detective@5 --concurrent-runners 4
+npx doc-detective@5 --concurrent-runners true   # CPU core count (capped at 4)
 ```
 
 Default: `1` (runs contexts sequentially).
@@ -391,10 +391,10 @@ The `debug` config field is deprecated and ignored. For diagnostic output, use t
 
 ```bash
 # Dedicated subcommand
-npx doc-detective debug
+npx doc-detective@5 debug
 
 # Environment variable (CI-friendly)
-DOC_DETECTIVE_DEBUG=true npx doc-detective
+DOC_DETECTIVE_DEBUG=true npx doc-detective@5
 ```
 
 See [Fix Failing Tests](../../doc-detective-doc-testing/references/fix-failing-tests.md#environment-and-configuration-troubleshooting) for details.
@@ -405,7 +405,7 @@ After generating config, verify it:
 
 ```bash
 # Test config loads correctly: exits 0 when it's valid and tests resolve, 2 otherwise
-npx doc-detective --config .doc-detective.json --dry-run
+npx doc-detective@5 --config .doc-detective.json --dry-run
 
 # Or validate with JSON Schema
 npx ajv validate -s https://raw.githubusercontent.com/doc-detective/common/refs/heads/main/dist/schemas/config_v3.schema.json -d .doc-detective.json

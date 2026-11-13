@@ -57,7 +57,7 @@ describe('Hook 4: session-start-check-install', function () {
     const output = parseOutput(result.stdout);
     assert.ok(output.additionalContext.includes('not installed'));
     assert.ok(output.additionalContext.includes('npm i -g doc-detective'));
-    assert.ok(output.additionalContext.includes('npx doc-detective'));
+    assert.ok(output.additionalContext.includes('npx doc-detective@5'));
     assert.ok(output.additionalContext.includes('Docker'));
   });
 

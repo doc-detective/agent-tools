@@ -158,6 +158,6 @@ describe('LSP plugin: launcher shim', function () {
     // In a standard Node install npm sits beside node, so npx-cli.js resolves.
     assert.strictEqual(spec.command, process.execPath);
     assert.match(spec.args[0], /npx-cli\.js$/);
-    assert.deepStrictEqual(spec.args.slice(1), ['--yes', 'doc-detective', 'lsp', '--stdio']);
+    assert.deepStrictEqual(spec.args.slice(1), ['--yes', 'doc-detective@5', 'lsp', '--stdio']);
   });
 });

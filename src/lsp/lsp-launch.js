@@ -10,8 +10,8 @@
 // It resolves the Doc Detective CLI so a workspace's pinned version always wins:
 //   1. project-local install (node_modules/doc-detective) — version matches the
 //      project the author is editing; launched as `node <abs bin>`.
-//   2. `npx --yes doc-detective` — launched through Node's own bundled
-//      `npx-cli.js`; npx uses a globally-installed doc-detective if present, so
+//   2. `npx --yes doc-detective@5` — launched through Node's own bundled
+//      `npx-cli.js`; npx uses a globally-installed doc-detective 5 if present, so
 //      this also covers the "installed globally, not in this project" case.
 //
 // then execs `doc-detective lsp --stdio`, inheriting stdio so Claude Code's LSP
@@ -24,9 +24,8 @@
 // searches the current directory first, so a planted `doc-detective.cmd` in an
 // untrusted workspace could otherwise run when the server auto-starts.
 //
-// NOTE: the `lsp` subcommand ships in doc-detective with the language-server
-// feature. Against an older published CLI the launch resolves but the subcommand
-// is unknown — expected until that release lands.
+// NOTE: the `lsp` subcommand ships in doc-detective 5. A project-local install
+// older than 5 resolves first but doesn't know the subcommand.
 
 const { spawn } = require("node:child_process");
 const path = require("node:path");
@@ -76,7 +75,7 @@ function resolveLocal(startDir = process.cwd()) {
  * Zero-install fallback via npx, launched through Node's own bundled
  * `npx-cli.js` (resolved next to `process.execPath`) with the current Node and
  * shell:false — so the OS never resolves `npx`/`doc-detective` by name from the
- * workspace cwd. npx still uses a globally-installed doc-detective if present.
+ * workspace cwd. npx still uses a globally-installed doc-detective 5 if present.
  */
 function resolveNpx() {
   const nodeDir = path.dirname(process.execPath);
@@ -90,7 +89,7 @@ function resolveNpx() {
     if (fs.existsSync(npxCli)) {
       return {
         command: process.execPath,
-        args: [npxCli, "--yes", "doc-detective", ...LSP_ARGS],
+        args: [npxCli, "--yes", "doc-detective@5", ...LSP_ARGS],
       };
     }
   }
@@ -98,8 +97,8 @@ function resolveNpx() {
      node. On POSIX `npx` resolves from PATH (execvp, not the cwd) with no shell;
      the Windows .cmd shim needs a shell but this branch is effectively dead on a
      standard install. */
-  if (!isWindows) return { command: "npx", args: ["--yes", "doc-detective", ...LSP_ARGS] };
-  return { command: "npx.cmd", args: ["--yes", "doc-detective", ...LSP_ARGS], shell: true };
+  if (!isWindows) return { command: "npx", args: ["--yes", "doc-detective@5", ...LSP_ARGS] };
+  return { command: "npx.cmd", args: ["--yes", "doc-detective@5", ...LSP_ARGS], shell: true };
 }
 
 /* c8 ignore start - spawns the real server; the pure resolvers above are unit
