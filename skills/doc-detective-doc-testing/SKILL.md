@@ -151,7 +151,7 @@ doc-detective --input test-spec.json --output results.json
 # 2. Docker
 docker run -v "$(pwd):/app" docdetective/docdetective --input /app/test-spec.json --output /app/results.json
 # 3. NPX
-npx doc-detective --input test-spec.json --output results.json
+npx doc-detective@5 --input test-spec.json --output results.json
 ```
 
 These specs need CLI 5 or later. Move to the next runner when the command itself isn't available, or when its `--version` reports a version below 5. If none are available, inform the user and suggest installation. Otherwise, act on the exit code:

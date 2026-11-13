@@ -19,8 +19,8 @@ fi
 # Check 2: npx (use --yes to suppress install prompts, tail -1 to ignore progress output)
 # Skip if CI=true to avoid npm cache lock issues in parallel test runs
 if [ "$AVAILABLE" = "false" ] && [ "$CI" != "true" ] && command -v npx &>/dev/null; then
-  if timeout 8 npx --yes doc-detective --version &>/dev/null 2>&1; then
-    VERSION=$(timeout 8 npx --yes doc-detective --version 2>/dev/null | tail -1 || echo "unknown")
+  if timeout 8 npx --yes doc-detective@5 --version &>/dev/null 2>&1; then
+    VERSION=$(timeout 8 npx --yes doc-detective@5 --version 2>/dev/null | tail -1 || echo "unknown")
     STATUS="doc-detective available via npx (version: ${VERSION})"
     AVAILABLE="true"
   fi
@@ -42,7 +42,7 @@ if [ "$AVAILABLE" = "true" ]; then
   SAFE_STATUS=$(printf '%s' "$STATUS" | sed 's#[\\"/]#\\&#g' | tr -d '\n')
   printf '{"additionalContext": "Doc Detective status: %s. Tests can be executed directly."}\n' "$SAFE_STATUS"
 else
-  printf '{"additionalContext": "Doc Detective CLI is not installed. When the user requests test execution, suggest installation: npm i -g doc-detective, npx doc-detective, or Docker (docker pull docdetective/docdetective). Test spec generation and validation still work without the CLI."}\n'
+  printf '{"additionalContext": "Doc Detective CLI is not installed. When the user requests test execution, suggest installation: npm i -g doc-detective, npx doc-detective@5, or Docker (docker pull docdetective/docdetective). Test spec generation and validation still work without the CLI."}\n'
 fi
 
 exit 0

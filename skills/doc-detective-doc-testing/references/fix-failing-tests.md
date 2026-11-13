@@ -134,10 +134,10 @@ Run `doc-detective debug` to print a diagnostic dump and exit without running te
 
 ```bash
 # Print a diagnostic dump
-npx doc-detective debug
+npx doc-detective@5 debug
 
 # Include full environment variables (redacted)
-npx doc-detective debug --include-env
+npx doc-detective@5 debug --include-env
 ```
 
 The dump includes:
@@ -154,7 +154,7 @@ Set `DOC_DETECTIVE_DEBUG=true` to print the same dump from the default command. 
 
 ```bash
 # CI-friendly: emit diagnostics instead of running tests
-DOC_DETECTIVE_DEBUG=true npx doc-detective
+DOC_DETECTIVE_DEBUG=true npx doc-detective@5
 ```
 
 Useful in CI pipelines when tests fail unexpectedly. The env-var path omits the full `process.env` dump for security.
