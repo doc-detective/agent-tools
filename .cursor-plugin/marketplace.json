@@ -6,7 +6,7 @@
   },
   "metadata": {
     "description": "Documentation testing and workflow validation tools.",
-    "version": "1.4.1"
+    "version": "2.0.0"
   },
   "plugins": [
     {

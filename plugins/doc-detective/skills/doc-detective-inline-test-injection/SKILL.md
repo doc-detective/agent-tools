@@ -2,7 +2,7 @@
 name: doc-detective-inline-test-injection
 description: 'Inject Doc Detective test specs into documentation source files as inline comments'
 metadata:
-  version: '1.4.1'
+  version: '2.0.0'
   organization: Doc Detective
   date: November 2026
   abstract: Inject Doc Detective test specifications directly into documentation files as inline comments. Supports Markdown, MDX, HTML, AsciiDoc, and XML/DITA formats with automatic format detection and semantic step matching.

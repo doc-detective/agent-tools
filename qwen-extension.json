@@ -1,6 +1,6 @@
 {
   "name": "doc-detective",
-  "version": "1.4.1",
+  "version": "2.0.0",
   "contextFileName": "GEMINI.md",
   "mcpServers": {
     "doc-detective": {
