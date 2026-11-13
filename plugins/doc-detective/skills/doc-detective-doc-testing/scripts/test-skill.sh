@@ -597,6 +597,69 @@ EOF
         skip "fix-tests not built (run build-skill.sh first)"
     fi
 
+    # Test 10l: a text fix never replaces a `$NAME` reference with result text
+    echo ""
+    echo "--- Test 10l: fix-tests keeps variable references in text fixes ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        SPEC_JSON='{"tests":[{"testId":"t","steps":[{"stepId":"s1","find":{"elementText":"$GREETING","timeout":5000}},{"stepId":"s2","click":"$BUTTON"}]}]}'
+        echo "$SPEC_JSON" > "$TEST_OUTPUT_DIR/text-vars-spec.json"
+        cat > "$TEST_OUTPUT_DIR/text-vars-results.json" << 'EOF'
+{ "specs": [ { "contentPath": "text-vars-spec.json", "tests": [ { "testId": "t", "contexts": [ { "contextId": "chrome", "steps": [
+  { "find": { "elementText": "Hello", "timeout": 5000 }, "stepId": "s1", "result": "FAIL", "resultDescription": "Expected \"Hello\" but got \"Hello back\"." },
+  { "click": "Sign in", "stepId": "s2", "result": "FAIL", "resultDescription": "No elements matched. Found \"Log in\"." }
+] } ] } ] } ] }
+EOF
+        OUTPUT=$(cd "$TEST_OUTPUT_DIR" && node "$SKILL_DIR/scripts/fix-tests.js" text-vars-results.json --spec text-vars-spec.json --auto-fix 2>&1 || true)
+        ACTUAL=$(node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))))" "$TEST_OUTPUT_DIR/text-vars-spec.json")
+        if [ "$ACTUAL" = "$SPEC_JSON" ]; then
+            pass "fix-tests keeps variable references in text fixes"
+        else
+            fail "fix-tests should keep variable references in text fixes" "$ACTUAL / $OUTPUT"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
+    # Test 10m: a proposal from a results spec without `contentPath` can't be
+    # matched to a file, so it isn't applied
+    echo ""
+    echo "--- Test 10m: fix-tests ignores proposals with no content path ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        SPEC_JSON='{"tests":[{"testId":"shared","steps":[{"stepId":"s1","find":{"elementText":"Slow","timeout":5000}}]}]}'
+        echo "$SPEC_JSON" > "$TEST_OUTPUT_DIR/no-path-spec.json"
+        cat > "$TEST_OUTPUT_DIR/no-path-results.json" << 'EOF'
+{ "specs": [ { "tests": [ { "testId": "shared", "contexts": [ { "contextId": "chrome", "steps": [
+  { "find": { "elementText": "Slow", "timeout": 5000 }, "stepId": "s1", "result": "FAIL", "resultDescription": "Timed out waiting for element." }
+] } ] } ] } ] }
+EOF
+        OUTPUT=$(cd "$TEST_OUTPUT_DIR" && node "$SKILL_DIR/scripts/fix-tests.js" no-path-results.json --spec no-path-spec.json 2>&1 || true)
+        ACTUAL=$(node -e "console.log(JSON.stringify(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8'))))" "$TEST_OUTPUT_DIR/no-path-spec.json")
+        if [ "$ACTUAL" = "$SPEC_JSON" ]; then
+            pass "fix-tests ignores a proposal with no content path"
+        else
+            fail "fix-tests should ignore a proposal with no content path" "$ACTUAL / $OUTPUT"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
+    # Test 10n: a proposal that couldn't be applied counts as unresolved, so
+    # the run exits 1 instead of reporting an untouched spec as fixed
+    echo ""
+    echo "--- Test 10n: fix-tests exits 1 when a fix can't be applied ---"
+    if [ -f "./scripts/fix-tests.js" ]; then
+        echo '{"tests":[{"testId":"shared","steps":[{"stepId":"s1","find":{"elementText":"Slow","timeout":5000}}]}]}' > "$TEST_OUTPUT_DIR/this-spec.json"
+        if OUTPUT=$(cd "$TEST_OUTPUT_DIR" && node "$SKILL_DIR/scripts/fix-tests.js" other-results.json --spec this-spec.json 2>&1); then
+            fail "fix-tests should exit 1 when a fix can't be applied" "$OUTPUT"
+        elif echo "$OUTPUT" | grep -q "1 issue(s) require manual review"; then
+            pass "fix-tests counts an unapplied fix as unresolved"
+        else
+            fail "fix-tests should report the unapplied fix for review" "$OUTPUT"
+        fi
+    else
+        skip "fix-tests not built (run build-skill.sh first)"
+    fi
+
     # Test 10f: fix-tests rejects a file that isn't a results document
     echo ""
     echo "--- Test 10f: fix-tests rejects unrecognized results ---"

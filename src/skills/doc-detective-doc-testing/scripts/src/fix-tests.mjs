@@ -172,6 +172,9 @@ function analyzeFailure(failure) {
   return proposals.sort((a, b) => b.confidence - a.confidence)[0];
 }
 
+// A `$NAME` reference resolves at run time, so result text never replaces it.
+const isVariable = value => typeof value === 'string' && /\$[A-Za-z_]/.test(value);
+
 /**
  * Generate a fix based on strategy
  */
@@ -187,9 +190,9 @@ function generateFix(strategy, originalStep, error) {
       if (textMatch) {
         const newText = textMatch[1] || textMatch[2] || textMatch[3];
         if (fix.click && typeof fix.click === 'string') {
-          fix.click = newText;
+          if (!isVariable(fix.click)) fix.click = newText;
         } else if (fix.find && typeof fix.find === 'string') {
-          fix.find = newText;
+          if (!isVariable(fix.find)) fix.find = newText;
         }
       }
       break;
@@ -211,9 +214,9 @@ function generateFix(strategy, originalStep, error) {
       if (urlMatch && fix.goTo) {
         const newUrl = urlMatch[1] || urlMatch[2] || urlMatch[3];
         if (typeof fix.goTo === 'string') {
-          fix.goTo = newUrl;
+          if (!isVariable(fix.goTo)) fix.goTo = newUrl;
         } else if (typeof fix.goTo === 'object') {
-          fix.goTo.url = newUrl;
+          if (!isVariable(fix.goTo.url)) fix.goTo.url = newUrl;
         }
       }
       break;
@@ -223,7 +226,7 @@ function generateFix(strategy, originalStep, error) {
       const expectedMatch = error.match(/got "([^"]+)"|actual: "([^"]+)"/i);
       if (expectedMatch) {
         const actualText = expectedMatch[1] || expectedMatch[2];
-        if (fix.find?.elementText) {
+        if (fix.find?.elementText && !isVariable(fix.find.elementText)) {
           fix.find.elementText = actualText;
         }
       }
@@ -304,15 +307,15 @@ function applyFix(spec, proposal, specFile) {
 
   const tests = spec.tests || [];
 
-  // Results can cover many files, and IDs only need to be unique within one.
-  const sameFile = proposal.contentPath && resolve(proposal.contentPath) === resolve(specFile);
-  if (proposal.contentPath && !sameFile) return false;
+  // Results can cover many files, and IDs only need to be unique within one,
+  // so a proposal that doesn't name this file can't be matched to it.
+  if (!proposal.contentPath || resolve(proposal.contentPath) !== resolve(specFile)) return false;
 
   // The CLI generates IDs for tests and steps that have none, and they appear
-  // only in results. Fall back to position, but only within the same file.
+  // only in results. Fall back to position.
   const positional = tests[proposal.testIndex];
   const test = tests.find(t => t.testId === proposal.testId)
-    || (sameFile && positional && !positional.testId ? positional : null);
+    || (positional && !positional.testId ? positional : null);
   if (!test) return false;
 
   const steps = test.steps || [];
@@ -465,6 +468,9 @@ Examples:
     for (const proposal of autoApplicable) {
       if (applyFix(spec, proposal, options.specFile)) {
         appliedCount++;
+      } else {
+        // An untouched step is still broken
+        needsReview.push(proposal);
       }
     }
 
