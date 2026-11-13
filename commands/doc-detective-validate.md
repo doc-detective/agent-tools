@@ -77,7 +77,8 @@ The MCP tool returns `{valid, errors[], normalizedObject, schemaKey, schemaVersi
 ```bash
 # Option 1
 echo '<spec-json>' | node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
-# Option 2: exits 0 when the spec is valid, 2 when it isn't. Names the invalid file, but not the field.
+# Option 2: exits 0 when the spec is valid. Exit 2 means the spec is invalid only when stderr names the spec file;
+# any other exit-2 error (a config error, for example) stopped validation, so report that error instead. Doesn't name the field.
 npx doc-detective --dry-run --input <spec-file>
 ```
 

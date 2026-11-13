@@ -77,6 +77,8 @@ permissions:
 
 The action needs `contents: write` to force-push `pr_branch` and `pull-requests: write` to open or update the PR.
 
+Run PR creation on `push` to the default branch, or on `schedule`. On `pull_request`, the checkout is the source PR's merge commit, so the PR the action opens carries the source PR's changes as well as its own, and every source PR overwrites the same `pr_branch`.
+
 ### Issue creation (`create_issue_on_fail: true`)
 
 ```yaml
@@ -182,7 +184,8 @@ jobs:
 name: Doc Detective
 
 on:
-  pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
@@ -347,6 +350,8 @@ name: Doc Detective
 
 on:
   pull_request:
+  push:
+    branches: [main]   # seeds the cache that every pull request can restore
 
 permissions:
   contents: read
@@ -371,7 +376,7 @@ jobs:
       - uses: doc-detective/github-action@v2
 ```
 
-This variant prebuilds WebDriverAgent through the Doc Detective CLI so later runs skip the cold `xcodebuild` compile. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at a cache directory, `actions/cache` persists it across runs, and `install ios --yes` compiles WDA once into it before the action runs; test sessions then consume those products automatically. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry — so when a runner image bumps Xcode or the driver version, the prebuild refreshes rather than restoring a stale build indefinitely. See [iOS tests](#ios-tests) for details.
+This variant prebuilds WebDriverAgent through the Doc Detective CLI so later runs skip the cold `xcodebuild` compile. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at a cache directory, `actions/cache` persists it across runs, and `install ios --yes` compiles WDA once into it before the action runs; test sessions then consume those products automatically. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry — so when a runner image bumps Xcode or the driver version, the prebuild refreshes rather than restoring a stale build indefinitely. A cache saved by a `pull_request` run is visible only to that pull request, so the `push` trigger on the default branch saves the entry that new pull requests restore. See [iOS tests](#ios-tests) for details.
 
 ### Using action outputs
 
@@ -379,7 +384,8 @@ This variant prebuilds WebDriverAgent through the Doc Detective CLI so later run
 name: Doc Detective
 
 on:
-  pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: write

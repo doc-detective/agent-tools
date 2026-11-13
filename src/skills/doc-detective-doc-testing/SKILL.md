@@ -154,11 +154,11 @@ docker run -v "$(pwd):/app" docdetective/docdetective --input /app/test-spec.jso
 npx doc-detective --input test-spec.json --output results.json
 ```
 
-Move to the next runner only when the command itself isn't available. If none are available, inform the user and suggest installation. Otherwise, act on the exit code:
+These specs need CLI 5 or later. Move to the next runner when the command itself isn't available, or when its `--version` reports a version below 5. If none are available, inform the user and suggest installation. Otherwise, act on the exit code:
 
 | Exit code | Meaning | Next step |
 |---|---|---|
-| `0` | No test failed, and at least one passed or warned | Report the results |
+| `0` | No test failed, and at least one passed or warned. A config with `exitOnFail: false` exits `0` even when tests fail | Read the results file's `summary` before reporting success |
 | `1` | At least one test failed | A normal outcome, not a crash: read the results file (Step 4) |
 | `2` | Nothing valid was tested, because of bad usage, bad config, no tests, every test skipped, or an internal error | Fix the problem named on stderr. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason |
 

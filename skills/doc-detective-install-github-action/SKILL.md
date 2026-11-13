@@ -24,7 +24,7 @@ Install and configure the Doc Detective GitHub Action for automated documentatio
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--trigger <event>` | `pull_request` | Workflow trigger event (`pull_request`, `push`, `schedule`, etc.) |
+| `--trigger <event>` | `pull_request` (`push` with `--create-pr-on-change`) | Workflow trigger event (`pull_request`, `push`, `schedule`, etc.) |
 | `--no-exit-on-fail` | false | Let the CI check pass when Doc Detective tests fail. By default, failing tests fail the check. |
 | `--exit-on-fail` | true | Deprecated, because failing the check is now the default |
 | `--create-pr-on-change` | false | Create a PR when files change during test execution (e.g., updated screenshots) |
@@ -108,7 +108,7 @@ jobs:
 | Existing config found at repo root | Set `config` to the config file name |
 | Existing config found outside repo root | Set `working_directory` to the config's parent directory, and set `config` to the file name only. `config` resolves against `working_directory`, so `working_directory: docs` with `config: docs/.doc-detective.json` points at `docs/docs/.doc-detective.json`. |
 | `--no-exit-on-fail` | Set `exit_on_fail: false`. Otherwise, omit the input: it defaults to `true`. |
-| `--create-pr-on-change` | Set `create_pr_on_change: true`, add `contents: write` and `pull-requests: write` permissions |
+| `--create-pr-on-change` | Set `create_pr_on_change: true`, add `contents: write` and `pull-requests: write` permissions. Unless `--trigger` is given, trigger on `push` to the default branch instead of `pull_request`. On `pull_request`, the action builds its branch from the source PR's merge commit, so the PR it opens carries the source PR's changes too, and every source PR overwrites the same `pr_branch`. If the user passes `--trigger pull_request`, warn them of both. |
 | `--create-issue-on-fail` | Set `create_issue_on_fail: true`, add `issues: write` permission |
 | `--integrations` provided | Set the `issue_mentions` input to the comma-separated list. Don't use the deprecated `integrations` input. |
 | `--trigger schedule` | Use cron syntax; suggest `cron: '0 6 * * 1'` (Monday 6 AM UTC) and prompt for customization unless `--ci` |
@@ -167,7 +167,8 @@ jobs:
 name: Doc Detective
 
 on:
-  pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
