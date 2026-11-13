@@ -383,7 +383,7 @@ Then in `.env` (gitignored):
 DOC_DETECTIVE_API_KEY=sk-actual-key-here
 ```
 
-Doc Detective masks the values of variables it uses as `***NAME***` in logs, reports, and results files. Screenshots and recordings are pixels, so masking covers them only partly: browser screenshots blur page text that holds a secret, but recordings, text in iframes, shadow DOM, or a canvas, and native app and device captures can still show it. Review captures before you share run artifacts, or turn them off with `"autoScreenshot": false` and `"autoRecord": false`.
+Doc Detective masks the values of variables it uses as `***NAME***` in logs, reports, and results files. Screenshots and recordings are pixels, so masking covers them only partly. Browser screenshots blur page text that holds a secret. Recordings can still show it, and so can text in iframes, shadow DOM, or a canvas, and native app and device captures. Review captures before you share run artifacts, or turn them off with `"autoScreenshot": false` and `"autoRecord": false`.
 
 ### Don't Use the Deprecated `debug` Config Field
 

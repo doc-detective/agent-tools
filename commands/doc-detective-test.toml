@@ -44,7 +44,7 @@ The same spec, test, context, and step always produce the same path within each 
 
 ## Auto Screenshots
 
-By default (`autoScreenshot` defaults to `true`), Doc Detective captures a PNG screenshot after every step that drives a browser, app, or device and doesn't already define its own `screenshot`. `--no-auto-screenshot` or `autoScreenshot: false` turns it off. Screenshots are saved to the per-run artifact folder at paths like:
+`autoScreenshot` defaults to `true`. Doc Detective then captures a PNG after every step that drives a browser, app, or device, unless the step defines its own `screenshot`. `--no-auto-screenshot` or `autoScreenshot: false` turns it off. Screenshots are saved to the per-run artifact folder at paths like:
 
 ```
 .doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/01-goTo-s4f2a91c.png

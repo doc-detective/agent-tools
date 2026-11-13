@@ -78,7 +78,7 @@ If no config exists, create silently with minimal defaults. If a config exists: 
 
 For each procedure-heavy file identified in Phase 1:
 
-1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, write output to `doc-detective-tests/<name>-spec.json` where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens. Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
+1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, and write output to `doc-detective-tests/<name>-spec.json`. `<name>` is the source filename, lowercased, with non-alphanumeric characters replaced by hyphens. Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
 2. Track the source file for each test (`_sourceFile` field) to support Phase 6 injection.
 3. Validate each spec before proceeding. If a spec cannot be fixed, skip it and report it to the user.
 

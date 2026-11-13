@@ -322,7 +322,7 @@ function applyFix(spec, proposal, specFile) {
   let i = steps.findIndex(s => s.stepId === proposal.stepId);
   if (i < 0) {
     const candidate = steps[proposal.stepIndex];
-    // ponytail: same-action check only, a test filter that shifts positions onto the same action still mismatches
+    // Caveat: same-action check only, a test filter that shifts positions onto the same action still mismatches
     const sameAction = candidate && !candidate.stepId
       && Object.keys(proposal.originalStep || {}).some(key => key in candidate);
     if (!sameAction) return false;
