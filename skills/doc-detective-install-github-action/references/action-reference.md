@@ -77,7 +77,7 @@ permissions:
 
 The action needs `contents: write` to force-push `pr_branch` and `pull-requests: write` to open or update the PR.
 
-Run PR creation on `push` to the default branch, or on `schedule`. On `pull_request`, the checkout is the source PR's merge commit, so the PR the action opens carries the source PR's changes as well as its own, and every source PR overwrites the same `pr_branch`.
+Run PR creation on `push` to the default branch, or on `schedule`. On `pull_request`, the checkout is the source PR's merge commit. The PR the action opens then carries the source PR's changes as well as its own, and every source PR overwrites the same `pr_branch`.
 
 ### Issue creation (`create_issue_on_fail: true`)
 
@@ -114,11 +114,11 @@ KVM setup is best-effort. If the action can't grant access, it emits a warning a
 
 ## iOS tests
 
-Doc Detective runs `ios` platform tests on macOS runners through the XCUITest driver, which depends on WebDriverAgent (WDA). The first XCUITest session in a run compiles WDA from source with `xcodebuild`, which takes roughly 10 minutes on a cold, ephemeral runner and is the dominant cost of any iOS run. No extra setup is required: when no prebuilt WDA products exist, the first session builds WDA in-session.
+Doc Detective runs `ios` platform tests on macOS runners through the XCUITest driver, which depends on WebDriverAgent (WDA). The first XCUITest session in a run compiles WDA from source with `xcodebuild`. That takes roughly 10 minutes on a cold, ephemeral runner, and it's the dominant cost of any iOS run. No extra setup is required: when no prebuilt WDA products exist, the first session builds WDA in-session.
 
 ### Speed up iOS tests with a CLI-managed WebDriverAgent prebuild
 
-To skip the cold WDA compile on later runs, let Doc Detective's CLI prebuild WDA and persist its cache directory across runs. Run `npx doc-detective@5 install ios --yes` in your setup steps to compile WDA once into the Doc Detective cache, keyed by your Xcode and XCUITest driver versions; test sessions then consume those products automatically and read-only. Point `DOC_DETECTIVE_CACHE_DIR` at a directory, restore and save that directory with `actions/cache`, and run the prebuild before the action.
+To skip the cold WDA compile on later runs, let Doc Detective's CLI prebuild WDA and persist its cache directory across runs. Run `npx doc-detective@5 install ios --yes` in your setup steps to compile WDA once into the Doc Detective cache. The cache is keyed by your Xcode and XCUITest driver versions, and test sessions consume those products automatically and read-only. Point `DOC_DETECTIVE_CACHE_DIR` at a directory, restore and save that directory with `actions/cache`, and run the prebuild before the action.
 
 Key the cache with a rotating, run-scoped key plus a `restore-keys` fallback. An exact cache hit never re-uploads, so a static key would strand the products built for an older Xcode or driver toolchain and keep restoring a stale prebuild. A run-scoped key always saves, and `restore-keys` pulls the newest previous entry.
 
@@ -341,7 +341,7 @@ jobs:
       - uses: doc-detective/github-action@v2
 ```
 
-iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required: when no prebuilt WebDriverAgent products exist, the first XCUITest session builds WDA in-session (~10 min on a cold runner). To skip the cold compile on later runs, use the CLI-managed prebuild below.
+iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required. When no prebuilt WebDriverAgent products exist, the first XCUITest session builds WDA in-session (~10 min on a cold runner). To skip the cold compile on later runs, use the CLI-managed prebuild below.
 
 ### iOS tests with a CLI-managed WebDriverAgent prebuild
 
@@ -376,7 +376,7 @@ jobs:
       - uses: doc-detective/github-action@v2
 ```
 
-This variant prebuilds WebDriverAgent through the Doc Detective CLI so later runs skip the cold `xcodebuild` compile. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at a cache directory, `actions/cache` persists it across runs, and `install ios --yes` compiles WDA once into it before the action runs; test sessions then consume those products automatically. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry — so when a runner image bumps Xcode or the driver version, the prebuild refreshes rather than restoring a stale build indefinitely. A cache saved by a `pull_request` run is visible only to that pull request, so the `push` trigger on the default branch saves the entry that new pull requests restore. See [iOS tests](#ios-tests) for details.
+This variant prebuilds WebDriverAgent through the Doc Detective CLI so later runs skip the cold `xcodebuild` compile. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at a cache directory, and `actions/cache` persists it across runs. `install ios --yes` compiles WDA once into it before the action runs, and test sessions then consume those products automatically. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry. When a runner image bumps Xcode or the driver version, the prebuild refreshes instead of restoring a stale build. A cache saved by a `pull_request` run is visible only to that pull request. The `push` trigger on the default branch saves the entry that new pull requests restore. See [iOS tests](#ios-tests) for details.
 
 ### Using action outputs
 
