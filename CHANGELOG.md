@@ -1,3 +1,10 @@
+## [2.0.1](https://github.com/doc-detective/agent-tools/compare/v2.0.0...v2.0.1) (2026-11-13)
+
+
+### Bug Fixes
+
+* pin npx doc-detective to [@5](https://github.com/5) ([#79](https://github.com/doc-detective/agent-tools/issues/79)) ([ac2c8a9](https://github.com/doc-detective/agent-tools/commit/ac2c8a913eb2debe8ef05056e46fd7707d457b91))
+
 # [2.0.0](https://github.com/doc-detective/agent-tools/compare/v1.4.1...v2.0.0) (2026-11-13)
 
 
