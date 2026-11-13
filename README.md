@@ -39,6 +39,24 @@ Head to the per-agent sections below if you prefer the native install flow or ne
 
 > **Note:** `install agents` is one subcommand in the Doc Detective CLI's broader `install` group. Other subcommands (`install runtime`, `install browsers`, `install status`, `install all`) manage the CLI's lazy-loaded runtime dependencies. See the [`install` command reference](https://docs.doc-detective.com/reference/reference/cli/install) for details.
 
+### Doc Detective version compatibility
+
+Each agent tools major version works with one Doc Detective major version:
+
+- Agent tools 2.x, on the `main` branch and the `v2` tag, work with Doc Detective 5. Their GitHub Action workflows use `doc-detective/github-action@v2`.
+- Agent tools 1.x, on the `v1` tag, work with Doc Detective 4. Agent tools 2.x write specs and commands that Doc Detective 4 rejects or misreads.
+
+To check your Doc Detective version, run `npx doc-detective --version`.
+
+`npx doc-detective install agents` installs the agent tools that match your CLI, so it needs no extra step. The native install commands in the per-agent sections below install from `main`, which suits Doc Detective 5. For Doc Detective 4, add the `v1` ref to the command you use:
+
+| Install method | Command for Doc Detective 4 |
+|----------------|-----------------------------|
+| Claude Code or Copilot CLI | `/plugin marketplace add doc-detective/agent-tools#v1` |
+| Gemini CLI | `gemini extensions install https://github.com/doc-detective/agent-tools.git --ref v1` |
+| `npx skills` | `npx skills add doc-detective/agent-tools#v1` |
+| A step that clones the repository, as for Codex, Cursor, and manual installation | `git clone --branch v1 https://github.com/doc-detective/agent-tools.git` |
+
 ### Automatic prompt during npm install
 
 When you run `npm install doc-detective` in an interactive terminal, the CLI checks for supported coding agents. If it detects agents without doc-detective tools installed, you see a prompt:
@@ -733,3 +751,5 @@ Supported types:
 ### Releases
 
 Releases are cut automatically when pull requests merge to `main`, and the merged title's type drives the version bump. `feat` triggers a minor release, `fix` triggers a patch release, and a `!` after the type (for example `feat!:`) or a `BREAKING CHANGE:` footer triggers a major release. Types such as `docs`, `chore`, and `ci` don't trigger a release, and neither does `perf`: this repository's release config turns off the patch release that `perf` gets by default. On a releasable merge, the workflow bumps the version, regenerates the build artifacts, updates `CHANGELOG.md`, tags the release, and publishes a GitHub Release.
+
+The workflow also moves each stable release's floating major tag to the release commit. For example, `v2.3.1` moves `v2`, so an install pinned to `v2` gets the latest 2.x release. Prereleases, such as `v2.0.0-rc.1`, don't move a tag.
