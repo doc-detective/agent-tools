@@ -7,12 +7,16 @@ on:
     paths:
       - "src/hooks/**"
       - "tests/hooks/**"
+      - "src/skills/doc-detective-doc-testing/scripts/**"
+      - "package-lock.json"
   pull_request:
     branches:
       - main
     paths:
       - "src/hooks/**"
       - "tests/hooks/**"
+      - "src/skills/doc-detective-doc-testing/scripts/**"
+      - "package-lock.json"
 
 jobs:
   test:

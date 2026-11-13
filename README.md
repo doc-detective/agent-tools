@@ -20,15 +20,13 @@ npx doc-detective install agents
 
 It detects which supported agents are installed on your machine, prompts you to choose which to configure, and invokes each agent's native install mechanism. Re-run any time to update to the latest version.
 
-> **Backwards compatibility:** The older `doc-detective install-agents` form still works as a legacy alias, so existing scripts and CI jobs don't need to change.
-
 To target a specific agent non-interactively:
 
 ```bash
 npx doc-detective install agents --agent claude --scope project --yes
 ```
 
-Supported `--agent` ids: `claude`, `copilot`, `gemini`, `codex`, `qwen`, `opencode`. Repeat `--agent` to target several agents in one run. Cursor isn't one of them; see [Cursor](#cursor).
+Supported `--agent` ids: `claude`, `copilot`, `gemini`, `codex`, `qwen`, `opencode`. To target several agents in one run, give `--agent` once with a comma-separated list, such as `--agent claude,codex`. Cursor isn't one of them; see [Cursor](#cursor).
 
 Useful flags:
 
@@ -465,8 +463,8 @@ Installs a Doc Detective GitHub Actions workflow for automated documentation tes
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--trigger <event>` | `pull_request` | Workflow trigger (`pull_request`, `push`, `schedule`, etc.) |
-| `--exit-on-fail` | false | Fail CI when tests fail |
+| `--trigger <event>` | `pull_request` (`push` with `--create-pr-on-change`) | Workflow trigger (`pull_request`, `push`, `schedule`, etc.) |
+| `--no-exit-on-fail` | false | Let CI pass when tests fail. By default, failing tests fail the check. |
 | `--create-pr-on-change` | false | Open a PR when files change during test execution |
 | `--create-issue-on-fail` | false | Create a GitHub issue when tests fail |
 | `--integrations <list>` | (none) | Comma-separated integrations to mention in issues |

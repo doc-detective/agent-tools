@@ -234,9 +234,9 @@ When docs mention "enter your API key" or similar:
 ```
 
 **Wait conditions:**
-When docs say "wait for" or "until":
+When docs say "wait for" or "until" an element appears, find it with a `timeout`. For a loading indicator that disappears, find the element that appears when loading finishes:
 ```json
-{ "wait": { "selector": ".loading", "state": "hidden" } }
+{ "find": { "selector": ".results", "timeout": 10000 } }
 ```
 
 **Form submissions:**

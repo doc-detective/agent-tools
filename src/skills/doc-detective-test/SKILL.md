@@ -33,26 +33,26 @@ Convert documented procedures into executable Doc Detective test specifications,
 | `--fix-threshold <n>` | `80` | Confidence threshold (0–100) for auto-applying fixes |
 | `--max-fix-attempts <n>` | `3` | Maximum fix iterations per failing test |
 | `--inject` | `false` | Inject passing tests into source file after completion |
-| `--auto-screenshot` | `false` | Pass `--auto-screenshot` to Doc Detective to capture a screenshot after every browser-driven step |
-| `--no-auto-screenshot` | - | Pass `--no-auto-screenshot` to Doc Detective to turn off auto screenshots that the config file enables |
+| `--auto-screenshot` | - | Pass `--auto-screenshot` to Doc Detective to turn on auto screenshots that the config file turns off |
+| `--no-auto-screenshot` | - | Pass `--no-auto-screenshot` to Doc Detective to turn off the screenshot it captures after every step that drives a browser, app, or device |
 
 ```
 /doc-detective-test docs/login.md --fix
 /doc-detective-test docs/login.md --fix --auto-fix
 /doc-detective-test docs/login.md --fix --fix-threshold 60
 /doc-detective-test docs/login.md --fix --inject
-/doc-detective-test docs/login.md --auto-screenshot
+/doc-detective-test docs/login.md --no-auto-screenshot
 ```
 
 ## Per-Run Artifact Folders
 
-Each test run archives its results and screenshots in a dedicated folder at `<output>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (on by default) writes `testResults.json` there, alongside any auto screenshots from the run. Doc Detective still writes the flat `testResults-<timestamp>.json` to the output directory too.
+Each test run archives its results, screenshots, and recordings in a dedicated folder at `<outputDir>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (on by default) writes `testResults.json` there. The results' `runDir` names the folder.
 
 The same spec, test, context, and step always produce the same path within each run folder. Diff two run folders to spot changes over time.
 
 ## Auto Screenshots
 
-When `--auto-screenshot` is enabled (or `autoScreenshot: true` in config), Doc Detective captures a PNG screenshot after every browser-driven step that doesn't already define its own `screenshot`. Screenshots are saved to the per-run artifact folder at paths like:
+`autoScreenshot` defaults to `true`. Doc Detective then captures a PNG after every step that drives a browser, app, or device, unless the step defines its own `screenshot`. `--no-auto-screenshot` or `autoScreenshot: false` turns it off. Screenshots are saved to the per-run artifact folder at paths like:
 
 ```
 .doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/01-goTo-s4f2a91c.png
@@ -64,11 +64,11 @@ Auto screenshots can be configured at three levels with test > spec > config pre
 
 | Level | Config key | Effect |
 |-------|------------|--------|
-| Config | `autoScreenshot: true` | Applies to all tests |
-| Spec | `autoScreenshot: true` on spec object | Applies to all tests in the spec |
-| Test | `autoScreenshot: true` on test object | Applies to this test only |
+| Config | `autoScreenshot: false` | Applies to all tests |
+| Spec | `autoScreenshot: false` on spec object | Applies to all tests in the spec |
+| Test | `autoScreenshot: false` on test object | Applies to this test only |
 
-Setting `autoScreenshot: false` at a lower level overrides a `true` at a higher level. Unset values defer to the next level up.
+A value at a lower level overrides the level above it, so a test can set `autoScreenshot: true` to turn screenshots back on. Unset values defer to the next level up.
 
 ## Stable IDs
 
@@ -119,13 +119,25 @@ Run `/doc-detective-validate` on the generated spec. If validation fails, stop a
 
 ### Step 4: Execute Tests
 
-Run all tests in the spec. If `--auto-screenshot` or `--no-auto-screenshot` is set, pass the same flag to Doc Detective. Record each test result as `pass` or `fail` with the failure reason.
+Run all tests in the spec, writing results to a file. If `--auto-screenshot` or `--no-auto-screenshot` is set, pass the same flag to Doc Detective:
+
+```bash
+doc-detective --input <spec-file> --output <results-file>
+```
+
+Act on the exit code:
+
+- `0`: No test failed, and at least one passed or warned.
+- `1`: At least one test failed. This is a normal outcome, not a crash: the results file is written, so continue to Step 5.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason.
+
+Read the results file. Record each test's `specs[].tests[].result` value as written: `PASS`, `WARNING`, `SKIPPED`, or `FAIL`. Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`. A `***NAME***` value in the results is a masked variable that the step ran with. Keep the spec's `$NAME`, and never copy the masked value into a fix.
 
 ### Step 5: Process Results
 
-**If all tests pass:**
-- If `--inject` is set: run `/doc-detective-inject` on the source file with the passing spec. If inject fails, report: `Error: injection failed: <reason>`. Otherwise report: `All tests passed. Injected into <path>.`
-- If `--inject` is not set: report: `All tests passed.`
+**If no tests failed:**
+- If `--inject` is set and at least one test has the result `PASS`: run `/doc-detective-inject` on the source file with only those tests. If inject fails, report: `Error: injection failed: <reason>`. Otherwise report: `<n> passed, <n> warned, <n> skipped. Injected into <path>.`
+- Otherwise, report: `<n> passed, <n> warned, <n> skipped.`
 - Stop.
 
 **If any tests fail and `--fix` is not set:**
@@ -145,7 +157,7 @@ For each failing test, repeat until the test passes or `--max-fix-attempts` is r
    - If confidence ≥ `--fix-threshold`: apply the fix immediately.
    - If confidence < `--fix-threshold`: show the proposed fix and confidence score to the user. If the user approves, apply the fix. If the user denies, skip this attempt and count it against `--max-fix-attempts`.
 3. Apply the fix to the test spec.
-4. Re-run the fixed test.
+4. Re-run the fixed test, and read the results file again. Exit `1` means the test still fails; exit `2` means nothing valid ran, because the fix made the spec invalid or every test skipped. Check stderr, then revert or correct the fix.
 5. If the test passes, mark it resolved. If it still fails, generate a new fix and repeat from step 1.
 
 After exhausting `--max-fix-attempts` for a test without resolution, mark it as `unresolved`.
@@ -161,8 +173,8 @@ Running `/doc-detective-test docs/login.md` against a login procedure:
 
 ```
 Results: 2 passed, 2 failed
-  ✗ signin: Element "Sign In" not found
-  ✗ verify: Navigation timeout
+  ✗ signin: No elements matched selector or text.
+  ✗ verify: Couldn't open URL
 Run with --fix to attempt automatic repairs.
 ```
 

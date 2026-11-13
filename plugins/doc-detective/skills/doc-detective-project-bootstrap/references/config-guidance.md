@@ -16,7 +16,7 @@ The absolute minimum config is an empty object:
 
 This uses all defaults:
 - `input`: `.` (current directory)
-- `output`: `.` (current directory)
+- `outputDir`: `.` (current directory)
 - `recursive`: `true`
 - `detectSteps`: `true`
 - `fileTypes`: `["markdown", "asciidoc", "html", "dita"]`
@@ -29,12 +29,12 @@ Set **`detectSteps: false`** when your suite is built from explicit inline steps
 
 ### Standard Minimal Config
 
-For most projects, specify `input`, `output`, and — for an explicit-step suite — `detectSteps: false`:
+For most projects, specify `input`, `outputDir`, and — for an explicit-step suite — `detectSteps: false`:
 
 ```json
 {
   "input": "docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false
 }
 ```
@@ -46,7 +46,8 @@ Only add fields when:
 | Scenario | Add Field |
 |----------|-----------|
 | Docs not in root or `docs/` | `input` |
-| Want results in specific location | `output` |
+| Want run folders and reports in a specific location | `outputDir` |
+| Want the JSON results at an exact path | `output` (a file, not a folder) |
 | Multiple doc directories | `input` (array) |
 | Non-default file types only | `fileTypes` |
 | Using environment variables | `loadVariables` |
@@ -54,7 +55,11 @@ Only add fields when:
 | Running test contexts in parallel | `concurrentRunners` |
 | Need relative URL resolution | `origin` |
 | Run **only** explicit inline/spec steps (no prose auto-detection) | `detectSteps: false` (default is `true`) |
+| Skip the screenshot after every step, or the recording of every context | `autoScreenshot: false`, `autoRecord: false` (both default to `true`) |
+| Show a variable's value in output because it isn't secret | `publicVariables` (names, `*` matches any characters) |
 | Turn off post-run hints | `hints: { "enabled": false }` |
+
+Every run writes a run folder under `<outputDir>/.doc-detective/runs/`. With the defaults, it holds a screenshot after each step that drives a browser, app, or device. It also holds a recording of each such context when the host can record it. Add `.doc-detective/` to `.gitignore` so run output stays out of commits.
 
 ## Configuration Schema Reference
 
@@ -63,7 +68,8 @@ From `doc-detective-common`, key fields:
 ```typescript
 interface Config {
   input?: string | string[];      // Default: "."
-  output?: string;                // Default: "."
+  output?: string;                // JSON results file; no default
+  outputDir?: string;             // Run folders and reports. Default: "."
   recursive?: boolean;            // Default: true
   loadVariables?: string;         // Path to .env file
   origin?: string;                // Base URL for relative links
@@ -74,6 +80,9 @@ interface Config {
   shell?: "bash"|"cmd"|"powershell"; // Default: "bash" on every platform, incl. Windows (where bash resolves to Git Bash, auto-installed if absent). Default shell for runShell steps and runCode; cmd/powershell are Windows-only. A runShell step's own shell field overrides this.
   concurrentRunners?: number | true; // Default: 1, true = CPU cores (max 4)
   logLevel?: "silent"|"error"|"warning"|"info"|"debug"; // Default: "info"
+  autoScreenshot?: boolean;       // Default: true
+  autoRecord?: boolean;           // Default: true
+  publicVariables?: string[];     // Variable names to show unmasked
   hints?: { enabled: boolean };   // Default: { enabled: true }
 }
 ```
@@ -162,7 +171,7 @@ Recordings don't need this: the `browser` engine records each context's own wind
 ```json
 {
   "input": "docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false
 }
 ```
@@ -172,7 +181,7 @@ Recordings don't need this: the `browser` engine records each context's own wind
 ```json
 {
   "input": ["pages", "app"],
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false,
   "fileTypes": ["markdown"]
 }
@@ -185,12 +194,12 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 ```json
 {
   "input": "docs/src/content/docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false
 }
 ```
 
-(To silence code-fence/bold auto-detection, `detectSteps: false` is the supported switch. The `markup` array can't be emptied to disable patterns — the schema requires it to be non-empty — so narrow it by listing only the patterns you want instead.)
+(To silence code-fence/bold auto-detection, `detectSteps: false` is the supported switch. The `markup` array can't be emptied to disable patterns, because the schema requires it to be non-empty. Narrow it by listing only the patterns you want instead.)
 
 ### Monorepo with Multiple Doc Locations
 
@@ -200,7 +209,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
     "packages/*/docs",
     "docs"
   ],
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false
 }
 ```
@@ -210,7 +219,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 ```json
 {
   "input": "docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false,
   "loadVariables": ".env.test"
 }
@@ -221,7 +230,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 ```json
 {
   "input": "docs",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false,
   "origin": "https://api.example.com"
 }
@@ -232,7 +241,7 @@ The built-in `markdown` file type already covers `.mdx` and recognizes the `{/* 
 ```json
 {
   "input": "content",
-  "output": ".doc-detective/results",
+  "outputDir": ".doc-detective/results",
   "detectSteps": false,
   "fileTypes": ["dita"],
   "processDitaMaps": true
@@ -284,11 +293,11 @@ When merging with existing config:
 
 ```javascript
 // Existing
-{ "output": "custom-output" }
+{ "outputDir": "custom-output" }
 
 // Bootstrap would set ".doc-detective/results"
 // Result: Keep existing
-{ "output": "custom-output" }
+{ "outputDir": "custom-output" }
 ```
 
 ## Anti-Patterns to Avoid
@@ -299,7 +308,7 @@ When merging with existing config:
 ```json
 {
   "input": ".",
-  "output": ".",
+  "outputDir": ".",
   "recursive": true,
   "detectSteps": true,
   "logLevel": "info",
@@ -374,6 +383,8 @@ Then in `.env` (gitignored):
 DOC_DETECTIVE_API_KEY=sk-actual-key-here
 ```
 
+Doc Detective masks the values of variables it uses as `***NAME***` in logs, reports, and results files. Screenshots and recordings are pixels, so masking covers them only partly. Browser screenshots blur page text that holds a secret. Recordings can still show it, and so can text in iframes, shadow DOM, or a canvas, and native app and device captures. Review captures before you share run artifacts, or turn them off with `"autoScreenshot": false` and `"autoRecord": false`.
+
 ### Don't Use the Deprecated `debug` Config Field
 
 The `debug` config field is deprecated and ignored. For diagnostic output, use the `debug` subcommand or `DOC_DETECTIVE_DEBUG` environment variable instead:
@@ -393,7 +404,7 @@ See [Fix Failing Tests](../../doc-detective-doc-testing/references/fix-failing-t
 After generating config, verify it:
 
 ```bash
-# Test config loads correctly
+# Test config loads correctly: exits 0 when it's valid and tests resolve, 2 otherwise
 npx doc-detective --config .doc-detective.json --dry-run
 
 # Or validate with JSON Schema

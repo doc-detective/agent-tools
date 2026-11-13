@@ -17,14 +17,20 @@ With options:
 ```json
 {
   "goTo": {
-    "url": "https://example.com",
-    "waitUntil": "networkidle"
+    "url": "https://example.com/dashboard",
+    "waitUntil": {
+      "networkIdleTime": 500,
+      "find": { "selector": "[data-testid='dashboard-loaded']" }
+    }
   }
 }
 ```
 
 **Options:**
-- `waitUntil`: `"load"` | `"domcontentloaded"` | `"networkidle"` | `"commit"`
+- `waitUntil`: Object, not a string such as `"networkidle"`. All fields are optional. The network and DOM checks run on every `goTo`, even without `waitUntil`, using the defaults below.
+  - `networkIdleTime`: Milliseconds with no new network requests (default `500`, `0` for no wait)
+  - `domIdleTime`: Milliseconds with no DOM changes (default `1000`, `0` for no wait)
+  - `find`: Element that must exist before the step continues. Takes the element fields of the [`find` action](#find), such as `selector` and `elementText`.
 
 **Open a new tab or window**:
 
@@ -249,13 +255,24 @@ Check if an element exists. Can optionally interact with it.
 }
 ```
 
-**Find and match text**:
+**Find an element with specific text**:
 
 ```json
 {
   "find": {
     "selector": ".status",
-    "matchText": "Success"
+    "elementText": "Success"
+  }
+}
+```
+
+**Find an element whose text contains a substring** (regular expression):
+
+```json
+{
+  "find": {
+    "selector": ".status",
+    "elementText": "/Success/"
   }
 }
 ```
@@ -289,18 +306,17 @@ Check if an element exists. Can optionally interact with it.
 - `elementText`: Find the element by its display text (the object-form equivalent of the string shorthand, as in `{ "find": { "elementText": "Welcome" } }`)
 - `elementAria`: Find the element by its computed accessible name
 - `selector`: CSS selector
-- `timeout`: Wait time in ms
+- `timeout`: Maximum time in ms to wait for the element to exist (default `5000`). The step fails if the element isn't found in time.
 - `click`: Click after finding. Set `true`, or an object with `duration` (long-press hold in ms) and/or `button` (`"left"` | `"right"` | `"middle"`)
 - `moveTo`: Move cursor to element before interacting (boolean)
 - `type`: Type text after finding (object with `keys`)
-- `matchText`: After finding, assert the element *contains* this text (substring match; also accepts a `/regex/`)
 
 **Text matching:** When you find an element by text — the `{ "find": "Welcome" }` shorthand or the `elementText` field — the match is against the element's *whole* visible text with whitespace normalized: leading and trailing whitespace is trimmed, and internal runs of spaces, tabs, and newlines collapse to a single space.
 
 - **Whole-element exact match, not a substring.** A broad target with `elementText` won't match a nested heading, because the container's full text is more than the heading alone. To match a substring instead, wrap the value in slashes to use a regular expression, as in `{ "find": { "elementText": "/Garden companion/" } }`.
 - **Split text still matches.** Text that a framework such as React, Vue, or Svelte splits across several DOM text nodes still matches, and the result is the same on Chrome and Firefox regardless of how each browser's driver reports whitespace.
 - **Same rules elsewhere.** The same normalization applies to `elementAria` and to a selector's matched text.
-- **`matchText` is separate.** `matchText` asserts against an already-found element with a substring check and is unaffected.
+- **No `matchText`.** `elementText` replaces `matchText`, which fails validation.
 
 On mobile app surfaces, `find` scrolls the surface down to bring an off-screen element into view. It scrolls downward only, up to five times within the step's `timeout`. `click` and element-targeted `type` inherit this because they find the element first. Desktop app surfaces don't scroll, since their accessibility trees expose off-screen elements directly.
 
@@ -616,7 +632,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 {
   "runShell": {
     "command": "node --version",
-    "stdio": "v22"
+    "stdio": "v24"
   }
 }
 ```
@@ -1080,23 +1096,22 @@ Fixed duration:
 { "wait": 2000 }
 ```
 
-Wait for element:
+**Options:**
+- Duration in ms (number), or a variable such as `"$WAIT_DURATION"`
+- `true` to wait the default 5000 ms
+
+`wait` has no object form. To wait for an element to appear, use `find` with a `timeout`:
 
 ```json
 {
-  "wait": {
-    "selector": ".loading",
-    "state": "hidden"
+  "find": {
+    "selector": ".results",
+    "timeout": 10000
   }
 }
 ```
 
-**Options:**
-- Duration in ms (number)
-- Or object with:
-  - `selector`: Element to wait for
-  - `state`: `"visible"` | `"hidden"` | `"attached"` | `"detached"`
-  - `timeout`: Max wait time in ms
+`find` waits for an element to exist, not to disappear. To wait past a loading indicator, find the element that appears when loading finishes. Prefer `find` with a `timeout` over a fixed `wait`: a duration that's long enough locally can be too short on a slower CI runner.
 
 ---
 

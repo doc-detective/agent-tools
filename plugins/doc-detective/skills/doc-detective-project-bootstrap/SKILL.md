@@ -72,14 +72,14 @@ Generate `.doc-detective.json` following the "smallest reasonable config" princi
 If no config exists, create silently with minimal defaults. If a config exists: read it, merge new fields, show a diff, and prompt the user to confirm. If the user rejects the merge, stop and report — do not proceed.
 
 ```json
-{ "input": ["docs/**/*.md"], "output": ".doc-detective/results" }
+{ "input": ["docs/**/*.md"], "outputDir": ".doc-detective/results" }
 ```
 
 ### Phase 3: Generate Tests
 
 For each procedure-heavy file identified in Phase 1:
 
-1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, write output to `.doc-detective/doc-detective-tests/<name>-spec.json` where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens.
+1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, and write output to `doc-detective-tests/<name>-spec.json`. `<name>` is the source filename, lowercased, with non-alphanumeric characters replaced by hyphens. Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
 2. Track the source file for each test (`_sourceFile` field) to support Phase 6 injection.
 3. Validate each spec before proceeding. If a spec cannot be fixed, skip it and report it to the user.
 
@@ -88,16 +88,16 @@ For each procedure-heavy file identified in Phase 1:
 Run all generated specs (try global CLI, then Docker, then npx — same fallback chain as the `doc-testing` skill):
 
 ```bash
-doc-detective --input .doc-detective/doc-detective-tests/ --output .doc-detective/results/
+doc-detective --input doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
-If no runner is available, stop and inform the user. After execution, collect all failing tests from `testResults-<timestamp>.json`.
+If no runner is available, stop and inform the user. Exit `1` means at least one test failed. That's a normal outcome, not a crash. Collect the failing tests from `.doc-detective/results/results.json` and continue to Phase 5. A config with `exitOnFail: false` exits `0` even when tests fail, so read the results file after exit `0` too. Exit `2` means nothing valid was tested or the CLI couldn't proceed, so stop and report the error from stderr.
 
 ### Phase 5: Fix Loop
 
 Skip this phase if no tests failed. For each failing test, repeat up to 3 times:
 
-1. Read the step's `resultDescription` to identify the failure.
+1. In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`.
 2. Propose a fix and assign a confidence score: **High (80–100)** — exact match found; **Medium (50–79)** — probable fix; **Low (0–49)** — uncertain.
 3. Apply: if ≥ threshold apply automatically; if < threshold show fix, ask user to apply/skip/edit; if < 50% always ask regardless of threshold.
 4. Re-run the test. If it passes, move to the next failing test.
@@ -125,6 +125,5 @@ The injection tool selects the correct comment format automatically.
 2. If in `--ci` mode, default to yes — proceed without prompting.
 3. Invoke `/doc-detective-install-github-action` with matching flags:
    - Pass `--ci` if bootstrap was called with `--ci`.
-   - For `--exit-on-fail`:
-     - In `--ci` mode, pass `--exit-on-fail` by default.
-     - In interactive mode, ask the user and pass it only if they opt in.
+   - Don't pass `--exit-on-fail`: it's deprecated, because failing the check is now the default.
+   - In interactive mode, ask the user whether failing tests should fail the check, and pass `--no-exit-on-fail` only if they say no.

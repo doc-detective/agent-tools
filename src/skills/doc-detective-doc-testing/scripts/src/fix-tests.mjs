@@ -30,11 +30,10 @@ const MAX_ITERATIONS = 3;
  */
 const ERROR_PATTERNS = [
   {
-    pattern: /Element.*not found|selector.*not found|Cannot find/i,
+    pattern: /No elements matched|Element.*not found|selector.*not found|Cannot find/i,
     type: 'element_not_found',
     strategies: [
       { name: 'update_text', confidence: 70, description: 'Element text may have changed' },
-      { name: 'add_wait', confidence: 60, description: 'Element may need more time to load' },
       { name: 'update_selector', confidence: 50, description: 'Selector may need adjustment' }
     ]
   },
@@ -42,12 +41,11 @@ const ERROR_PATTERNS = [
     pattern: /timeout|timed out|exceeded/i,
     type: 'timeout',
     strategies: [
-      { name: 'increase_timeout', confidence: 85, description: 'Increase wait time' },
-      { name: 'add_explicit_wait', confidence: 75, description: 'Add explicit wait for element' }
+      { name: 'increase_timeout', confidence: 85, description: 'Increase wait time' }
     ]
   },
   {
-    pattern: /navigation|redirect|url.*changed|net::ERR/i,
+    pattern: /Couldn't open URL|unresolvable URL|navigation|redirect|url.*changed|net::ERR/i,
     type: 'navigation',
     strategies: [
       { name: 'update_url', confidence: 90, description: 'URL may have changed' },
@@ -73,8 +71,7 @@ const ERROR_PATTERNS = [
     pattern: /click.*failed|not clickable|intercepted/i,
     type: 'click_failed',
     strategies: [
-      { name: 'wait_for_clickable', confidence: 75, description: 'Wait for element to be clickable' },
-      { name: 'scroll_into_view', confidence: 65, description: 'Element may need scrolling' }
+      { name: 'wait_for_clickable', confidence: 75, description: 'Wait for element to be clickable' }
     ]
   }
 ];
@@ -132,6 +129,7 @@ function loadJson(filePath) {
  */
 function analyzeFailure(failure) {
   const { testId, stepId, error, step } = failure;
+  const position = { testIndex: failure.testIndex, stepIndex: failure.stepIndex, contentPath: failure.contentPath };
   const proposals = [];
 
   // Match error against known patterns
@@ -139,8 +137,10 @@ function analyzeFailure(failure) {
     if (pattern.pattern.test(error)) {
       for (const strategy of pattern.strategies) {
         proposals.push({
+          ...position,
           testId,
           stepId,
+          error,
           errorType: pattern.type,
           strategy: strategy.name,
           confidence: strategy.confidence,
@@ -156,6 +156,7 @@ function analyzeFailure(failure) {
   // If no pattern matched, provide generic low-confidence fix
   if (proposals.length === 0) {
     proposals.push({
+      ...position,
       testId,
       stepId,
       errorType: 'unknown',
@@ -170,6 +171,9 @@ function analyzeFailure(failure) {
   // Return highest confidence proposal
   return proposals.sort((a, b) => b.confidence - a.confidence)[0];
 }
+
+// A `$NAME` reference resolves at run time, so result text never replaces it.
+const isVariable = value => typeof value === 'string' && /\$[A-Za-z_]/.test(value);
 
 /**
  * Generate a fix based on strategy
@@ -186,20 +190,13 @@ function generateFix(strategy, originalStep, error) {
       if (textMatch) {
         const newText = textMatch[1] || textMatch[2] || textMatch[3];
         if (fix.click && typeof fix.click === 'string') {
-          fix.click = newText;
+          if (!isVariable(fix.click)) fix.click = newText;
         } else if (fix.find && typeof fix.find === 'string') {
-          fix.find = newText;
+          if (!isVariable(fix.find)) fix.find = newText;
         }
       }
       break;
     }
-
-    case 'add_wait':
-      // Insert a wait before the step
-      return {
-        _insertBefore: true,
-        wait: { selector: extractSelector(originalStep), state: 'visible', timeout: 10000 }
-      };
 
     case 'increase_timeout':
       if (fix.find && typeof fix.find === 'object') {
@@ -211,21 +208,15 @@ function generateFix(strategy, originalStep, error) {
       }
       break;
 
-    case 'add_explicit_wait':
-      return {
-        _insertBefore: true,
-        wait: 5000
-      };
-
     case 'update_url': {
       // Try to extract the actual URL from error
       const urlMatch = error.match(/redirected to "([^"]+)"|actual: "([^"]+)"|got "(https?:\/\/[^"]+)"/i);
       if (urlMatch && fix.goTo) {
         const newUrl = urlMatch[1] || urlMatch[2] || urlMatch[3];
         if (typeof fix.goTo === 'string') {
-          fix.goTo = newUrl;
+          if (!isVariable(fix.goTo)) fix.goTo = newUrl;
         } else if (typeof fix.goTo === 'object') {
-          fix.goTo.url = newUrl;
+          if (!isVariable(fix.goTo.url)) fix.goTo.url = newUrl;
         }
       }
       break;
@@ -235,27 +226,20 @@ function generateFix(strategy, originalStep, error) {
       const expectedMatch = error.match(/got "([^"]+)"|actual: "([^"]+)"/i);
       if (expectedMatch) {
         const actualText = expectedMatch[1] || expectedMatch[2];
-        if (fix.find && typeof fix.find === 'object' && fix.find.matchText) {
-          fix.find.matchText = actualText;
+        if (fix.find?.elementText && !isVariable(fix.find.elementText)) {
+          fix.find.elementText = actualText;
         }
       }
       break;
     }
 
     case 'wait_for_clickable':
+      // `click` finds its element first, so a longer timeout gives it time to
+      // become clickable.
       if (fix.click && typeof fix.click === 'object') {
-        fix.click.waitForClickable = true;
+        fix.click.timeout = (fix.click.timeout || 5000) * 2;
       }
       break;
-
-    case 'scroll_into_view':
-      return {
-        _insertBefore: true,
-        runCode: {
-          language: 'javascript',
-          code: `document.querySelector('${extractSelector(originalStep)}')?.scrollIntoView({ behavior: 'smooth', block: 'center' });`
-        }
-      };
 
     case 'update_selector':
     case 'update_expected_status':
@@ -266,49 +250,50 @@ function generateFix(strategy, originalStep, error) {
       return null;
   }
 
-  return fix;
-}
-
-/**
- * Extract selector from a step
- */
-function extractSelector(step) {
-  if (!step) return '*';
-  
-  if (step.click) {
-    return typeof step.click === 'string' ? `text="${step.click}"` : step.click.selector || '*';
-  }
-  if (step.find) {
-    return typeof step.find === 'string' ? `text="${step.find}"` : step.find.selector || '*';
-  }
-  if (step.type && step.type.selector) {
-    return step.type.selector;
-  }
-  return '*';
+  // A strategy that couldn't change anything isn't a fix
+  return JSON.stringify(fix) === JSON.stringify(originalStep) ? null : fix;
 }
 
 /**
  * Extract failures from Doc Detective results
  */
 function extractFailures(results) {
-  const failures = [];
+  if (!Array.isArray(results?.specs)) {
+    throw new Error('Not a Doc Detective results file: expected a "specs" array. Write one with: doc-detective --output <file>');
+  }
 
-  const tests = results.tests || results.results?.tests || [];
-  
-  for (const test of tests) {
-    if (test.status === 'FAIL' || test.status === 'failed') {
-      const steps = test.steps || [];
-      for (const step of steps) {
-        if (step.status === 'FAIL' || step.status === 'failed') {
+  const failures = [];
+  const seen = new Set();
+
+  for (const spec of results.specs) {
+    (spec.tests || []).forEach((test, testIndex) => {
+      for (const context of test.contexts || []) {
+        (context.steps || []).forEach((resultStep, stepIndex) => {
+          if (resultStep.result !== 'FAIL') return;
+
+          // The same step can fail in several contexts, but it only needs one fix
+          const key = JSON.stringify([spec.contentPath, test.testId, resultStep.stepId, stepIndex]);
+          if (seen.has(key)) return;
+          seen.add(key);
+
+          // What's left after the fields the runner adds is the step as authored
+          const {
+            result, resultDescription, resultCode, resultHint, stepId, location,
+            startedAt, durationMs, attempts, outputs, assertions, autoScreenshotPath,
+            ...step
+          } = resultStep;
           failures.push({
-            testId: test.testId || test.id,
-            stepId: step.stepId || step.id,
-            error: step.error || step.message || 'Unknown error',
-            step: step.step || step.action
+            testId: test.testId,
+            stepId,
+            testIndex,
+            stepIndex,
+            contentPath: spec.contentPath,
+            error: resultDescription || 'Unknown error',
+            step
           });
-        }
+        });
       }
-    }
+    });
   }
 
   return failures;
@@ -317,33 +302,40 @@ function extractFailures(results) {
 /**
  * Apply fix to spec
  */
-function applyFix(spec, proposal) {
+function applyFix(spec, proposal, specFile) {
   if (!proposal.proposedFix) return false;
 
   const tests = spec.tests || [];
-  
-  for (const test of tests) {
-    if (test.testId === proposal.testId) {
-      const steps = test.steps || [];
-      
-      for (let i = 0; i < steps.length; i++) {
-        if (steps[i].stepId === proposal.stepId || i === parseInt(proposal.stepId, 10)) {
-          if (proposal.proposedFix._insertBefore) {
-            // Insert a new step before
-            const newStep = { ...proposal.proposedFix };
-            delete newStep._insertBefore;
-            steps.splice(i, 0, newStep);
-          } else {
-            // Replace the step
-            steps[i] = { ...steps[i], ...proposal.proposedFix };
-          }
-          return true;
-        }
-      }
-    }
+
+  // Results can cover many files, and IDs only need to be unique within one,
+  // so a proposal that doesn't name this file can't be matched to it.
+  if (!proposal.contentPath || resolve(proposal.contentPath) !== resolve(specFile)) return false;
+
+  // The CLI generates IDs for tests and steps that have none, and they appear
+  // only in results. Fall back to position.
+  const positional = tests[proposal.testIndex];
+  const test = tests.find(t => t.testId === proposal.testId)
+    || (positional && !positional.testId ? positional : null);
+  if (!test) return false;
+
+  const steps = test.steps || [];
+  let i = steps.findIndex(s => s.stepId === proposal.stepId);
+  if (i < 0) {
+    const candidate = steps[proposal.stepIndex];
+    // Caveat: same-action check only, a test filter that shifts positions onto the same action still mismatches
+    const sameAction = candidate && !candidate.stepId
+      && Object.keys(proposal.originalStep || {}).some(key => key in candidate);
+    if (!sameAction) return false;
+    i = proposal.stepIndex;
   }
 
-  return false;
+  // Build the fix from the spec's own step. The results copy has variables
+  // expanded and secrets masked, and neither belongs in the spec.
+  const fix = generateFix(proposal.strategy, steps[i], proposal.error);
+  if (!fix) return false;
+
+  steps[i] = fix;
+  return true;
 }
 
 /**
@@ -474,8 +466,11 @@ Examples:
     let appliedCount = 0;
     
     for (const proposal of autoApplicable) {
-      if (applyFix(spec, proposal)) {
+      if (applyFix(spec, proposal, options.specFile)) {
         appliedCount++;
+      } else {
+        // An untouched step is still broken
+        needsReview.push(proposal);
       }
     }
 

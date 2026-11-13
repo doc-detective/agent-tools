@@ -1,32 +1,32 @@
 # Doc Detective GitHub Action Reference
 
-Complete reference for `doc-detective/github-action@v1`. Use this to configure workflow files without needing to fetch external documentation.
+Complete reference for `doc-detective/github-action@v2`. Use this to configure workflow files without needing to fetch external documentation.
 
 ## Action Inputs
 
 | Input | Description | Default |
 |---|---|---|
-| `version` | Doc Detective version to install: a specific version number or an npm tag (like `latest`). Set to an empty string (`""`) to run whatever `doc-detective` is already resolvable in the working directory instead of installing from the registry — see [Running against a local build](#running-against-a-local-build). | `latest` |
-| `working_directory` | Directory to run Doc Detective in | `.` (repo root) |
-| `android` | Enable Android emulator support on Linux runners by granting KVM access (see [Android emulator tests](#android-emulator-tests)). `auto` scans your specs and config and enables KVM only when an `android` platform is found; `true` always enables it on Linux; `false` never does. No effect on macOS/Windows runners. | `auto` |
-| `ios` | **Deprecated no-op.** Retained so existing workflows keep working, but it no longer caches the WebDriverAgent (WDA) build. Doc Detective (v4.28+) builds and manages WDA itself; to speed up iOS runs, prebuild with `npx doc-detective install ios --yes` and a persisted cache directory instead (see [iOS tests](#ios-tests)). | `auto` |
-| `config` | Path to Doc Detective config file | (auto-detected) |
-| `input` | Input file or directory to test | (from config) |
-| `exit_on_fail` | Fail the GitHub Actions check if any test fails | `false` |
-| `create_pr_on_change` | Create a pull request if files change during execution (e.g., updated screenshots) | `false` |
-| `pr_branch` | Branch name for the created PR | `doc-detective/updates` |
-| `pr_title` | Title for the created PR | `Doc Detective: Updated files` |
+| `version` | The Doc Detective version, range, or npm tag to install. `""` runs the `doc-detective` already resolvable in the working directory. | `5` |
+| `working_directory` | Directory to run Doc Detective and its `git` commands in, relative to the repo root. `config` and `input` resolve against it. | `.` (repo root) |
+| `android` | Set up KVM for the Android emulator on Linux runners: `auto` (only when a spec has an `android` platform), `true`, or `false` | `auto` |
+| `config` | Path to Doc Detective config file, relative to `working_directory` | (auto-detected: `.doc-detective.json`, `.yaml`, or `.yml`) |
+| `input` | Input file or directory to test, relative to `working_directory` | (from config) |
+| `exit_on_fail` | Fail the job if any test fails. Set to `false` to report failures without failing the job. The job still fails when nothing valid was tested. | `true` |
+| `create_pr_on_change` | Open or update a pull request if files change during execution (e.g., updated screenshots). The PR targets the base branch of the triggering PR (`GITHUB_BASE_REF`). Otherwise it targets the branch that triggered the run (`GITHUB_REF_NAME`). | `false` |
+| `pr_branch` | Branch for the PR. Each run resets it to the checked-out commit plus that run's changes and force-pushes it. The action then updates the branch's open PR, or opens one. Don't commit to it by hand. | `doc-detective-changes` |
+| `pr_paths` | Comma-separated paths to commit to the PR, relative to `working_directory`. Only changes under these paths open a PR. For example, `docs/images`. | (every changed file, including captured screenshots) |
+| `pr_title` | Title for the created PR | `Doc Detective Changes` |
 | `pr_body` | Body text for the created PR | (default message) |
-| `pr_labels` | Comma-separated labels for the created PR | (none) |
+| `pr_labels` | Comma-separated labels for the created PR | `doc-detective` |
 | `pr_assignees` | Comma-separated assignees for the created PR | (none) |
 | `pr_reviewers` | Comma-separated reviewers for the created PR | (none) |
-| `create_issue_on_fail` | Create a GitHub issue when tests fail | `false` |
-| `issue_title` | Title for the created issue | `Doc Detective: Test failures` |
-| `issue_body` | Body text for the created issue | (default message with failure details) |
-| `issue_labels` | Comma-separated labels for the created issue | (none) |
+| `create_issue_on_fail` | Create a GitHub issue when tests fail. If an open issue has the same `issue_title` and the first label in `issue_labels`, the action replaces that issue's body instead of opening another. | `false` |
+| `issue_title` | Title for the created issue | `Doc Detective Failure` |
+| `issue_body` | Body text for the created issue. `$SUMMARY` inserts the run's Markdown summary (`testResults.md` in the run folder), `$RESULTS` the results as JSON, `$RUN_URL` the workflow run URL, and `$PROMPT` the `issue_prompt` text. | `A Doc Detective run ($RUN_URL) failed:`, a blank line, then `$SUMMARY` |
+| `issue_labels` | Comma-separated labels for the created issue | `doc-detective` |
 | `issue_assignees` | Comma-separated assignees for the created issue | (none) |
-| `integrations` | Comma-separated integration identifiers to mention in issues | (none) |
-| `prompt` | Custom prompt for AI integrations mentioned in issues | (none) |
+| `issue_mentions` | Comma-separated tools to mention in issues. Replaces the deprecated `integrations`. | (none) |
+| `issue_prompt` | Text that follows each mention. Replaces the deprecated `prompt`. | `Investigate potential causes of the failures reported in this Doc Detective test output and suggest fixes.` |
 | `token` | GitHub token for API operations (PR/issue creation) | `${{ github.token }}` |
 
 ## Action Outputs
@@ -34,23 +34,26 @@ Complete reference for `doc-detective/github-action@v1`. Use this to configure w
 | Output | Description |
 |---|---|
 | `results` | JSON string of Doc Detective test results |
-| `pull_request_url` | URL of created PR (if `create_pr_on_change` triggered) |
-| `issue_url` | URL of created issue (if `create_issue_on_fail` triggered) |
+| `pull_request_url` | URL of the created or updated PR (if `create_pr_on_change` triggered) |
+| `issue_url` | URL of the created or updated issue (if `create_issue_on_fail` triggered) |
 
 ## Running against a local build
 
-By default, `version` pins the package spec passed to npx (for example, `npx doc-detective@latest`), so npx resolves Doc Detective from the npm registry. Set `version` to an empty string (`""`) to drop the `@version` suffix and run bare `npx doc-detective`, which lets npx use whatever `doc-detective` build is already available in the working directory. This is how a repository can dog-food the action against its own build under review instead of the published package.
+By default, `version` pins the package spec passed to npx (for example, `npx doc-detective@5`), so npx resolves Doc Detective from the npm registry. Set `version` to an empty string (`""`) to drop the `@version` suffix and run bare `npx doc-detective`, which lets npx use whatever `doc-detective` build is already available in the working directory. This is how a repository can dog-food the action against its own build under review instead of the published package.
 
 The action does not install or link a local build for you. Make `doc-detective` resolvable in earlier workflow steps before this action runs — typically by checking out the build, installing its dependencies, and linking it with `npm link`. npx looks for the package from the `working_directory` input, and a global link made with `npm link` is visible from any directory. If no local `doc-detective` is resolvable, npx silently falls back to the latest published release, so confirm the link is in place (for example, with `npm ls -g doc-detective`) before relying on it.
 
 ```yaml
 - uses: actions/checkout@v4
+- uses: actions/setup-node@v4
+  with:
+    node-version: 24
 - name: Build and link a local doc-detective
   run: |
     npm ci
     npm run build
     npm link
-- uses: doc-detective/github-action@v1
+- uses: doc-detective/github-action@v2
   with:
     version: ""   # run the locally linked build instead of a published release
 ```
@@ -72,7 +75,9 @@ permissions:
   pull-requests: write
 ```
 
-The action needs `contents: write` to push a new branch and `pull-requests: write` to open the PR.
+The action needs `contents: write` to force-push `pr_branch` and `pull-requests: write` to open or update the PR.
+
+Run PR creation on `push` to the default branch, or on `schedule`. On `pull_request`, the checkout is the source PR's merge commit. The PR the action opens then carries the source PR's changes as well as its own, and every source PR overwrites the same `pr_branch`.
 
 ### Issue creation (`create_issue_on_fail: true`)
 
@@ -93,9 +98,10 @@ permissions:
 
 ## Platform Limitations
 
-- **Headless browsers on Linux.** Ubuntu runners have no display server. Firefox and Chrome automatically fall back to headless mode, so tests requiring visible browser windows won't work on Linux; use a macOS or Windows runner for those.
+- **Node.js 24.15 or later.** `npx` runs Doc Detective 5 on the job's Node.js, not the action's own runtime. Add `actions/setup-node` with `node-version: 24` before the action, as every template below does. On older Node.js, the action logs a warning and runs anyway.
+- **Headless browsers on Ubuntu.** Ubuntu runners have no display, so Chrome and Firefox run headless. Doc Detective records headless Chrome, but not headless Firefox. To run headed or record Firefox, install Xvfb, or use a `macos-latest` or `windows-latest` runner.
 - **Android emulator tests are Linux-only.** The `android` input enables KVM only on Linux runners. macOS and Windows runners can't accelerate the hosted emulator, so `android` contexts don't run there. See [Android emulator tests](#android-emulator-tests).
-- **iOS tests are macOS-only.** iOS simulators run only on macOS runners, so `ios` platform contexts don't run on Linux or Windows. The `ios` input is a deprecated no-op; to speed up those runs, prebuild the WebDriverAgent build with the Doc Detective CLI instead. See [iOS tests](#ios-tests).
+- **iOS tests are macOS-only.** iOS simulators run only on macOS runners, so `ios` platform contexts don't run on Linux or Windows. To speed up those runs, prebuild the WebDriverAgent build with the Doc Detective CLI. See [iOS tests](#ios-tests).
 - **Default token scope.** The default `GITHUB_TOKEN` can create PRs and issues within the same repository. For cross-repo operations or repos with strict token policies, a custom `token` input may be required.
 
 ## Android emulator tests
@@ -108,21 +114,36 @@ KVM setup is best-effort. If the action can't grant access, it emits a warning a
 
 ## iOS tests
 
-Doc Detective runs `ios` platform tests on macOS runners through the XCUITest driver, which depends on WebDriverAgent (WDA). The first XCUITest session in a run compiles WDA from source with `xcodebuild`, which takes roughly 10 minutes on a cold, ephemeral runner and is the dominant cost of any iOS run. No extra setup is required: when no prebuilt WDA products exist, the first session builds WDA in-session. As of Doc Detective v4.28, Doc Detective builds and manages WDA itself, so the action no longer caches the build.
-
-### The `ios` input is deprecated
-
-The `ios` input is a deprecated no-op. It remains declared so existing workflows keep working, but it no longer caches WDA. On a macOS runner, a run that would previously have cached — `ios: true`, or the default `ios: auto` when an `ios` platform is detected in your specs — now emits a one-time migration notice pointing at the prebuild recipe below; every other case is silent. The notice is informational and never fails the run. Because the input has no effect, you can safely remove `ios` from your workflow.
+Doc Detective runs `ios` platform tests on macOS runners through the XCUITest driver, which depends on WebDriverAgent (WDA). The first XCUITest session in a run compiles WDA from source with `xcodebuild`. That takes roughly 10 minutes on a cold, ephemeral runner, and it's the dominant cost of any iOS run. No extra setup is required: when no prebuilt WDA products exist, the first session builds WDA in-session.
 
 ### Speed up iOS tests with a CLI-managed WebDriverAgent prebuild
 
-To skip the cold WDA compile on later runs, let Doc Detective's CLI prebuild WDA and persist its cache directory across runs. Run `npx doc-detective install ios --yes` in your setup steps to compile WDA once into the Doc Detective cache, keyed by your Xcode and XCUITest driver versions; test sessions then consume those products automatically and read-only. Point `DOC_DETECTIVE_CACHE_DIR` at a directory, restore and save that directory with `actions/cache`, and run the prebuild before the action. The managed prebuild requires Doc Detective v4.28 or later, so if you pin the action's `version` input, keep it at v4.28+ to match the prebuild.
+To skip the cold WDA compile on later runs, let Doc Detective's CLI prebuild WDA and persist its cache directory across runs. Run `npx doc-detective@5 install ios --yes` in your setup steps to compile WDA once into the Doc Detective cache. The cache is keyed by your Xcode and XCUITest driver versions, and test sessions consume those products automatically and read-only. Point `DOC_DETECTIVE_CACHE_DIR` at a directory, restore and save that directory with `actions/cache`, and run the prebuild before the action.
 
 Key the cache with a rotating, run-scoped key plus a `restore-keys` fallback. An exact cache hit never re-uploads, so a static key would strand the products built for an older Xcode or driver toolchain and keep restoring a stale prebuild. A run-scoped key always saves, and `restore-keys` pulls the newest previous entry.
 
-## Integrations
+## Run Files and Secrets
 
-The `integrations` input accepts a comma-separated list of AI tool identifiers. When `create_issue_on_fail` is enabled, the action mentions these integrations in the issue body so they can automatically respond.
+By default, Doc Detective takes a screenshot after every step that drives a browser, app, or device. It also records each such context when the runner can. The action writes only the results file, which sets the `results` output, to `${{ runner.temp }}`. Doc Detective writes the rest under the config's `outputDir`: the run folder, `.doc-detective/runs/<runId>/`, which holds these captures and the run's summary, and reports such as `junit.xml`.
+
+The action adds `.doc-detective/`, `junit.xml`, `doc-detective-summary.md`, and `testResults-*` to the checkout's `.git/info/exclude`, so they stay out of `create_pr_on_change` pull requests. An image a `screenshot` step saves isn't excluded, so an updated image reaches the PR. Set `pr_paths` to limit what the PR commits.
+
+To keep the run folder after the job, upload it in a later step. Give `path` relative to the repo root. This example assumes the config sits at the repo root and sets no `outputDir`. With `working_directory: docs`, the path is `docs/.doc-detective/runs/`. `upload-artifact` skips files in folders whose names start with `.` unless `include-hidden-files` is `true`:
+
+```yaml
+- uses: actions/upload-artifact@v4
+  if: always()
+  with:
+    name: doc-detective-run
+    path: .doc-detective/runs/
+    include-hidden-files: true
+```
+
+Doc Detective masks the values of variables it uses, such as `$API_TOKEN`, as `***NAME***` in logs, results, and the issues the action creates. Pass secrets to the job as environment variables, and reference them as `$NAME` in specs.
+
+## Issue Mentions
+
+The `issue_mentions` input accepts a comma-separated list of AI tool identifiers. When `create_issue_on_fail` is enabled, the action mentions these tools in the issue body so they can automatically respond.
 
 Supported identifiers:
 - `doc-sentinel` — Doc Detective's own monitoring bot
@@ -151,7 +172,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
 ```
 
 ### With PR creation for file changes
@@ -160,7 +184,8 @@ jobs:
 name: Doc Detective
 
 on:
-  pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
@@ -171,9 +196,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
         with:
-          exit_on_fail: true
+          node-version: 24
+      - uses: doc-detective/github-action@v2
+        with:
           create_pr_on_change: true
           pr_labels: doc-detective,automated
           pr_reviewers: octocat
@@ -197,12 +224,14 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
         with:
-          exit_on_fail: true
+          node-version: 24
+      - uses: doc-detective/github-action@v2
+        with:
           create_issue_on_fail: true
           issue_labels: doc-detective,test-failure
-          integrations: claude,copilot
+          issue_mentions: claude,copilot
 ```
 
 ### Scheduled nightly run with all features
@@ -225,14 +254,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
         with:
-          exit_on_fail: true
+          node-version: 24
+      - uses: doc-detective/github-action@v2
+        with:
           create_pr_on_change: true
           pr_labels: doc-detective,nightly
           create_issue_on_fail: true
           issue_labels: doc-detective,nightly-failure
-          integrations: claude,copilot
+          issue_mentions: claude,copilot
 ```
 
 ### Custom config and working directory
@@ -253,11 +284,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
         with:
           working_directory: docs
-          config: docs/.doc-detective.json
-          exit_on_fail: true
+          config: .doc-detective.json
 ```
 
 ### Android emulator tests on Linux
@@ -276,7 +309,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
         with:
           android: auto   # default; scans specs/config and enables KVM if an android platform is found
 ```
@@ -299,10 +335,13 @@ jobs:
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
 ```
 
-iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required: when no prebuilt WebDriverAgent products exist, the first XCUITest session builds WDA in-session (~10 min on a cold runner). The `ios` input is a deprecated no-op, so leave it out. To skip the cold compile on later runs, use the CLI-managed prebuild below.
+iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required. When no prebuilt WebDriverAgent products exist, the first XCUITest session builds WDA in-session (~10 min on a cold runner). To skip the cold compile on later runs, use the CLI-managed prebuild below.
 
 ### iOS tests with a CLI-managed WebDriverAgent prebuild
 
@@ -311,6 +350,8 @@ name: Doc Detective
 
 on:
   pull_request:
+  push:
+    branches: [main]   # seeds the cache that every pull request can restore
 
 permissions:
   contents: read
@@ -328,11 +369,14 @@ jobs:
           key: dd-cache-${{ runner.os }}-${{ github.run_id }}
           restore-keys: |
             dd-cache-${{ runner.os }}-
-      - run: npx doc-detective install ios --yes   # prebuilds WebDriverAgent into the cache
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npx doc-detective@5 install ios --yes   # prebuilds WebDriverAgent into the cache
+      - uses: doc-detective/github-action@v2
 ```
 
-This variant prebuilds WebDriverAgent through the Doc Detective CLI so later runs skip the cold `xcodebuild` compile. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at a cache directory, `actions/cache` persists it across runs, and `install ios --yes` compiles WDA once into it before the action runs; test sessions then consume those products automatically. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry — so when a runner image bumps Xcode or the driver version, the prebuild refreshes rather than restoring a stale build indefinitely. The managed prebuild requires Doc Detective v4.28 or later. See [iOS tests](#ios-tests) for details.
+This variant prebuilds WebDriverAgent through the Doc Detective CLI so later runs skip the cold `xcodebuild` compile. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at a cache directory, and `actions/cache` persists it across runs. `install ios --yes` compiles WDA once into it before the action runs, and test sessions then consume those products automatically. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry. When a runner image bumps Xcode or the driver version, the prebuild refreshes instead of restoring a stale build. A cache saved by a `pull_request` run is visible only to that pull request. The `push` trigger on the default branch saves the entry that new pull requests restore. See [iOS tests](#ios-tests) for details.
 
 ### Using action outputs
 
@@ -340,7 +384,8 @@ This variant prebuilds WebDriverAgent through the Doc Detective CLI so later run
 name: Doc Detective
 
 on:
-  pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
@@ -352,7 +397,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
         id: doc-detective
         with:
           exit_on_fail: false

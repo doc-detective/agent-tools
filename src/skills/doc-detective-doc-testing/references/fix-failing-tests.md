@@ -4,7 +4,7 @@ When tests fail, analyze the failures and generate fixes with confidence scores.
 
 ## Fix Tool
 
-Use the fix-tests tool to analyze failures and propose fixes:
+Use the fix-tests tool to analyze failures and propose fixes. It reads the file that `doc-detective --output results.json` writes, and takes each failure from `specs[].tests[].contexts[].steps[]` where `result` is `FAIL`. Doc Detective exits `1` when a test fails, and still writes that file.
 
 ```bash
 # Analyze failures and show proposed fixes (dry-run)
@@ -46,7 +46,7 @@ For each failing step, analyze:
     "errorType": "element_not_found",
     "action": "click",
     "target": "Submit",
-    "resultDescription": "Element 'Submit' not found within timeout",
+    "resultDescription": "No elements matched selector or text.",
     "potentialCauses": [
       "Button text changed",
       "Element not yet visible",
@@ -96,14 +96,14 @@ Track fix attempts for reporting. Each entry records the step, original/fixed va
 
 ## Re-run and Iterate
 
-Save updated spec → run validator → execute tests → check results. If all pass, report success. If still failing, iterate up to max attempts, then report "needs manual review."
+Save updated spec → run validator → execute tests → read the results file (exit `1` means tests failed, not that the run crashed). If all pass, report success. If still failing, iterate up to max attempts, then report "needs manual review."
 
 ## Common Fix Patterns
 
 | Failure | Fix Strategy | Typical Confidence |
 |---------|--------------|-------------------|
 | Element text changed | Search page for similar text | 70-90% |
-| Element not visible | Add wait step before action | 80-95% |
+| Element not visible | Add a `find` step with `timeout` before the action | 80-95% |
 | Timeout | Increase timeout value | 90% |
 | Selector invalid | Switch to text-based match | 75-85% |
 | Navigation redirect | Update URL to final destination | 85-95% |
@@ -171,7 +171,7 @@ Output is safe to paste in bug reports or support requests. Redaction is best-ef
 
 | Symptom | Diagnostic Check | Resolution |
 |---------|------------------|------------|
-| Browser actions fail | Check browser components in dump | Run `doc-detective install` |
+| Browser actions fail | Check browser components in dump | Run `doc-detective install browsers --yes` |
 | Config validation errors | Look for `CONFIG INVALID` banner | Fix config syntax per error message |
 | Missing env vars | Review referenced env vars section | Set required variables or update `.env` |
 | Container detection issues | Check container signals | Verify container runtime and mounts |

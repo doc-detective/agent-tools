@@ -113,7 +113,7 @@ function startServer() {
   });
   child.on("error", (err) => {
     process.stderr.write(
-      `doc-detective-lsp: failed to start (${err.message}). ` +
+      `doc-detective lsp: failed to start (${err.message}). ` +
         `Install doc-detective locally or globally, or ensure npx is available.\n`,
     );
     process.exit(1);

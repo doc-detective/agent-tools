@@ -55,3 +55,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: npx semantic-release
+
+      # Doc Detective CLI installs agent tools from the floating major tag
+      # (`v1`, `v2`), so point it at each stable release: v2.3.1 moves v2.
+      # semantic-release tags the release commit it leaves at HEAD, so no
+      # stable tag there means no release was cut, or it was a prerelease.
+      # Only on main: a manual run against an old release tag would otherwise
+      # find that tag at HEAD and move the major tag back to it.
+      - name: Move the major version tag
+        if: github.ref == 'refs/heads/main'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          version="$(git tag --points-at HEAD --list 'v*' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -n 1 || true)"
+          if [ -z "$version" ]; then
+            echo "No stable release at HEAD. Leaving the major tag alone."
+            exit 0
+          fi
+          major="${version%%.*}"
+          git tag -f "$major" HEAD
+          git push --force "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" "refs/tags/${major}"
+          echo "Moved ${major} to ${version}."

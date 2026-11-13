@@ -17,8 +17,9 @@ Install and configure the Doc Detective GitHub Action for automated documentatio
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--trigger <event>` | `pull_request` | Workflow trigger event (`pull_request`, `push`, `schedule`, etc.) |
-| `--exit-on-fail` | false | Fail the CI check when Doc Detective tests fail |
+| `--trigger <event>` | `pull_request` (`push` with `--create-pr-on-change`) | Workflow trigger event (`pull_request`, `push`, `schedule`, etc.) |
+| `--no-exit-on-fail` | false | Let the CI check pass when Doc Detective tests fail. By default, failing tests fail the check. |
+| `--exit-on-fail` | true | Deprecated, because failing the check is now the default |
 | `--create-pr-on-change` | false | Create a PR when files change during test execution (e.g., updated screenshots) |
 | `--create-issue-on-fail` | false | Create a GitHub issue when tests fail |
 | `--integrations <list>` | (none) | Comma-separated integrations to mention in issues (`doc-sentinel`, `promptless`, `dosu`, `claude`, `opencode`, `copilot`, `cursor`) |
@@ -27,7 +28,7 @@ Install and configure the Doc Detective GitHub Action for automated documentatio
 ```bash
 /doc-detective-install-github-action
 /doc-detective-install-github-action --ci
-/doc-detective-install-github-action --trigger push --exit-on-fail
+/doc-detective-install-github-action --trigger push --no-exit-on-fail
 /doc-detective-install-github-action --create-pr-on-change --create-issue-on-fail --integrations claude,copilot
 ```
 
@@ -85,7 +86,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
         with:
           # Inputs configured per options
 ```
@@ -94,12 +98,12 @@ jobs:
 
 | Condition | Action |
 |---|---|
-| Existing config found | Set `config` input to the config file path |
-| Config not at repo root | Set `working_directory` to the config's parent directory |
-| `--exit-on-fail` | Set `exit_on_fail: true` |
-| `--create-pr-on-change` | Set `create_pr_on_change: true`, add `contents: write` and `pull-requests: write` permissions |
+| Existing config found at repo root | Set `config` to the config file name |
+| Existing config found outside repo root | Set `working_directory` to the config's parent directory, and set `config` to the file name only. `config` resolves against `working_directory`, so `working_directory: docs` with `config: docs/.doc-detective.json` points at `docs/docs/.doc-detective.json`. |
+| `--no-exit-on-fail` | Set `exit_on_fail: false`. Otherwise, omit the input: it defaults to `true`. |
+| `--create-pr-on-change` | Set `create_pr_on_change: true`, add `contents: write` and `pull-requests: write` permissions. Unless `--trigger` is given, trigger on `push` to the default branch instead of `pull_request`. On `pull_request`, the action builds its branch from the source PR's merge commit. The PR it opens then carries the source PR's changes too, and every source PR overwrites the same `pr_branch`. If the user passes `--trigger pull_request`, warn them of both. |
 | `--create-issue-on-fail` | Set `create_issue_on_fail: true`, add `issues: write` permission |
-| `--integrations` provided | Set `integrations` input to the comma-separated list |
+| `--integrations` provided | Set the `issue_mentions` input to the comma-separated list. Don't use the deprecated `integrations` input. |
 | `--trigger schedule` | Use cron syntax; suggest `cron: '0 6 * * 1'` (Monday 6 AM UTC) and prompt for customization unless `--ci` |
 
 If not in `--ci` mode, present the generated workflow to the user for confirmation before writing. Explain each enabled feature and the permissions it requires.
@@ -119,9 +123,12 @@ Summarize what was created and list any manual steps needed:
 - **Created**: Path to the workflow file and a summary of configured features.
 - **Manual steps** (if applicable):
   - If `--create-pr-on-change`: Remind the user that the default `GITHUB_TOKEN` works for PR creation, but if the repo requires specific token permissions, they may need to configure a custom token.
+  - If `--create-pr-on-change`: Tell the user that each run force-pushes one branch, `doc-detective-changes` by default, and updates its open PR. Nobody should commit to that branch by hand, and a branch protection rule that blocks force-pushes to it stops the PR. Also tell them the PR commits every changed file by default, including images that `screenshot` steps save, which can show unreleased UI or customer data. Suggest setting `pr_paths` to the folders the PR should update.
   - If using a custom `token` input: Remind the user to add the secret to the repository settings.
   - If the repository has branch protection rules: Note that PRs created by the action use the default `GITHUB_TOKEN` and may need approval before merging.
   - General: Confirm that GitHub Actions is enabled for the repository.
+  - Run files: By default, Doc Detective takes a screenshot after each browser, app, or device step and records each such context. They go in the run folder, `.doc-detective/runs/<runId>/`, under the config's `outputDir`. The action keeps the run folder and reports out of git through `.git/info/exclude`. To keep them after the job, add an `actions/upload-artifact` step with `include-hidden-files: true`. Its `path` is the run folder relative to the repo root. With the config in `working_directory` and no `outputDir` set, that's `<working_directory>/.doc-detective/runs/`, for example `docs/.doc-detective/runs/`. See [references/action-reference.md](references/action-reference.md#run-files-and-secrets).
+  - Secrets: Pass secrets to the job as environment variables, and reference them as `$NAME` in specs. Doc Detective shows their values as `***NAME***` in logs, results, and the issues the action creates.
 
 ## Examples
 
@@ -141,7 +148,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
 ```
 
 ### With PR creation on file changes
@@ -150,7 +160,8 @@ jobs:
 name: Doc Detective
 
 on:
-  pull_request:
+  push:
+    branches: [main]
 
 permissions:
   contents: write
@@ -161,9 +172,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
         with:
-          exit_on_fail: true
+          node-version: 24
+      - uses: doc-detective/github-action@v2
+        with:
           create_pr_on_change: true
 ```
 
@@ -185,11 +198,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
         with:
-          exit_on_fail: true
+          node-version: 24
+      - uses: doc-detective/github-action@v2
+        with:
           create_issue_on_fail: true
-          integrations: claude,copilot
+          issue_mentions: claude,copilot
 ```
 
 ### Full-featured with custom config
@@ -212,15 +227,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: doc-detective/github-action@v1
+      - uses: actions/setup-node@v4
         with:
-          config: docs/.doc-detective.json
-          exit_on_fail: true
-          create_pr_on_change: true
+          node-version: 24
+      - uses: doc-detective/github-action@v2
+        with:
+          working_directory: docs
+          config: .doc-detective.json
+          # Open PRs only from pushes to main. On pull_request, the PR would
+          # carry the source PR's changes and share one pr_branch.
+          create_pr_on_change: ${{ github.event_name == 'push' }}
           pr_labels: doc-detective,automated
           create_issue_on_fail: true
           issue_labels: doc-detective,test-failure
-          integrations: claude,copilot
+          issue_mentions: claude,copilot
 ```
 
 ## Related Commands

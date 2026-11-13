@@ -61,6 +61,39 @@ describe('Hook 4: session-start-check-install', function () {
     assert.ok(output.additionalContext.includes('Docker'));
   });
 
+  // A cached image only counts when its `version` label is CLI 5 or later:
+  // `latest` can still be a CLI 4 image that misreads CLI 5 specs.
+  for (const [label, available] of [['5.0.0', true], ['4.38.1', false]]) {
+    it(`should ${available ? '' : 'not '}report a cached ${label} Docker image as available`, async function () {
+      const fs = require('fs');
+      const os = require('os');
+      const path = require('path');
+
+      const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'hook4-docker-'));
+      for (const tool of ['bash', 'cat', 'printf', 'sed', 'tr', 'timeout']) {
+        try {
+          const realPath = require('child_process')
+            .execFileSync('which', [tool], { encoding: 'utf8' }).trim();
+          if (realPath) fs.symlinkSync(realPath, path.join(fakeBin, tool));
+        } catch { /* tool not found, skip */ }
+      }
+      // `docker image inspect --format ...` prints the image's version label
+      fs.writeFileSync(path.join(fakeBin, 'docker'), `#!/bin/bash\necho ${label}\n`, { mode: 0o755 });
+
+      const result = await runHook('session-start-check-install.sh', '{}', {
+        env: { PATH: fakeBin, HOME: process.env.HOME },
+      });
+      fs.rmSync(fakeBin, { recursive: true, force: true });
+
+      const ctx = parseOutput(result.stdout).additionalContext;
+      if (available) {
+        assert.ok(ctx.includes('Docker image (version: 5.0.0)'), ctx);
+      } else {
+        assert.ok(ctx.includes('not installed'), ctx);
+      }
+    });
+  }
+
   it('should produce well-formed JSON regardless of version output', async function () {
     const result = await runHook('session-start-check-install.sh', '{}');
     const output = parseOutput(result.stdout);

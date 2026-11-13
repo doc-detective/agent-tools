@@ -82,7 +82,7 @@ Generate `.doc-detective.json` following the "smallest reasonable config" princi
 | `--ci` + existing config | Use existing config unchanged |
 
 ```json
-{ "input": "docs", "output": ".doc-detective/results", "detectSteps": false }
+{ "input": "docs", "outputDir": ".doc-detective/results", "detectSteps": false }
 ```
 
 If `--dry-run`, print the config that would be written and skip file creation. If config cannot be created or the user rejects the merge, stop and report — do not proceed. See `skills/doc-detective-project-bootstrap/references/config-guidance.md` for full options.
@@ -91,7 +91,7 @@ If `--dry-run`, print the config that would be written and skip file creation. I
 
 For each procedure-containing file identified in Phase 1:
 
-1. Invoke `/doc-detective-generate <file-path> --output .doc-detective/doc-detective-tests/<name>-spec.json`, where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens (e.g., `login-guide.md` → `login-guide`).
+1. Invoke `/doc-detective-generate <file-path> --output doc-detective-tests/<name>-spec.json`, where `<name>` is the source filename lowercased with non-alphanumeric characters replaced by hyphens (e.g., `login-guide.md` → `login-guide`). Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
 2. Confirm each spec passes validation before continuing. If a spec cannot be fixed, skip it and report it to the user.
 3. If `--dry-run`, print each spec without writing to disk.
 
@@ -100,12 +100,16 @@ For each procedure-containing file identified in Phase 1:
 Run all generated specs:
 
 ```bash
-doc-detective --input .doc-detective/doc-detective-tests/ --output .doc-detective/results/
+doc-detective --input doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
-`--input` (and `--output`) on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory** — so a config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root; if you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
+`--input`, `--output`, and `--output-dir` on the CLI resolve **relative to the current working directory**. By contrast, paths inside a config file (`--config`) resolve relative to **the config file's directory**. A config in a subfolder with `"input": "docs"` scans `<subfolder>/docs`. When passing the directory explicitly as above, run from the repo root. If you instead rely on the config's `input`, keep the config at the repo root. A "No tests detected" warning is usually this mismatch.
 
-Skip this phase if `--skip-tests` or `--dry-run` is set. If the command fails to execute, stop and report the error — do not proceed to Phase 5. After execution, collect all failing tests from the results output.
+Skip this phase if `--skip-tests` or `--dry-run` is set. Act on the exit code:
+
+- `0`: No test failed, and at least one passed or warned. A config with `exitOnFail: false` exits `0` even when tests fail, so read `.doc-detective/results/results.json` anyway, and treat any failing test as you would for exit `1`.
+- `1`: At least one test failed. This is a normal outcome, not a crash: collect the failing tests from `.doc-detective/results/results.json`, and continue to Phase 5.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. When every test skipped, stderr gives the first skip reason. Don't proceed to Phase 5.
 
 ### Phase 5: Fix Loop
 
@@ -113,7 +117,7 @@ Skip this phase if `--skip-fix-loop` is set.
 
 For each failing test, repeat up to 3 times:
 
-1. Read the step's `resultDescription` to identify the failure.
+1. In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`.
 2. Propose a fix and assign a confidence score: **High (80–100)** — exact alternative identified; **Medium (50–79)** — likely correct but uncertain; **Low (0–49)** — best guess with significant uncertainty.
 3. Apply the fix based on confidence:
 
@@ -136,9 +140,8 @@ Report all "needs manual review" tests to the user before completing.
 2. If in `--ci` mode, default to yes — proceed without prompting.
 3. Invoke `/doc-detective-install-github-action` with matching flags:
    - Pass `--ci` if init was called with `--ci`.
-   - For `--exit-on-fail`:
-     - In `--ci` mode, pass `--exit-on-fail` by default.
-     - In interactive mode, ask the user and pass it only if they opt in.
+   - Don't pass `--exit-on-fail`: it's deprecated, because failing the check is now the default.
+   - In interactive mode, ask the user whether failing tests should fail the check, and pass `--no-exit-on-fail` only if they say no.
 
 ## Related Commands
 

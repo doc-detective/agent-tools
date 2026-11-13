@@ -93,11 +93,11 @@ See `references/actions.md` for the full action catalog.
 ### Known Actions
 
 These are the only valid action types:
-- `goTo` - URL string or `{ url: string, waitUntil?: string, newTab?: true | string | object, newWindow?: true | string | object, surface?: object }`. `newTab`/`newWindow` open and name a browser tab/window (mutually exclusive; only `goTo` opens tabs and windows).
+- `goTo` - URL string or `{ url: string, waitUntil?: { networkIdleTime?: number, domIdleTime?: number, find?: object }, newTab?: true | string | object, newWindow?: true | string | object, surface?: object }`. `newTab`/`newWindow` open and name a browser tab/window (mutually exclusive; only `goTo` opens tabs and windows).
 - `click` - Text string or `{ selector: string }`
-- `find` - Text string or `{ selector: string, timeout?: number, matchText?: string }`
+- `find` - Text string or `{ selector: string, timeout?: number, elementText?: string }`
 - `type` - `{ keys: string | string[], selector?: string, surface?: string | object, waitUntil?: object, timeout?: number }`. `surface` targets a process (name or `{ process }`), a browser window/tab (`{ browser, window?, tab? }`), or a native app (`{ app, window? }`).
-- `wait` - Number (ms) or `{ selector: string, state: string }`
+- `wait` - Number (ms), `true` (5000 ms), or a variable string such as `"$WAIT_DURATION"`. No object form: to wait for an element, use `find` with `timeout`.
 - `screenshot` - Path string or `{ path: string, surface?: object }`. `surface` can target a browser window/tab or a native app (`{ app, window? }`).
 - `httpRequest` - `{ url: string, method: string, ... }`
 - `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[], background?: { name: string, waitUntil?: object }, timeout?: number }`. `stdio` matches stdout **or** stderr (string or `/regex/`). The object form is strict: there is **no** `stdout`/`stderr` field, and using one invalidates the spec.
@@ -143,37 +143,46 @@ For multi-file specs, offer injection separately per source file. Return the ful
 
 ## Step 3: Execute Tests
 
-**Only execute after validation passes.** Try in order until one succeeds:
+**Only execute after validation passes.** Use the first runner that's available:
 
 ```bash
 # 1. Global CLI
-doc-detective --input test-spec.json
+doc-detective --input test-spec.json --output results.json
 # 2. Docker
-docker run -v "$(pwd):/app" docdetective/doc-detective-latest --input /app/doc-detective-test-spec.json
+docker run -v "$(pwd):/app" docdetective/docdetective --input /app/test-spec.json --output /app/results.json
 # 3. NPX
-npx doc-detective --input test-spec.json
+npx doc-detective --input test-spec.json --output results.json
 ```
 
-If none available, inform user and suggest installation.
+These specs need CLI 5 or later. Move to the next runner when the command itself isn't available, or when its `--version` reports a version below 5. If none are available, inform the user and suggest installation. Otherwise, act on the exit code:
+
+| Exit code | Meaning | Next step |
+|---|---|---|
+| `0` | No test failed, and at least one passed or warned. A config with `exitOnFail: false` exits `0` even when tests fail | Read the results file's `summary` before reporting success |
+| `1` | At least one test failed | A normal outcome, not a crash: read the results file (Step 4) |
+| `2` | Nothing valid was tested, because of bad usage, bad config, no tests, every test skipped, or an internal error | Fix the problem named on stderr. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason |
+
+Logs, warnings, and the paths of report files go to stderr. The terminal summary goes to stdout. `--output <file>` writes the JSON results to exactly that path. `--output-dir <dir>` sets where run folders and reports go. To read results from stdout instead of a file, pass `--json`. Then stdout holds only the JSON results.
 
 ### Run Options
 
-- **Auto screenshots:** Add `--auto-screenshot` to capture a PNG after every browser-driven step that has no explicit `screenshot`. Images land in `.doc-detective/runs/<runId>/` nested under `specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/` at stable paths for run-over-run comparison.
-- **Per-run artifacts:** Results are archived by default at `<output>/.doc-detective/runs/<runId>/testResults.json`, alongside any screenshots from that run.
+- **Auto screenshots:** On by default. Doc Detective captures a PNG after every step that drives a browser, app, or device and has no explicit `screenshot`. Add `--no-auto-screenshot` to turn them off. Images land in `<outputDir>/.doc-detective/runs/<runId>/` nested under `specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/` at stable paths for run-over-run comparison.
+- **Per-run artifacts:** Each run's screenshots, recordings, and results land in its run folder, `<outputDir>/.doc-detective/runs/<runId>/`. The results' `runDir` names it.
 - **Stable IDs:** Specs, tests, contexts, and steps without explicit IDs get deterministic fallbacks from the file path, a content hash, or the platform and browser. The same test keeps the same ID across runs.
 
 ## Step 4: Analyze Results
 
-Doc Detective writes test results to `testResults-<timestamp>.json` in the output directory and archives a copy at `<output>/.doc-detective/runs/<runId>/testResults.json` (the per-run artifact folder). Both have `summary` (pass/fail counts) and `specs[].tests[].steps[]` entries. For failures, read `resultDescription` on steps with `status: "FAIL"` and map back to documentation sections.
+The results document has `summary` (pass/fail counts per level) and `specs[].tests[].contexts[].steps[]` entries. For failures, read `resultDescription` on steps with `result: "FAIL"` and map back to documentation sections. Steps after a failure in the same context report `result: "SKIPPED"`.
+
+Results and logs show the values of variables the run used, such as `$PASSWORD`, as `***NAME***`. The step ran with the real value. When you fix a spec, keep its `$NAME` reference, and never copy a masked value into it. By default, the run also saves a screenshot after each step that drives a browser, app, or device, and a recording of each such context. They're in the run folder that the results' `runDir` names. Look at the screenshot of a failed step to see what the page showed.
 
 ### Common Failure Patterns
 
 | Error | Likely cause |
 |---|---|
-| "Element not found" | Text changed, element removed, wrong selector |
-| "Timeout" | Page slow to load, element not visible |
-| "Navigation failed" | URL changed, redirect, auth required |
-| "Unexpected status code" | API endpoint changed, auth issue |
+| "No elements matched selector or text." | Text changed, element removed, wrong selector, page slow to load |
+| "Couldn't open URL" or "Invalid or unresolvable URL" | URL changed, server down, auth required |
+| "Returned 404. Expected one of [200,201]." | API endpoint changed, auth issue |
 
 ## Step 5: Fix Failing Tests (Optional)
 
