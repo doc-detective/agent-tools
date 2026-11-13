@@ -6,7 +6,7 @@ metadata:
   organization: Doc Detective
   date: November 2026
   abstract: Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
-  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
 user-invocable: false
 ---
@@ -94,19 +94,24 @@ See `references/actions.md` for the full action catalog.
 ### Known Actions
 
 These are the only valid action types:
-- `goTo` - URL string or `{ url: string, waitUntil?: { networkIdleTime?: number, domIdleTime?: number, find?: object } }`
+- `goTo` - URL string or `{ url: string, waitUntil?: { networkIdleTime?: number, domIdleTime?: number, find?: object }, newTab?: true | string | object, newWindow?: true | string | object, surface?: object }`. `newTab`/`newWindow` open and name a browser tab/window (mutually exclusive; only `goTo` opens tabs and windows).
 - `click` - Text string or `{ selector: string }`
 - `find` - Text string or `{ selector: string, timeout?: number, elementText?: string }`
-- `type` - `{ keys: string, selector: string }`
+- `type` - `{ keys: string | string[], selector?: string, surface?: string | object, waitUntil?: object, timeout?: number }`. `surface` targets a process (name or `{ process }`), a browser window/tab (`{ browser, window?, tab? }`), or a native app (`{ app, window? }`).
 - `wait` - Number (ms), `true` (5000 ms), or a variable string such as `"$WAIT_DURATION"`. No object form: to wait for an element, use `find` with `timeout`.
-- `screenshot` - Path string or `{ path: string }`
+- `screenshot` - Path string or `{ path: string, surface?: object }`. `surface` can target a browser window/tab or a native app (`{ app, window? }`).
 - `httpRequest` - `{ url: string, method: string, ... }`
-- `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[] }`. `stdio` matches stdout **or** stderr (string or `/regex/`); the object form is strict, so there is **no** `stdout`/`stderr` field — using one invalidates the spec.
+- `runShell` - `{ command: string, exitCodes?: number[], stdio?: string, workingDirectory?: string, args?: string[], background?: { name: string, waitUntil?: object }, timeout?: number }`. `stdio` matches stdout **or** stderr (string or `/regex/`). The object form is strict: there is **no** `stdout`/`stderr` field, and using one invalidates the spec.
+- `runCode` - `{ language: string, code: string, background?: { name: string, waitUntil?: object }, timeout?: number }`
+- `startSurface` - `{ app: string, name?: string, args?: string[], workingDirectory?: string, env?: object, waitUntil?: { delayMs?: number, find?: object }, timeout?: number, driverOptions?: object }`. Launches a native app as an automation surface on Windows, macOS, Android, or iOS; other platforms are SKIPPED. On macOS, launch by `.app` path or bundle ID. Grant the process running Doc Detective the Accessibility permission (System Settings → Privacy & Security → Accessibility), or the context is SKIPPED. `env` is supported on macOS but rejected on Windows; `workingDirectory` fails on every app driver. `elementText`/`elementId`/`elementAria` and native XPath/`~id` selectors target elements (CSS is browser-only).
+- `closeSurface` - Process name string, browser surface `{ browser, name?, window? | tab? }`, native app surface `{ app }`, or an array of these. Closes background processes, browser tabs/windows, whole browsers, or apps; missing surfaces are a no-op.
+- `runBrowserScript` - JS string or `{ script: string, args?: any[], output?: string }` (runs in the browser page; `args` accepts any JSON-serializable values; return value captured into `outputs.result`)
 - `checkLink` - URL string or `{ url: string, statusCodes?: number[] }`
 - `loadVariables` - File path string
 - `loadCookie` / `saveCookie` - File path string
-- `record` - Path string or object
-- `stopRecord` - Boolean true
+- `record` - Path string or object (object supports an optional `name`)
+- `stopRecord` - Boolean, null, a recording `name` string, or `{ name }`
+- `annotate` - `{ add?: [...], update?: [...], clear?: true | string[] }` (at least one). Draws persistent annotations into the page for recordings/screenshots; browser-only (skipped without a page)
 
 ### Validation Failure Handling
 
@@ -160,6 +165,12 @@ Move to the next runner only when the command itself isn't available. If none ar
 
 Logs, warnings, and the paths of report files go to stderr. The terminal summary goes to stdout. `--output <file>` writes the JSON results to exactly that path. `--output-dir <dir>` sets where run folders and reports go. To read results from stdout instead of a file, pass `--json`. Then stdout holds only the JSON results.
 
+### Run Options
+
+- **Auto screenshots:** On by default. Doc Detective captures a PNG after every step that drives a browser, app, or device and has no explicit `screenshot`. Add `--no-auto-screenshot` to turn them off. Images land in `<outputDir>/.doc-detective/runs/<runId>/` nested under `specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/` at stable paths for run-over-run comparison.
+- **Per-run artifacts:** Each run's screenshots, recordings, and results land in its run folder, `<outputDir>/.doc-detective/runs/<runId>/`. The results' `runDir` names it.
+- **Stable IDs:** Specs, tests, contexts, and steps without explicit IDs get deterministic fallbacks from the file path, a content hash, or the platform and browser. The same test keeps the same ID across runs.
+
 ## Step 4: Analyze Results
 
 The results document has `summary` (pass/fail counts per level) and `specs[].tests[].contexts[].steps[]` entries. For failures, read `resultDescription` on steps with `result: "FAIL"` and map back to documentation sections. Steps after a failure in the same context report `result: "SKIPPED"`.
@@ -189,9 +200,9 @@ Before returning any test spec:
 
 ## External Resources
 
-- Main docs: https://doc-detective.com
-- Test structure: https://doc-detective.com/docs/get-started/tests
-- Actions: https://doc-detective.com/docs/category/actions
+- Main docs: https://docs.doc-detective.com
+- Test structure: https://docs.doc-detective.com/docs/get-started/how-testing-works
+- Actions: https://docs.doc-detective.com/docs/get-started/concepts#action
 - GitHub: https://github.com/doc-detective/doc-detective
 
 ## Scripts

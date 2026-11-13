@@ -10,7 +10,65 @@ Agent tools for testing documentation procedures and validating that documented 
 
 ## Installation
 
+### Quick install
+
+The fastest way to install the agent tools is the Doc Detective CLI:
+
+```bash
+npx doc-detective install agents
+```
+
+It detects which supported agents are installed on your machine, prompts you to choose which to configure, and invokes each agent's native install mechanism. Re-run any time to update to the latest version.
+
+To target a specific agent non-interactively:
+
+```bash
+npx doc-detective install agents --agent claude --scope project --yes
+```
+
+Supported `--agent` ids: `claude`, `copilot`, `gemini`, `codex`, `qwen`, `opencode`. To target several agents in one run, give `--agent` once with a comma-separated list, such as `--agent claude,codex`. Cursor isn't one of them; see [Cursor](#cursor).
+
+Useful flags:
+
+- `--scope project` or `--scope global`: skip the scope prompt.
+- `--yes`: run without prompts. Requires `--agent` and `--scope`.
+- `--force`: reinstall even if already up to date.
+- `--dry-run`: print the actions that would be taken without executing them.
+
+Head to the per-agent sections below if you prefer the native install flow or need to troubleshoot.
+
+> **Note:** `install agents` is one subcommand in the Doc Detective CLI's broader `install` group. Other subcommands (`install runtime`, `install browsers`, `install status`, `install all`) manage the CLI's lazy-loaded runtime dependencies. See the [`install` command reference](https://docs.doc-detective.com/reference/reference/cli/install) for details.
+
+### Automatic prompt during npm install
+
+When you run `npm install doc-detective` in an interactive terminal, the CLI checks for supported coding agents. If it detects agents without doc-detective tools installed, you see a prompt:
+
+```
+Detected coding agents that may be missing doc-detective tools: Claude Code, Gemini CLI.
+? Install doc-detective agent tools now? (y/N)
+```
+
+Answer **y** to launch `install agents` with the detected agents pre-selected, then choose the install scope (global or project). Answer **n** to skip, and the CLI prints a reminder to run `npx doc-detective install agents` later.
+
+The prompt is skipped when:
+
+- `CI` environment variable is set
+- `DOC_DETECTIVE_SKIP_AGENT_PROMPT` environment variable is set
+- stdin or stdout is not a TTY (piped installs, redirected output, non-interactive shells)
+
+To disable the prompt permanently, add `DOC_DETECTIVE_SKIP_AGENT_PROMPT=1` to your shell profile.
+
 ### Claude Code
+
+```bash
+npx doc-detective install agents --agent claude
+```
+
+The command auto-detects Claude Code and invokes its native plugin management. Without `--scope`, it first asks whether to install for the project or user-global. Re-run any time to update.
+
+If the `claude` binary is not on your PATH but `~/.claude/` exists, the command edits your settings file directly. Claude Code then prompts you to complete the install on its next launch.
+
+#### Install from inside Claude Code
 
 1. Open Claude Code:
 
@@ -33,20 +91,36 @@ Agent tools for testing documentation procedures and validating that documented 
 
 ### Gemini CLI
 
-1. Install the extension and open Gemini CLI:
+```bash
+npx doc-detective install agents --agent gemini
+```
 
-   ```bash
-   gemini extensions install https://github.com/doc-detective/agent-tools.git --auto-update
-   gemini
-   ```
+This invokes `gemini extensions install` under the hood with auto-update enabled. Gemini CLI installs extensions user-globally, so the `--scope` flag has no effect for this agent.
 
-2. Ask about Doc Detective, or use the `init` command to get started:
+#### Install with `gemini extensions install`
 
-   ```text
-   /doc-detective-init
-   ```
+```bash
+gemini extensions install https://github.com/doc-detective/agent-tools.git --auto-update
+gemini
+```
+
+Ask about Doc Detective, or use the `init` command to get started:
+
+```text
+/doc-detective-init
+```
 
 ### Copilot CLI
+
+```bash
+npx doc-detective install agents --agent copilot
+```
+
+The command invokes Copilot CLI's native plugin management to add the marketplace and install the plugin. Copilot CLI installs plugins user-globally, so the `--scope` flag has no effect.
+
+If the `copilot` binary is not on your PATH, install it first: `npm install -g @github/copilot` (or see the [Copilot CLI install docs](https://docs.github.com/en/copilot/how-tos/set-up/install-copilot-cli)). You must also be logged in with `copilot login`.
+
+#### Install from inside Copilot CLI
 
 1. Open Copilot CLI:
 
@@ -69,21 +143,41 @@ Agent tools for testing documentation procedures and validating that documented 
 
 ### Qwen Code
 
-1. Install the plugin and open Qwen Code:
+```bash
+npx doc-detective install agents --agent qwen
+```
 
-   ```bash
-   qwen extensions install https://github.com/doc-detective/agent-tools
-   qwen extensions install doc-detective:doc-detective
-   qwen
-   ```
+The command invokes `qwen extensions install` non-interactively with auto-update enabled. Qwen Code installs extensions user-globally, so the `--scope` flag has no effect.
 
-2. Ask about Doc Detective, or use the `init` command to get started:
+#### Install with `qwen extensions install`
 
-   ```text
-   /doc-detective-init
-   ```
+```bash
+qwen extensions install https://github.com/doc-detective/agent-tools
+qwen extensions install doc-detective:doc-detective
+qwen
+```
+
+Ask about Doc Detective, or use the `init` command to get started:
+
+```text
+/doc-detective-init
+```
 
 ### OpenCode
+
+```bash
+# User-global (default)
+npx doc-detective install agents --agent opencode
+
+# Or per-project
+npx doc-detective install agents --agent opencode --scope project
+```
+
+The command fetches the agent-tools bundle and copies skills, the runtime plugin, hooks, and agents into the appropriate scope directory (`~/.config/opencode/` or `./.opencode/`). OpenCode auto-discovers them on next launch.
+
+The plugin provides `tool.execute.before` and `tool.execute.after` hooks. They validate test specs, block common anti-patterns, suggest running tests after doc edits, and check that the Doc Detective CLI is available.
+
+#### Install manually
 
 1. Clone the repository:
 
@@ -103,7 +197,23 @@ Agent tools for testing documentation procedures and validating that documented 
 
 3. Start OpenCode and ask about Doc Detective, or use the `init` command:
 
+   ```text
+   /doc-detective-init
+   ```
+
 ### Codex
+
+```bash
+# User-global (default)
+npx doc-detective install agents --agent codex
+
+# Or per-project
+npx doc-detective install agents --agent codex --scope project
+```
+
+The command fetches doc-detective's skills from GitHub and copies them into the user's (or project's) `.agents/skills/` directory. Codex auto-discovers skills on its next launch.
+
+#### Install manually
 
 1. Clone the repo and copy the plugin and marketplace into your project:
 
@@ -394,7 +504,7 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 | **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
 | **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
 
-Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
+Hooks are supported in Claude Code, Gemini CLI, and OpenCode. Codex supports skills natively via the plugin manifest. Other agents can use the shared scripts in `hooks/scripts/` with their own hook configuration.
 
 ## Language server (LSP)
 
@@ -497,10 +607,10 @@ Then execute:
 
 ## Resources
 
-- [Doc Detective Documentation](https://doc-detective.com)
+- [Doc Detective Documentation](https://docs.doc-detective.com)
 - [Doc Detective GitHub](https://github.com/doc-detective/doc-detective)
-- [Test Specification Format](https://doc-detective.com/docs/get-started/doc-detective-tests)
-- [Actions Reference](https://doc-detective.com/docs/category/actions)
+- [Test Specification Format](https://docs.doc-detective.com/reference/schemas/specification)
+- [Actions Reference](https://docs.doc-detective.com/docs/get-started/concepts#action)
 
 ## MCP server
 
@@ -592,4 +702,34 @@ AGPL3
 
 ## Contributing
 
-To contribute improvements to this plugin, submit issues or pull requests to the repository.
+To contribute improvements to this plugin, open an issue or pull request in the repository.
+
+### Pull request titles
+
+This repository squash-merges pull requests, so the pull request title becomes the commit message on `main`. A GitHub Actions check validates every title against the [Conventional Commits](https://www.conventionalcommits.org/) format, so start your title with one of the supported types, followed by a colon and a short description:
+
+```
+<type>: <description>
+```
+
+You can add an optional, unrestricted scope, for example `feat(lsp): add language server`.
+
+Supported types:
+
+| Type | Use for |
+|------|---------|
+| `feat` | A new user-facing feature |
+| `fix` | A bug fix |
+| `docs` | Documentation-only changes |
+| `chore` | Maintenance work with no product impact |
+| `refactor` | Code changes that neither fix a bug nor add a feature |
+| `test` | Adding or updating tests |
+| `ci` | Changes to CI configuration or workflows |
+| `build` | Changes to the build system or dependencies |
+| `perf` | Performance improvements |
+| `style` | Formatting or style changes |
+| `revert` | Reverting a previous change |
+
+### Releases
+
+Releases are cut automatically when pull requests merge to `main`, and the merged title's type drives the version bump. `feat` triggers a minor release, `fix` triggers a patch release, and a `!` after the type (for example `feat!:`) or a `BREAKING CHANGE:` footer triggers a major release. Types such as `docs`, `chore`, and `ci` don't trigger a release, and neither does `perf`: this repository's release config turns off the patch release that `perf` gets by default. On a releasable merge, the workflow bumps the version, regenerates the build artifacts, updates `CHANGELOG.md`, tags the release, and publishes a GitHub Release.

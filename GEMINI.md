@@ -84,4 +84,4 @@ For complete documentation, read these files:
 - Configuration guidance: `skills/doc-detective-project-bootstrap/references/config-guidance.md`
 - Procedure heuristics: `skills/doc-detective-project-bootstrap/references/procedure-heuristics.md`
 - Markup patterns: `skills/doc-detective-inline-test-injection/references/markup-patterns.md`
-- Doc Detective docs: https://doc-detective.com
+- Doc Detective docs: https://docs.doc-detective.com
