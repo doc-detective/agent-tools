@@ -26,10 +26,12 @@ if [ "$AVAILABLE" = "false" ] && [ "$CI" != "true" ] && command -v npx &>/dev/nu
   fi
 fi
 
-# Check 3: Docker
+# Check 3: Docker. Only a CLI 5 or later image runs CLI 5 specs, and a cached
+# `latest` can be older, so read the image's `version` label.
 if [ "$AVAILABLE" = "false" ] && command -v docker &>/dev/null; then
-  if docker image inspect docdetective/docdetective &>/dev/null 2>&1; then
-    STATUS="doc-detective available via Docker image"
+  IMAGE_VERSION=$(docker image inspect --format '{{index .Config.Labels "version"}}' docdetective/docdetective 2>/dev/null)
+  if [[ "$IMAGE_VERSION" =~ ^([5-9]|[1-9][0-9]+)\. ]]; then
+    STATUS="doc-detective available via Docker image (version: ${IMAGE_VERSION})"
     AVAILABLE="true"
   fi
 fi
