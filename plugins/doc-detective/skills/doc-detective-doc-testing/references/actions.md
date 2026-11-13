@@ -1,6 +1,6 @@
 # Doc Detective Actions Reference
 
-Quick reference for all Doc Detective actions. For comprehensive documentation, see https://doc-detective.com/docs/category/actions.
+Quick reference for all Doc Detective actions. For comprehensive documentation, see https://docs.doc-detective.com/docs/get-started/concepts#action.
 
 ## Navigation & Browser
 
@@ -32,6 +32,155 @@ With options:
   - `domIdleTime`: Milliseconds with no DOM changes (default `1000`, `0` for no wait)
   - `find`: Element that must exist before the step continues. Takes the element fields of the [`find` action](#find), such as `selector` and `elementText`.
 
+**Open a new tab or window**:
+
+`goTo` is the only action that opens browser tabs and windows. Set `newTab` or `newWindow` to open the URL in a fresh surface and name it so later steps can target it. Each accepts `true` for an anonymous surface, a string to name it, or an object. `newTab` and `newWindow` are mutually exclusive, and neither can be combined with a conflicting [`surface`](#browser-windows-and-tabs) selector.
+
+```json
+{ "goTo": { "url": "https://example.com/cart", "newTab": "cart" } }
+```
+
+```json
+{
+  "goTo": {
+    "url": "https://example.com/admin",
+    "newWindow": { "name": "admin", "tab": "overview" }
+  }
+}
+```
+
+**Opener options:**
+- `newTab`: `true` (anonymous tab), a string (tab name), or `{ "name": "<name>" }`. Opens the URL in a new tab.
+- `newWindow`: `true` (anonymous window), a string (window name), or `{ "name": "<name>", "tab": "<name>" }` where `tab` names the window's first tab. Opens the URL in a new window.
+- `surface`: With `newTab`, selects the existing window the new tab opens in. Without an opener, addresses an existing window/tab (see [Browser windows and tabs](#browser-windows-and-tabs)).
+
+---
+
+## Browser windows and tabs
+
+Most browser steps accept a `surface` that targets a specific window or tab instead of the active one. These steps take it: `goTo`, `click`, `find`, `dragAndDrop`, `runBrowserScript`, `record`, `screenshot`, `type`, and `closeSurface`. The targeted tab is focused before the step runs and stays focused afterward. Omit `surface` to keep the default behavior, where the step acts on the active tab. A tab given without a window is searched for across every tab in the browser in creation order. That includes tabs the page opened itself through `target="_blank"` or `window.open`.
+
+A browser `surface` is an object with a required `browser` plus an optional `window` and/or `tab` selector:
+
+```json
+{ "click": { "selector": "button.primary", "surface": { "browser": "chrome", "tab": "cart" } } }
+```
+
+```json
+{ "find": { "selector": "#status", "surface": { "browser": "chrome", "window": "admin", "tab": -1 } } }
+```
+
+**Surface fields:**
+- `browser`: Required. One of `"chrome"`, `"firefox"`, `"safari"`, `"webkit"`, `"edge"`. A `goTo` step opens that browser if it isn't open yet. Other steps fail with a message until it's open.
+- `name`: Optional browser surface name. Defaults to the engine name. Give distinct names to drive several browsers at once, including two of the same engine. With more than one browser of an engine open, a step that omits `name` fails and asks you to name one.
+- `window` / `tab`: Optional window or tab selector. Omit `window` to use the active window; omit `tab` to use the active tab.
+
+**Window/tab selectors** accept any of these forms:
+- **Name**: The string name assigned when the surface was opened: `"cart"`.
+- **Index**: An integer in creation order; negative counts from the end, so `-1` is the newest: `-1`.
+- **Criteria**: An object matching any of `name`, `index`, `title`, or `url`. `title` and `url` match as a substring, or as a `/regex/` wrapped in forward slashes: `{ "title": "/Checkout/" }`.
+
+---
+
+## Native app surfaces
+
+`startSurface` launches a native app and registers it as an automation surface. Once you set `surface` to `{ "app": "<name>" }`, the element steps you already use in the browser can drive it: `find`, `click`, `type`, `screenshot`, and `waitUntil`. Close the app with a [`closeSurface`](#closesurface) step. Native app surfaces run on **Windows, macOS, Android, and iOS**. On any other platform, the context is marked SKIPPED (not failed) with an actionable reason. The driver for each platform installs automatically the first time you use it. On macOS, the process that runs Doc Detective also needs the Accessibility permission (see [macOS Accessibility permission](#macos-accessibility-permission)).
+
+### startSurface
+
+Launch an app and register it under a name that later steps can target.
+
+```json
+{ "startSurface": { "app": "C:\\Windows\\System32\\charmap.exe" } }
+```
+
+```json
+{
+  "startSurface": {
+    "app": "Microsoft.WindowsCalculator_8wekyb3d8bbwe!App",
+    "name": "calc",
+    "waitUntil": { "delayMs": 500 },
+    "timeout": 30000
+  }
+}
+```
+
+On macOS, launch by bundle ID or by `.app` path:
+
+```json
+{ "startSurface": { "app": "com.apple.TextEdit", "name": "textedit" } }
+```
+
+```json
+{ "startSurface": { "app": "/System/Applications/Calculator.app", "name": "calc" } }
+```
+
+**Options:**
+- `app`: Required. The app to launch. On Windows, an executable path, package name, or UWP AppUserModelID. On macOS, a `.app` path or a bundle ID (`com.apple.TextEdit`). The kind is inferred from the value's syntax; there is no separate type field.
+- `name`: The surface name later steps reference in `surface`. Defaults to the executable's basename (without extension) or the final segment of an ID.
+- `args`: Launch arguments. On macOS they pass to the app as a real argument array. On Windows they join into a single shell-style string, so an argument that contains spaces must carry its own quotes (for example, `"\"My File.txt\""`).
+- `workingDirectory`: Not supported by any app driver. A non-default value fails the step with guidance. Launch through `runShell` if the working directory matters.
+- `env`: Extra environment variables for the launched app. Supported on macOS. On Windows, any value fails the step with guidance. Set the variables in the shell that launches Doc Detective, or launch through `runShell` instead.
+- `waitUntil`: Startup readiness gate: `{ delayMs?: number, find?: object }`. `delayMs` waits a fixed time; `find` waits for an element to appear.
+- `timeout`: Maximum time in ms to wait for startup (default `60000`). The first macOS launch builds the driver's helper app and can take a few minutes, so allow extra time there.
+- `driverOptions`: Object of driver capability overrides passed through to the underlying driver (for example, `appium:noReset`).
+
+The mobile fields `install`, `activity`, and `device` apply only to Android and iOS targets. On Windows and macOS, setting any of them fails the step with guidance.
+
+### Targeting elements on an app surface
+
+Element steps target an app through `surface`, the same way they target a browser tab. The value is `{ "app": "<name>" }`. The element-finding fields keep the names you already use. On an app surface they map to the platform's native accessibility tree instead of the DOM.
+
+On **Windows** (UI Automation):
+- `elementText` matches the element's `Name`.
+- `elementId` (and `elementTestId`) match its `AutomationId`.
+- `elementAria` matches its UIA `ControlType`.
+
+On **macOS** (accessibility):
+- `elementText` matches the element's title, label, or value.
+- `elementId` (and `elementTestId`) match its accessibility identifier.
+- `elementAria` matches its `XCUIElementType` role (for example, `button` → `XCUIElementTypeButton`, `textbox` → `XCUIElementTypeTextField`) together with its accessible name (title or label). Pass it as a role string.
+
+On both platforms:
+- `selector` is an escape hatch for native locators: a native XPath (starting with `//` or `(`), or an accessibility id (starting with `~`). CSS selectors are browser-only and are rejected on app surfaces.
+- `elementClass` and `elementAttribute` are not supported on app surfaces.
+
+```json
+{ "click": { "elementText": "Select", "surface": { "app": "charmap" } } }
+```
+
+```json
+{
+  "type": {
+    "keys": ["AB"],
+    "selector": "//Edit[@Name=\"Characters to copy :\"]",
+    "surface": { "app": "charmap" }
+  }
+}
+```
+
+```json
+{ "click": { "elementText": "7", "surface": { "app": "calc" } } }
+```
+
+```json
+{ "screenshot": { "path": "charmap.png", "surface": { "app": "charmap" } } }
+```
+
+**App surface fields:**
+- `app`: Required. The `name` from `startSurface` (or its derived default).
+- `window`: Which app window to act on, such as a dialog the app opened. Omit it to use the active window. Takes a name, an index in creation order (`-1` is the newest), or `{ name, index, title }` criteria. On Windows, only `-1` and `title` criteria work; other index selectors fail with guidance.
+
+Gate app tests to the platforms they support so the skip elsewhere is intentional. For example, set `runOn` platforms to `["windows"]` for a Windows app or `["mac"]` for a macOS app.
+
+### macOS Accessibility permission
+
+macOS won't let one app control another until you grant the controlling process the Accessibility permission. That permission is part of the system's Transparency, Consent, and Control (TCC). Doc Detective checks for it before launching an app surface. If the permission is clearly denied, the context is marked SKIPPED (not failed) with the walkthrough below. If the check is inconclusive, the run proceeds, and any accessibility-related launch error carries the same walkthrough. To grant it:
+
+> Open System Settings → Privacy & Security → Accessibility and enable the app that launches Doc Detective (your terminal, IDE, or CI runner process), then rerun.
+
+The process you enable is whichever one runs Doc Detective (your terminal, your IDE, or the CI runner's shell), not the app being automated.
+
 ---
 
 ## Element Interaction
@@ -51,6 +200,28 @@ Click or tap an element.
 ```json
 { "click": { "selector": "button.primary" } }
 ```
+
+**Long-press / press-and-hold** (`duration` in ms):
+
+```json
+{ "click": { "elementText": "Save", "duration": 800 } }
+```
+
+`duration` holds the press: a long-press (touch-and-hold) on mobile app surfaces, and press-and-hold of the button on desktop apps and browsers. Omit it for a normal click.
+
+**Right- or middle-click** (`button`):
+
+```json
+{ "click": { "selector": "#menu", "button": "right" } }
+```
+
+**Options:**
+- `selector` / `elementText` (and the other element locators): the element to click
+- `duration`: hold time in ms for a long-press or press-and-hold (integer ≥ 1; omit for a normal click)
+- `button`: `"left"` (default) | `"right"` | `"middle"`
+- `surface`: target a specific app surface, browser window, or tab instead of the active one
+
+A long-press uses the primary button, so combining `duration` with a non-`left` `button` fails the step. Touch surfaces (Android and iOS) have no right or middle button, and macOS app surfaces support `right` but not `middle`.
 
 ### find
 
@@ -120,13 +291,34 @@ Check if an element exists. Can optionally interact with it.
 }
 ```
 
+**Find and long-press** (pass an object to `click` to set `duration` or `button`):
+
+```json
+{
+  "find": {
+    "elementText": "List item",
+    "click": { "duration": 800 }
+  }
+}
+```
+
 **Options:**
+- `elementText`: Find the element by its display text (the object-form equivalent of the string shorthand, as in `{ "find": { "elementText": "Welcome" } }`)
+- `elementAria`: Find the element by its computed accessible name
 - `selector`: CSS selector
 - `timeout`: Maximum time in ms to wait for the element to exist (default `5000`). The step fails if the element isn't found in time.
-- `click`: Click after finding (boolean)
+- `click`: Click after finding. Set `true`, or an object with `duration` (long-press hold in ms) and/or `button` (`"left"` | `"right"` | `"middle"`)
 - `moveTo`: Move cursor to element before interacting (boolean)
 - `type`: Type text after finding (object with `keys`)
-- `elementText`: Text the element must have, matched against its full visible text with whitespace normalized. Wrap in slashes (`/Success/`) to match part of the text by regular expression. This field replaces `matchText`, which fails validation.
+
+**Text matching:** When you find an element by text — the `{ "find": "Welcome" }` shorthand or the `elementText` field — the match is against the element's *whole* visible text with whitespace normalized: leading and trailing whitespace is trimmed, and internal runs of spaces, tabs, and newlines collapse to a single space.
+
+- **Whole-element exact match, not a substring.** A broad target with `elementText` won't match a nested heading, because the container's full text is more than the heading alone. To match a substring instead, wrap the value in slashes to use a regular expression, as in `{ "find": { "elementText": "/Garden companion/" } }`.
+- **Split text still matches.** Text that a framework such as React, Vue, or Svelte splits across several DOM text nodes still matches, and the result is the same on Chrome and Firefox regardless of how each browser's driver reports whitespace.
+- **Same rules elsewhere.** The same normalization applies to `elementAria` and to a selector's matched text.
+- **No `matchText`.** `elementText` replaces `matchText`, which fails validation.
+
+On mobile app surfaces, `find` scrolls the surface down to bring an off-screen element into view. It scrolls downward only, up to five times within the step's `timeout`. `click` and element-targeted `type` inherit this because they find the element first. Desktop app surfaces don't scroll, since their accessibility trees expose off-screen elements directly.
 
 ### dragAndDrop
 
@@ -140,6 +332,51 @@ Drag element from source to target.
   }
 }
 ```
+
+`dragAndDrop` moves one element onto another. To scroll or swipe a surface without a target element, use [`swipe`](#swipe).
+
+### swipe
+
+Scroll or swipe a surface. Works on browser and app surfaces, including mobile apps. `swipe` is the movement-only counterpart to `dragAndDrop`. Where `dragAndDrop` moves an element onto a target element, `swipe` moves the surface itself, by direction or between two pixel points.
+
+**Direction shorthand.** A string names the direction the finger moves. `"up"` moves content up to reveal what's below; `"left"` reveals content to the right (the next carousel card):
+
+```json
+{ "swipe": "up" }
+```
+
+**Directional with distance.** `distance` is a fraction of the surface's height (`up`/`down`) or width (`left`/`right`):
+
+```json
+{
+  "swipe": {
+    "direction": "up",
+    "distance": 0.8,
+    "surface": { "app": "myapp" }
+  }
+}
+```
+
+**Point-to-point.** Drag from one pixel coordinate to another. Points are literal pixels measured from the top-left corner (`0, 0`) of the app window or the browser viewport:
+
+```json
+{
+  "swipe": {
+    "from": { "x": 200, "y": 600 },
+    "to": { "x": 200, "y": 200 },
+    "duration": 250
+  }
+}
+```
+
+**Options:**
+- `direction`: `"up"` | `"down"` | `"left"` | `"right"` (required for the directional form)
+- `distance`: Fraction of the surface to travel, greater than `0` up to `1` (default `0.5`)
+- `from` / `to`: Start and end points as `{ "x": <px>, "y": <px> }`, both required for the point-to-point form (pixels from the top-left corner)
+- `duration`: Movement time in ms (integer ≥ 1; default `500`)
+- `surface`: Target a specific app surface, browser window, or tab instead of the active one. Object form only; the `"up"` string shorthand always swipes the active surface.
+
+Use `direction` (with `distance`) or `from`/`to`, never both. Prefer the directional form, whose fractional `distance` works at any resolution. Use the point-to-point form, in absolute pixels, only when you need a precise gesture path.
 
 ---
 
@@ -185,6 +422,90 @@ Type text into an element. Supports special keys.
 - `$F1$` through `$F12$` - Function keys
 - `$INSERT$` - Insert
 - `$SUBTRACT$` - Numpad subtract
+
+#### Mobile device keys
+
+On a mobile app surface, `type` also presses the device's own buttons. These device keys don't need element criteria, so send them on their own:
+
+```json
+{ "type": "$BACK$" }
+```
+
+This example is Android-only: iOS rejects `$BACK$`, as the platform notes below explain.
+
+- `$BACK$` - System back button
+- `$HOME$` - Device home button
+- `$APP_SWITCH$` - App switcher / recents
+- `$VOLUME_UP$`, `$VOLUME_DOWN$` - Volume buttons
+
+On a mobile app surface, `$HOME$` presses the device home button. In a browser or desktop text field, it still moves the cursor to the start of the line.
+
+Typing plain text and editing keys works differently on each platform:
+
+- **Android** types criteria-less text into the currently focused element, so you can send `{ "type": "search text" }` right after focusing a field. It maps the editing keys above to device key events and accepts `$BACK$`, `$HOME$`, `$APP_SWITCH$`, and the volume keys.
+- **iOS** still requires element criteria to type text. Target the field with `elementText` (or another locator) and pass `keys`, which takes a string or an array of strings. iOS folds `$ENTER$`, `$TAB$`, `$BACKSPACE$`, and `$DELETE$` into the typed text and presses `$HOME$` and the volume keys as physical buttons. It rejects `$BACK$`, because iOS has no system back button, so click the app's own back control instead. It also rejects `$APP_SWITCH$`, because XCUITest exposes no app-switcher button.
+
+```json
+{
+  "type": {
+    "keys": ["search text", "$ENTER$"],
+    "elementText": "Search field"
+  }
+}
+```
+
+**Type to a background process**:
+
+The `type` step can also send keystrokes to a running background process. For example, use it to drive an interactive REPL or CLI such as `node -i` or `python -i`. Instead of targeting an element, set `surface` to the process name (or to `{ "process": "<name>" }`) of a process started by `runShell`/`runCode` with `background`. After sending the keys, an optional `waitUntil` holds the step until the process output matches, and `timeout` bounds that wait.
+
+```json
+{
+  "type": {
+    "keys": ["6 * 7", "$ENTER$"],
+    "surface": "repl",
+    "waitUntil": { "stdio": "/^42$/" },
+    "timeout": 5000
+  }
+}
+```
+
+**Process surface options:**
+- `surface`: Name of the target process, or `{ "process": "<name>" }`. A process surface can't be combined with element-finding fields like `selector`.
+- `waitUntil`: After the keys are sent, wait until the process is ready. Accepts `stdio` (substring or `/regex/` matched against combined stdout and stderr) and/or `delayMs` (fixed wait). (`port` and `httpGet` are not supported for process surfaces.) Requires a `surface`.
+- `timeout`: Maximum time in ms to wait for `waitUntil` after sending the keys (default `5000`)
+- `inputDelay`: Delay in ms between each keystroke sent to the process (default `100`)
+
+Process surfaces use their own special-key tokens, which differ from the element key codes above:
+
+```json
+{ "type": { "keys": ["$CTRL$", "c"], "surface": { "process": "repl" } } }
+```
+
+**Process key tokens:**
+- `$ENTER$` / `$RETURN$` - Carriage return
+- `$TAB$` - Tab
+- `$ESCAPE$` - Escape
+- `$BACKSPACE$` - Backspace
+- `$SPACE$` - Space
+- `$DELETE$` - Delete
+- `$ARROW_UP$`, `$ARROW_DOWN$`, `$ARROW_LEFT$`, `$ARROW_RIGHT$` - Arrow keys (ANSI escape sequences)
+- `$CTRL$` followed by a letter in the next array element sends that control byte (for example, `["$CTRL$", "c"]` sends `Ctrl+C`)
+
+**Type into a specific browser tab**:
+
+Set `surface` to a browser window or tab to type into a field there (see [Browser windows and tabs](#browser-windows-and-tabs)). After typing, an optional `waitUntil` holds the step until the tab is ready, and `timeout` bounds that wait. For a browser surface, `waitUntil` accepts `networkIdleTime`, `domIdleTime`, and/or `find` (an element to wait for); for a process surface it accepts `stdio` and/or `delayMs`.
+
+```json
+{
+  "type": {
+    "keys": ["kittens", "$ENTER$"],
+    "selector": "#search",
+    "surface": { "browser": "chrome", "tab": "cart" },
+    "waitUntil": { "find": { "selector": ".results" } },
+    "timeout": 10000
+  }
+}
+```
 
 ---
 
@@ -284,7 +605,7 @@ Perform HTTP requests for API testing.
 
 ### runShell
 
-Execute native shell commands.
+Execute native shell commands. By default, commands run in `bash` on every platform, including Windows, so the same POSIX syntax works everywhere. On Windows, `bash` resolves to Git Bash. If Git for Windows isn't installed, Doc Detective downloads a portable copy the first time a test needs one.
 
 ```json
 {
@@ -329,11 +650,92 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 
 **Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid and Doc Detective silently skips it):
 - `command`: Shell command to execute (required)
-- `args`: Array of string arguments for the command
+- `shell`: Shell to run the command in: `bash` (default), `cmd`, or `powershell`. `cmd` and `powershell` are Windows-only; gate those steps to Windows with a `runOn` context (for example, `"runOn": [{ "platforms": ["windows"] }]`) if the spec also runs elsewhere. If unset, falls back to the config-level `shell`, which also defaults to `bash`.
+- `args`: Array of string arguments for the command (default: `[]`)
 - `exitCodes`: Expected exit codes (default: `[0]`). The step fails if the actual exit code is not in this list.
 - `stdio`: Expected content in the command's **stdout or stderr** (partial match). Plain string, or a `/regex/` delimited by forward slashes.
 - `workingDirectory`: Directory to run the command in (default `"."`, relative to where Doc Detective is invoked)
-- `path` / `directory`: Save the command's output to a file for later comparison
+- `timeout`: Max time in milliseconds the command is allowed to run before the step fails (default: `60000`)
+
+These fields capture the command's output to a file and compare it against the saved copy on later runs (a snapshot test):
+- `path`: File path to save the command's output, relative to `directory`. Use an extension that matches the output, such as `.txt` for plain text or `.json` for JSON.
+- `directory`: Directory to save the output in. Created if it doesn't exist; defaults to your media directory.
+- `maxVariation`: Allowed fraction of text difference (0–1) between the current output and the previously saved output. A larger difference makes the step a `WARNING`, not a `FAIL`. Ignored when no saved output exists at `path` yet. (default: `0`)
+- `overwrite`: When to replace the saved output: `"true"` (always), `"false"` (never), or `"aboveVariation"` (only when the difference exceeds `maxVariation`). Note these are **strings**, not booleans. (default: `"aboveVariation"`)
+
+**Long-running background process**:
+
+Set `background` to start a long-lived process, such as a Docker container, dev server, or database, and keep it running while later steps execute. The step returns as soon as the process is ready rather than waiting for it to exit. Stop it later with a [`closeSurface`](#closesurface) step. `background` is an object with a required `name` and an optional `waitUntil` readiness gate. Later `type` and `closeSurface` steps use the `name` to target the process. When `background` is set, the `exitCodes`, `stdout`/`stderr`, and output-saving options are ignored, and `timeout` instead bounds how long the step waits for `waitUntil`.
+
+```json
+{
+  "runShell": {
+    "command": "docker run -p 8080:80 nginx",
+    "background": {
+      "name": "web",
+      "waitUntil": {
+        "httpGet": "http://localhost:8080"
+      }
+    },
+    "timeout": 30000
+  }
+}
+```
+
+**Background options:**
+- `background`: An object with a required `name` and an optional `waitUntil`
+- `name`: Unique process name within the run (non-empty), used to target it from a later `type` or `closeSurface` step
+- `waitUntil`: One or more readiness conditions that hold the step until the process is ready (see [Readiness conditions](#readiness-conditions)). Omit it to treat the process as ready as soon as it spawns.
+- `timeout`: In background mode, the maximum time in ms to wait for `waitUntil` to be satisfied before the step fails (default `60000`)
+
+#### Readiness conditions
+
+`waitUntil` holds the step until the process is ready. Provide any combination of the conditions below; the step proceeds only once every condition you include passes before `timeout` (they are AND-combined).
+
+**`port`**: wait for a TCP port to accept connections on localhost:
+
+```json
+{ "waitUntil": { "port": 8080 } }
+```
+
+**`httpGet`**: wait for an HTTP GET to a URL to return a 2xx status:
+
+```json
+{ "waitUntil": { "httpGet": "http://localhost:8080/health" } }
+```
+
+**`stdio`**: wait for output to match, searched across both stdout and stderr:
+
+```json
+{ "waitUntil": { "stdio": "/ready to accept/" } }
+```
+
+**`delayMs`**: wait a fixed number of milliseconds:
+
+```json
+{ "waitUntil": { "delayMs": 2000 } }
+```
+
+**Combine conditions**: the step is ready only once all of them pass:
+
+```json
+{
+  "waitUntil": {
+    "port": 5432,
+    "stdio": "/ready to accept/",
+    "httpGet": "http://localhost:8080/health",
+    "delayMs": 1000
+  }
+}
+```
+
+**Condition options:**
+- `port`: TCP port (integer, 1–65535); ready once the port accepts connections on localhost
+- `httpGet`: URL string; ready once an HTTP GET to it returns a 2xx status
+- `stdio`: A substring, or a `/regex/` (wrapped in slashes), matched against the process's combined stdout and stderr (string, non-empty)
+- `delayMs`: Number of milliseconds to wait (integer, minimum `0`)
+
+Provide at least one condition; an empty `waitUntil` is rejected.
 
 ### runCode
 
@@ -347,6 +749,97 @@ Assemble and run code snippets.
   }
 }
 ```
+
+For long-running processes, `runCode` accepts the same `background` and `timeout` options as `runShell`:
+
+```json
+{
+  "runCode": {
+    "language": "javascript",
+    "code": "require('http').createServer((req, res) => res.end('ok')).listen(8088);",
+    "background": { "name": "api", "waitUntil": { "port": 8088 } },
+    "timeout": 15000
+  }
+}
+```
+
+### runBrowserScript
+
+Execute JavaScript in the browser page context. The script runs against the live page under test, so it has access to `document`, `window`, and the DOM. Use it to read computed DOM state, seed app state (such as `localStorage`), or assert on values only reachable from JS. This is distinct from `runCode`, which runs Node, Python, or Bash on the host machine.
+
+Like `goTo`, `find`, and `click`, it needs a live page, so it runs only in a browser context.
+
+**String form** (use `return` to capture a value):
+
+```json
+{ "runBrowserScript": "return document.title;" }
+```
+
+**Object form**:
+
+```json
+{
+  "runBrowserScript": {
+    "script": "return arguments[0] + arguments[1];",
+    "args": ["foo", "bar"],
+    "output": "foobar"
+  }
+}
+```
+
+The script's return value is captured into the step's `outputs.result`, so it flows into the step-level `variables` plumbing via `$$result`:
+
+```json
+{
+  "runBrowserScript": "return window.localStorage.getItem('token');",
+  "variables": { "TOKEN": "$$result" }
+}
+```
+
+**Options:**
+- `script`: JavaScript to evaluate in the page (required in object form). Values from `args` are available via the `arguments` object (`arguments[0]`, `arguments[1]`, ...).
+- `args`: Array of values passed positionally to the script. Each item may be any JSON-serializable value (string, number, boolean, null, object, or array).
+- `output`: Expected content in the serialized return value (non-string values are serialized to JSON before matching). Supports a substring or a regular expression that starts and ends with `/`, like `/^https?:\/\//`.
+- `path`: File path to save the serialized return value, relative to `directory`
+- `directory`: Directory to save the return value (defaults to your media directory)
+- `maxVariation`: Allowed fraction (0–1) of difference from a previously saved value before the step returns a warning
+- `overwrite`: Whether to rewrite saved output: `"true"`, `"false"`, or `"aboveVariation"` (default `"aboveVariation"`)
+- `timeout`: Max time in ms the script may run (default 60000)
+- `surface`: The browser window or tab to run the script in. Omit it to run in the active tab.
+
+Running arbitrary JavaScript can modify application state. Mark a step `unsafe: true` when its script could have side effects. Unsafe steps run only when the `allowUnsafeSteps` config option or the `--allow-unsafe` flag allows them, and are skipped otherwise.
+
+### closeSurface
+
+Close one or more open surfaces. A surface can be a background process started by `runShell` or `runCode`, a browser tab or window, or a [native app](#native-app-surfaces). Target a process or app by its registered name, or a browser tab or window with a [browser surface](#browser-windows-and-tabs). Pass an array to close several at once. Closing a surface that isn't open (already closed, or never opened) is a no-op that passes, so `closeSurface` is safe to call unconditionally. Surfaces you never close explicitly are torn down automatically when the run ends.
+
+Close a background process by name:
+
+```json
+{ "closeSurface": "web" }
+```
+
+```json
+{ "closeSurface": ["web", "api"] }
+```
+
+Close a browser tab (`tab`) or window and all its tabs (`window`):
+
+```json
+{ "closeSurface": { "browser": "chrome", "tab": "cart" } }
+```
+
+```json
+{ "closeSurface": { "browser": "chrome", "window": "admin" } }
+```
+
+Close a [native app](#native-app-surfaces) by its surface name:
+
+```json
+{ "closeSurface": { "app": "charmap" } }
+```
+
+A browser surface with no `window` or `tab` closes that whole browser, for example `{ "closeSurface": { "browser": "chrome" } }`. A browser with an active recording refuses to close until you `stopRecord`. Doc Detective also refuses to close the last open tab, because that would end the session. Close the whole browser instead.
 
 ---
 
@@ -378,7 +871,7 @@ With options:
 
 ### record / stopRecord
 
-Record video of test execution.
+Record video of test execution. The `engine` field controls how Doc Detective captures it. `browser` records the Chrome viewport and is safe under concurrency. `ffmpeg` records the screen and works for any application. If you omit `engine`, Doc Detective uses `browser` when a visible Chrome context is available and `ffmpeg` otherwise. On Android and iOS contexts, recording captures the device screen and `engine` doesn't apply.
 
 Start recording:
 
@@ -386,11 +879,176 @@ Start recording:
 { "record": "test-execution.webm" }
 ```
 
+Select the recording engine with a shorthand string:
+
+```json
+{ "record": { "path": "test-execution.mp4", "engine": "ffmpeg" } }
+```
+
+Configure the `ffmpeg` engine in detail:
+
+```json
+{
+  "record": {
+    "path": "test-execution.mp4",
+    "engine": {
+      "name": "ffmpeg",
+      "target": "window",
+      "fps": 60
+    }
+  }
+}
+```
+
+**Options:**
+- `path`: Output file path. Supported extensions: `.mp4`, `.webm`, `.gif`
+- `engine`: Recording engine, as a string (`"browser"` or `"ffmpeg"`) or an object for full control. Defaults to `browser` when a visible Chrome context is available, otherwise `ffmpeg`.
+- `engine.name`: `"browser"` (Chrome viewport, concurrency-safe) or `"ffmpeg"` (screen capture, any application)
+- `engine.target`: What the `ffmpeg` engine captures: `"display"` (full screen), `"window"` (active window), or `"viewport"` (browser content area). Defaults to `"window"` when the recording targets an app surface and `"display"` otherwise. `window` and `viewport` are best-effort: Doc Detective captures the full screen, then crops. The `browser` engine ignores this field.
+- `engine.fps`: Capture frame rate for the `ffmpeg` engine (default: `30`). The `browser` engine ignores this field.
+
 Stop recording:
 
 ```json
 { "stopRecord": true }
 ```
+
+Each `record` step must be paired with a later `stopRecord` step.
+
+#### Named and overlapping recordings
+
+A single test context can have more than one recording active at the same time. Give a recording a `name` so that a later `stopRecord` can target it:
+
+```json
+{ "record": { "path": "checkout-flow.mp4", "name": "checkout" } }
+```
+
+Names must be unique among recordings that are active at the same time. A recording started without a `name` is anonymous.
+
+`stopRecord` decides which recording to stop based on its value:
+
+| Value | Stops |
+|-------|-------|
+| `true` or `null` | The most recently started active recording (LIFO) |
+| `"<name>"` | The named recording, wherever it sits in the active set |
+| `{ "name": "<name>" }` | The named recording (object form, equivalent to the string) |
+
+Stop a specific recording by name:
+
+```json
+{ "stopRecord": "checkout" }
+```
+
+```json
+{ "stopRecord": { "name": "checkout" } }
+```
+
+Doc Detective catches a reused `name` before the run starts when a recording by that name is still active. It skips the affected test across all contexts with a warning, rather than failing partway through.
+
+#### Auto-record every context
+
+Set `autoRecord: true` at the config, spec, or test level, or pass `--auto-record` on the CLI. Doc Detective then records a full video of every browser-based test context, alongside any explicit `record` steps. Pass `--no-auto-record` to override a config file that enables it.
+
+- **Precedence:** test > spec > config.
+- **Engine:** always `ffmpeg`. The recording wraps the whole context.
+- **Path:** `<output>/.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/recordings/<contextId>.mp4`. The same context maps to the same path in every run, for run-over-run comparison.
+- **Stopping:** An untargeted `stopRecord` never stops the automatic recording. Doc Detective finalizes it at the end of the context.
+
+### annotate
+
+Draw annotations onto the page so they persist across steps, survive navigation, and appear in any recordings and screenshots taken while they're visible. A screenshot's own `annotations` last only for that capture. These stay on screen until an `annotate` step clears them, their `duration` elapses, or the context ends. Browser only: on an app-only context with no page to draw into, the step is skipped rather than failed.
+
+The value is an object with **at least one** of `add`, `update`, or `clear`:
+
+```json
+{ "annotate": { "add": [{ "outline": "#submit-button" }] } }
+```
+
+```json
+{ "annotate": { "clear": true } }
+```
+
+- `add`: Array of annotation objects to draw. Give an annotation an `id` to update or clear it later; adding one with an id already on screen replaces it.
+- `update`: Array of annotation objects to change, each matched by `id` (`id` is required on every entry). Each entry replaces the annotation with that id. Updating an id that isn't on screen fails the step. An update is a full replacement, so fields you leave out reset to their defaults: repeat `track`, `transition`, `style`, and any other field you want to keep.
+- `clear`: `true` clears every annotation; an array of id strings clears just those. Clearing an id that isn't on screen does nothing.
+
+`clear` runs before `add`, so `{ "clear": ["a"], "add": [{ "id": "a", ... }] }` replaces `a`.
+
+**Annotation object.** Each annotation names **exactly one** type, whose value is the target it points at:
+
+| Type | Purpose |
+|------|---------|
+| `outline` | Draw a box around the target |
+| `arrow` | Point an arrow at the target |
+| `badge` | Mark the target with a small numbered/lettered marker (`label` sets the characters) |
+| `callout` | Label the target with a text box and leader line (`label` sets the text) |
+| `blur` | Obscure the target to redact it; pair with `all` to redact every match |
+| `text` | Place a standalone text box at a fixed position (`label` sets the text; the target must be `{ "position": ... }`) |
+
+A **target** takes one of three forms:
+
+- A string: display text or a selector.
+- A detailed find object with at least one of `selector`, `elementText`, `elementId`, `elementTestId`, `elementClass`, `elementAttribute`, or `elementAria`. `selector`, `elementClass`, and `elementAttribute` are browser-only.
+- `{ "position": ... }` for a fixed spot.
+
+A `text` box has no element, so target it by position, for example `{ "text": { "position": "top-right" }, "label": "Demo data" }`.
+
+Shared annotation fields:
+- `label`: Text to display. Required by `badge`, `callout`, and `text`; ignored by the others.
+- `id`: Handle (pattern `^[A-Za-z0-9_-]+$`) so a later `annotate` step can update or clear this annotation.
+- `style`: Visual overrides, all optional. `color` and `background` are CSS color strings (hex, rgb, or named), and `background` also takes `transparent`. `fontFamily` is a string, and `opacity` is 0–1. `strokeWidth`, `fontSize`, `radius`, `padding`, and `maxWidth` are numbers in pixels, and `intensity` is the blur strength (≥ 1). Anything unset falls back to the resolved theme.
+- `position`: Placement relative to the target. Use a named region (`top`, `bottom`, `left`, `right`, `center`, `top-left`, `top-right`, `bottom-left`, `bottom-right`), an absolute point `{ "x": number, "y": number }`, or a nudge `{ "offset": { "x": number, "y": number } }`.
+- `all`: If `true`, annotate every match instead of only the first. Most useful with `blur`.
+
+Fields that apply to recordings and are inert in still screenshots:
+- `track`: Follow the element as the page scrolls or reflows.
+- `transition`: How the annotation enters and leaves: `enter` (`none`, `fade`, `pop`, `draw`), `exit` (`none`, `fade`), and `durationMs`, the animation length.
+- `duration`: Milliseconds the annotation stays visible before it clears itself, with no paired `clear` step. This is its lifespan, not the animation length in `transition.durationMs`.
+
+Narrate a recording, moving the same annotations from field to field:
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        { "record": "sso-setup.webm" },
+        { "annotate": { "add": [
+          { "id": "step", "badge": "#idp", "label": "1" },
+          { "id": "guide", "callout": "#idp", "label": "Pick your provider first", "position": "right", "track": true }
+        ] } },
+        { "click": "#idp" },
+        { "annotate": { "update": [
+          { "id": "step", "badge": "#metadata-url", "label": "2" },
+          { "id": "guide", "callout": "#metadata-url", "label": "Paste the metadata URL" }
+        ] } },
+        { "annotate": { "clear": true } },
+        { "stopRecord": true }
+      ]
+    }
+  ]
+}
+```
+
+Redact every match for a whole recording. Set `transition.enter` to `none` on a redaction blur. An annotation that fades in leaves the content readable while it animates, and every frame lands in the recording:
+
+```json
+{
+  "annotate": {
+    "add": [
+      {
+        "id": "redact",
+        "blur": { "selector": ".account-id" },
+        "all": true,
+        "track": true,
+        "transition": { "enter": "none" }
+      }
+    ]
+  }
+}
+```
+
+**Output:** `$$annotationCount`, the number of annotations on screen after the step.
 
 ---
 
@@ -454,6 +1112,246 @@ Fixed duration:
 ```
 
 `find` waits for an element to exist, not to disappear. To wait past a loading indicator, find the element that appears when loading finishes. Prefer `find` with a `timeout` over a fixed `wait`: a duration that's long enough locally can be too short on a slower CI runner.
+
+---
+
+## Conditional Execution (`if`)
+
+Add an `if` condition to a spec, test, or step to run it only when the condition holds. When the condition is false, Doc Detective marks that unit SKIPPED instead of running it.
+
+An `if` decides *whether* a unit runs. It never produces a pass or a fail. A skipped unit was reached but not run, which is distinct from a FAIL, and skipping a step doesn't stop the steps that follow.
+
+`if` is opt-in. A spec, test, or step without an `if` runs unconditionally.
+
+Set `if` to a single condition expression or an array of expressions. An array passes only when every expression passes (logical AND).
+
+```json
+{
+  "if": "$$platform != windows",
+  "runShell": { "command": "./scripts/setup.sh" }
+}
+```
+
+```json
+{
+  "if": ["$$platform != windows", "$$steps.build.outputs.exitCode == 0"],
+  "runShell": { "command": "npm run deploy" }
+}
+```
+
+**Where you can use it:**
+
+- **Spec-level `if`**: when false, every test in the spec is skipped and none run.
+- **Test-level `if`**: when false, that test is skipped across all its contexts. Sibling tests are unaffected.
+- **Step-level `if`**: when false, that step is skipped before its action runs. Later steps still run.
+
+**What conditions can reference:**
+
+- `$$platform`, the operating system (`linux`, `mac`, or `windows`), at every scope.
+- `$$steps.<stepId>.outputs.*`, a prior step's outputs, at step scope only. Give the earlier step a `stepId`, then read its outputs in a later step's `if`:
+
+```json
+{
+  "steps": [
+    { "stepId": "build", "runShell": { "command": "npm run build" } },
+    {
+      "if": "$$steps.build.outputs.exitCode == 0",
+      "runShell": { "command": "npm run deploy" }
+    }
+  ]
+}
+```
+
+A spec- or test-level `if` can't reference `$$steps.*`. Step outputs don't exist before any step has run, so such a condition always evaluates to false. The spec or test is always skipped. Use `$$steps.*` only in a step-level `if`.
+
+**Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus the word operators `contains`, `oneOf`, and `matches`, as described in [Step Assertions](#step-assertions).
+
+**Evaluation rules:**
+
+- An empty or absent `if` counts as no condition, so the unit runs.
+- A condition that can't be resolved fails closed: the `if` evaluates to false and the unit is skipped. A step-level `if` that references a prior step that was itself skipped also fails closed, since a skipped step records no outputs.
+
+---
+
+## Step Assertions
+
+Every step asserts its own action result, so if the action fails, the step fails. To check more than that built-in result, add a step-level `assertions` field. Doc Detective evaluates these custom assertions after the action runs and folds them into the step's status.
+
+Set `assertions` to a single condition expression or an array of expressions. Each expression resolves to true or false, and an array passes only when every expression passes (logical AND).
+
+```json
+{
+  "runShell": { "command": "node -e \"console.log('hello world')\"" },
+  "assertions": [
+    "$$outputs.exitCode == 0",
+    "$$outputs.stdio.stdout contains \"hello\""
+  ]
+}
+```
+
+**Reference the step's outputs:** Custom assertions read the current step's outputs through the `$$outputs.*` namespace, plus `$$platform` for the operating system (`linux`, `mac`, or `windows`). Available outputs depend on the action: `runShell` and `runCode` expose `$$outputs.exitCode`, `$$outputs.stdio.stdout`, and `$$outputs.stdio.stderr`, while `checkLink` exposes `$$outputs.statusCode`.
+
+**Operators:** Comparison (`==`, `!=`, `>`, `>=`, `<`, `<=`) plus three word operators. `contains` checks for a substring, `oneOf` checks membership in a list such as `[0, 1]`, and `matches` tests a regular expression pattern, as in `$$outputs.stdio.stdout matches "^hello"`. String values work quoted or bare, so `$$platform != windows` and `$$platform != "windows"` are equivalent.
+
+```json
+{
+  "assertions": [
+    "$$outputs.exitCode oneOf [0, 1]",
+    "$$platform != windows"
+  ]
+}
+```
+
+**Status rules:** A step passes only when both its implicit and custom assertions pass. Custom assertions can introduce a failure, but they can't rescue a step that has already failed:
+
+- If the action's implicit check fails, Doc Detective skips the custom assertions and the step stays FAIL.
+- If the step was skipped, or the action errored before producing a result, Doc Detective skips the custom assertions. The step keeps its original status.
+- An expression that can't be resolved fails closed, so the assertion fails and the step fails.
+
+**Namespace:** The `$$outputs.*` namespace is distinct from the bare `$$name` expressions used to set the step-level `variables` and `outputs` objects. Assertions can reference only the current step's `$$outputs.*` and `$$platform`. A `$$steps.*` reference always fails closed, so the step fails, and Doc Detective logs a warning.
+
+---
+
+## Step Routing
+
+Attach routing handlers to a step to control what runs next based on its outcome. Each handler is an array of routing entries, and Doc Detective evaluates the handler that matches the step's result:
+
+- `onPass`: after the step passes
+- `onFail`: after the step fails
+- `onWarning`: after the step produces a warning
+- `onSkip`: after the step is reached but skipped (blocked as `unsafe`, or its guard `if` evaluated false)
+
+Each entry pairs an optional `if` condition with exactly one routing action (`continue`, `stop`, `retry`, or `goToStep`). The first entry whose condition holds wins; an entry with no `if` always matches. If no entry matches, the step's status default applies.
+
+An `if` is a condition expression, or an array of expressions that must all hold. It can read the step's own outputs through `$$outputs.*` and the operating system through `$$platform` (`linux`, `mac`, or `windows`), with the operators `==`, `!=`, `>`, `>=`, `<`, `<=`, `contains`, `oneOf`, and `matches`:
+
+```json
+{
+  "runShell": { "command": "./scripts/smoke-test.sh" },
+  "onFail": [
+    { "if": "$$outputs.exitCode == 2", "continue": true },
+    { "stop": "test" }
+  ]
+}
+```
+
+Routing is opt-in. A step with no handlers uses the defaults: `PASS`, `WARNING`, and `SKIPPED` continue to the next step, and `FAIL` stops the test.
+
+Routing chooses flow, not the verdict. A step that fails still reports `FAIL` and still fails the test even when its `onFail` handler routes `continue`. Later steps run, but the rolled-up result stays failed.
+
+A handler fires only if the step was reached. A step that never ran because an earlier step stopped execution fires no handler.
+
+### continue and stop
+
+- `continue`: proceed to the next step. Use it to override a status default, for example to keep going after a failure.
+- `stop`: halt execution at the given scope. `{ "stop": "test" }` ends the current test's remaining steps. `{ "stop": "spec" }` ends the spec's remaining tests, and `{ "stop": "run" }` behaves the same as `"spec"`.
+
+```json
+{
+  "stepId": "optional-check",
+  "find": "Beta banner",
+  "onFail": [
+    { "continue": true }
+  ]
+}
+```
+
+### retry
+
+A `retry` entry re-runs the step until it no longer routes `retry` or the retry limit is hit. Each attempt re-runs the whole step, so a transient failure can recover to `PASS`.
+
+```json
+{
+  "runShell": { "command": "curl -sf https://example.com/health" },
+  "onFail": [
+    { "retry": { "limit": 3, "delay": 1000, "backoff": "exponential" } }
+  ]
+}
+```
+
+**Options:**
+- `limit`: Number of retries (1–100). This counts re-runs after the first attempt, so `limit + 1` total runs.
+- `delay`: Milliseconds to wait before each retry (default `0`).
+- `backoff`: `"fixed"` (default) or `"exponential"`.
+
+Once retries are exhausted, Doc Detective re-resolves routing with `retry` entries skipped to find the terminal action. So `onFail: [{ "retry": { "limit": 2 } }]` retries twice and then stops (the `FAIL` default), while `onFail: [{ "retry": { "limit": 1 } }, { "continue": true }]` retries once and then continues. `retry` is a no-op under `onSkip`. When a step is retried, its result includes an `attempts` field with the total run count.
+
+### goToStep
+
+A `goToStep` entry jumps execution to another step in the same test and continues from there:
+
+```json
+{
+  "stepId": "submit",
+  "click": "Submit",
+  "onFail": [
+    { "goToStep": "retry-login" }
+  ]
+}
+```
+
+The target matches by `stepId` within the same test; if two steps share a `stepId`, the first wins. An unknown target is a misconfiguration, so Doc Detective records a `FAIL` and stops rather than report green on a typo.
+
+A `goToStep` can point at an earlier step, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number; the first run omits `visit`. A visit cap of `1000 × (number of steps) + 1000` step runs per test bounds loops. A self-referential jump hits the cap, records a `FAIL`, and stops instead of hanging. As with the other handlers, a jump never changes a verdict. A backward jump that re-runs a step which failed on its first visit leaves the test failed.
+
+A step handler doesn't jump between tests. If a step entry with `goToTest` matches, Doc Detective applies the step's status default instead and ignores the later entries. To jump between tests, use a test-level handler.
+
+---
+
+## Test Routing (`goToTest`)
+
+Attach routing handlers to a test to control what runs next based on its outcome. Each handler is an array of routing entries. Doc Detective evaluates the handler that matches the test's result:
+
+- `onPass`: after the test passes
+- `onFail`: after the test fails
+- `onWarning`: after the test produces a warning
+- `onSkip`: after the test is skipped
+
+Each entry pairs an optional `if` condition with exactly one routing action. The first entry whose condition holds wins. If none match, the test's default flow applies. An `if` uses the same expressions as step routing (see [Step Routing](#step-routing)), and at test scope it can read `$$platform`.
+
+Routing is opt-in. A test without these handlers runs in document order.
+
+### goToTest
+
+A `goToTest` entry jumps execution to another test in the same spec and continues from there:
+
+```json
+{
+  "testId": "login",
+  "steps": [
+    { "goTo": "https://example.com/login" },
+    { "find": "Sign In" }
+  ],
+  "onPass": [
+    { "goToTest": "dashboard-checks" }
+  ],
+  "onFail": [
+    { "if": "$$platform == windows", "goToTest": "windows-cleanup" },
+    { "stop": "spec" }
+  ]
+}
+```
+
+When `login` passes, Doc Detective jumps to the test with `testId` `dashboard-checks` and runs the spec forward from there. Any tests between the two are skipped.
+
+**Target resolution:**
+
+- The target matches by `testId` within the same spec. A `goToTest` can't jump to another spec.
+- If two tests share a `testId`, the first wins.
+- An unknown target, usually a typo'd `testId`, is a misconfiguration. Doc Detective records a FAIL and stops the spec so the mistake can't silently report green.
+
+**Backward jumps and re-runs:**
+
+A `goToTest` can point at an earlier test, which re-runs it. Each re-run appends a fresh report stamped with an incrementing `visit` number, and the first run omits `visit`. A visit cap of `100 × (number of tests) + 100` test runs per spec bounds loops. A self-referential jump hits the cap, records a FAIL, and stops instead of hanging.
+
+A jump never changes a verdict. Each visited test's result stands on its own. If a backward jump re-runs a test that failed on its first visit, the spec stays failed.
+
+### Other test-level actions
+
+- `{ "continue": true }` (the default): proceed to the next test in document order.
+- `{ "stop": "spec" }`: stop the spec's remaining tests. `{ "stop": "run" }` behaves the same as `"spec"`, and `{ "stop": "test" }` does nothing because the test has already finished.
+
+`retry` and `goToStep` are step-level actions and don't apply at the test level.
 
 ---
 

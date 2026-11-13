@@ -6,7 +6,7 @@ metadata:
   organization: Doc Detective
   date: November 2026
   abstract: Convert documentation procedures into executable Doc Detective test specifications, run them, fix failures, and verify the documentation matches actual behavior.
-  references: https://doc-detective.com, https://github.com/doc-detective/doc-detective
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
 user-invocable: true
 ---
@@ -34,13 +34,55 @@ Convert documented procedures into executable Doc Detective test specifications,
 | `--fix-threshold <n>` | `80` | Confidence threshold (0–100) for auto-applying fixes |
 | `--max-fix-attempts <n>` | `3` | Maximum fix iterations per failing test |
 | `--inject` | `false` | Inject passing tests into source file after completion |
+| `--auto-screenshot` | - | Pass `--auto-screenshot` to Doc Detective to turn on auto screenshots that the config file turns off |
+| `--no-auto-screenshot` | - | Pass `--no-auto-screenshot` to Doc Detective to turn off the screenshot it captures after every step that drives a browser, app, or device |
 
 ```
 /doc-detective-test docs/login.md --fix
 /doc-detective-test docs/login.md --fix --auto-fix
 /doc-detective-test docs/login.md --fix --fix-threshold 60
 /doc-detective-test docs/login.md --fix --inject
+/doc-detective-test docs/login.md --no-auto-screenshot
 ```
+
+## Per-Run Artifact Folders
+
+Each test run archives its results, screenshots, and recordings in a dedicated folder at `<outputDir>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (on by default) writes `testResults.json` there. The results' `runDir` names the folder.
+
+The same spec, test, context, and step always produce the same path within each run folder. Diff two run folders to spot changes over time.
+
+## Auto Screenshots
+
+By default (`autoScreenshot` defaults to `true`), Doc Detective captures a PNG screenshot after every step that drives a browser, app, or device and doesn't already define its own `screenshot`. `--no-auto-screenshot` or `autoScreenshot: false` turns it off. Screenshots are saved to the per-run artifact folder at paths like:
+
+```
+.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/01-goTo-s4f2a91c.png
+```
+
+The file name is the step's position within the test (`01`), its action (`goTo`), and its `stepId` with the leading `<testId>~` removed (`s4f2a91c`). Because the path derives from spec, test, context, and step IDs, the same step lands on the same relative path within each run folder.
+
+Auto screenshots can be configured at three levels with test > spec > config precedence:
+
+| Level | Config key | Effect |
+|-------|------------|--------|
+| Config | `autoScreenshot: false` | Applies to all tests |
+| Spec | `autoScreenshot: false` on spec object | Applies to all tests in the spec |
+| Test | `autoScreenshot: false` on test object | Applies to this test only |
+
+A value at a lower level overrides the level above it, so a test can set `autoScreenshot: true` to turn screenshots back on. Unset values defer to the next level up.
+
+## Stable IDs
+
+Doc Detective generates stable fallback IDs so the same spec, test, context, or step keeps the same ID across runs:
+
+| ID | Fallback derivation |
+|----|---------------------|
+| `specId` | Relative file path |
+| `testId` | `<specId>~<hash>` of the test definition |
+| `contextId` | `<platform>-<browser>`, or `default` |
+| `stepId` | `<testId>~s<hash>` of the step definition |
+
+Explicit IDs in your specs always take precedence. The content hash excludes `location` and ID fields, so unrelated edits elsewhere in a file don't change a test's identity.
 
 ## Entry Criteria
 
@@ -78,7 +120,7 @@ Run `/doc-detective-validate` on the generated spec. If validation fails, stop a
 
 ### Step 4: Execute Tests
 
-Run all tests in the spec, writing results to a file:
+Run all tests in the spec, writing results to a file. If `--auto-screenshot` or `--no-auto-screenshot` is set, pass the same flag to Doc Detective:
 
 ```bash
 doc-detective --input <spec-file> --output <results-file>
