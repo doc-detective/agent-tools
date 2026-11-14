@@ -8,12 +8,19 @@ cat > /dev/null
 
 AVAILABLE="false"
 STATUS=""
+OLD_GLOBAL=""
 
-# Check 1: Global CLI
+# Check 1: Global CLI. Only CLI 5 or later runs CLI 5 specs, so an older
+# global install falls through to the other checks.
 if command -v doc-detective &>/dev/null; then
-  VERSION=$(doc-detective --version 2>/dev/null || echo "unknown")
-  STATUS="doc-detective CLI found (version: ${VERSION})"
-  AVAILABLE="true"
+  VERSION=""
+  [[ "$(doc-detective --version 2>/dev/null)" =~ ([0-9]+\.[0-9]+\.[0-9]+[^[:space:]]*) ]] && VERSION="${BASH_REMATCH[1]}"
+  if [[ "$VERSION" =~ ^([5-9]|[1-9][0-9]+)\. ]]; then
+    STATUS="doc-detective CLI found (version: ${VERSION})"
+    AVAILABLE="true"
+  else
+    OLD_GLOBAL="${VERSION:-unknown}"
+  fi
 fi
 
 # Check 2: npx (use --yes to suppress install prompts, tail -1 to ignore progress output)
@@ -42,7 +49,12 @@ if [ "$AVAILABLE" = "true" ]; then
   SAFE_STATUS=$(printf '%s' "$STATUS" | sed 's#[\\"/]#\\&#g' | tr -d '\n')
   printf '{"additionalContext": "Doc Detective status: %s. Tests can be executed directly."}\n' "$SAFE_STATUS"
 else
-  printf '{"additionalContext": "Doc Detective CLI is not installed. When the user requests test execution, suggest installation: npm i -g doc-detective, npx doc-detective@5, or Docker (docker pull docdetective/docdetective). Test spec generation and validation still work without the CLI."}\n'
+  OLD_NOTE=""
+  if [ -n "$OLD_GLOBAL" ]; then
+    SAFE_OLD=$(printf '%s' "$OLD_GLOBAL" | sed 's#[\\"/]#\\&#g' | tr -d '\n')
+    OLD_NOTE=" The global doc-detective is ${SAFE_OLD}, but these skills need Doc Detective 5 or later."
+  fi
+  printf '{"additionalContext": "Doc Detective CLI is not installed.%s When the user requests test execution, suggest installation: npm i -g doc-detective@5, npx doc-detective@5, or Docker (docker pull docdetective/docdetective). Test spec generation and validation still work without the CLI."}\n' "$OLD_NOTE"
 fi
 
 exit 0

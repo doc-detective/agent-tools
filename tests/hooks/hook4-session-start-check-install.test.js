@@ -56,7 +56,7 @@ describe('Hook 4: session-start-check-install', function () {
 
     const output = parseOutput(result.stdout);
     assert.ok(output.additionalContext.includes('not installed'));
-    assert.ok(output.additionalContext.includes('npm i -g doc-detective'));
+    assert.ok(output.additionalContext.includes('npm i -g doc-detective@5'));
     assert.ok(output.additionalContext.includes('npx doc-detective@5'));
     assert.ok(output.additionalContext.includes('Docker'));
   });
@@ -90,6 +90,39 @@ describe('Hook 4: session-start-check-install', function () {
         assert.ok(ctx.includes('Docker image (version: 5.0.0)'), ctx);
       } else {
         assert.ok(ctx.includes('not installed'), ctx);
+      }
+    });
+  }
+
+  // A global install only counts when it's CLI 5 or later: an older global
+  // CLI misreads CLI 5 specs, so the hook falls through and says why.
+  for (const [version, available] of [['5.0.0', true], ['4.26.0', false]]) {
+    it(`should ${available ? '' : 'not '}report a global ${version} CLI as available`, async function () {
+      const fs = require('fs');
+      const os = require('os');
+      const path = require('path');
+
+      const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'hook4-global-'));
+      for (const tool of ['bash', 'cat', 'printf', 'sed', 'tr', 'timeout']) {
+        try {
+          const realPath = require('child_process')
+            .execFileSync('which', [tool], { encoding: 'utf8' }).trim();
+          if (realPath) fs.symlinkSync(realPath, path.join(fakeBin, tool));
+        } catch { /* tool not found, skip */ }
+      }
+      fs.writeFileSync(path.join(fakeBin, 'doc-detective'), `#!/bin/bash\necho ${version}\n`, { mode: 0o755 });
+
+      const result = await runHook('session-start-check-install.sh', '{}', {
+        env: { PATH: fakeBin, HOME: process.env.HOME },
+      });
+      fs.rmSync(fakeBin, { recursive: true, force: true });
+
+      const ctx = parseOutput(result.stdout).additionalContext;
+      if (available) {
+        assert.ok(ctx.includes('CLI found (version: 5.0.0)'), ctx);
+      } else {
+        assert.ok(ctx.includes('not installed'), ctx);
+        assert.ok(ctx.includes('global doc-detective is 4.26.0'), ctx);
       }
     });
   }
