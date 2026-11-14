@@ -500,7 +500,7 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 | **Test spec validation** | After editing a `.json` test spec | Automatically validates the spec structure and reports errors |
 | **Action anti-pattern blocker** | Before writing test spec content | Blocks the common mistake of `{"action": "goTo"}` — the correct format is `{"goTo": "url"}` |
 | **Documentation test reminder** | After editing a documentation file | Suggests running `/doc-detective-test` if the project has a Doc Detective config |
-| **Installation check** | Session start | Checks if the Doc Detective CLI is available and provides installation instructions if not |
+| **Installation check** | Session start | Checks for Doc Detective 5 or later as a global install, through `npx doc-detective@5`, or as a pulled `docdetective/docdetective` image. If none qualifies, the agent gets installation instructions and the version of any older global install it skipped. To upgrade a global install, run `npm i -g doc-detective@5`. Test spec generation and validation work without the CLI |
 | **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
 | **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
 
@@ -516,7 +516,7 @@ On **Claude Code**, the plugin bundles a Doc Detective language server that give
 | **Completion** | Action keys and their fields, with schema-aware value snippets. |
 | **Hover** | Action descriptions pulled straight from the schema. |
 
-The server activates automatically on install. It launches through `lsp/lsp-launch.js`, which resolves the Doc Detective CLI in the same order as the install check — a project-local install first (so a workspace's pinned version wins), then a global `doc-detective`, then `npx`. LSP is a Claude Code capability, so this does not apply to the other hosts.
+The server activates automatically on install. It launches through `lsp/lsp-launch.js`, which tries a project-local Doc Detective install first, so a workspace's pinned version wins. Otherwise it runs `npx doc-detective@5`, which uses a global Doc Detective 5 when one is installed. LSP is a Claude Code capability, so this does not apply to the other hosts.
 
 ## Inline Test Injection
 
