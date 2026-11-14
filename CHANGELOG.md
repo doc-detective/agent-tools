@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/doc-detective/agent-tools/compare/v2.0.1...v2.0.2) (2026-11-14)
+
+
+### Bug Fixes
+
+* **hooks:** only report a global Doc Detective 5 or later as ready ([#80](https://github.com/doc-detective/agent-tools/issues/80)) ([39c477a](https://github.com/doc-detective/agent-tools/commit/39c477a5f300d5e84e0eb7ba741a3928fe2c8b79))
+
 ## [2.0.1](https://github.com/doc-detective/agent-tools/compare/v2.0.0...v2.0.1) (2026-11-13)
 
 

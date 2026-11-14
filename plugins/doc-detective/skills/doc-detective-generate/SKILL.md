@@ -2,7 +2,7 @@
 name: doc-detective-generate
 description: 'Interpret documentation procedures into Doc Detective test specifications without executing'
 metadata:
-  version: '2.0.1'
+  version: '2.0.2'
   organization: Doc Detective
   date: November 2026
   abstract: Interpret documentation procedures into Doc Detective test specifications without executing the tests. Parses docs, maps language to actions, validates the spec, and outputs the result.
