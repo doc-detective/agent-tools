@@ -29,9 +29,11 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          # semantic-release v25 requires Node >=22.14 (the test workflows stay on
-          # 20; only this release job runs semantic-release).
-          node-version: 22
+          # @semantic-release/changelog 7 and @semantic-release/git 11 require
+          # Node ^22.22.2 || >=24.15, so the range states that minimum and setup
+          # fails if it can't be met (the test workflows stay on 20; only this
+          # release job runs semantic-release).
+          node-version: '^22.22.2'
           cache: 'npm'
           cache-dependency-path: package-lock.json
 

@@ -4,7 +4,7 @@
   "private": true,
   "repository": "github:doc-detective/agent-tools",
   "engines": {
-    "node": ">=20"
+    "node": "^20.19.0 || >=22.12.0"
   },
   "scripts": {
     "build": "node build.js",
