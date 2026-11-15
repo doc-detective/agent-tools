@@ -80,8 +80,9 @@ echo '<spec-json>' | node skills/doc-detective-doc-testing/scripts/doc-detective
 # each file and field. Exit 2: usage error, bad config, or no tests found. Add --json for {valid, files[{path, valid, errors}]}.
 npx doc-detective@5 validate <spec-file>
 # Option 3, only if Option 2 fails with an unknown-command error (older Doc Detective): the spec is valid only when
-# the printed plan lists it; exit 0 with no plan means it wasn't checked. Exit 2 means the spec is invalid only when
-# stderr names the spec file. Doesn't name the field.
+# the printed plan lists it; exit 0 with no plan means it wasn't checked. If config sets `exitOnFail: false`, invalid
+# inline steps are skipped and the file can still be listed, so treat the result as inconclusive. Exit 2 means the
+# spec is invalid only when stderr names the spec file. Doesn't name the field.
 npx doc-detective@5 --dry-run --input <spec-file>
 ```
 
