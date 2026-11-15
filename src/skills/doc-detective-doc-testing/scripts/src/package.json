@@ -3,7 +3,7 @@
     "doc-detective-common": "^5.0.0"
   },
   "devDependencies": {
-    "esbuild": "^0.27.2"
+    "esbuild": "^0.28.2"
   },
   "scripts": {
     "prebuild": "npm install",
