@@ -404,8 +404,8 @@ See [Fix Failing Tests](../../doc-detective-doc-testing/references/fix-failing-t
 After generating config, verify it:
 
 ```bash
-# Test config loads correctly: exits 0 when it's valid and tests resolve, 2 otherwise
-npx doc-detective@5 --config .doc-detective.json --dry-run
+# Test config loads and its tests are valid: exits 0 when all valid, 1 when a test is invalid, 2 for a bad config or no tests
+npx doc-detective@5 validate --config .doc-detective.json
 
 # Or validate with JSON Schema
 npx ajv validate -s https://raw.githubusercontent.com/doc-detective/common/refs/heads/main/dist/schemas/config_v3.schema.json -d .doc-detective.json
