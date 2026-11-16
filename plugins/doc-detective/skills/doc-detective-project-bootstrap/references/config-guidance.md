@@ -55,6 +55,7 @@ Only add fields when:
 | Running test contexts in parallel | `concurrentRunners` |
 | Need relative URL resolution | `origin` |
 | Run **only** explicit inline/spec steps (no prose auto-detection) | `detectSteps: false` (default is `true`) |
+| Test each partial only as a standalone spec, not inside the pages that include it | `resolveIncludes: false` (default is `true`; changes which tests run) |
 | Skip the screenshot after every step, or the recording of every context | `autoScreenshot: false`, `autoRecord: false` (both default to `true`) |
 | Show a variable's value in output because it isn't secret | `publicVariables` (names, `*` matches any characters) |
 | Turn off post-run hints | `hints: { "enabled": false }` |
@@ -74,6 +75,7 @@ interface Config {
   loadVariables?: string;         // Path to .env file
   origin?: string;                // Base URL for relative links
   detectSteps?: boolean;          // Default: true (toggles markup auto-detection only)
+  resolveIncludes?: boolean;      // Default: true (replaces include directives with the included content before detection)
   allowUnsafeSteps?: boolean;     // Default: false
   fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
   runOn?: Context[];              // Execution contexts
