@@ -588,6 +588,23 @@ if [ "$RUN_CLI_TESTS" = true ]; then
         grep -qE '^   \.\. step$' "$RST_DIR/note.rst" || PROBLEMS="$PROBLEMS note-opener"
         grep -qE '^      click: Submit$' "$RST_DIR/note.rst" || PROBLEMS="$PROBLEMS note-payload"
         echo "$PREVIEW" | grep -qE '^\+$' || PROBLEMS="$PROBLEMS preview-separators"
+        # No newline at EOF: a full blank line still separates the statement from the prose.
+        printf 'Intro.\n\nClick **Submit**.' > "$RST_DIR/eof.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/eof.rst" --apply > /dev/null 2>&1 || true
+        [ "$(grep -B1 -E '^\.\. step' "$RST_DIR/eof.rst" | head -1)" = "" ] || PROBLEMS="$PROBLEMS eof-blank"
+        # An empty comment followed by a blank line: the block quote after it is visible prose.
+        printf 'Intro.\n\n..\n\n   Click **Submit** here.\n' > "$RST_DIR/empty.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/empty.rst" --apply > /dev/null 2>&1 || true
+        awk '/Click \*\*Submit\*\* here/ {c=NR} /\.\. step \{"click":"Submit"\}$/ {s=NR} END {exit !(c && s > c)}' "$RST_DIR/empty.rst" || PROBLEMS="$PROBLEMS empty-comment"
+        # A match on a directive's line: the statement goes after the directive's body.
+        printf '.. note:: Click **Submit**.\n\n   Keep this instruction visible.\n' > "$RST_DIR/directive.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/directive.rst" --apply > /dev/null 2>&1 || true
+        awk '/Keep this instruction/ {k=NR} /^\.\. step/ {s=NR} END {exit !(k && s > k)}' "$RST_DIR/directive.rst" || PROBLEMS="$PROBLEMS directive-body"
+        # A match in a section title: the title and its adornments stay together.
+        printf '=================\nClick **Submit**\n=================\n\nText.\n' > "$RST_DIR/title.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/title.rst" --apply > /dev/null 2>&1 || true
+        [ "$(grep -A1 -E '^Click \*\*Submit\*\*$' "$RST_DIR/title.rst" | tail -1)" = "=================" ] || PROBLEMS="$PROBLEMS title-underline"
+        [ "$(grep -B1 -E '^Click \*\*Submit\*\*$' "$RST_DIR/title.rst" | head -1)" = "=================" ] || PROBLEMS="$PROBLEMS title-overline"
         if [ -z "$PROBLEMS" ]; then
             pass "reStructuredText placement respects indentation, literal blocks, and preview"
         else
