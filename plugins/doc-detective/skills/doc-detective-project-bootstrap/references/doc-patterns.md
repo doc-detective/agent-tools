@@ -140,6 +140,7 @@ Map detected file types to Doc Detective `fileTypes` config:
 | Markdown | `"markdown"` |
 | MDX | `"markdown"` (same patterns) |
 | AsciiDoc | `"asciidoc"` |
+| reStructuredText | `"rst"` |
 | HTML | `"html"` |
 | DITA | `"dita"` |
 

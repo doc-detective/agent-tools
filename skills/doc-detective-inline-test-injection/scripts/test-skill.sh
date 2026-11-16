@@ -107,9 +107,9 @@ fi
 
 # Check if bundled script exists
 INJECT_SCRIPT=""
-if [ -f "$SCRIPT_DIR/doc-detective-inline-test-injection.js" ]; then
-    INJECT_SCRIPT="node $SCRIPT_DIR/doc-detective-inline-test-injection.js"
-    echo "Inject script: $SCRIPT_DIR/doc-detective-inline-test-injection.js (bundled)"
+if [ -f "$SCRIPT_DIR/inline-test-injection.js" ]; then
+    INJECT_SCRIPT="node $SCRIPT_DIR/inline-test-injection.js"
+    echo "Inject script: $SCRIPT_DIR/inline-test-injection.js (bundled)"
 else
     echo "Inject script: not found (run build-skill.sh first)"
 fi
@@ -531,6 +531,30 @@ if [ "$RUN_CLI_TESTS" = true ]; then
             pass "AsciiDoc uses line comment syntax"
         else
             fail "AsciiDoc should use line comment syntax // ()" "$(echo "$OUTPUT" | head -c 300)"
+        fi
+    else
+        skip "Inject script not available"
+    fi
+
+    # Test 22b: reStructuredText uses comment blocks separated by blank lines
+    echo ""
+    echo "--- Test 22b: reStructuredText uses comment blocks ---"
+    if [ -n "$INJECT_SCRIPT" ]; then
+        cp "$FIXTURES_DIR/sources/sample.rst" "$TEST_OUTPUT_DIR/sample.rst"
+        $INJECT_SCRIPT "$FIXTURES_DIR/specs/valid-basic.json" "$TEST_OUTPUT_DIR/sample.rst" --apply > /dev/null 2>&1 || true
+        RST=$(cat "$TEST_OUTPUT_DIR/sample.rst")
+        # Every injected statement sits at the start of a block: blank line before and after.
+        BAD=$(awk '/^\.\. (step|test)( |$)/ { if (prev != "") print "no blank before: " $0; want=1; prev=$0; next }
+                   want && $0 != "" { print "no blank after: " prev } { want=0; prev=$0 }' "$TEST_OUTPUT_DIR/sample.rst")
+        if echo "$RST" | grep -qE '^\.\. test \{"testId":"getting-started"' \
+            && echo "$RST" | grep -qE '^\.\. step \{"goTo":"https://example.com"\}$' \
+            && echo "$RST" | grep -qE '^\.\. step \{"find":"Welcome"\}$' \
+            && echo "$RST" | grep -qE '^\.\. step \{"click":"Get Started"\}$' \
+            && echo "$RST" | grep -qE '^\.\. test end$' \
+            && [ -z "$BAD" ]; then
+            pass "reStructuredText uses .. step / .. test comment blocks"
+        else
+            fail "reStructuredText should use blank-line-separated .. step / .. test comments" "$(echo "$BAD"; echo "$RST" | head -c 600)"
         fi
     else
         skip "Inject script not available"

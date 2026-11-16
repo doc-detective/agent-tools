@@ -92,6 +92,32 @@ describe('Hook 6: post-edit-warn-inline-tests', function () {
     assert.ok(output?.additionalContext.includes('AsciiDoc'));
   });
 
+  it('should warn for reStructuredText files with comment-based tests', async function () {
+    for (const line of ['.. step {"goTo":"https://example.com"}', '.. test {"testId":"guide"}']) {
+      const filePath = path.join(tmpDir, 'guide.rst');
+      fs.writeFileSync(filePath, ['Guide', '=====', '', line, '', 'Navigate to the site.'].join('\n'));
+
+      const result = await runHook('post-edit-warn-inline-tests.js', {
+        tool_input: { file_path: filePath },
+      });
+      assert.strictEqual(result.code, 0);
+
+      const output = parseOutput(result.stdout);
+      assert.ok(output?.additionalContext.includes('reStructuredText'), `should warn for ${line}`);
+    }
+  });
+
+  it('should not treat RST directives as inline tests', async function () {
+    const filePath = path.join(tmpDir, 'plain.rst');
+    fs.writeFileSync(filePath, ['Guide', '=====', '', '.. note::', '', '   A test step note.', ''].join('\n'));
+
+    const result = await runHook('post-edit-warn-inline-tests.js', {
+      tool_input: { file_path: filePath },
+    });
+    assert.strictEqual(result.code, 0);
+    assert.strictEqual(result.stdout.trim(), '');
+  });
+
   it('should exit silently for doc files without inline tests', async function () {
     const filePath = path.join(tmpDir, 'plain.md');
     fs.writeFileSync(filePath, '# Just a heading\n\nSome content.\n');
@@ -140,7 +166,7 @@ describe('Hook 6: post-edit-warn-inline-tests', function () {
   });
 
   it('should handle all supported doc extensions', async function () {
-    const extensions = ['.md', '.markdown', '.mdx', '.html', '.htm', '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc'];
+    const extensions = ['.md', '.markdown', '.mdx', '.html', '.htm', '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst'];
     for (const ext of extensions) {
       const filePath = path.join(tmpDir, `file${ext}`);
       fs.writeFileSync(filePath, '<!-- step {"goTo":"url"} -->');
