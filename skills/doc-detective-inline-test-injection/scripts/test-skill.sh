@@ -588,6 +588,14 @@ if [ "$RUN_CLI_TESTS" = true ]; then
         grep -qE '^   \.\. step$' "$RST_DIR/note.rst" || PROBLEMS="$PROBLEMS note-opener"
         grep -qE '^      click: Submit$' "$RST_DIR/note.rst" || PROBLEMS="$PROBLEMS note-payload"
         echo "$PREVIEW" | grep -qE '^\+$' || PROBLEMS="$PROBLEMS preview-separators"
+        # Preview adds exactly the lines apply mode adds, in the same order.
+        cp "$RST_DIR/preview.rst" "$RST_DIR/applied.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/applied.rst" --apply > /dev/null 2>&1 || true
+        [ "$(echo "$PREVIEW" | grep -E '^\+' | grep -vE '^\+\+\+ ' | sed 's/^+//')" = "$(diff "$RST_DIR/preview.rst" "$RST_DIR/applied.rst" | grep '^>' | sed 's/^> //')" ] || PROBLEMS="$PROBLEMS preview-matches-apply"
+        # A directive that starts on a list item's line: its literal body isn't a placement candidate.
+        printf 'Guide\n=====\n\n- .. code-block:: text\n\n     Click **Submit** to continue.\n\nClick **Submit** here.\n' > "$RST_DIR/list-literal.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/list-literal.rst" --apply > /dev/null 2>&1 || true
+        grep -qE '^ +\.\. (step|test)' "$RST_DIR/list-literal.rst" && PROBLEMS="$PROBLEMS list-literal"
         # No newline at EOF: a full blank line still separates the statement from the prose.
         printf 'Intro.\n\nClick **Submit**.' > "$RST_DIR/eof.rst"
         $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/eof.rst" --apply > /dev/null 2>&1 || true
