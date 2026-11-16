@@ -93,7 +93,7 @@ describe('Hook 6: post-edit-warn-inline-tests', function () {
   });
 
   it('should warn for reStructuredText files with comment-based tests', async function () {
-    for (const line of ['.. step {"goTo":"https://example.com"}', '.. test {"testId":"guide"}']) {
+    for (const line of ['.. step {"goTo":"https://example.com"}', '.. test {"testId":"guide"}', '   .. step {"find":"Nested"}', '\t.. test {"testId":"nested"}']) {
       const filePath = path.join(tmpDir, 'guide.rst');
       fs.writeFileSync(filePath, ['Guide', '=====', '', line, '', 'Navigate to the site.'].join('\n'));
 

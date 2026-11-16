@@ -24,8 +24,9 @@ const INLINE_PATTERNS = [
   { pattern: /<\?doc-detective/,     format: 'XML/DITA' },
   { pattern: /\/\/\s*\(step\s/,     format: 'AsciiDoc' },
   { pattern: /\/\/\s*\(test\s/,     format: 'AsciiDoc' },
-  { pattern: /^\.\.\s+step(\s|$)/m, format: 'reStructuredText' },
-  { pattern: /^\.\.\s+test(\s|$)/m, format: 'reStructuredText' },
+  // RST comments can nest in an indented block, such as a list item or a note body.
+  { pattern: /^[ \t]*\.\.[ \t]+step(\s|$)/m, format: 'reStructuredText' },
+  { pattern: /^[ \t]*\.\.[ \t]+test(\s|$)/m, format: 'reStructuredText' },
 ];
 
 function readStdin() {
