@@ -52,9 +52,9 @@ Select comment syntax by file extension:
 | XML/DITA | `.xml`, `.dita`, `.ditamap` | `<?doc-detective step {...} ?>` |
 | AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | `// (step {...})` |
 
-If the extension is unrecognized, stop and report: `Error: unsupported file type: <extension>`.
+If the extension is unrecognized, stop and report: `Error: unsupported file type: <extension>`. An included partial is the exception. See [Injecting into shared snippets and partials](#injecting-into-shared-snippets-and-partials).
 
-> **MDX `*/` hazard.** The MDX comment `{/* … */}` ends at the first `*/`. If a step's serialized JSON contains the substring `*/`, it closes the comment early and breaks the MDX/Astro build. This bites globs (`**/dir/**` contains `*/`) and some regexes. Before injecting into `.mdx`, scan each step's JSON for `*/`; if present, rewrite the payload to avoid it (e.g. `test/dir/**` instead of `**/dir/**`). There is no way to escape `*/` inside a `{/* … */}` JSX comment, so the payload itself must not contain it. Markdown/HTML `<!-- … -->` comments are not affected.
+> **MDX `*/` hazard.** The MDX comment `{/* … */}` ends at the first `*/`. If a step's serialized JSON contains the substring `*/`, it closes the comment early and breaks the MDX/Astro build. This bites globs (`**/dir/**` contains `*/`) and some regexes. Run this check before injecting any MDX comment, including one in a partial that an `.mdx` page includes. Scan each step's JSON for `*/`; if present, rewrite the payload to avoid it (e.g. `test/dir/**` instead of `**/dir/**`). There is no way to escape `*/` inside a `{/* … */}` JSX comment, so the payload itself must not contain it. Markdown/HTML `<!-- … -->` comments are not affected.
 
 ### Step 3: Match Steps to Content
 
@@ -131,7 +131,7 @@ Before Doc Detective looks for tests, it replaces each include directive with th
 - **Results point at the file that holds each statement.** For a test or step from an included file, `location.file` in the results JSON holds that file's absolute path. Its `location.line` refers to that file. When a step from a partial fails, edit the file `location.file` names, not the page.
 - **A broken include doesn't fail the run.** Doc Detective prints a warning on stderr, and the exit code stays the same. A missing file, a file outside the working directory, or a cycle leaves the directive as text. A tag, section, anchor, or line range that selects nothing in the file makes the directive include nothing, and its warning starts with `Couldn't find`. If a partial's tests are missing from the results, check stderr for these warnings.
 
-In Step 3, a step's matching text can come from an included file. Open that file and inject the step marker there, next to the content it tests. Use the comment syntax for the partial's own file type from Step 2. If the config sets `resolveIncludes: false`, every file runs on its own, including partials.
+In Step 3, a step's matching text can come from an included file. Open that file and inject the step marker there, next to the content it tests. Use the comment syntax for the partial's own file type from Step 2. Doc Detective reads a partial whose extension matches no file type, such as `.txt`, with the including page's syntax. For that partial, use the including page's comment syntax, and don't stop at Step 2. If the config sets `resolveIncludes: false`, every file runs on its own, including partials.
 
 ## Configuration
 
