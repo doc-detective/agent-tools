@@ -594,7 +594,7 @@ if [ "$RUN_CLI_TESTS" = true ]; then
         [ "$(echo "$PREVIEW" | grep -E '^\+' | grep -vE '^\+\+\+ ' | sed 's/^+//')" = "$(diff "$RST_DIR/preview.rst" "$RST_DIR/applied.rst" | grep '^>' | sed 's/^> //')" ] || PROBLEMS="$PROBLEMS preview-matches-apply"
         # A directive that starts on a list item's line: its literal body isn't a placement candidate.
         printf 'Guide\n=====\n\n- .. code-block:: text\n\n     Click **Submit** to continue.\n\nClick **Submit** here.\n' > "$RST_DIR/list-literal.rst"
-        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/list-literal.rst" --apply > /dev/null 2>&1 || true
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/list-literal.rst" --apply > /dev/null 2>&1 || PROBLEMS="$PROBLEMS list-literal-exit"
         grep -qE '^ +\.\. (step|test)' "$RST_DIR/list-literal.rst" && PROBLEMS="$PROBLEMS list-literal"
         awk '/^Click \*\*Submit\*\* here/ {c=NR} /^\.\. step \{"click":"Submit"\}$/ {s=NR} END {exit !(c && s > c)}' "$RST_DIR/list-literal.rst" || PROBLEMS="$PROBLEMS list-literal-placement"
         # Preview shows the test start before its source line, as apply writes it.
