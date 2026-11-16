@@ -596,6 +596,9 @@ if [ "$RUN_CLI_TESTS" = true ]; then
         printf 'Guide\n=====\n\n- .. code-block:: text\n\n     Click **Submit** to continue.\n\nClick **Submit** here.\n' > "$RST_DIR/list-literal.rst"
         $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/list-literal.rst" --apply > /dev/null 2>&1 || true
         grep -qE '^ +\.\. (step|test)' "$RST_DIR/list-literal.rst" && PROBLEMS="$PROBLEMS list-literal"
+        awk '/^Click \*\*Submit\*\* here/ {c=NR} /^\.\. step \{"click":"Submit"\}$/ {s=NR} END {exit !(c && s > c)}' "$RST_DIR/list-literal.rst" || PROBLEMS="$PROBLEMS list-literal-placement"
+        # Preview shows the test start before its source line, as apply writes it.
+        echo "$PREVIEW" | awk '/^\+\.\. test \{/ && !t {t=NR} /^ Click \*\*Submit\*\* to continue\.$/ && !c {c=NR} END {exit !(t && c && t < c)}' || PROBLEMS="$PROBLEMS preview-test-start"
         # No newline at EOF: a full blank line still separates the statement from the prose.
         printf 'Intro.\n\nClick **Submit**.' > "$RST_DIR/eof.rst"
         $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/eof.rst" --apply > /dev/null 2>&1 || true
