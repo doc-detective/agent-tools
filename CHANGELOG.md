@@ -1,3 +1,10 @@
+# [2.1.0](https://github.com/doc-detective/agent-tools/compare/v2.0.2...v2.1.0) (2026-11-17)
+
+
+### Features
+
+* support reStructuredText (.rst) docs ([#87](https://github.com/doc-detective/agent-tools/issues/87)) ([91d957d](https://github.com/doc-detective/agent-tools/commit/91d957d3373ab152c4afb5cdeb8b73be4c44b5e6))
+
 ## [2.0.2](https://github.com/doc-detective/agent-tools/compare/v2.0.1...v2.0.2) (2026-11-14)
 
 
