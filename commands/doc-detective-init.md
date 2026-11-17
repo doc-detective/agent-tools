@@ -62,7 +62,7 @@ Before completing:
 1. Search for documentation files matching: `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, `**/*.dita`
 2. If no files found, stop and ask the user where documentation is located.
 3. Check for existing config: `.doc-detective.json`, `doc-detective.config.js`
-4. Identify procedure-heavy files: read each file and flag it if it contains 3 or more numbered steps or sequential bullet points with action verbs (navigate, click, enter, verify, type, select).
+4. Identify procedure-heavy files: run `npx doc-detective audit <docs-dir> --json` and flag each file with untested procedure steps. For the fields to read and how to tell whether `audit` is available, see `skills/doc-detective-project-bootstrap/references/audit-coverage.md`. `audit` finds procedures only in numbered lists, so also flag files with sequential bullet points that use action verbs (navigate, click, enter, verify, type, select). Without `audit`, read each file and flag it if it contains 3 or more numbered steps or such bullet points.
 
 ### Phase 2: Configure
 

@@ -49,7 +49,8 @@ Before completing:
 3. [ ] Test specs generated, validated, and executed (unless `--dry-run`)
 4. [ ] Fix loop completed or skipped; unresolved failures reported as "needs manual review"
 5. [ ] Passing tests injected into source files (unless `--skip-inject` or `--ci` without `--inject-all`)
-6. [ ] GitHub Action workflow offered/installed (if GitHub repo)
+6. [ ] Coverage audited after injection, with procedure step counts and remaining untested steps reported (if injection ran and `audit` is available)
+7. [ ] GitHub Action workflow offered/installed (if GitHub repo)
 
 ## Workflow
 
@@ -62,8 +63,8 @@ Before completing:
 1. Search for documentation files matching: `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, `**/*.dita`
 2. If no files found, stop and ask the user where documentation is located.
 3. Check for existing config: `.doc-detective.json`, `doc-detective.config.js`
-4. Identify procedure-heavy files: flag any file containing 3 or more numbered steps or sequential bullet points with action verbs (navigate, click, enter, verify, type, select).
-5. Report file counts, key directories, and identified procedure-heavy files to the user.
+4. Identify procedure-heavy files: run `npx doc-detective audit <docs-dir> --json` and flag each file with untested procedure steps. For the fields to read and how to tell whether `audit` is available, read [references/audit-coverage.md](references/audit-coverage.md). `audit` finds procedures only in numbered lists, so also flag files with sequential bullet points that use action verbs (navigate, click, enter, verify, type, select). Without `audit`, flag any file containing 3 or more numbered steps or such bullet points.
+5. Report file counts, key directories, identified procedure-heavy files, and the audit's procedure step counts to the user.
 
 ### Phase 2: Configure
 
@@ -114,6 +115,7 @@ For each source file with passing tests:
 1. Preview the injection using the `inline-test-injection` skill (no `--apply` flag).
 2. Show the preview and ask the user to confirm before applying.
 3. Apply confirmed injections using the skill's `--apply` mode.
+4. Run `audit` again on the injected files. A procedure step the tests cover is now `hasStep`, or `inTest` when it sits inside an injected test without a step of its own. Report how many procedure steps the tests now cover and list each step still `untested` with its file and line. Check any step near one marked `<!-- TODO: verify step placement -->`. See [references/audit-coverage.md](references/audit-coverage.md).
 
 The injection tool selects the correct comment format automatically.
 
