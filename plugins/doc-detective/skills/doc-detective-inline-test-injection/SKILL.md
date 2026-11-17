@@ -5,7 +5,7 @@ metadata:
   version: '2.0.2'
   organization: Doc Detective
   date: November 2026
-  abstract: Inject Doc Detective test specifications directly into documentation files as inline comments. Supports Markdown, MDX, HTML, AsciiDoc, and XML/DITA formats with automatic format detection and semantic step matching.
+  abstract: Inject Doc Detective test specifications directly into documentation files as inline comments. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA formats with automatic format detection and semantic step matching.
   references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'false'
 user-invocable: false
@@ -52,8 +52,11 @@ Select comment syntax by file extension:
 | HTML | `.html`, `.htm` | `<!-- step {...} -->` |
 | XML/DITA | `.xml`, `.dita`, `.ditamap` | `<?doc-detective step {...} ?>` |
 | AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | `// (step {...})` |
+| reStructuredText | `.rst` | `.. step {...}` |
 
 If the extension is unrecognized, stop and report: `Error: unsupported file type: <extension>`. An included partial is the exception. See [Injecting into shared snippets and partials](#injecting-into-shared-snippets-and-partials).
+
+> **reStructuredText comments are blocks.** Doc Detective reads `.. test {...}`, `.. step {...}`, `.. test end`, and `.. test ignore start` / `.. test ignore end` only when the comment starts its own block. Put a blank line before and after each one. A `..` line that continues a paragraph is prose. A multi-line payload continues on lines indented under the `.. step` line. Directives (`.. note::`), targets (`.. _name:`), footnotes (`.. [1]`), and substitutions (`.. |name|`) aren't test comments.
 
 > **MDX `*/` hazard.** The MDX comment `{/* … */}` ends at the first `*/`. If a step's serialized JSON contains the substring `*/`, it closes the comment early and breaks the MDX/Astro build. This bites globs (`**/dir/**` contains `*/`) and some regexes. Run this check before injecting any MDX comment, including one in a partial that an `.mdx` page includes. Scan each step's JSON for `*/`; if present, rewrite the payload to avoid it (e.g. `test/dir/**` instead of `**/dir/**`). There is no way to escape `*/` inside a `{/* … */}` JSX comment, so the payload itself must not contain it. Markdown/HTML `<!-- … -->` comments are not affected.
 

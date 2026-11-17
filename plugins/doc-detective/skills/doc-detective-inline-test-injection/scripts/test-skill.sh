@@ -107,9 +107,9 @@ fi
 
 # Check if bundled script exists
 INJECT_SCRIPT=""
-if [ -f "$SCRIPT_DIR/doc-detective-inline-test-injection.js" ]; then
-    INJECT_SCRIPT="node $SCRIPT_DIR/doc-detective-inline-test-injection.js"
-    echo "Inject script: $SCRIPT_DIR/doc-detective-inline-test-injection.js (bundled)"
+if [ -f "$SCRIPT_DIR/inline-test-injection.js" ]; then
+    INJECT_SCRIPT="node $SCRIPT_DIR/inline-test-injection.js"
+    echo "Inject script: $SCRIPT_DIR/inline-test-injection.js (bundled)"
 else
     echo "Inject script: not found (run build-skill.sh first)"
 fi
@@ -531,6 +531,95 @@ if [ "$RUN_CLI_TESTS" = true ]; then
             pass "AsciiDoc uses line comment syntax"
         else
             fail "AsciiDoc should use line comment syntax // ()" "$(echo "$OUTPUT" | head -c 300)"
+        fi
+    else
+        skip "Inject script not available"
+    fi
+
+    # Test 22b: reStructuredText uses comment blocks separated by blank lines
+    echo ""
+    echo "--- Test 22b: reStructuredText uses comment blocks ---"
+    if [ -n "$INJECT_SCRIPT" ]; then
+        cp "$FIXTURES_DIR/sources/sample.rst" "$TEST_OUTPUT_DIR/sample.rst"
+        $INJECT_SCRIPT "$FIXTURES_DIR/specs/valid-basic.json" "$TEST_OUTPUT_DIR/sample.rst" --apply > /dev/null 2>&1 || true
+        RST=$(cat "$TEST_OUTPUT_DIR/sample.rst")
+        # Every injected statement sits at the start of a block: blank line before and after.
+        BAD=$(awk '/^\.\. (step|test)( |$)/ { if (prev != "") print "no blank before: " $0; want=1; prev=$0; next }
+                   want && $0 != "" { print "no blank after: " prev } { want=0; prev=$0 }' "$TEST_OUTPUT_DIR/sample.rst")
+        if echo "$RST" | grep -qE '^\.\. test \{"testId":"getting-started"' \
+            && echo "$RST" | grep -qE '^\.\. step \{"goTo":"https://example.com"\}$' \
+            && echo "$RST" | grep -qE '^\.\. step \{"find":"Welcome"\}$' \
+            && echo "$RST" | grep -qE '^\.\. step \{"click":"Get Started"\}$' \
+            && echo "$RST" | grep -qE '^\.\. test end$' \
+            && [ -z "$BAD" ]; then
+            pass "reStructuredText uses .. step / .. test comment blocks"
+        else
+            fail "reStructuredText should use blank-line-separated .. step / .. test comments" "$(echo "$BAD"; echo "$RST" | head -c 600)"
+        fi
+    else
+        skip "Inject script not available"
+    fi
+
+    # Test 22c: reStructuredText placement respects indentation, literal blocks, and preview
+    echo ""
+    echo "--- Test 22c: reStructuredText placement and preview ---"
+    if [ -n "$INJECT_SCRIPT" ]; then
+        RST_DIR="$TEST_OUTPUT_DIR/rst-placement"
+        mkdir -p "$RST_DIR"
+        echo '{"tests":[{"testId":"t","steps":[{"click":"Submit"}]}]}' > "$RST_DIR/click.json"
+        echo '{"tests":[{"testId":"t","steps":[{"click":"Submit","description":"Press submit"}]}]}' > "$RST_DIR/described.json"
+        # A list item: comments sit at the item's content indent, so the item's next paragraph stays visible.
+        printf 'Guide\n=====\n\n* Click **Submit** to continue.\n\n  Keep this instruction visible.\n' > "$RST_DIR/list.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/list.rst" --apply > /dev/null 2>&1 || true
+        # A literal block: the match inside the example isn't a placement candidate.
+        printf 'Guide\n=====\n\n.. code-block:: text\n\n   Click **Submit** to continue.\n\nClick **Submit** here.\n' > "$RST_DIR/literal.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/literal.rst" --apply > /dev/null 2>&1 || true
+        # A multi-line YAML step in a note body: every line keeps the body's indent.
+        printf 'Guide\n=====\n\n.. note::\n\n   Click **Submit** to continue.\n' > "$RST_DIR/note.rst"
+        $INJECT_SCRIPT "$RST_DIR/described.json" "$RST_DIR/note.rst" --apply --syntax yaml > /dev/null 2>&1 || true
+        # Preview: shows the blank separator lines that apply mode adds.
+        printf 'Intro line.\nClick **Submit** to continue.\nNext line.\n' > "$RST_DIR/preview.rst"
+        PREVIEW=$($INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/preview.rst" 2>&1 || true)
+        PROBLEMS=""
+        grep -qE '^  \.\. step \{"click":"Submit"\}$' "$RST_DIR/list.rst" || PROBLEMS="$PROBLEMS list-indent"
+        grep -qE '^  \.\. test end$' "$RST_DIR/list.rst" || PROBLEMS="$PROBLEMS list-test-end"
+        grep -qE '^   +\.\. (step|test)' "$RST_DIR/literal.rst" && PROBLEMS="$PROBLEMS literal-block"
+        grep -qE '^\.\. step \{"click":"Submit"\}$' "$RST_DIR/literal.rst" || PROBLEMS="$PROBLEMS literal-placement"
+        grep -qE '^   \.\. step$' "$RST_DIR/note.rst" || PROBLEMS="$PROBLEMS note-opener"
+        grep -qE '^      click: Submit$' "$RST_DIR/note.rst" || PROBLEMS="$PROBLEMS note-payload"
+        echo "$PREVIEW" | grep -qE '^\+$' || PROBLEMS="$PROBLEMS preview-separators"
+        # Preview adds exactly the lines apply mode adds, in the same order.
+        cp "$RST_DIR/preview.rst" "$RST_DIR/applied.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/applied.rst" --apply > /dev/null 2>&1 || true
+        [ "$(echo "$PREVIEW" | grep -E '^\+' | grep -vE '^\+\+\+ ' | sed 's/^+//')" = "$(diff "$RST_DIR/preview.rst" "$RST_DIR/applied.rst" | grep '^>' | sed 's/^> //')" ] || PROBLEMS="$PROBLEMS preview-matches-apply"
+        # A directive that starts on a list item's line: its literal body isn't a placement candidate.
+        printf 'Guide\n=====\n\n- .. code-block:: text\n\n     Click **Submit** to continue.\n\nClick **Submit** here.\n' > "$RST_DIR/list-literal.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/list-literal.rst" --apply > /dev/null 2>&1 || PROBLEMS="$PROBLEMS list-literal-exit"
+        grep -qE '^ +\.\. (step|test)' "$RST_DIR/list-literal.rst" && PROBLEMS="$PROBLEMS list-literal"
+        awk '/^Click \*\*Submit\*\* here/ {c=NR} /^\.\. step \{"click":"Submit"\}$/ {s=NR} END {exit !(c && s > c)}' "$RST_DIR/list-literal.rst" || PROBLEMS="$PROBLEMS list-literal-placement"
+        # Preview shows the test start before its source line, as apply writes it.
+        echo "$PREVIEW" | awk '/^\+\.\. test \{/ && !t {t=NR} /^ Click \*\*Submit\*\* to continue\.$/ && !c {c=NR} END {exit !(t && c && t < c)}' || PROBLEMS="$PROBLEMS preview-test-start"
+        # No newline at EOF: a full blank line still separates the statement from the prose.
+        printf 'Intro.\n\nClick **Submit**.' > "$RST_DIR/eof.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/eof.rst" --apply > /dev/null 2>&1 || true
+        [ "$(grep -B1 -E '^\.\. step' "$RST_DIR/eof.rst" | head -1)" = "" ] || PROBLEMS="$PROBLEMS eof-blank"
+        # An empty comment followed by a blank line: the block quote after it is visible prose.
+        printf 'Intro.\n\n..\n\n   Click **Submit** here.\n' > "$RST_DIR/empty.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/empty.rst" --apply > /dev/null 2>&1 || true
+        awk '/Click \*\*Submit\*\* here/ {c=NR} /\.\. step \{"click":"Submit"\}$/ {s=NR} END {exit !(c && s > c)}' "$RST_DIR/empty.rst" || PROBLEMS="$PROBLEMS empty-comment"
+        # A match on a directive's line: the statement goes after the directive's body.
+        printf '.. note:: Click **Submit**.\n\n   Keep this instruction visible.\n' > "$RST_DIR/directive.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/directive.rst" --apply > /dev/null 2>&1 || true
+        awk '/Keep this instruction/ {k=NR} /^\.\. step/ {s=NR} END {exit !(k && s > k)}' "$RST_DIR/directive.rst" || PROBLEMS="$PROBLEMS directive-body"
+        # A match in a section title: the title and its adornments stay together.
+        printf '=================\nClick **Submit**\n=================\n\nText.\n' > "$RST_DIR/title.rst"
+        $INJECT_SCRIPT "$RST_DIR/click.json" "$RST_DIR/title.rst" --apply > /dev/null 2>&1 || true
+        [ "$(grep -A1 -E '^Click \*\*Submit\*\*$' "$RST_DIR/title.rst" | tail -1)" = "=================" ] || PROBLEMS="$PROBLEMS title-underline"
+        [ "$(grep -B1 -E '^Click \*\*Submit\*\*$' "$RST_DIR/title.rst" | head -1)" = "=================" ] || PROBLEMS="$PROBLEMS title-overline"
+        if [ -z "$PROBLEMS" ]; then
+            pass "reStructuredText placement respects indentation, literal blocks, and preview"
+        else
+            fail "reStructuredText placement problems:$PROBLEMS" "$(cat "$RST_DIR/list.rst" "$RST_DIR/literal.rst" "$RST_DIR/note.rst"; echo "$PREVIEW")"
         fi
     else
         skip "Inject script not available"

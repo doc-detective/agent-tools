@@ -20,7 +20,7 @@ Invoke these slash commands directly:
 Invoked automatically when relevant, not run directly:
 
 - **doc-detective-doc-testing** — Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
-- **doc-detective-inline-test-injection** — Inject Doc Detective test specifications directly into documentation files as inline comments. Supports Markdown, MDX, HTML, AsciiDoc, and XML/DITA formats with automatic format detection and semantic step matching.
+- **doc-detective-inline-test-injection** — Inject Doc Detective test specifications directly into documentation files as inline comments. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA formats with automatic format detection and semantic step matching.
 - **doc-detective-project-bootstrap** — Initialize Doc Detective in a repository by detecting documentation, generating minimal configuration, creating tests for identified procedures, and iteratively running and fixing tests with confidence-based suggestions. Supports interactive and CI modes.
 
 ## Agents

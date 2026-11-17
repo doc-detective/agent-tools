@@ -53,7 +53,7 @@ If a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is regist
 detect_tests({
   content: <raw-doc-content>,
   filePath: <source-path>,            // optional, used only for file-type inference
-  fileType: "markdown" | "asciidoc" | "dita" | "docbook" | "restructuredtext" | "html"  // optional override
+  fileType: "markdown" | "asciidoc" | "dita" | "html" | "rst"  // optional override
 })
 ```
 

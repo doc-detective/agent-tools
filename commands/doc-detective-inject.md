@@ -64,6 +64,7 @@ Select comment syntax by file extension:
 | HTML | `.html`, `.htm` | `<!-- step {...} -->` |
 | XML/DITA | `.xml`, `.dita`, `.ditamap` | `<?doc-detective step {...} ?>` |
 | AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | `// (step {...})` |
+| reStructuredText | `.rst` | `.. step {...}`, with `.. test {...}` and `.. test end` around each test. Each comment is its own block, with a blank line before and after. |
 
 If the extension is unrecognized, abort and report: `Error: unsupported file type: <extension>`.
 

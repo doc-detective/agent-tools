@@ -19,7 +19,7 @@ This uses all defaults:
 - `outputDir`: `.` (current directory)
 - `recursive`: `true`
 - `detectSteps`: `true`
-- `fileTypes`: `["markdown", "asciidoc", "html", "dita"]`
+- `fileTypes`: `["markdown", "asciidoc", "html", "dita", "rst"]`
 
 ### `detectSteps`: what it controls
 
@@ -77,7 +77,7 @@ interface Config {
   detectSteps?: boolean;          // Default: true (toggles markup auto-detection only)
   resolveIncludes?: boolean;      // Default: true (replaces include directives with the included content before detection)
   allowUnsafeSteps?: boolean;     // Default: false
-  fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita"]
+  fileTypes?: FileType[];         // Default: ["markdown","asciidoc","html","dita","rst"]
   runOn?: Context[];              // Execution contexts
   shell?: "bash"|"cmd"|"powershell"; // Default: "bash" on every platform, incl. Windows (where bash resolves to Git Bash, auto-installed if absent). Default shell for runShell steps and runCode; cmd/powershell are Windows-only. A runShell step's own shell field overrides this.
   concurrentRunners?: number | true; // Default: 1, true = CPU cores (max 4)
@@ -328,7 +328,7 @@ When merging with existing config:
 ❌ Bad:
 ```json
 {
-  "fileTypes": ["markdown", "asciidoc", "html", "dita"]
+  "fileTypes": ["markdown", "asciidoc", "html", "dita", "rst"]
 }
 ```
 
