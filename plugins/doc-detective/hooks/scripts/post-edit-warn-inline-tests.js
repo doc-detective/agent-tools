@@ -11,7 +11,7 @@ const path = require('path');
 
 const DOC_EXTENSIONS = new Set([
   '.md', '.markdown', '.mdx', '.html', '.htm',
-  '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc'
+  '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst'
 ]);
 
 // Inline test comment patterns by format
@@ -24,6 +24,9 @@ const INLINE_PATTERNS = [
   { pattern: /<\?doc-detective/,     format: 'XML/DITA' },
   { pattern: /\/\/\s*\(step\s/,     format: 'AsciiDoc' },
   { pattern: /\/\/\s*\(test\s/,     format: 'AsciiDoc' },
+  // RST comments can nest in an indented block, such as a list item or a note body.
+  { pattern: /^[ \t]*\.\.[ \t]+step(\s|$)/m, format: 'reStructuredText' },
+  { pattern: /^[ \t]*\.\.[ \t]+test(\s|$)/m, format: 'reStructuredText' },
 ];
 
 function readStdin() {

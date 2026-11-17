@@ -33,6 +33,18 @@ This reference documents the default semantic patterns used for matching test st
 | `clickOnscreenText` | `Click *Submit*` | `click: "Submit"` |
 | `findOnscreenText` | `*Welcome*` | `find: "Welcome"` |
 
+### reStructuredText (.rst)
+
+| Pattern | Content Example | Detected Action |
+|---------|-----------------|-----------------|
+| `checkHyperlink` | `` `Link <https://example.com>`_ `` or a bare `https://example.com` | `checkLink: "https://example.com"` |
+| `goToUrl` | ``Go to `Example <https://example.com>`_`` | `goTo: "https://example.com"` |
+| `clickOnscreenText` | `Click **Submit**` | `click: "Submit"` |
+| `findOnscreenText` | `**Welcome**` | `find: "Welcome"` |
+| `typeText` | `Type "hello world"` | `type: "hello world"` |
+
+**Action verb triggers:** Click, Tap, Left-click, Choose, Select, Check, Go to, Open, Navigate to, Visit, Access, Proceed to, Launch, Press, Enter, Type
+
 ### XML/DITA (.xml, .dita, .ditamap)
 
 | Pattern | Content Example | Detected Action |

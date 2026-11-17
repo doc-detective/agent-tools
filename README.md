@@ -512,7 +512,7 @@ On **Claude Code**, the plugin bundles a Doc Detective language server that give
 
 | Capability | Behavior |
 |------------|----------|
-| **Diagnostics** | Schema errors are reported inline as you edit `*.spec.json` / `*.spec.yaml` and `.doc-detective.*` config files, and inside inline Doc Detective tests in Markdown/AsciiDoc/HTML/DITA. The `action`-keyed anti-pattern (using an `action` property instead of the compact action-as-key form) gets one clear message instead of a wall of schema errors. |
+| **Diagnostics** | Schema errors are reported inline as you edit `*.spec.json` / `*.spec.yaml` and `.doc-detective.*` config files. Inline Doc Detective tests in Markdown/AsciiDoc/reStructuredText/HTML/DITA get the same diagnostics. Using an `action` property instead of the compact action-as-key form gets one clear message, not a wall of schema errors. |
 | **Completion** | Action keys and their fields, with schema-aware value snippets. |
 | **Hover** | Action descriptions pulled straight from the schema. |
 

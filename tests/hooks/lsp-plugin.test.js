@@ -49,7 +49,7 @@ describe('LSP plugin: manifest lspServers', function () {
   it('maps spec and markup extensions to the doc-detective language', function () {
     const map = lsp.extensionToLanguage;
     assert.ok(map, 'extensionToLanguage is required');
-    for (const ext of ['.json', '.yaml', '.yml', '.md', '.html']) {
+    for (const ext of ['.json', '.yaml', '.yml', '.md', '.adoc', '.rst', '.html']) {
       assert.strictEqual(map[ext], 'doc-detective', `${ext} must map to doc-detective`);
     }
   });

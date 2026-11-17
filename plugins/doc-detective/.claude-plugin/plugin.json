@@ -32,6 +32,7 @@
         ".mdx": "doc-detective",
         ".adoc": "doc-detective",
         ".asciidoc": "doc-detective",
+        ".rst": "doc-detective",
         ".html": "doc-detective",
         ".htm": "doc-detective",
         ".dita": "doc-detective"

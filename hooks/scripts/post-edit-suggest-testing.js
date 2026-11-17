@@ -10,7 +10,7 @@ const path = require('path');
 
 const DOC_EXTENSIONS = new Set([
   '.md', '.markdown', '.mdx', '.html', '.htm',
-  '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc'
+  '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst'
 ]);
 
 const CONFIG_FILES = [
