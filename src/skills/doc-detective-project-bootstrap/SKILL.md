@@ -49,7 +49,9 @@ Report the file counts, the key directories, and the procedure-heavy files to th
 
 ## Configure
 
-Follow the "smallest reasonable config" principle: set only what the defaults don't already cover. Without an existing config, create `.doc-detective.json` without asking:
+Follow the "smallest reasonable config" principle: set only what the defaults don't already cover.
+
+When no config exists, create `.doc-detective.json` without asking:
 
 ```json
 { "input": ["docs/**/*.md"], "outputDir": ".doc-detective/results" }

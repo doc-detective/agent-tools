@@ -53,7 +53,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright. 
 
 ## Get a valid spec
 
-The input is a file path or inline text. Pass it to `/doc-detective-generate` to build the spec, and then validate the spec with `/doc-detective-validate`.
+The input is a file path or inline text. For inline text, use it directly without reading from disk. Pass it to `/doc-detective-generate` to build the spec, and then validate the spec with `/doc-detective-validate`.
 
 ## Run the tests
 
