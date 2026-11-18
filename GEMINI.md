@@ -65,7 +65,7 @@ Each action name IS the JSON key. Never use an `"action"` property.
 1. **Action name IS the key** — Use `{ "goTo": "url" }`, never `{ "action": "goTo", "url": "..." }`
 2. **Prefer text over selectors** — Use `{ "click": "Submit" }` not `{ "click": "#submit-btn" }`
 3. **Always validate specs** — Run the validate-test script before returning any test specification
-4. **Execution fallback chain.** Try `doc-detective`, then `docker run docdetective/docdetective`, then `npx doc-detective@5`
+4. **Execution fallback chain.** Try `doc-detective`, then `docker run docdetective/docdetective`, then `npx doc-detective@5`. These specs need Doc Detective 5 or later. Skip the global `doc-detective` when `doc-detective --version` reports a version below 5. Skip Docker when the image's `version` label (`docker image inspect --format '{{index .Config.Labels "version"}}' docdetective/docdetective`) is missing or below 5. If no runner qualifies, tell the user and suggest installation instead of running an older version
 
 ## Hooks
 
@@ -73,7 +73,7 @@ This extension includes hooks that run automatically:
 - **Test spec validation** — Validates `.json` test specs after editing
 - **Anti-pattern blocker** — Blocks `{"action": "goTo"}` format (must use `{"goTo": "url"}`)
 - **Doc test reminder** — Suggests running tests after editing documentation files
-- **Installation check** — Reports Doc Detective CLI availability at session start
+- **Installation check** — Reports at session start whether Doc Detective 5 or later is available. When it names an older global install it skipped, don't run that install
 - **Test spec formatting** — Normalizes test spec JSON formatting
 - **Inline test warning** — Warns when editing docs with inline test comments
 
