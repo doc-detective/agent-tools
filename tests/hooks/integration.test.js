@@ -65,7 +65,7 @@ describe('Integration: Claude Code', function () {
     // Hook 4 injects context at session start — verify the hook's marker text appears
     const combined = result.stdout + result.stderr;
     assert.ok(
-      combined.includes('Doc Detective status:') || combined.includes('Doc Detective CLI is not installed') ||
+      combined.includes('Doc Detective status:') || combined.includes('No Doc Detective 5 runner was confirmed') ||
       result.stdout.includes('YES') || result.stdout.includes('NO'),
       `Expected hook marker or YES/NO. Got: ${result.stdout.slice(0, 200)}`
     );
@@ -166,7 +166,7 @@ describe('Integration: Gemini CLI', function () {
     // Verify the hook's marker text appears, or fall back to model response
     const combined = result.stdout + result.stderr;
     assert.ok(
-      combined.includes('Doc Detective status:') || combined.includes('Doc Detective CLI is not installed') ||
+      combined.includes('Doc Detective status:') || combined.includes('No Doc Detective 5 runner was confirmed') ||
       result.stdout.includes('YES') || result.stdout.includes('NO'),
       `Expected hook marker or YES/NO. Got: ${result.stdout.slice(0, 200)}`
     );

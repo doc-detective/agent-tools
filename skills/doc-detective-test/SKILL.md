@@ -12,7 +12,7 @@ metadata:
 
 # Test Documentation Command
 
-**Skill:** `doc-detective:test`
+**Skill:** `doc-detective:doc-detective-test`
 
 ## Goal
 

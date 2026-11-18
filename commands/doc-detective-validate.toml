@@ -4,7 +4,7 @@
 
 prompt = """# Validate Command
 
-**Skill:** `doc-detective:validate`
+**Skill:** `doc-detective:doc-detective-validate`
 
 ## Goal
 
@@ -98,9 +98,7 @@ For a config file, call `validate_spec({object: <config>, schemaKey: "config_v3"
 - `output`: A string, the path of the JSON results file, not a folder.
 - `outputDir`: A string, the folder for run folders and reports.
 - `logLevel`: One of `silent`, `error`, `warning`, `info`, `debug`.
-- `browser`: An object, not a string.
-- `env`: An object, or the path of a `.env` file as a string.
-- `defaultCommandTimeout`: A number, in milliseconds.
+- No other top-level keys. The schema rejects unknown keys.
 
 **Valid config:**
 
@@ -111,10 +109,10 @@ For a config file, call `validate_spec({object: <config>, schemaKey: "config_v3"
 **Invalid config:**
 
 ```json
-{ "input": "docs/", "browser": "chrome", "logLevel": "verbose" }
+{ "input": "docs/", "logLevel": "verbose", "recursive": "yes" }
 ```
 
-Errors: `browser` must be an object, and the `logLevel` value is invalid.
+Errors: `logLevel` isn't one of the allowed values, and `recursive` must be a boolean.
 
 See [doc-detective-common](https://github.com/doc-detective/doc-detective-common) for the full configuration schema.
 

@@ -50,7 +50,7 @@ Leave the repository with working Doc Detective test coverage for its documented
 
 ## Find the documentation
 
-Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json` or `doc-detective.config.js`.
+Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`.
 
 Tests are worth generating only for files that walk a reader through a task. Read each file. Flag it as procedure-heavy when it has three or more numbered steps, or sequential bullet points with action verbs. Such verbs include navigate, click, enter, verify, type, and select.
 
@@ -96,17 +96,7 @@ The exit code says what to do next:
 
 Skip fixes with `--skip-fix-loop`. Otherwise, give each failing test up to three fix attempts.
 
-In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`. Propose a fix, and score your confidence in it:
-
-- **High (80–100):** You found the exact alternative.
-- **Medium (50–79):** The fix is likely correct but uncertain.
-- **Low (0–49):** The fix is a best guess with significant uncertainty.
-
-| Confidence | Action |
-|---|---|
-| ≥ threshold (default 80%) | Apply automatically |
-| < threshold | Show proposed fix, ask user: apply / skip / edit manually |
-| < 50% | Ask the user regardless of threshold, unless `--auto-fix` is set |
+In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`. Propose a fix and rate your confidence from 0 to 100: 80 or more means you found the exact alternative, and below 50 is a best guess. Apply it when the rating meets `--fix-threshold`. Otherwise show it, and ask the user whether to apply it, skip it, or edit it by hand.
 
 Run the test again after each fix. Move on when it passes.
 
