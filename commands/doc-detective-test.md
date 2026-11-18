@@ -5,7 +5,7 @@ skill: doc-detective-test
 
 # Test Documentation Command
 
-**Skill:** `doc-detective:test`
+**Skill:** `doc-detective:doc-detective-test`
 
 ## Goal
 

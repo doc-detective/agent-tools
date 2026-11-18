@@ -258,7 +258,6 @@ Doc Detective supports multiple config file formats. Use `.json` for simplicity:
 |--------|----------|
 | JSON | `.doc-detective.json` |
 | YAML | `.doc-detective.yaml` or `.doc-detective.yml` |
-| JavaScript | `doc-detective.config.js` |
 
 **Recommendation:** Use `.doc-detective.json` for:
 - Easy parsing and editing
@@ -280,15 +279,15 @@ When merging with existing config:
 { "input": ["docs", "guides"] }
 ```
 
-### Object Fields (Deep Merge)
+### Array of objects (append)
 
 ```javascript
 // Existing
-{ "runOn": [{ "app": "chrome" }] }
+{ "runOn": [{ "browsers": ["chrome"] }] }
 
 // Bootstrap adds Firefox
 // Result
-{ "runOn": [{ "app": "chrome" }, { "app": "firefox" }] }
+{ "runOn": [{ "browsers": ["chrome"] }, { "browsers": ["firefox"] }] }
 ```
 
 ### Scalar Fields (Prefer Existing)

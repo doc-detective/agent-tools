@@ -25,74 +25,22 @@ Analyze failure → Generate fix → Calculate confidence → Apply/Prompt → R
 
 | Option | Default | Description |
 |--------|---------|-------------|
-| `--fix` | `false` | Enable automatic fix attempts |
-| `--auto-fix` | `false` | Apply all fixes without prompting |
-| `--threshold` | `80` | Confidence threshold (0-100) for auto-apply |
-| `--max-iterations` | `3` | Maximum fix iterations per test |
+| `--spec <path>` | none | Spec file to fix |
+| `--dry-run` | `false` | Show proposed fixes without applying them |
+| `--auto-fix` | `false` | Apply all fixes regardless of confidence |
+| `--threshold <0-100>` | `80` | Confidence at or above which a fix applies automatically |
+| `--max-iterations <n>` | `3` | Maximum fix attempts per test |
+| `--output <path>` | input spec | Write the fixed spec here instead of overwriting the input |
 
-## Failure Analysis
+## Confidence scores
 
-For each failing step, analyze:
-
-1. **Error type**: Element not found, timeout, navigation failure, assertion failure
-2. **Context**: What the step was trying to do
-3. **Actual result**: What happened instead
-4. **Potential causes**: Why it might have failed
-
-```json
-{
-  "failureAnalysis": {
-    "stepId": "click-submit",
-    "errorType": "element_not_found",
-    "action": "click",
-    "target": "Submit",
-    "resultDescription": "No elements matched selector or text.",
-    "potentialCauses": [
-      "Button text changed",
-      "Element not yet visible",
-      "Different selector needed"
-    ]
-  }
-}
-```
-
-## Generate Fix with Confidence Score
-
-Based on failure analysis, generate a fix and calculate confidence:
-
-```json
-{
-  "fix": {
-    "stepId": "click-submit",
-    "originalStep": { "click": "Submit" },
-    "fixedStep": { "click": "Submit Form" },
-    "confidence": 85,
-    "reasoning": "Page contains button with text 'Submit Form' which matches the intent"
-  }
-}
-```
-
-**Confidence scoring factors:**
-- **High (80-100)**: Exact alternative found, clear pattern match
-- **Medium (50-79)**: Partial match, likely correct but uncertain
-- **Low (0-49)**: Best guess, significant uncertainty
+Score each proposed fix from 0 to 100 for how sure you are that it resolves the failure. `--threshold` (or `--fix-threshold` in `/doc-detective-test`) is compared against this score. 80 or more means you found an exact alternative, 50 to 79 a likely but uncertain match, and below 50 a best guess.
 
 ## Apply Fix Decision
 
-With `--auto-fix`, apply all fixes automatically. Otherwise, apply fixes at or above `--fix-threshold` automatically; prompt user for confirmation on lower-confidence fixes.
+With `--auto-fix`, apply all fixes. Otherwise, apply fixes at or above `--threshold` (`--fix-threshold` in `/doc-detective-test`), and ask the user before you apply a lower-confidence fix.
 
-## Fix History Tracking
-
-Track fix attempts for reporting. Each entry records the step, original/fixed values, confidence, and result:
-
-```json
-{
-  "fixHistory": [
-    { "attempt": 1, "stepId": "click-submit", "original": { "click": "Submit" }, "fixed": { "click": "Submit Form" }, "confidence": 85, "result": "PASS" },
-    { "attempt": 1, "stepId": "find-welcome", "original": { "find": "Welcome" }, "fixed": { "find": "Welcome back" }, "confidence": 45, "result": "FAIL", "note": "Needs manual review" }
-  ]
-}
-```
+Record each attempt (the step, the original and fixed step, the confidence, and the result) so the report can list the failures that remain.
 
 ## Re-run and Iterate
 

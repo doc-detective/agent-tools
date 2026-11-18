@@ -23,7 +23,7 @@ describe('Hook 4: session-start-check-install', function () {
     const ctx = output.additionalContext;
     assert.ok(typeof ctx === 'string', 'additionalContext must be a string');
     const reportsAvailable = ctx.includes('Tests can be executed directly');
-    const suggestsInstall = ctx.includes('not installed');
+    const suggestsInstall = ctx.includes('No Doc Detective 5 runner was confirmed');
     assert.ok(
       reportsAvailable || suggestsInstall,
       'should report available or suggest installation'
@@ -55,10 +55,9 @@ describe('Hook 4: session-start-check-install', function () {
     assert.strictEqual(result.code, 0);
 
     const output = parseOutput(result.stdout);
-    assert.ok(output.additionalContext.includes('not installed'));
+    assert.ok(output.additionalContext.includes('No Doc Detective 5 runner was confirmed'));
     assert.ok(output.additionalContext.includes('npm i -g doc-detective@5'));
-    assert.ok(output.additionalContext.includes('npx doc-detective@5'));
-    assert.ok(output.additionalContext.includes('Docker'));
+    assert.ok(output.additionalContext.includes('docker pull docdetective/docdetective'));
   });
 
   // A cached image only counts when its `version` label is CLI 5 or later:
@@ -89,7 +88,7 @@ describe('Hook 4: session-start-check-install', function () {
       if (available) {
         assert.ok(ctx.includes('Docker image (version: 5.0.0)'), ctx);
       } else {
-        assert.ok(ctx.includes('not installed'), ctx);
+        assert.ok(ctx.includes('No Doc Detective 5 runner was confirmed'), ctx);
       }
     });
   }
@@ -121,7 +120,7 @@ describe('Hook 4: session-start-check-install', function () {
       if (available) {
         assert.ok(ctx.includes('CLI found (version: 5.0.0)'), ctx);
       } else {
-        assert.ok(ctx.includes('not installed'), ctx);
+        assert.ok(ctx.includes('No Doc Detective 5 runner was confirmed'), ctx);
         assert.ok(ctx.includes('global doc-detective is 4.26.0'), ctx);
       }
     });

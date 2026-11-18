@@ -25,7 +25,7 @@ Invoked automatically when relevant, not run directly:
 
 ## Agents
 
-- **doc-detective-specialist** — Use this agent when the user needs help with Doc Detective configuration, doc testing strategies, Docs as Tests methodology, or any aspect of using Doc Detective tools, commands, and plugins. This includes setting up test configurations, writing doc tests, debugging test failures, understanding Docs as Tests concepts, or integrating Doc Detective into workflows.
+- **doc-detective-specialist** — Use this agent for Doc Detective work: configuring Doc Detective, writing or debugging doc tests and inline tests, explaining Docs as Tests concepts, or adding Doc Detective to CI. It answers from the plugin's Doc Detective references and returns working config or spec snippets.
 
 ## MCP server
 

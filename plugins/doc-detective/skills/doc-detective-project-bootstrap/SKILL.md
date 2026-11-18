@@ -1,6 +1,6 @@
 ---
 name: doc-detective-project-bootstrap
-description: Initialize Doc Detective in a repository by detecting documentation, generating minimal config, creating tests for procedures, and iteratively running/fixing them. Use when (1) setting up Doc Detective in a new project, (2) user asks to "init" or "bootstrap" doc testing, (3) creating initial test coverage for existing documentation, or (4) onboarding a project to Doc Detective workflows.
+description: 'Detailed workflow behind doc-detective-init: detect docs, write a minimal config, generate tests, and run and fix them. For a direct user request to set up Doc Detective, doc-detective-init is the entry point.'
 metadata:
   version: '2.1.0'
   organization: Doc Detective
@@ -42,7 +42,7 @@ Use this skill when the user wants to set up Doc Detective or asks for initial t
 
 ## Find the documentation
 
-Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json` or `doc-detective.config.js`. See [references/doc-patterns.md](references/doc-patterns.md) for detection patterns.
+Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`. See [references/doc-patterns.md](references/doc-patterns.md) for detection patterns.
 
 Tests are worth generating only for files that walk a reader through a task. Flag a file as procedure-heavy when it has three or more numbered steps, or sequential bullet points with action verbs. Such verbs include navigate, click, enter, verify, type, and select. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
 
@@ -55,7 +55,7 @@ Follow the "smallest reasonable config" principle: set only what the defaults do
 When no config exists, create `.doc-detective.json` without asking:
 
 ```json
-{ "input": ["docs/**/*.md"], "outputDir": ".doc-detective/results" }
+{ "input": "docs", "outputDir": ".doc-detective/results", "detectSteps": false }
 ```
 
 See [references/config-guidance.md](references/config-guidance.md) for options and merge rules.
@@ -64,7 +64,7 @@ See [references/config-guidance.md](references/config-guidance.md) for options a
 
 For each procedure-heavy file, use the `doc-testing` skill to generate a spec with that file as input. Write the spec to `doc-detective-tests/<name>-spec.json`. `<name>` is the source file name, lowercased, with non-alphanumeric characters replaced by hyphens. Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
 
-Record each test's source file in a `_sourceFile` field, so you know which file to inject it into. Validate each spec before you use it. Skip a spec you can't fix.
+Keep a list of which source file each spec came from, so you know where to inject it. Don't add it to the spec, because the test schema rejects unknown fields. Validate each spec before you use it. Skip a spec you can't fix.
 
 ## Run the tests
 

@@ -325,12 +325,7 @@ On mobile app surfaces, `find` scrolls the surface down to bring an off-screen e
 Drag element from source to target.
 
 ```json
-{
-  "dragAndDrop": {
-    "sourceSelector": "#draggable",
-    "targetSelector": "#droppable"
-  }
-}
+{ "dragAndDrop": { "source": { "selector": "#draggable" }, "target": { "selector": "#droppable" } } }
 ```
 
 `dragAndDrop` moves one element onto another. To scroll or swipe a surface without a target element, use [`swipe`](#swipe).

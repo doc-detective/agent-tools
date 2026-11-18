@@ -24,7 +24,7 @@ When a skill says "if `validate_spec` is available," check for either the bare n
 
 ## Detection branch — when to prefer MCP
 
-Skills that validate or detect tests SHOULD prefer the MCP tool when available. Pseudo-prompt:
+Skills that validate or detect tests prefer the MCP tool when it's registered, because it tracks the live schema. Pseudo-prompt:
 
 > If a tool named `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered in this session, call it with `{object: <spec-or-config>, schemaKey: "spec_v3" | "config_v3", addDefaults: true}`. Use the local Node script (`node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin`) only as a fallback when no MCP tool is available.
 
