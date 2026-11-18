@@ -53,13 +53,15 @@ Select comment syntax by file extension:
 | AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | `// (step {...})` |
 | reStructuredText | `.rst` | `.. step {...}` |
 
-If the extension is unrecognized, stop and report: `Error: unsupported file type: <extension>`.
+If the extension is unrecognized, stop and report: `Error: unsupported file type: <extension>`. An included partial is the exception. See [Injecting into shared snippets and partials](#injecting-into-shared-snippets-and-partials).
 
 > **reStructuredText comments are blocks.** Doc Detective reads `.. test {...}`, `.. step {...}`, `.. test end`, and `.. test ignore start` / `.. test ignore end` only when the comment starts its own block. Put a blank line before and after each one. A `..` line that continues a paragraph is prose. A multi-line payload continues on lines indented under the `.. step` line. Directives (`.. note::`), targets (`.. _name:`), footnotes (`.. [1]`), and substitutions (`.. |name|`) aren't test comments.
 
-> **MDX `*/` hazard.** The MDX comment `{/* … */}` ends at the first `*/`. If a step's serialized JSON contains the substring `*/`, it closes the comment early and breaks the MDX/Astro build. This bites globs (`**/dir/**` contains `*/`) and some regexes. Before injecting into `.mdx`, scan each step's JSON for `*/`; if present, rewrite the payload to avoid it (e.g. `test/dir/**` instead of `**/dir/**`). There is no way to escape `*/` inside a `{/* … */}` JSX comment, so the payload itself must not contain it. Markdown/HTML `<!-- … -->` comments are not affected.
+> **MDX `*/` hazard.** The MDX comment `{/* … */}` ends at the first `*/`. If a step's serialized JSON contains the substring `*/`, it closes the comment early and breaks the MDX/Astro build. This bites globs (`**/dir/**` contains `*/`) and some regexes. Run this check before injecting any MDX comment, including one in a partial that an `.mdx` page includes. Scan each step's JSON for `*/`; if present, rewrite the payload to avoid it (e.g. `test/dir/**` instead of `**/dir/**`). There is no way to escape `*/` inside a `{/* … */}` JSX comment, so the payload itself must not contain it. Markdown/HTML `<!-- … -->` comments are not affected.
 
 ### Step 3: Match Steps to Content
+
+If the page includes other files and a step's text lives in one of them, see [Injecting into shared snippets and partials](#injecting-into-shared-snippets-and-partials).
 
 Process each test independently — the insertion point resets to line 1 at the start of each test. For each step, determine the **match value**:
 - String step value (e.g., `goTo: "https://..."`, `click: "Submit"`) → use that string
@@ -122,6 +124,17 @@ Once tests are injected, Doc Detective finds them when it scans the source files
 - **`detectSteps` only toggles *markup auto-detection*** — the implicit steps Doc Detective infers from prose (hyperlinks → `checkLink`, `**bold**` → `find`, fenced ` ```bash `/` ```json ` blocks → `runCode`, etc.). Its schema **default is `true`**.
 
 So for a suite built from explicit inline steps, set **`detectSteps: false`**. This is the reliable way to silence the noise: a docs page's own code fences and bold text are otherwise scooped up as extra (often invalid) auto-detected steps. To keep auto-detection on but tailor *which* patterns fire, override the file type's `markup` array with your own pattern list (the schema requires it to be non-empty, so disabling everything is done via `detectSteps: false`, not an empty `markup`).
+
+## Injecting into shared snippets and partials
+
+Before Doc Detective looks for tests, it replaces each include directive with the included file's content, so it reads a page as it renders. Supported directives are AsciiDoc `include::`, MkDocs `--8<--`, mdBook `{{#include}}`, Fern `<Markdown src>`, MDX component imports, and reStructuredText `.. include::`. The `resolveIncludes` field in `.doc-detective.json` or `.doc-detective.yaml` controls this and defaults to `true`. Include resolution changes where an injected test runs:
+
+- **A test in a partial runs inside each page that includes it.** A partial is a file that another input includes. Its tests run in reading order, once in each page that includes it. A partial included by 10 pages runs 10 times, and a failure shows in each page's results. The partial doesn't also run on its own, even when it's inside the configured `input`. A file listed in `beforeAll` or `afterAll` is the exception: it still runs in that phase, and its tests also run inside each page that includes it. To run a partial by itself, run Doc Detective with that file as the only `--input`.
+- **A test can start on a page and continue in a partial.** Keep each test's `test` and `test end` markers in the same file. For a test that spans an include, put both markers in the page, around the include directive, and put the step markers in the partial. A `test` marker in a partial without its `test end` would open a test in every page that includes it.
+- **Results point at the file that holds each statement.** For a test or step from an included file, `location.file` in the results JSON holds that file's absolute path. Its `location.line` refers to that file. When a step from a partial fails, edit the file `location.file` names, not the page.
+- **A broken include doesn't fail the run.** Doc Detective prints a warning on stderr, and the exit code stays the same. A missing file, a file outside the working directory, or a cycle leaves the directive as text. A tag, section, anchor, or line range that selects nothing in the file makes the directive include nothing, and its warning starts with `Couldn't find`. If a partial's tests are missing from the results, check stderr for these warnings.
+
+In Step 3, a step's matching text can come from an included file. Open that file and inject the step marker there, next to the content it tests. Use the comment syntax for the partial's own file type from Step 2. Doc Detective reads a partial whose extension matches no file type, such as `.txt`, with the including page's syntax. For that partial, use the including page's comment syntax, and don't stop at Step 2. If the config sets `resolveIncludes: false`, every file runs on its own, including partials.
 
 ## Configuration
 
