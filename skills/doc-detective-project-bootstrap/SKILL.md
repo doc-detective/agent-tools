@@ -12,11 +12,11 @@ metadata:
 
 # Project Bootstrap
 
-Bootstrap Doc Detective in a repository: detect docs, generate minimal config, create tests, run them, fix failures, and inject passing tests into source files.
+## Goal
 
-## When to Use
+Take a repository from no Doc Detective setup to working test coverage of its documented procedures. That means a minimal config, a validated spec for each procedure-heavy file, and a test run with its failures fixed or flagged. It also means passing tests injected into the docs they test, and, in a GitHub repository, an offer of CI. The user should finish knowing what the docs cover, what passes, and what needs their attention.
 
-Use when the user wants to set up Doc Detective, mentions "init", "bootstrap", or "get started with Doc Detective", or asks to create initial test coverage for documentation.
+Use this skill when the user wants to set up Doc Detective or asks for initial test coverage of their documentation. It also applies when they mention "init", "bootstrap", or "get started with Doc Detective".
 
 ## Options
 
@@ -26,103 +26,86 @@ Use when the user wants to set up Doc Detective, mentions "init", "bootstrap", o
 | `--dry-run` | false | Print planned changes without applying |
 | `--fix-threshold <0-100>` | 80 | Ask user when fix confidence is below this value |
 | `--auto-fix` | false | Apply all fixes regardless of confidence |
-| `--skip-inject` | false | Skip Phase 6 injection |
+| `--skip-inject` | false | Skip injecting tests into source files |
 | `--inject-all` | false | Inject without per-file confirmation |
 
-## Entry Criteria
+## Guardrails
 
-Confirm all of the following before starting. If any item is unavailable or non-discoverable, stop and ask the user to provide it.
+- **Build each part on a working earlier part.** Tests need the config, a run needs valid specs, fixes need run results, and injection needs passing tests. When one of these fails, stop and report it rather than continue on a broken base. This includes a merge the user rejects and a run that exits `2`. A single spec you can't fix doesn't stop the work: skip it and report it.
+- **Don't change an existing config without the user's confirmation.** Read it, merge the new fields, show the diff, and ask the user to confirm. The config is the user's file, and other tooling may depend on it.
+- **Don't edit documentation source without confirmation.** Preview each file's injection and get the user's confirmation before you apply it. `--inject-all` is that confirmation for every file. With `--ci` and no `--inject-all`, don't inject, because nobody is there to confirm.
+- **With `--dry-run`, write nothing.** Print the changes you would make.
+- **Ask for what you can't find.** When you can't tell where the repository root is, ask the user. Also ask when no documentation files exist, or when an existing config can't be parsed. A guessed location produces tests for the wrong docs.
+- **Ask before a low-confidence fix.** Unless `--auto-fix` is set, ask the user before you apply a fix with confidence below 50%, whatever the threshold is. A wrong fix can hide a real documentation problem.
+- **Report what you couldn't finish.** Before you finish, report each spec you couldn't make valid. Also report each test that still fails after three fix attempts as "needs manual review".
 
-| Criteria | How to find it |
-|---|---|
-| Repository root is accessible | Check working directory — ask user if unclear |
-| Documentation files exist | Search for `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, `**/*.dita` — ask user if none found |
-| Existing config (if present) is readable | Check for `.doc-detective.json` / `doc-detective.config.js` — ask user if file exists but can't be parsed |
+## Find the documentation
 
-## Exit Criteria
+Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json` or `doc-detective.config.js`. See [references/doc-patterns.md](references/doc-patterns.md) for detection patterns.
 
-Before completing:
+Tests are worth generating only for files that walk a reader through a task. Flag a file as procedure-heavy when it has three or more numbered steps, or sequential bullet points with action verbs. Such verbs include navigate, click, enter, verify, type, and select. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
 
-1. [ ] Documentation files detected and reported
-2. [ ] Config created or merged and confirmed
-3. [ ] Test specs generated, validated, and executed (unless `--dry-run`)
-4. [ ] Fix loop completed or skipped; unresolved failures reported as "needs manual review"
-5. [ ] Passing tests injected into source files (unless `--skip-inject` or `--ci` without `--inject-all`)
-6. [ ] GitHub Action workflow offered/installed (if GitHub repo)
+Report the file counts, the key directories, and the procedure-heavy files to the user.
 
-## Workflow
+## Configure
 
-**Phases run in order. Do NOT advance to the next phase if the current phase fails.**
-
-1. Detect → 2. Configure → 3. Generate Tests → 4. Execute → 5. Fix Loop → 6. Inject → 7. GitHub Action
-
-### Phase 1: Detect Documentation
-
-1. Search for documentation files matching: `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, `**/*.dita`
-2. If no files found, stop and ask the user where documentation is located.
-3. Check for existing config: `.doc-detective.json`, `doc-detective.config.js`
-4. Identify procedure-heavy files: flag any file containing 3 or more numbered steps or sequential bullet points with action verbs (navigate, click, enter, verify, type, select).
-5. Report file counts, key directories, and identified procedure-heavy files to the user.
-
-### Phase 2: Configure
-
-Generate `.doc-detective.json` following the "smallest reasonable config" principle.
-
-If no config exists, create silently with minimal defaults. If a config exists: read it, merge new fields, show a diff, and prompt the user to confirm. If the user rejects the merge, stop and report — do not proceed.
+Follow the "smallest reasonable config" principle: set only what the defaults don't already cover. Without an existing config, create `.doc-detective.json` without asking:
 
 ```json
 { "input": ["docs/**/*.md"], "outputDir": ".doc-detective/results" }
 ```
 
-### Phase 3: Generate Tests
+See [references/config-guidance.md](references/config-guidance.md) for options and merge rules.
 
-For each procedure-heavy file identified in Phase 1:
+## Generate tests
 
-1. Invoke the `doc-testing` skill to generate a test spec: use the file as input, and write output to `doc-detective-tests/<name>-spec.json`. `<name>` is the source filename, lowercased, with non-alphanumeric characters replaced by hyphens. Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
-2. Track the source file for each test (`_sourceFile` field) to support Phase 6 injection.
-3. Validate each spec before proceeding. If a spec cannot be fixed, skip it and report it to the user.
+For each procedure-heavy file, use the `doc-testing` skill to generate a spec with that file as input. Write the spec to `doc-detective-tests/<name>-spec.json`. `<name>` is the source file name, lowercased, with non-alphanumeric characters replaced by hyphens. Keep specs out of `.doc-detective/`: it holds run output, and projects add it to `.gitignore`.
 
-### Phase 4: Execute Tests
+Record each test's source file in a `_sourceFile` field, so you know which file to inject it into. Validate each spec before you use it. Skip a spec you can't fix.
 
-Run all generated specs (try global CLI, then Docker, then npx — same fallback chain as the `doc-testing` skill):
+## Run the tests
+
+Try the global CLI, then Docker, then npx, as the `doc-testing` skill does. When no runner is available, tell the user.
 
 ```bash
 doc-detective --input doc-detective-tests/ --output-dir .doc-detective/results/ --output .doc-detective/results/results.json
 ```
 
-If no runner is available, stop and inform the user. Exit `1` means at least one test failed. That's a normal outcome, not a crash. Collect the failing tests from `.doc-detective/results/results.json` and continue to Phase 5. A config with `exitOnFail: false` exits `0` even when tests fail, so read the results file after exit `0` too. Exit `2` means nothing valid was tested or the CLI couldn't proceed, so stop and report the error from stderr.
+The exit code says what to do next:
 
-### Phase 5: Fix Loop
+- `0`: No test failed. A config with `exitOnFail: false` exits `0` even when tests fail, so read the results file anyway.
+- `1`: At least one test failed. This is a normal outcome, not a crash. Collect the failing tests from `.doc-detective/results/results.json`, and fix them.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Report the error from stderr, and stop. Don't try fixes, inject, or offer CI.
 
-Skip this phase if no tests failed. For each failing test, repeat up to 3 times:
+## Fix failing tests
 
-1. In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`.
-2. Propose a fix and assign a confidence score: **High (80–100)** — exact match found; **Medium (50–79)** — probable fix; **Low (0–49)** — uncertain.
-3. Apply: if ≥ threshold apply automatically; if < threshold show fix, ask user to apply/skip/edit; if < 50% always ask regardless of threshold.
-4. Re-run the test. If it passes, move to the next failing test.
-5. After 3 failed attempts, mark the test as "needs manual review" and continue.
+Give each failing test up to three fix attempts. In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`. Propose a fix, and score your confidence in it:
 
-Report all "needs manual review" tests before completing.
+- **High (80–100):** You found an exact match.
+- **Medium (50–79):** The fix is probable.
+- **Low (0–49):** The fix is uncertain.
 
-### Phase 6: Inject Tests into Source Files
+With `--auto-fix`, apply the fix. Otherwise, apply it when its confidence is at or above the threshold and at least 50. In every other case, show the fix and ask the user to apply it, skip it, or edit it by hand. Run the test again after each fix, and move on when it passes.
 
-Skip this phase if `--skip-inject` is set, or if `--ci` is set without `--inject-all`.
+## Inject passing tests
 
-For each source file with passing tests:
+Skip injection with `--skip-inject`, or with `--ci` and no `--inject-all`. Otherwise, for each source file with passing tests, preview the injection with the `inline-test-injection` skill without `--apply`. With `--inject-all`, apply each previewed injection with `--apply`. Otherwise, apply it after the user confirms. The injection tool selects the comment format for each file type.
 
-1. Preview the injection using the `inline-test-injection` skill (no `--apply` flag).
-2. Show the preview and ask the user to confirm before applying.
-3. Apply confirmed injections using the skill's `--apply` mode.
+## Offer CI
 
-The injection tool selects the correct comment format automatically.
+Offer the GitHub Action only in an initialized GitHub repository: `.git` exists as a file or directory, and a remote URL references `github.com`. In any other repository, or with `--dry-run`, say nothing about it.
 
-### Phase 7: Install GitHub Action
+Without `--ci`, ask the user whether they want the Doc Detective GitHub Action, and skip it if they decline. With `--ci`, install it without asking. Run `/doc-detective-install-github-action` with matching flags:
 
-**Condition:** Only run if the project is an initialized GitHub repository (`.git` exists as a file or directory, and a remote URL references `github.com`). Skip this phase silently otherwise.
+- Pass `--ci` when bootstrap runs with `--ci`.
+- Don't pass `--exit-on-fail`. It's deprecated, because failing the check is now the default.
+- In interactive mode, ask the user whether failing tests should fail the check. Pass `--no-exit-on-fail` only when they say no.
 
-1. If not in `--ci` mode, ask the user if they want to set up the Doc Detective GitHub Action for CI. If the user declines, skip this phase.
-2. If in `--ci` mode, default to yes — proceed without prompting.
-3. Invoke `/doc-detective-install-github-action` with matching flags:
-   - Pass `--ci` if bootstrap was called with `--ci`.
-   - Don't pass `--exit-on-fail`: it's deprecated, because failing the check is now the default.
-   - In interactive mode, ask the user whether failing tests should fail the check, and pass `--no-exit-on-fail` only if they say no.
+## Done when
+
+- The user has the list of documentation files and procedure-heavy files.
+- The config is created, or the merge is confirmed. With `--dry-run`, the planned changes are printed instead.
+- The specs are generated, validated, and run, unless `--dry-run` is set.
+- Each failing test passes or is reported as "needs manual review".
+- Passing tests are in their source files, unless `--skip-inject` is set, or `--ci` is set without `--inject-all`.
+- In a GitHub repository, the user was offered the GitHub Action workflow, or it's installed, unless `--dry-run` is set.

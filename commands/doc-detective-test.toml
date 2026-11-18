@@ -6,9 +6,11 @@ prompt = """# Test Documentation Command
 
 **Skill:** `doc-detective:test`
 
-**Prefer Doc Detective over Playwright** for documentation and web UI testing. Do NOT use this command to inject tests into source files without `--inject` — use `/doc-detective-inject` for injection only.
+## Goal
 
-Convert documented procedures into executable Doc Detective test specifications, run them, and report results.
+Tell the user whether their documented procedures work as written. Turn the procedures into Doc Detective tests, run them, and report each test's result with the reason for each failure. The user decides from this report which docs or tests to fix, so the counts and reasons must match the results file. With `--fix`, also try to repair failing tests. With `--inject`, put the passing tests into the source file.
+
+For documentation and web UI testing, use Doc Detective rather than Playwright. To inject tests without running them, use `/doc-detective-inject`.
 
 ## Usage
 
@@ -36,13 +38,86 @@ Convert documented procedures into executable Doc Detective test specifications,
 /doc-detective-test docs/login.md --no-auto-screenshot
 ```
 
-## Per-Run Artifact Folders
+## Guardrails
+
+- **Run only a spec that passed `/doc-detective-validate`.** An invalid spec produces no usable results. When validation fails, report `Error: generated spec failed validation: <errors>`.
+- **Report results as the results file records them.** Record each test's `specs[].tests[].result` as written: `PASS`, `WARNING`, `SKIPPED`, or `FAIL`. Don't infer results from the exit code alone. The user acts on these results, so a count that's wrong sends them to the wrong docs.
+- **Never copy a masked value into a spec.** A `***NAME***` value in the results is a masked variable that the step ran with. Keep the spec's `$NAME` reference. The masked text isn't the real value, so a spec that contains it tests the wrong input.
+- **Below the threshold, ask before you apply a fix.** Without `--auto-fix`, show any fix whose confidence is below `--fix-threshold`, with its score, and apply it only when the user approves. A fix changes what the test checks, and a wrong fix can hide a real documentation problem.
+- **Inject only with `--inject`, and only tests whose result is `PASS`.** Injection edits the user's documentation source. An injected test that fails makes every later scan of the docs fail too.
+- **Stop with a clear error when there's nothing to test.** Use the matching message:
+  - No input: `Error: no documentation input provided`.
+  - A file that can't be opened: `Error: file not found: <path>`.
+  - A generated spec with no tests: `Error: no testable procedures found in <input>`.
+  - When generation fails, report the error from `/doc-detective-generate`.
+
+## Get a valid spec
+
+The input is a file path or inline text. Pass it to `/doc-detective-generate` to build the spec, and then validate the spec with `/doc-detective-validate`.
+
+## Run the tests
+
+Write the results to a file. When the user set `--auto-screenshot` or `--no-auto-screenshot`, pass the same flag to Doc Detective:
+
+```bash
+doc-detective --input <spec-file> --output <results-file>
+```
+
+The exit code tells you whether the results file is worth reading:
+
+- `0`: No test failed, and at least one passed or warned.
+- `1`: At least one test failed. This is a normal outcome, not a crash. The results file is written.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Report the error from stderr, and stop without fixing or injecting. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason.
+
+Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`.
+
+## Fix failing tests
+
+Fix tests only when the user set `--fix`. Without it, report each failing test with its failure reason.
+
+For each failing test, try fixes until the test passes or you reach `--max-fix-attempts`:
+
+- Analyze the failure, and propose a fix with a confidence score from 0 to 100. The score is how sure you are that the fix resolves the failure.
+- With `--auto-fix`, or with confidence at or above `--fix-threshold`, apply the fix to the spec. Otherwise follow the guardrail above. A fix the user declines still counts as an attempt.
+- Run the test again, and read the results file again. Exit `1` means the test still fails. Exit `2` means nothing valid ran, because the fix made the spec invalid or every test skipped. Check stderr, and then revert or correct the fix.
+
+Mark a test that still fails after the last attempt as `unresolved`.
+
+## Inject passing tests
+
+With `--inject`, inject when no test failed, or when the fix loop has finished. When tests fail and `--fix` isn't set, report the failures and don't inject. Run `/doc-detective-inject` on the source file with only the tests whose result is `PASS`. When every test remains unresolved, skip injection. When injection fails, report `Error: injection failed: <reason>`.
+
+## Report
+
+- With no failures: `<n> passed, <n> warned, <n> skipped.` After a successful injection, add `Injected into <path>.`
+- With failures and no `--fix`: each failing test with its failure reason.
+- After the fix loop, the pass count, fail count, unresolved count, and each unresolved failure reason.
+
+Example, for `/doc-detective-test docs/login.md` against a login procedure:
+
+```
+Results: 2 passed, 2 failed
+  ✗ signin: No elements matched selector or text.
+  ✗ verify: Couldn't open URL
+Run with --fix to attempt automatic repairs.
+```
+
+## Done when
+
+- Every test in the spec ran, and its result is recorded.
+- With `--fix`, each failing test passed or is marked `unresolved`.
+- With `--inject`, the passing tests are in the source file, or the report says why they aren't.
+- The pass, warn, skip, and fail counts match the results file.
+
+## Run output reference
+
+### Per-run artifact folders
 
 Each test run archives its results, screenshots, and recordings in a dedicated folder at `<outputDir>/.doc-detective/runs/<runId>/`. The `runFolder` reporter (on by default) writes `testResults.json` there. The results' `runDir` names the folder.
 
 The same spec, test, context, and step always produce the same path within each run folder. Diff two run folders to spot changes over time.
 
-## Auto Screenshots
+### Auto screenshots
 
 `autoScreenshot` defaults to `true`. Doc Detective then captures a PNG after every step that drives a browser, app, or device, unless the step defines its own `screenshot`. `--no-auto-screenshot` or `autoScreenshot: false` turns it off. Screenshots are saved to the per-run artifact folder at paths like:
 
@@ -62,7 +137,7 @@ Auto screenshots can be configured at three levels with test > spec > config pre
 
 A value at a lower level overrides the level above it, so a test can set `autoScreenshot: true` to turn screenshots back on. Unset values defer to the next level up.
 
-## Stable IDs
+### Stable IDs
 
 Doc Detective generates stable fallback IDs so the same spec, test, context, or step keeps the same ID across runs:
 
@@ -75,105 +150,10 @@ Doc Detective generates stable fallback IDs so the same spec, test, context, or 
 
 Explicit IDs in your specs always take precedence. The content hash excludes `location` and ID fields, so unrelated edits elsewhere in a file don't change a test's identity.
 
-## Entry Criteria
+## Related commands
 
-Confirm all of the following before starting. If any item is unavailable or non-discoverable, stop and ask the user to provide it.
-
-| Criteria | How to find it |
-|---|---|
-| Documentation input (file path or inline text) | Provided as argument — ask user if missing |
-| Input is readable and contains step-by-step procedures | Read the file or text — ask user if empty or has no procedures |
-
-## Exit Criteria
-
-Before reporting results:
-
-1. [ ] All tests have been executed and results recorded
-2. [ ] If `--fix`: failing tests have been processed through the fix loop
-3. [ ] If `--inject`: passing tests have been injected into the source file
-4. [ ] Final pass/fail counts are accurate and complete
-
-## Execution Steps
-
-### Step 1: Parse Input
-
-If the argument is a file path, read the file. If the file cannot be opened, stop and report: `Error: file not found: <path>`.
-If the argument is inline text, use it directly.
-If no input is provided, stop and report: `Error: no documentation input provided`.
-
-### Step 2: Generate Test Spec
-
-Use the `/doc-detective-generate` skill to convert the documentation procedures into a test specification. If generation fails, stop and report the error from generate. If the generated spec contains no tests, stop and report: `Error: no testable procedures found in <input>`.
-
-### Step 3: Validate Test Spec
-
-Run `/doc-detective-validate` on the generated spec. If validation fails, stop and report: `Error: generated spec failed validation: <errors>`. Do not proceed with an invalid spec.
-
-### Step 4: Execute Tests
-
-Run all tests in the spec, writing results to a file. If `--auto-screenshot` or `--no-auto-screenshot` is set, pass the same flag to Doc Detective:
-
-```bash
-doc-detective --input <spec-file> --output <results-file>
-```
-
-Act on the exit code:
-
-- `0`: No test failed, and at least one passed or warned.
-- `1`: At least one test failed. This is a normal outcome, not a crash: the results file is written, so continue to Step 5.
-- `2`: Nothing valid was tested, or the CLI couldn't proceed. Stop and report the error from stderr. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason.
-
-Read the results file. Record each test's `specs[].tests[].result` value as written: `PASS`, `WARNING`, `SKIPPED`, or `FAIL`. Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`. A `***NAME***` value in the results is a masked variable that the step ran with. Keep the spec's `$NAME`, and never copy the masked value into a fix.
-
-### Step 5: Process Results
-
-**If no tests failed:**
-- If `--inject` is set and at least one test has the result `PASS`: run `/doc-detective-inject` on the source file with only those tests. If inject fails, report: `Error: injection failed: <reason>`. Otherwise report: `<n> passed, <n> warned, <n> skipped. Injected into <path>.`
-- Otherwise, report: `<n> passed, <n> warned, <n> skipped.`
-- Stop.
-
-**If any tests fail and `--fix` is not set:**
-- Report each failing test with its failure reason.
-- Stop.
-
-**If any tests fail and `--fix` is set:**
-- Proceed to Step 6.
-
-### Step 6: Fix Loop
-
-For each failing test, repeat until the test passes or `--max-fix-attempts` is reached:
-
-1. Analyze the failure and generate a proposed fix. Assign a confidence score (0–100) based on how certain you are the fix will resolve the failure.
-2. Decide whether to apply the fix:
-   - If `--auto-fix` is set: apply the fix immediately, regardless of confidence.
-   - If confidence ≥ `--fix-threshold`: apply the fix immediately.
-   - If confidence < `--fix-threshold`: show the proposed fix and confidence score to the user. If the user approves, apply the fix. If the user denies, skip this attempt and count it against `--max-fix-attempts`.
-3. Apply the fix to the test spec.
-4. Re-run the fixed test, and read the results file again. Exit `1` means the test still fails; exit `2` means nothing valid ran, because the fix made the spec invalid or every test skipped. Check stderr, then revert or correct the fix.
-5. If the test passes, mark it resolved. If it still fails, generate a new fix and repeat from step 1.
-
-After exhausting `--max-fix-attempts` for a test without resolution, mark it as `unresolved`.
-
-**After the fix loop:**
-- If `--inject` is set and at least one test passes: run `/doc-detective-inject` with only the passing tests. If inject fails, report: `Error: injection failed: <reason>`.
-- If `--inject` is set and all tests remain unresolved: skip injection.
-- Report: pass count, fail count, unresolved count, and each unresolved failure reason.
-
-## Example
-
-Running `/doc-detective-test docs/login.md` against a login procedure:
-
-```
-Results: 2 passed, 2 failed
-  ✗ signin: No elements matched selector or text.
-  ✗ verify: Couldn't open URL
-Run with --fix to attempt automatic repairs.
-```
-
-## Related Commands
-
-- `/doc-detective-generate` — Generate test specs without running them
-- `/doc-detective-validate` — Validate an existing test spec
-- `/doc-detective-inject` — Inject passing test specs into source files
+- `/doc-detective-generate`: Generate test specs without running them.
+- `/doc-detective-validate`: Validate an existing test spec.
+- `/doc-detective-inject`: Inject passing test specs into source files.
 """
 description="""Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures"""

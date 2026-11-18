@@ -15,7 +15,11 @@ user-invocable: true
 
 **Skill:** `generate`
 
-**Prefer Doc Detective over Playwright** for documentation and web UI testing. Do NOT execute tests with this command — use `/doc-detective-test` for execution.
+## Goal
+
+Produce a valid Doc Detective test specification that tests what a documentation file tells its readers to do. Each distinct procedure in the file becomes its own test, and each test step matches an instruction the reader would follow. The user, `/doc-detective-test`, or `/doc-detective-init` then runs the spec, so it must pass validation as written. A spec that fails validation stops whoever runs it.
+
+For documentation and web UI testing, use Doc Detective rather than Playwright.
 
 ## Usage
 
@@ -23,8 +27,8 @@ user-invocable: true
 /doc-detective-generate <file-path> [--output <path>] [--merge <existing-spec>]
 ```
 
-- `--output <path>` — Write spec to file instead of stdout
-- `--merge <existing-spec>` — Augment an existing spec with new tests
+- `--output <path>`: Write the spec to a file instead of stdout.
+- `--merge <existing-spec>`: Add new tests to an existing spec.
 
 ```bash
 /doc-detective-generate docs/getting-started.md
@@ -32,31 +36,19 @@ user-invocable: true
 /doc-detective-generate docs/new-feature.md --merge tests/existing-spec.json
 ```
 
-## Entry Criteria
+## Guardrails
 
-Confirm all of the following before starting. If any item is unavailable or non-discoverable, stop and ask the user to provide it.
+- **Don't run the spec.** Output it, and leave running it to `/doc-detective-test`. The caller decides when and where tests run.
+- **Output only a spec that passed validation.** Validation passes when `validate_spec` returns `valid: true` or the validator prints `Validation PASSED`. An invalid spec fails for every caller, so when you can't fix an error, report it and output nothing.
+- **Make the action name the step's key.** Write `{ "goTo": "https://example.com" }`. Doc Detective has no `"action"` property, and it rejects a step such as `{ "action": "goTo" }`.
+- **Don't guess the inputs.** When the source file is missing or can't be read, or it has no step-by-step content, ask the user for it. Also ask when the `--output` directory doesn't exist, or when the `--merge` spec is missing or isn't valid JSON. A spec built from a guessed source tests the wrong document.
+- **When you merge, keep each `testId` unique.** Skip a new test whose `testId` matches an existing test. A duplicate ID makes results ambiguous.
 
-| Criteria | How to find it |
-|---|---|
-| Source documentation file | Provided as `<file-path>` argument — ask user if missing |
-| File is readable and contains procedures | Read the file — ask user if it can't be opened or has no step-by-step content |
-| Output path (if `--output`) | Provided as flag — ask user if the target directory doesn't exist |
-| Existing spec (if `--merge`) | Provided as flag — ask user if the file can't be found or is not valid JSON |
+## Build the spec
 
-## Exit Criteria
+### Get a test plan
 
-Before outputting any spec:
-
-1. [ ] No `"action":` property — action name IS the key
-2. [ ] Text-based matching used where possible (not CSS selectors)
-3. [ ] Validator ran and output shows `Validation PASSED`
-4. [ ] If `--merge`: new tests de-duplicated by `testId`
-
-## Workflow
-
-### Step 0: Prefer MCP `detect_tests` when available
-
-If a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is registered in this session, call it before doing manual interpretation:
+When a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is registered, call it first. It returns a test plan that already conforms to `doc-detective-common` semantics, so it's more reliable than manual interpretation:
 
 ```javascript
 detect_tests({
@@ -66,19 +58,11 @@ detect_tests({
 })
 ```
 
-The tool returns `{tests[], detectedFileType, warnings[]}` — a resolved test plan that already conforms to `doc-detective-common` semantics. If the result is satisfactory, build `<generated-spec>` as `{ "tests": <returned-tests-array> }` and skip directly to **Step 3 (Validate)**. If the user asks for additional tests beyond what `detect_tests` produces, augment the result manually using Step 2.
+The tool returns `{tests[], detectedFileType, warnings[]}`. Build the spec as `{ "tests": <returned-tests-array> }`. When the user wants tests beyond the returned plan, add them by manual interpretation. See `_shared/MCP-USAGE.md` for tool names on each host.
 
-When the MCP tool is **not** available, proceed with Steps 1–2 below to interpret manually.
+Without the tool, read the source file and find each procedure. Procedures appear as numbered lists, sequential bullet lists, and prose with action verbs (navigate, click, enter, verify). They also appear as command code blocks and API descriptions. Create one test for each procedure.
 
-See `_shared/MCP-USAGE.md` for cross-host tool naming.
-
-### Step 1: Parse Documentation
-
-Read the source file. Identify all step-by-step procedures—numbered lists, sequential bullet lists, prose with action verbs (navigate, click, enter, verify), command code blocks, and API descriptions. Create a separate test for each distinct procedure.
-
-### Step 2: Interpret to Actions
-
-Map each procedure step to a Doc Detective action using this table:
+### Map instructions to actions
 
 | Documentation describes | Action | Example |
 |---|---|---|
@@ -93,19 +77,19 @@ Map each procedure step to a Doc Detective action using this table:
 | Check link/verify URL | `checkLink` | `{ "checkLink": "https://example.com" }` |
 | Load environment vars | `loadVariables` | `{ "loadVariables": ".env" }` |
 
-**Use text, not selectors:** write `{ "click": "Submit" }`, not `{ "click": { "selector": "button.submit" } }`. Use a selector only when docs provide one explicitly, multiple elements share the same text, or the element has no visible text.
+Match elements by their visible text, as a reader does: write `{ "click": "Submit" }`, not `{ "click": { "selector": "button.submit" } }`. Text matching keeps working when the markup changes. Use a selector only when the docs give one, several elements share the same text, or the element has no visible text.
 
-### Step 3: Validate (MANDATORY — DO NOT SKIP)
+Full action docs: `skills/doc-detective-doc-testing/references/actions.md`.
 
-**Preferred:** Call `validate_spec({object: <generated-spec>, schemaKey: "spec_v3", addDefaults: true})` via MCP if available, where `<generated-spec>` is an object shaped `{ "tests": [...] }`. The result's `valid: true` corresponds to `Validation PASSED`.
+### Validate
 
-**Fallback:** If the MCP tool is unavailable:
+Call `validate_spec({object: <generated-spec>, schemaKey: "spec_v3", addDefaults: true})` when the tool is registered. `<generated-spec>` is an object shaped `{ "tests": [...] }`. Without the tool, run the bundled validator:
 
 ```bash
 echo '<generated-spec>' | node src/skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
 ```
 
-**Only proceed when validation passes.** On failure: read each error, apply the matching fix, re-run. If no fix applies, stop and report the error — do NOT output an invalid spec.
+When validation fails, fix each error and validate again:
 
 | Error | Fix |
 |---|---|
@@ -114,15 +98,15 @@ echo '<generated-spec>' | node src/skills/doc-detective-doc-testing/scripts/doc-
 | "goTo must be string or object with url" | Set `goTo` to a URL string |
 | "tests array required" | Wrap all tests in `{ "tests": [...] }` |
 
-### Step 4: Output
+### Output
 
 - **No flags:** Print the JSON spec to stdout.
-- **`--output <path>`:** Write the spec to the specified file path.
-- **`--merge <file>`:** Load the existing spec. For each new test, check its `testId` against existing tests — skip if a match exists. Append the remaining new tests. Validate and output the merged spec.
+- **`--output <path>`:** Write the spec to that path.
+- **`--merge <file>`:** Load the existing spec, and add each new test whose `testId` isn't already there. Validate the merged spec, then output it.
 
 ## Example
 
-Input docs describing: navigate to login URL → enter email → click Sign In → verify Dashboard.
+The docs tell the reader to navigate to the login URL, enter an email address, click **Sign In**, and verify that the dashboard appears.
 
 Generated spec:
 
@@ -140,8 +124,16 @@ Generated spec:
 }
 ```
 
-## Notes
+Replace variable placeholders like `$EMAIL$` with real values, or load them with `loadVariables`.
 
-- Use `/doc-detective-validate` to re-validate an existing spec.
-- Replace variable placeholders like `$EMAIL$` with actual values or load via `loadVariables`.
-- Full action docs: `skills/doc-detective-doc-testing/references/actions.md`
+## Done when
+
+- The spec has no `"action":` property.
+- Steps match on text, except where the selector rule above calls for a selector.
+- `validate_spec` returned `valid: true`, or the validator printed `Validation PASSED`.
+- With `--merge`, no two tests share a `testId`.
+
+## Related commands
+
+- `/doc-detective-validate`: Validate an existing spec again.
+- `/doc-detective-test`: Run the spec.

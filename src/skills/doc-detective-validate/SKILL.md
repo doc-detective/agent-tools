@@ -14,15 +14,19 @@ metadata:
 
 **Skill:** `doc-detective:validate`
 
-Validate Doc Detective test specifications or configuration files to ensure they're correctly structured.
+## Goal
+
+Tell the user whether a Doc Detective test specification or configuration file is valid, and name every field that isn't. The user, or the skill that called this one, decides whether to run, fix, or discard the input based on this verdict. A verdict that says `Validation PASSED` for an invalid file lets a broken spec reach a test run.
 
 ## Usage
 
-Validate a test specification file or inline JSON:
+Validate a test specification file:
 
 ```bash
 /doc-detective-validate test-spec.json
 ```
+
+Or run the command with no argument, and give the spec as inline JSON:
 
 ```bash
 /doc-detective-validate
@@ -46,27 +50,17 @@ Validate a configuration file:
 /doc-detective-validate --config .doc-detective.json
 ```
 
-## Entry Criteria
+## Guardrails
 
-Confirm all of the following before starting. If any item is unavailable or non-discoverable, stop and ask the user to provide it.
+- **Report `Validation PASSED` only when a validator confirms that the input has no errors.** A missing or inconclusive check isn't a pass. When no validator can confirm the input, say so instead of giving a verdict. Callers act on this verdict without checking again.
+- **Report every error as `[FIELD]: [ERROR REASON]`.** The user fixes the file from this list, so a missing field name leaves them searching.
+- **Ask for the input when you don't have it.** When no file path or inline JSON was given, ask the user. Don't validate a file you found on your own.
 
-| Criteria | How to find it |
-|---|---|
-| Test spec or config content to validate | Provided as a file path or inline JSON — ask user if missing |
+## Choose a validator
 
-## Exit Criteria
+Validators differ in how closely they track the installed Doc Detective engine. Use the first one that's available.
 
-Before completing:
-
-1. [ ] Validation executed against the provided input
-2. [ ] Each error reported as: `[FIELD]: [ERROR REASON]`
-3. [ ] Final result stated as `Validation PASSED` or `Validation FAILED`
-
-## Workflow
-
-### Validate Test Specification
-
-**Preferred:** If a tool named `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered in this session, call it instead of shelling out:
+**MCP `validate_spec`.** When a tool named `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered, call it. It tracks the live schema:
 
 ```javascript
 validate_spec({
@@ -77,9 +71,9 @@ validate_spec({
 })
 ```
 
-The MCP tool returns `{valid, errors[], normalizedObject, schemaKey, schemaVersion}`. Report each entry of `errors[]` as `[instancePath]: [message]`. Treat `valid: true` as `Validation PASSED`.
+The tool returns `{valid, errors[], normalizedObject, schemaKey, schemaVersion}`. Report each entry of `errors[]` as `[instancePath]: [message]`. `valid: true` means `Validation PASSED`.
 
-**Fallback:** If the MCP tool is not available, run the validator (try in order; stop and tell the user if none are available):
+**Command-line validators.** Without the MCP tool, use these in order. When none is available, tell the user.
 
 ```bash
 # Option 1
@@ -94,33 +88,27 @@ npx doc-detective@5 validate <spec-file>
 npx doc-detective@5 --dry-run --input <spec-file>
 ```
 
-See `_shared/MCP-USAGE.md` for tool-naming conventions across hosts and `log_observation` guidance when validation friction is unrecoverable.
+See `_shared/MCP-USAGE.md` for tool names on each host, and for `log_observation` guidance when validation problems can't be resolved.
 
-**Only report `Validation PASSED` when the output confirms no errors.** On failure, report each error as `[FIELD]: [ERROR REASON]`.
+## What makes a test spec valid
 
-**Test spec checks:**
+- The `tests` array exists and isn't empty.
+- Each test has a non-empty `steps` array.
+- Each step contains exactly one recognized Doc Detective action.
+- Action parameters have the expected types.
 
-- `tests` array must exist and be non-empty
-- Each test must have a non-empty `steps` array
-- Each step must contain exactly one recognized Doc Detective action
-- Action parameters must match expected types
+## What makes a configuration file valid
 
-### Validate Configuration File
+For a config file, call `validate_spec({object: <config>, schemaKey: "config_v3", addDefaults: true})` when the tool is registered, and report each `errors[]` entry as `[instancePath]: [message]`. Without the tool, check the JSON against the `doc-detective-common` config schema, and report each field that fails as `[FIELD]: [ERROR REASON]`.
 
-**Preferred:** Call `validate_spec({object: <config>, schemaKey: "config_v3", addDefaults: true})` via MCP if available. Report each `errors[]` entry as `[instancePath]: [message]`.
-
-**Fallback:** Check the provided JSON against the doc-detective-common config schema. Report every field that fails as `[FIELD]: [ERROR REASON]`.
-
-**Config checks:**
-
-- `input`: must be a string or string array of valid glob patterns or file paths
-- `recursive`: must be a boolean
-- `output`: must be a string: the path of the JSON results file, not a folder
-- `outputDir`: must be a string: the folder for run folders and reports
-- `logLevel`: must be one of `silent`, `error`, `warning`, `info`, `debug`
-- `browser`: must be an object (not a string)
-- `env`: must be an object or `.env` file path string
-- `defaultCommandTimeout`: must be a number (milliseconds)
+- `input`: A string or string array of valid glob patterns or file paths.
+- `recursive`: A boolean.
+- `output`: A string, the path of the JSON results file, not a folder.
+- `outputDir`: A string, the folder for run folders and reports.
+- `logLevel`: One of `silent`, `error`, `warning`, `info`, `debug`.
+- `browser`: An object, not a string.
+- `env`: An object, or the path of a `.env` file as a string.
+- `defaultCommandTimeout`: A number, in milliseconds.
 
 **Valid config:**
 
@@ -134,6 +122,12 @@ See `_shared/MCP-USAGE.md` for tool-naming conventions across hosts and `log_obs
 { "input": "docs/", "browser": "chrome", "logLevel": "verbose" }
 ```
 
-Errors: `browser` must be object, `logLevel` value invalid.
+Errors: `browser` must be an object, and the `logLevel` value is invalid.
 
 See [doc-detective-common](https://github.com/doc-detective/doc-detective-common) for the full configuration schema.
+
+## Done when
+
+- A validator ran against the input you were given.
+- Each error appears as `[FIELD]: [ERROR REASON]`.
+- The result ends with `Validation PASSED` or `Validation FAILED`, or it tells the user that no validator could confirm the input, and why.
