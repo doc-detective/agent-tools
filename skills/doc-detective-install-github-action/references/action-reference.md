@@ -8,7 +8,7 @@ Complete reference for `doc-detective/github-action@v2`. Use this to configure w
 |---|---|---|
 | `version` | The Doc Detective version, range, or npm tag to install. `""` runs the `doc-detective` already resolvable in the working directory. | `5` |
 | `working_directory` | Directory to run Doc Detective and its `git` commands in, relative to the repo root. `config` and `input` resolve against it. | `.` (repo root) |
-| `cache` | Cache the `doc-detective` package, and the runtime and browsers it installs on first use, so later runs restore them instead of downloading them. On macOS runs that test iOS, also cache the WebDriverAgent build. Follows `DOC_DETECTIVE_CACHE_DIR` and a config `cacheDir`. Set to `false` to install everything on every run. The action skips caching when `version` is `""`. A failed restore or save logs a warning, and the run continues. | `true` |
+| `cache` | Cache the `doc-detective` package, and the runtime and browsers it installs on first use, so later runs restore them instead of downloading them. On macOS runs that test iOS, also cache the WebDriverAgent build. Follows `DOC_DETECTIVE_CACHE_DIR` and a `cacheDir` in `DOC_DETECTIVE_CONFIG` or the project config. Set to `false` to install everything on every run. The action skips caching when `version` is `""`. A failed restore or save logs a warning, and the run continues. | `true` |
 | `android` | Set up KVM for the Android emulator on Linux runners: `auto` (only when a spec has an `android` platform), `true`, or `false` | `auto` |
 | `config` | Path to Doc Detective config file, relative to `working_directory` | (auto-detected: `.doc-detective.json`, `.yaml`, or `.yml`) |
 | `input` | Input file or directory to test, relative to `working_directory` | (from config) |
@@ -121,7 +121,7 @@ The action caches the WDA build when all of these are true:
 
 - The job runs on macOS.
 - `cache` is on, and `version` isn't empty.
-- A spec or config in `input`, `config`, or `working_directory` sets `ios` as a `platform` or `platforms` value.
+- A spec or config in `input`, `config`, or `working_directory` sets `ios` as a `platform` or `platforms` value. The action scans JSON, YAML, and Markdown files, up to six folders below each of those paths.
 
 The build has its own cache entry, about 70 MB, separate from the runtime and browsers. After the first save, the action saves the entry again only when a run builds WDA, such as after an Xcode or driver update. A failed restore or save logs a warning, and the run continues.
 
