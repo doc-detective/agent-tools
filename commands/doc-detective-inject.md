@@ -5,7 +5,7 @@ skill: doc-detective-inject
 
 # Inject Inline Tests Command
 
-**Skill:** `doc-detective:inject`
+**Skill:** `doc-detective:doc-detective-inject`
 
 ## Goal
 

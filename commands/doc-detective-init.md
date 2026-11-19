@@ -5,7 +5,7 @@ skill: doc-detective-init
 
 # Init Command
 
-**Skill:** `doc-detective:init`
+**Skill:** `doc-detective:doc-detective-init`
 
 ## Goal
 

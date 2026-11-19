@@ -136,6 +136,6 @@ If `.doc-detective.json` or `.doc-detective.yaml` exists in the working director
 
 ## Related skills
 
-- `doc-detective:generate`: Generate test specs from documentation, the opposite direction.
-- `doc-detective:validate`: Validate test specs before injection.
-- `doc-detective:test`: Run test specs after injection.
+- `doc-detective:doc-detective-generate`: Generate test specs from documentation, the opposite direction.
+- `doc-detective:doc-detective-validate`: Validate test specs before injection.
+- `doc-detective:doc-detective-test`: Run test specs after injection.

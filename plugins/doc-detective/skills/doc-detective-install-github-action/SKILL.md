@@ -13,7 +13,7 @@ user-invocable: true
 
 # Install GitHub Action
 
-**Skill:** `doc-detective:install-github-action`
+**Skill:** `doc-detective:doc-detective-install-github-action`
 
 ## Goal
 
