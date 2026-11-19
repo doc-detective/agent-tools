@@ -1,6 +1,6 @@
 ---
 name: doc-detective-validate
-description: 'Check whether an existing Doc Detective test spec or config file (such as .doc-detective.json) is valid, and name each invalid field, without running any tests. To run tests, use doc-detective-test. To write a new spec, use doc-detective-generate.'
+description: 'Check whether a Doc Detective test spec or config is valid, whether it is a file such as .doc-detective.json or JSON pasted into the message, and name each invalid field, without running any tests. Use for yes-or-no questions about whether a specific spec or config would load or be rejected, and for lint or schema-check requests. Use it rather than judging validity from memory. To run tests, use doc-detective-test. To write a new spec, use doc-detective-generate. Not for generic JSON or YAML syntax checks.'
 metadata:
   version: '2.1.1'
   organization: Doc Detective
