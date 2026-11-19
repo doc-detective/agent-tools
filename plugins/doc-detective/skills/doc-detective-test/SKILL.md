@@ -93,7 +93,7 @@ Take each failure reason from `resultDescription` on the steps in `specs[].tests
 
 | Error | Likely cause |
 |---|---|
-| "No elements matched selector or text." | Text changed, element removed, wrong selector, page slow to load |
+| "Couldn't find element ..." or "Couldn't find an element within `timeout` ..." | Text changed, element removed, wrong selector, page slow to load |
 | "Couldn't open URL" or "Invalid or unresolvable URL" | URL changed, server down, auth required |
 | "Returned 404. Expected one of [200,201]." | API endpoint changed, auth issue |
 
@@ -113,7 +113,7 @@ Mark a test that still fails after the last attempt as `unresolved`.
 
 ## Inject passing tests
 
-With `--inject`, inject when no test failed, or when the fix loop has finished. When tests fail and `--fix` isn't set, report the failures and don't inject. Run `/doc-detective-inject` on the source file with only the tests whose result is `PASS`. When every test remains unresolved, skip injection. When injection fails, report `Error: injection failed: <reason>`.
+With `--inject`, inject when no test failed, or when the fix loop has finished. When tests fail and `--fix` isn't set, report the failures and don't inject. Run `/doc-detective-inject <spec-file> <source-file> --apply` with a spec that holds only the tests whose result is `PASS`. The user's `--inject` is the confirmation that `--apply` asks for. When every test remains unresolved, skip injection. When injection fails, report `Error: injection failed: <reason>`.
 
 ## Report
 
@@ -125,7 +125,7 @@ Example, for `/doc-detective-test docs/login.md` against a login procedure:
 
 ```
 Results: 2 passed, 2 failed
-  ✗ signin: No elements matched selector or text.
+  ✗ signin: Couldn't find element `Sign in`.
   ✗ verify: Couldn't open URL
 Run with --fix to attempt automatic repairs.
 ```

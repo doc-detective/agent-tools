@@ -123,7 +123,7 @@ For a config file, call `validate_spec({object: <config>, schemaKey: "config_v3"
 
 Errors: `logLevel` isn't one of the allowed values, and `recursive` must be a boolean.
 
-See [doc-detective-common](https://github.com/doc-detective/doc-detective-common) for the full configuration schema.
+See the [`config_v3` schema](https://github.com/doc-detective/doc-detective/blob/main/src/common/src/schemas/src_schemas/config_v3.schema.json) for the full configuration schema.
 
 ## Done when
 

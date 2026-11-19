@@ -61,14 +61,16 @@ Report the file counts, the key directories, and the procedure-heavy files to th
 Follow the "smallest reasonable config" principle: set only what the defaults don't already cover. Without an existing config, create `.doc-detective.json` with:
 
 ```json
-{ "input": "docs", "outputDir": ".doc-detective/results", "detectSteps": false }
+{ "input": "doc-detective-tests", "outputDir": ".doc-detective/results", "detectSteps": false }
 ```
+
+`input` names the directory the generated specs go in, so a run without `--input`, such as the GitHub Action's or `/doc-detective-test`'s, finds them.
 
 See [references/config-guidance.md](references/config-guidance.md) for full options and merge rules.
 
 ## Generate tests
 
-For each procedure-heavy file, run:
+Unless `--dry-run` is set, create the `doc-detective-tests/` directory first, because `/doc-detective-generate` stops to ask when the `--output` directory doesn't exist. Then, for each procedure-heavy file, run:
 
 ```
 /doc-detective-generate <file-path> --output doc-detective-tests/<name>-spec.json

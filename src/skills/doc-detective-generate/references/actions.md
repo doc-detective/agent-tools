@@ -119,7 +119,7 @@ On macOS, launch by bundle ID or by `.app` path:
 - `app`: Required. The app to launch. On Windows, an executable path, package name, or UWP AppUserModelID. On macOS, a `.app` path or a bundle ID (`com.apple.TextEdit`). The kind is inferred from the value's syntax; there is no separate type field.
 - `name`: The surface name later steps reference in `surface`. Defaults to the executable's basename (without extension) or the final segment of an ID.
 - `args`: Launch arguments. On macOS they pass to the app as a real argument array. On Windows they join into a single shell-style string, so an argument that contains spaces must carry its own quotes (for example, `"\"My File.txt\""`).
-- `workingDirectory`: Not supported by any app driver. A non-default value fails the step with guidance. Launch through `runShell` if the working directory matters.
+- `workingDirectory`: Not an app field. No app driver supports it, so validation rejects it. Launch through `runShell` if the working directory matters.
 - `env`: Extra environment variables for the launched app. Supported on macOS. On Windows, any value fails the step with guidance. Set the variables in the shell that launches Doc Detective, or launch through `runShell` instead.
 - `waitUntil`: Startup readiness gate: `{ delayMs?: number, find?: object }`. `delayMs` waits a fixed time; `find` waits for an element to appear.
 - `timeout`: Maximum time in ms to wait for startup (default `60000`). The first macOS launch builds the driver's helper app and can take a few minutes, so allow extra time there.
@@ -527,7 +527,7 @@ With options:
 
 **Options:**
 - `url`: URL to check
-- `statusCodes`: Array of acceptable status codes (default: 200-299)
+- `statusCodes`: Array of acceptable status codes (default: `[200, 301, 302, 307, 308]`)
 
 ---
 
@@ -555,12 +555,14 @@ Perform HTTP requests for API testing.
   "httpRequest": {
     "url": "https://api.example.com/users",
     "method": "POST",
-    "headers": {
-      "Content-Type": "application/json"
-    },
-    "body": {
-      "name": "Test User",
-      "email": "test@example.com"
+    "request": {
+      "headers": {
+        "Content-Type": "application/json"
+      },
+      "body": {
+        "name": "Test User",
+        "email": "test@example.com"
+      }
     }
   }
 }
@@ -574,11 +576,13 @@ Perform HTTP requests for API testing.
     "url": "https://api.example.com/status",
     "method": "GET",
     "statusCodes": [200],
-    "responseHeaders": {
-      "content-type": "application/json"
-    },
-    "responseBody": {
-      "status": "healthy"
+    "response": {
+      "headers": {
+        "content-type": "application/json"
+      },
+      "body": {
+        "status": "healthy"
+      }
     }
   }
 }
@@ -587,12 +591,12 @@ Perform HTTP requests for API testing.
 **Options:**
 - `url`: Request URL
 - `method`: `"GET"` | `"POST"` | `"PUT"` | `"PATCH"` | `"DELETE"`
-- `headers`: Request headers object
-- `body`: Request body (object or string)
-- `statusCodes`: Expected status codes
-- `responseHeaders`: Expected response headers
-- `responseBody`: Expected response body (partial match)
-- `timeout`: Request timeout in ms
+- `request`: What to send: `headers` (object), `parameters` (URL query parameters, object), and `body` (object or string)
+- `statusCodes`: Expected status codes (default `[200, 201]`)
+- `response`: What to expect: `headers` (object) and `body` (JSON object, partial match). A missing key/value pair fails the step.
+- `timeout`: Request timeout in ms (default `60000`)
+
+The object form is strict: `headers`, `body`, `responseHeaders`, or `responseBody` at the top level fails validation.
 
 ---
 
@@ -643,13 +647,13 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 }
 ```
 
-**Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid and Doc Detective silently skips it):
+**Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid. By default, Doc Detective then runs nothing and exits `2`):
 - `command`: Shell command to execute (required)
 - `shell`: Shell to run the command in: `bash` (default), `cmd`, or `powershell`. `cmd` and `powershell` are Windows-only; gate those steps to Windows with a `runOn` context (for example, `"runOn": [{ "platforms": ["windows"] }]`) if the spec also runs elsewhere. If unset, falls back to the config-level `shell`, which also defaults to `bash`.
 - `args`: Array of string arguments for the command (default: `[]`)
 - `exitCodes`: Expected exit codes (default: `[0]`). The step fails if the actual exit code is not in this list.
 - `stdio`: Expected content in the command's **stdout or stderr** (partial match). Plain string, or a `/regex/` delimited by forward slashes.
-- `workingDirectory`: Directory to run the command in (default `"."`, relative to where Doc Detective is invoked)
+- `workingDirectory`: Directory to run the command in. Omit it to run where you ran Doc Detective. A relative path resolves against the spec file's directory, so `"."` is the spec's folder.
 - `timeout`: Max time in milliseconds the command is allowed to run before the step fails (default: `60000`)
 
 These fields capture the command's output to a file and compare it against the saved copy on later runs (a snapshot test):
@@ -854,15 +858,14 @@ With options:
 {
   "screenshot": {
     "path": "screenshots/dashboard.png",
-    "fullPage": true
+    "crop": "#main-content"
   }
 }
 ```
 
 **Options:**
-- `path`: Output file path
-- `fullPage`: Capture entire scrollable page (boolean)
-- `selector`: Capture specific element only
+- `path`: Output file path, ending in `.png`
+- `crop`: Capture one element only: its display text or selector, or an object with element fields such as `selector` plus an optional `padding`
 
 ### record / stopRecord
 

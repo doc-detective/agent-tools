@@ -102,7 +102,7 @@ Generated spec:
     "testId": "login-guide", "description": "Login Guide",
     "steps": [
       { "stepId": "nav", "goTo": "https://app.example.com/login" },
-      { "stepId": "email", "type": { "keys": "$EMAIL$", "selector": "[type='email']" } },
+      { "stepId": "email", "type": { "keys": "$EMAIL", "selector": "[type='email']" } },
       { "stepId": "signin", "click": "Sign In" },
       { "stepId": "verify", "find": "Dashboard" }
     ]
@@ -110,7 +110,7 @@ Generated spec:
 }
 ```
 
-Replace variable placeholders like `$EMAIL$` with real values, or load them with `loadVariables`.
+`$EMAIL` reads the `EMAIL` environment variable. Set it in the environment, or load it from a `.env` file with `loadVariables`. `$NAME$`, with a trailing `$`, is a special key such as `$ENTER$`, not a variable.
 
 ## Done when
 

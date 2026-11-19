@@ -90,6 +90,7 @@ Define custom patterns in `.doc-detective.json` or `.doc-detective.yaml`:
   "fileTypes": [
     {
       "name": "markdown",
+      "extends": "markdown",
       "markup": [
         {
           "name": "customClickButton",
@@ -150,6 +151,7 @@ The config also supports custom inline statement patterns:
   "fileTypes": [
     {
       "name": "markdown",
+      "extends": "markdown",
       "inlineStatements": {
         "testStart": ["<!--\\s*test\\s*([\\s\\S]*?)\\s*-->"],
         "testEnd": ["<!--\\s*test end\\s*-->"],

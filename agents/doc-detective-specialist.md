@@ -130,7 +130,7 @@ Documentation contains testable assertions—promises to users about what happen
     "steps": [
       { "goTo": { "url": "https://example.com" } },
       { "find": { "elementText": "Submit" } },
-      { "click": {} }
+      { "click": { "elementText": "Submit" } }
     ]
   }]
 }

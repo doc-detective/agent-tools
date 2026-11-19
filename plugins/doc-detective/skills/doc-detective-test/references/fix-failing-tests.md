@@ -29,7 +29,6 @@ Analyze failure → Generate fix → Calculate confidence → Apply/Prompt → R
 | `--dry-run` | `false` | Show proposed fixes without applying them |
 | `--auto-fix` | `false` | Apply all fixes regardless of confidence |
 | `--threshold <0-100>` | `80` | Confidence at or above which a fix applies automatically |
-| `--max-iterations <n>` | `3` | Maximum fix attempts per test |
 | `--output <path>` | input spec | Write the fixed spec here instead of overwriting the input |
 
 ## Confidence scores
@@ -98,14 +97,14 @@ The dump includes:
 
 ### Using the Environment Variable
 
-Set `DOC_DETECTIVE_DEBUG=true` to print the same dump from the default command. Doc Detective then exits without running tests:
+Set `DOC_DETECTIVE_DEBUG=true` to run the tests with debug-level logging. It doesn't print the diagnostic dump; `doc-detective debug` does:
 
 ```bash
-# CI-friendly: emit diagnostics instead of running tests
+# CI-friendly: run tests with debug-level logs
 DOC_DETECTIVE_DEBUG=true npx doc-detective@5
 ```
 
-Useful in CI pipelines when tests fail unexpectedly. The env-var path omits the full `process.env` dump for security.
+Useful in CI pipelines when tests fail unexpectedly.
 
 ### Secret Redaction
 

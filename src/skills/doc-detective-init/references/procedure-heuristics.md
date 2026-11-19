@@ -123,7 +123,7 @@ For CLI docs, a command block with a documented outcome (exit code or output) is
 **Environment variables:**
 When docs mention "enter your API key" or similar:
 ```json
-{ "type": { "keys": "$API_KEY$", "selector": "..." } }
+{ "type": { "keys": "$API_KEY", "selector": "..." } }
 ```
 
 **Wait conditions:**
