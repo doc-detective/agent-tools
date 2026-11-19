@@ -25,6 +25,6 @@ web app both work and can talk to each other.
    You should see the heading **Common HTML Elements**.
 
 4. Go to `http://localhost:8092/type-echo.html` and enter `install-check` in the
-   **Type here** field.
+   **Type here:** field.
 
    The preview below the field reads **install-check**. Your installation is ready.

@@ -12,7 +12,7 @@ Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (
 ## Requirements
 
 - The `claude` CLI, signed in. Runs are billed to that account.
-- Node.js 22.22.2 or later, 24.15 or later, or 26.12.1 or later. Doc Detective 5.5's Appium refuses older versions, so on an older default Node, point `DD_NODE_DIR` at a newer one.
+- Node.js 22.22.2 or later, 24.15 or later, or 26.12.1 or later. Doc Detective 5.6's Appium refuses older versions, so on an older default Node, point `DD_NODE_DIR` at a newer one.
 - `npm ci` in this repository.
 
 ## Run the routing eval
@@ -28,16 +28,18 @@ Each case is a request from [routing/cases.json](routing/cases.json), sent with 
 ## Run the spec-generation eval
 
 ```bash
-DD_REPO=<doc-detective checkout> MANNI_DIR=<manni clone> MANNI_PREFIX=<npm prefix> \
+DD_REPO=<doc-detective checkout> MANNI_PREFIX=<npm prefix> \
   node evals/spec-generation/run-eval.mjs --flow .claude/hillclimb/spec-generation --variant baseline --model claude-sonnet-5-5
 ```
 
-Each case runs `/doc-detective:doc-detective-generate <page> --output tests/<id>.spec.json` in a fresh workspace, then runs the spec it wrote with `doc-detective@5.5.0`. The grade compares the spec's steps with the case's `expected.json`, one generated step per expected step. A spec that only opens the page passes but covers almost nothing, so `complete` needs both.
+Each case runs `/doc-detective:doc-detective-generate <page> --output tests/<id>.spec.json` in a fresh workspace, then runs the spec it wrote with `doc-detective@5.6.0`, what `doc-detective@5` resolves to, so the session's own runs and the grade agree. The grade compares the spec's steps with the case's `expected.json`, one generated step per expected step. A spec that only opens the page passes but covers almost nothing, so `complete` needs both.
 
-There are two slices:
+A case's `workspace/` folder, when it has one, is the repo the session starts in: the files, folders, and config the page names. The runner adds the page and an empty `tests/` (with a `.gitkeep`). For manni and dd-docs it makes the result one git commit, so no history holds the page's original tests. Doc Detective runs from the workspace root with [doc-detective.config.json](spec-generation/doc-detective.config.json), which resolves relative paths from there (`relativePathBase: "cwd"`).
+
+There are three slices:
 
 - **web** ([spec-generation/cases/](spec-generation/cases/)): 21 how-to docs for the pages on Doc Detective's test server. `DD_REPO` is a [doc-detective](https://github.com/doc-detective/doc-detective) checkout with `npm ci` done. The runner starts its test servers (ports 8092 and 8093) when they aren't already up.
-- **manni** ([spec-generation/cases-manni/](spec-generation/cases-manni/)): 20 manni docs pages with their inline tests removed. `original.mdx` keeps the page as it was. Each case's workspace is an export of manni at commit `3a8b3d51399c4bac38021656b338af0f57376e88`, so the generated spec runs against manni's own fixtures. Set it up once:
+- **manni** ([spec-generation/cases-manni/](spec-generation/cases-manni/)): 19 manni docs pages with their inline tests removed, each in a small repo that holds what the page names. `original.mdx` keeps the page as it was. The manni CLI is a build of commit `3a8b3d51399c4bac38021656b338af0f57376e88`, linked into an npm prefix. Set it up once:
 
   ```bash
   git clone <manni repo> manni && cd manni
@@ -46,9 +48,10 @@ There are two slices:
   npm_config_prefix="$PWD/../npm-global" npm link
   ```
 
-  Then set `MANNI_DIR` to that clone and `MANNI_PREFIX` to the `npm-global` directory. The clone needs full history, not a shallow one.
+  Then set `MANNI_PREFIX` to the `npm-global` directory. The runner puts it first on `PATH` and sets `npm_config_prefix` for the session and the grade, so `manni` and `npx @hawkeyexl/manni` both run that build.
+- **dd-docs** ([spec-generation/cases-dd-docs/](spec-generation/cases-dd-docs/)): 8 pages from Doc Detective's own docs with their inline tests removed. They run against the shell and the test servers. Two call `python` and `bash`, so both must be on `PATH`.
 
-[spec-generation/cases.md](spec-generation/cases.md) and [spec-generation/cases-manni.md](spec-generation/cases-manni.md) describe every case. Each case's `reference.spec.json` passes and covers every expected step, so it scores `complete`.
+[spec-generation/cases.md](spec-generation/cases.md), [spec-generation/cases-manni.md](spec-generation/cases-manni.md), and [spec-generation/cases-dd-docs.md](spec-generation/cases-dd-docs.md) describe every case. Each case's `reference.spec.json` passes and covers every expected step, so it scores `complete`, and a one-step spec scores 0.
 
 ## Run a subset
 
@@ -58,7 +61,7 @@ There are two slices:
 EVAL_ONLY=init-plain,neg-playwright node evals/routing/run-eval.mjs --flow .claude/hillclimb/routing --variant baseline --model claude-sonnet-5-5
 ```
 
-Spec-generation case ids carry their slice: `web-01-home-page-tour`, `manni-cite-ci`.
+Spec-generation case ids carry their slice: `web-01-home-page-tour`, `manni-cite-ci`, `dd-docs-runshell`.
 
 ## Approve changed eval code
 

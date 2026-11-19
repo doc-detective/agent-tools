@@ -1,30 +1,48 @@
 {
   "source": "manni/docs/src/content/docs/meta/set-up/new-required-field.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-new-required-field.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "must have required property 'owner'",
-      "note": "Step 1: a doc lacking the new field fails once it is required."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Step 1: with `owner` required, a pass shows the backlog and exits 1."
     },
     {
-      "action": "runShell",
-      "match": "--write-baseline",
-      "note": "Step 2: --write-baseline records the finding and exits 0."
+      "stepType": "runShell",
+      "match": ["meta validate", "--write-baseline"],
+      "match_any": ["Baseline written", "recorded"],
+      "note": "Step 2: record the backlog; the page quotes `Baseline written to .manni-baseline.json` and the recorded count."
     },
     {
-      "action": "runShell",
-      "match": "baselined finding",
-      "note": "Step 3: with --baseline the same run passes, still counting the finding."
+      "stepType": "runShell",
+      "match": ["meta validate", "baselined finding"],
+      "note": "Step 3: with `baseline:` in the config, the build is green and counts the baselined findings."
     },
     {
-      "action": "runShell",
-      "match": "--baseline",
-      "note": "Step 4: a new violation not in the baseline still fails."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Step 4.1: a doc that lands without `owner` fails, exit 1."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "no longer occur"],
+      "note": "Step 4.2: a fixed violation is reported as no longer occurring."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--write-baseline"],
+      "match_any": ["Baseline written", "recorded"],
+      "note": "Step 4.3: prune by re-recording the baseline."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "ALTER TABLE"],
+      "note": "The one-statement ratchet: ALTER TABLE adds the field as required and backfills every file."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`.",
-    "The baseline file is written to the cwd; delete it after the run."
+    "manni.config.yaml validates collection `pages` (docs/**/*.md) against schemas/doc.json, which requires only `type`; no baseline yet. The page has the reader add `owner` to the schema and `baseline:` to the config, so a spec makes both edits.",
+    "docs/api/legacy.md and docs/api/errors.md lack `owner`; docs/guides/intro.md has one. Step 4 needs a new page without `owner` and a fix to an old one, which a spec writes."
   ]
 }

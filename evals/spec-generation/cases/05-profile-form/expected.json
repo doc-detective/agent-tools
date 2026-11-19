@@ -8,17 +8,17 @@
     {
       "stepType": "type",
       "match": "Ada Lovelace",
-      "note": "Step 2.1: enter the name in Text Input."
+      "note": "Step 2.1: enter the name in Text Input:."
     },
     {
       "stepType": "type",
       "match": "ada@example.com",
-      "note": "Step 2.2: enter the email in Email Input."
+      "note": "Step 2.2: enter the email in Email Input:."
     },
     {
       "stepType": "type",
       "match": "Analytical engine enthusiast.",
-      "note": "Step 2.3: enter the bio in Textarea."
+      "note": "Step 2.3: enter the bio in Textarea:."
     },
     {
       "stepType": "click",
@@ -42,7 +42,7 @@
         "type",
         "runBrowserScript"
       ],
-      "note": "Step 4: choose Option 2 in Dropdown Select."
+      "note": "Step 4: choose Option 2 in Dropdown Select:."
     }
   ],
   "must_not": [

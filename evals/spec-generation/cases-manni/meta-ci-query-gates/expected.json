@@ -1,74 +1,67 @@
 {
   "source": "manni/docs/src/content/docs/meta/ci/query-gates.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-ci-query-gates.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "json_each",
-      "note": "A tag census with json_each and plain SQL aggregates."
+      "stepType": "runShell",
+      "match": ["meta query", "json_each"],
+      "note": "A tag census over a corpus."
     },
     {
-      "action": "runShell",
-      "match": "JOIN authors",
-      "note": "A declared collection is a view; the dangling-author rule joins FROM authors."
+      "stepType": "runShell",
+      "match": ["meta query", "--check", "join authors", "check failed"],
+      "note": "The dangling-author rule joins the `authors` view; the page quotes `✗ 1 row — check failed`."
     },
     {
-      "action": "runShell",
-      "match": "LEFT JOIN docs a",
-      "note": "The no-config fallback: the same rule as a self-join."
+      "stepType": "runShell",
+      "match": ["meta query", "--check", "join docs a"],
+      "note": "With no config, the same rule as a path self-join over bare inputs."
     },
     {
-      "action": "runShell",
-      "match": "HAVING",
-      "note": "Duplicate slugs, the GROUP BY ... HAVING shape."
+      "stepType": "runShell",
+      "match": ["meta query", "--check", "having"],
+      "note": "Duplicate slugs, same shape."
     },
     {
-      "action": "runShell",
-      "match": "-> todo",
-      "note": "--dry-run previews a mutating statement."
+      "stepType": "runShell",
+      "match": ["meta query", "--check", "--param"],
+      "note": "`--param author=ghost` binds a runtime value into the gate."
     },
     {
-      "action": "runShell",
-      "match": "DROP TABLE",
-      "note": "DROP TABLE is refused, exit 2."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Name the gate in config: a bare `meta validate` runs the checks after the per-file schemas."
     },
     {
-      "action": "runShell",
-      "match": "check:unique-slugs",
-      "note": "A named check in config annotates the offending line."
+      "stepType": "runShell",
+      "match": ["meta validate", "checks skipped"],
+      "note": "A scoped run (`manni meta validate docs/intro.md`) skips checks with a `corpus checks skipped` notice."
     },
     {
-      "action": "runShell",
-      "match": "check:guide-needs-owner",
-      "note": "A check may read a collection as a view."
+      "stepType": "runShell",
+      "match": ["meta query"],
+      "match_any": ["-f json", "--format json"],
+      "note": "`--format json` prints the bare result array."
     },
     {
-      "action": "runShell",
-      "match": "corpus checks skipped",
-      "note": "A run scoped by paths skips checks with a notice."
+      "stepType": "runShell",
+      "match": ["meta query"],
+      "match_any": ["-f csv", "--format csv"],
+      "note": "`--format csv` prints the same rows as CSV."
     },
     {
-      "action": "runShell",
-      "match": "scoped to collections guides",
-      "note": "--collection is scoped too."
+      "stepType": "runShell",
+      "match": ["meta query", "--db"],
+      "note": "`--db <path>` writes the built table to a SQLite file."
     },
     {
-      "action": "runShell",
-      "match": "duplicate slug",
-      "note": "query --check -f github: the ad-hoc spelling."
-    },
-    {
-      "action": "runShell",
-      "match": "--param",
-      "note": "--param binds a runtime value into the gate."
-    },
-    {
-      "action": "runShell",
-      "match": "-f csv",
-      "note": "-f csv prints rows as CSV, header first."
+      "stepType": "runShell",
+      "match": ["meta query", "--dry-run", "(unset) -> todo"],
+      "note": "`--dry-run` previews the UPDATE; the page quotes `reviewed: (unset) -> todo`."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "docs/ (five pages with slug, author, tags, draft, and review fields: one cites the missing author `ghost`, two share a slug), authors/ (two author pages), schemas/author.json, and the page's manni.config.yaml declaring the `pages` and `authors` collections. The page has the reader move the duplicate-slug rule into `checks:`, so a spec rewrites the config before the bare validate."
   ]
 }

@@ -12,7 +12,7 @@ owner.
 
 2. Go to `http://localhost:8092/type-echo.html`.
 
-3. In the **Type here** field, enter your invitation code. This guide uses
+3. In the **Type here:** field, enter your invitation code. This guide uses
    `INV-2048`.
 
    The code appears below the field so you can double-check it before you

@@ -1,59 +1,30 @@
 {
   "source": "manni/docs/src/content/docs/meta/schemas/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-schemas.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "1 passed",
-      "note": "A document points itself at a schema via $schema."
+      "stepType": "runShell",
+      "match": ["meta schemas"],
+      "note": "Run `manni meta schemas` for the full built-in list."
     },
     {
-      "action": "runShell",
-      "match": "1 passed",
-      "note": "The minimal title schema passes a doc with a title."
+      "stepType": "runShell",
+      "match": ["meta validate", "-s"],
+      "note": "Reference your own schema by path: `manni meta validate docs/ -s ./schemas/metadata.schema.json`."
     },
     {
-      "action": "runShell",
-      "match": "must have required property 'title'",
-      "note": "An absent required field is a hard failure."
+      "stepType": "runShell",
+      "match": ["meta validate", "diataxis:diataxis:1.0", "google:okf:0.1"],
+      "note": "Stack a type vocabulary with OKF: `manni meta validate docs/ -s diataxis:diataxis:1.0 -s google:okf:0.1`."
     },
     {
-      "action": "runShell",
-      "match": "date-time",
-      "note": "The date-time format is enforced."
-    },
-    {
-      "action": "runShell",
-      "match": "google:okf:0.1",
-      "note": "`schemas` lists the OKF fallback."
-    },
-    {
-      "action": "runShell",
-      "match": "diataxis:diataxis:1.0",
-      "note": "`schemas` lists the Diataxis vocabulary."
-    },
-    {
-      "action": "runShell",
-      "match": "1 passed",
-      "note": "Stacking OKF with a taxonomy schema passes."
-    },
-    {
-      "action": "runShell",
-      "match": "allowed values",
-      "note": "A near-miss spelling fails the closed vocabulary."
-    },
-    {
-      "action": "runShell",
-      "match": "tgdp:templates:1.0",
-      "note": "`schemas` lists the TGDP vocabulary."
-    },
-    {
-      "action": "runShell",
-      "match": "1 passed",
-      "note": "TGDP accepts a slug with no Diataxis equivalent."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Point a document at its schema, step 3: validate path/to/document.md after adding `$schema:`."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "docs/ with three pages typed as Diataxis forms (tutorial, how-to, reference), schemas/metadata.schema.json (the page's required-vs-recommended example), and path/to/document.md, the page's example document without `$schema:`. The page has the reader add `$schema: ./schemas/metadata.schema.json`, so a spec edits the file before the last validate."
   ]
 }

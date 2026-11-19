@@ -1,7 +1,7 @@
 {
   "steps": [
     {"stepType": "goTo", "match": "type-echo.html", "note": "Step 1: go to the live preview page."},
-    {"stepType": "type", "match": "Hello, Doc Detective", "note": "Step 3: enter Hello, Doc Detective in the Type here field."},
+    {"stepType": "type", "match": "Hello, Doc Detective", "note": "Step 3: enter Hello, Doc Detective in the Type here: field."},
     {"stepType": "find", "match": "Hello, Doc Detective", "note": "Step 3: the preview line reads Hello, Doc Detective."}
   ],
   "must_not": [

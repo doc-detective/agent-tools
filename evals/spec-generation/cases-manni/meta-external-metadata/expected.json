@@ -1,44 +1,51 @@
 {
   "source": "manni/docs/src/content/docs/meta/set-up/external-metadata.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-external-metadata.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "docs-meta.yaml:6",
-      "note": "A bad manifest value is reported at the manifest line."
+      "stepType": "runShell",
+      "match": ["meta validate", "docs-meta.yaml:6"],
+      "note": "What a failure looks like: the bad manifest value is reported at `docs-meta.yaml:6`."
     },
     {
-      "action": "runShell",
-      "match": "is owned by manifest",
-      "note": "The owned-key finding names the manifest and collection."
+      "stepType": "runShell",
+      "match": ["meta validate", "is owned by manifest"],
+      "may_share": true,
+      "note": "The same run's owned-key finding names the manifest and the collection."
     },
     {
-      "action": "runShell",
-      "match": "did not load",
-      "note": "A manifest entry naming an unloaded page is exit 2."
+      "stepType": "runShell",
+      "match": ["meta get", "jira=PLAT-412"],
+      "note": "`manni meta get jira docs/auth.md` prints `docs/auth.md: jira=PLAT-412`."
     },
     {
-      "action": "runShell",
-      "match": "PLAT-412 -> PLAT-1",
-      "note": "A write to a manifest-owned key lands in the manifest."
+      "stepType": "runShell",
+      "match": ["meta validate", "did not load"],
+      "note": "The orphan config's entry naming a page the run did not load is exit 2."
     },
     {
-      "action": "runShell",
-      "match": "cannot tell them apart",
-      "note": "A field-joined manifest flags a duplicate id on both pages."
+      "stepType": "runShell",
+      "match": ["meta validate", "cannot tell them apart"],
+      "note": "In the field-join fixture, two pages sharing one id is a finding on both."
     },
     {
-      "action": "runShell",
-      "match": "no loaded document carries",
-      "note": "A field entry no page carries is exit 2."
+      "stepType": "runShell",
+      "match": ["meta validate", "no loaded document carries"],
+      "note": "A join entry whose id no page carries is exit 2."
     },
     {
-      "action": "runShell",
-      "match": "joins on",
-      "note": "An UPDATE of the join field is refused, exit 2."
+      "stepType": "runShell",
+      "match": ["meta query", "joins on"],
+      "note": "Changing a field-joined page's `id` with `query` is refused."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "--dry-run", "PLAT-412 -> PLAT-1"],
+      "note": "Editing the values: a dry-run UPDATE of an owned key names the manifest it lands in."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "test/fixtures/external-metadata/ (the page's lean-docset example: config, docs-meta.yaml, private.schema.json, four pages, manni.orphan.config.yaml) and test/fixtures/external-metadata-join/ (the field-join example), as the page names them. The submodule, remote-manifest, and overlap examples use placeholder repos and URLs, so they are not expected."
   ]
 }

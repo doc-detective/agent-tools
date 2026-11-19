@@ -1,7 +1,7 @@
 {
   "steps": [
     {"stepType": "goTo", "match": "type-echo.html", "note": "Step 2: open the code entry page."},
-    {"stepType": "type", "match": "INV-2048", "note": "Step 3: enter INV-2048 in Type here."},
+    {"stepType": "type", "match": "INV-2048", "note": "Step 3: enter INV-2048 in the Type here: field."},
     {"stepType": "find", "match": "INV-2048", "note": "Step 3: the code appears below the field."}
   ],
   "must_not": [

@@ -1,25 +1,26 @@
 {
   "source": "manni/docs/src/content/docs/meta/get-started/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-get-started.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "1 passed",
-      "note": "Validate a passing file: exit 0 with a green summary."
+      "stepType": "runShell",
+      "match": ["meta validate", "1 passed"],
+      "note": "Validate a passing file: exit 0 and the summary the page quotes."
     },
     {
-      "action": "runShell",
-      "match": "must have required property 'type'",
-      "note": "A failing file exits 1 and names the missing property."
+      "stepType": "runShell",
+      "match": ["meta validate", "required property 'type'"],
+      "note": "With type removed, the file fails and names the missing property."
     },
     {
-      "action": "runShell",
-      "match": "google:okf:0.1",
-      "note": "The failing result cites the flagging schema."
+      "stepType": "runShell",
+      "match": ["meta validate", "google:okf:0.1"],
+      "may_share": true,
+      "note": "The failing result cites the flagging schema. It can be the same step as the missing property."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "`node --version` prerequisite check (page says Node 24+).",
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "path/to/your-doc.md holds the page's example document. The page asks the reader to remove `type`, so a spec edits the file or writes a copy without it."
   ]
 }

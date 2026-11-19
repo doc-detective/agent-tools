@@ -1,65 +1,64 @@
 {
-  "specId": "manni-cite-set-up-index",
-  "description": "Inline tests from manni docs/src/content/docs/cite/set-up/index.mdx",
+  "specId": "manni-cite-set-up",
+  "description": "manni docs cite/set-up, run in a repo that holds the page's manni.config.yaml (collection docs-pages), docs/limits.md and lib/limits.ts.",
   "tests": [
     {
-      "testId": "cite-set-up-index",
-      "description": "The single-repository path: the first add, the first check, a wrong root, and the usage error when nothing is declared.",
+      "testId": "cite-set-up",
       "steps": [
         {
-          "description": "The first add, previewed: --dry-run prints the entry it would splice into the page's frontmatter and writes nothing.",
+          "description": "Mint the first citation, previewed: --dry-run prints the frontmatter diff.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni cite add test/fixtures/cite/pages/no-citations.md:6 src/limits.ts:2 --id fetch-timeout --no-config --root test/fixtures/cite --dry-run",
+            "command": "manni cite add docs/limits.md:6 lib/limits.ts:2 --id fetch-timeout --dry-run",
             "exitCodes": [
               0
             ],
-            "stdio": "/\\+    claim:[\\s\\S]*\\+      lines: 3/"
+            "stdio": "/\\+citations:[\\s\\S]*\\+      lines: 3/"
           }
         },
         {
-          "description": "The report names both pins and the file line the claim sits on after the write, which is ten lines below the line that was typed.",
+          "description": "Drop --dry-run to write it: the report names both pins and the claim's new file line.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni cite add test/fixtures/cite/pages/no-citations.md:6 src/limits.ts:2 --id fetch-timeout --no-config --root test/fixtures/cite --dry-run",
+            "command": "manni cite add docs/limits.md:6 lib/limits.ts:2 --id fetch-timeout",
             "exitCodes": [
               0
             ],
-            "stdio": "/added fetch-timeout to frontmatter \\(claim at line 16, sha256-921b21cc…; source src\\/limits\\.ts:2 \"export const FETCH_TIMEOUT_MS = 10_000;\", sha256-78af1d33…/"
+            "stdio": "/added fetch-timeout to frontmatter \\(claim at line 16, sha256-921b21cc…; source lib\\/limits\\.ts:2 \"export const FETCH_TIMEOUT_MS = 10_000;\"/"
           }
         },
         {
-          "description": "The first check: both ends hash to their pins, both read in file lines, and the summary is green.",
+          "description": "The first check, with no arguments: the collection covers the page and both ends are current.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/current.md",
+            "command": "manni cite check",
             "exitCodes": [
               0
             ],
-            "stdio": "/fetch-timeout\\s+:15 current\\s+src\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+            "stdio": "/fetch-timeout\\s+:16 current\\s+lib\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
           }
         },
         {
-          "description": "A root that does not hold the source reports missing rather than resolving to the wrong file, and exits 1.",
+          "description": "From docs/, the root is still the git root, so the same sources resolve.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni cite check --no-config --root . test/fixtures/cite/pages/current.md",
+            "command": "cd docs && manni cite check",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 findings"
+          }
+        },
+        {
+          "description": "A wrong root reads the source end as missing rather than resolving the wrong file.",
+          "runShell": {
+            "command": "manni cite check --root docs",
             "exitCodes": [
               1
             ],
-            "stdio": "/src\\/limits\\.ts:2 missing/"
+            "stdio": "/lib\\/limits\\.ts:2 missing[\\s\\S]*1 file checked, 0 passed, 1 failed, 1 finding/"
           }
         },
         {
-          "description": "A declared collection makes a bare check cover the right pages: this repository's own config checks its own docs with no arguments.",
+          "description": "No positional paths and no config is an operational error, exit 2.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni cite check -q",
-            "exitCodes": [
-              0
-            ],
-            "stdio": "/\\d+ files checked, \\d+ passed, 0 failed, 0 findings/"
-          }
-        },
-        {
-          "description": "No positional paths and no config is an operational error, exit 2, not a silently empty pass.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni cite check --no-config",
+            "command": "manni cite check --no-config",
             "exitCodes": [
               2
             ],

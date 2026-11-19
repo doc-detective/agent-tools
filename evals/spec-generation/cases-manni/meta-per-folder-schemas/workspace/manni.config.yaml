@@ -1,0 +1,10 @@
+collections:
+  - name: api
+    paths: ["api/**/*.md"]
+  - name: guides
+    paths: ["guides/**/*.md"]
+
+meta:
+  # The baseline every doc must satisfy.
+  schemas:
+    - google:okf:0.1

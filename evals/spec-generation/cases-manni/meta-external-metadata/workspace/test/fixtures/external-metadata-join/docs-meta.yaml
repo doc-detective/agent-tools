@@ -1,0 +1,8 @@
+# Keys are values of each page's `id`, so a rename never orphans an entry.
+auth-guide:
+  source: internal/auth-design.md
+  jira: PLAT-412
+billing-guide:
+  jira: not-a-ticket
+shared:
+  jira: PLAT-7

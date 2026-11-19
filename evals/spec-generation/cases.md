@@ -27,9 +27,18 @@ test servers (`http://localhost:8092` static pages, `http://localhost:8093` echo
 - `match`: a string or array of strings. Every one must appear, case-insensitively, in the
   JSON-serialized step.
 - `match_any`: optional array. At least one must appear in the serialized step.
+- Matching strips backslashes first, so regex escapes in a step still match.
+- `may_share`: optional. When no unused step matches, this entry may reuse a step an
+  earlier entry claimed: two facts one step can check together.
 - Expected steps appear in doc order; a generated spec may add extra steps between them.
 - `must_not`: prose for a human or LLM grader. Covers unautomatable instructions, traps,
   and conditional advice that shouldn't become steps.
+
+The [manni](cases-manni.md) and [dd-docs](cases-dd-docs.md) slices use the same format,
+plus `doc_path` (where the page goes in the workspace) and a `workspace/` folder.
+
+Each doc writes a field or button label exactly as the page shows it, colon included
+(`Type here:`, `Echo input:`), so a spec that finds the label by its text matches.
 
 ## Cases
 
@@ -59,7 +68,7 @@ test servers (`http://localhost:8092` static pages, `http://localhost:8093` echo
 
 ## Running a spec
 
-Use Node.js `>=22.22.2`, `>=24.15`, or `>=26.12.1`. Doc Detective 5.5 uses Appium 4, which won't start on older versions.
+Use Node.js `>=22.22.2`, `>=24.15`, or `>=26.12.1`. Doc Detective 5.6 uses Appium 4, which won't start on older versions.
 On Node 24.11 it hangs for 120 s, then fails with `Appium server ... failed to start`.
 
 ```bash
@@ -68,7 +77,7 @@ cd <doc-detective> && node test/server/start.js &
 node test/server/wait-ready.js
 
 # 2. Run a spec from this repo's root (headless Chrome, no screenshots or recording)
-npx -y doc-detective@5 -i evals/spec-generation/cases/<id>/reference.spec.json \
+npx -y doc-detective@5.6.0 -i evals/spec-generation/cases/<id>/reference.spec.json \
   -c evals/spec-generation/doc-detective.config.json \
   -o .tmp/runs/<id>/results.json --output-dir .tmp/runs/<id> -r terminal \
   --no-auto-update --no-telemetry --no-hints --no-input

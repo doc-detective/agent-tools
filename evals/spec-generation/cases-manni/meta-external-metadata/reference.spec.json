@@ -1,79 +1,98 @@
 {
-  "specId": "manni-meta-set-up-external-metadata",
-  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/external-metadata.mdx",
+  "specId": "manni-meta-external-metadata",
+  "description": "manni docs meta/set-up/external-metadata, run in a repo that holds the page's worked examples under test/fixtures/.",
   "tests": [
     {
-      "testId": "set-up-external-metadata",
-      "description": "External-metadata journey, mapped to the local CLI build over test/fixtures/external-metadata.",
+      "testId": "lean-docset",
       "steps": [
         {
-          "description": "A whole-corpus run over the external-metadata fixture merges the manifest, reports the manifest line for a bad value, and files a collision finding (exit 1).",
+          "description": "A bare run reports the bad manifest value at its manifest line.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/external-metadata/manni.config.yaml",
+            "command": "npx -y @hawkeyexl/manni meta validate -c test/fixtures/external-metadata/manni.config.yaml",
             "exitCodes": [
               1
             ],
-            "stdio": "docs-meta.yaml:6"
+            "stdio": "(docs-meta.yaml:6)"
           }
         },
         {
-          "description": "The owned-key finding names the manifest and the collection it belongs to.",
+          "description": "The owned-key finding names the manifest and its collection, and the summary counts three failures.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/external-metadata/manni.config.yaml",
+            "command": "npx -y @hawkeyexl/manni meta validate -c test/fixtures/external-metadata/manni.config.yaml",
             "exitCodes": [
               1
             ],
-            "stdio": "is owned by manifest docs-meta.yaml (collection pages)"
+            "stdio": "/is owned by manifest docs-meta.yaml \\(collection pages\\)[\\s\\S]*4 files checked, 1 passed, 3 failed, 3 errors/"
           }
         },
         {
-          "description": "A manifest entry naming a page the run did not load is exit 2 on a whole-corpus run.",
+          "description": "The run sees the manifest's key on the page.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/external-metadata/manni.orphan.config.yaml",
+            "command": "manni meta get jira test/fixtures/external-metadata/docs/auth.md -c test/fixtures/external-metadata/manni.config.yaml",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "jira=PLAT-412"
+          }
+        },
+        {
+          "description": "A manifest entry naming a page the run did not load is exit 2.",
+          "runShell": {
+            "command": "manni meta validate -c test/fixtures/external-metadata/manni.orphan.config.yaml",
             "exitCodes": [
               2
             ],
-            "stdio": "which this run did not load"
+            "stdio": "names \"docs/gone.md\", which this run did not load"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "field-join",
+      "steps": [
+        {
+          "description": "Two pages sharing one id is a finding on both.",
+          "runShell": {
+            "command": "manni meta validate -c test/fixtures/external-metadata-join/manni.config.yaml",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "docs-meta.yaml cannot tell them apart"
           }
         },
         {
-          "description": "A write to a manifest-owned key lands in the manifest, and the change names it.",
+          "description": "An entry whose id no page carries is exit 2.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta query -c test/fixtures/external-metadata/manni.config.yaml --dry-run \"UPDATE docs SET jira = 'PLAT-1' WHERE _path = 'docs/auth.md'\"",
+            "command": "manni meta validate -c test/fixtures/external-metadata-join/manni.orphan.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "names id \"gone-guide\", which no loaded document carries"
+          }
+        },
+        {
+          "description": "Changing a field-joined page's id is refused.",
+          "runShell": {
+            "command": "manni meta query -c test/fixtures/external-metadata-join/manni.config.yaml \"UPDATE docs SET id = 'other' WHERE _path = 'docs/auth.md'\"",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "is the field manifest docs-meta.yaml joins on"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "editing-values",
+      "steps": [
+        {
+          "description": "A write to a manifest-owned key lands in the manifest, named in brackets.",
+          "runShell": {
+            "command": "manni meta query -c test/fixtures/external-metadata/manni.config.yaml \"UPDATE docs SET jira = 'PLAT-1' WHERE _path = 'docs/auth.md'\" --dry-run",
             "exitCodes": [
               0
             ],
             "stdio": "jira: PLAT-412 -> PLAT-1  [docs-meta.yaml]"
-          }
-        },
-        {
-          "description": "A field-joined manifest files a duplicate finding on both pages sharing one id (exit 1).",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/external-metadata-join/manni.config.yaml",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "cannot tell them apart"
-          }
-        },
-        {
-          "description": "A field entry no page carries is exit 2 on a whole-corpus run.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/external-metadata-join/manni.orphan.config.yaml",
-            "exitCodes": [
-              2
-            ],
-            "stdio": "which no loaded document carries"
-          }
-        },
-        {
-          "description": "An UPDATE of the join field on a matched document is refused (exit 2).",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta query -c test/fixtures/external-metadata-join/manni.config.yaml --dry-run \"UPDATE docs SET id = 'other' WHERE _path = 'docs/auth.md'\"",
-            "exitCodes": [
-              2
-            ],
-            "stdio": "joins on"
           }
         }
       ]

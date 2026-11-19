@@ -1,44 +1,48 @@
 {
   "source": "manni/docs/src/content/docs/meta/set-up/config.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-set-up-config.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "Config file not found",
-      "note": "An explicit -c to a missing file exits 2."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "match_any": ["-c ", "--config"],
+      "note": "Explicit path: if the `-c` file does not exist, manni meta exits with an error rather than falling back to discovery."
     },
     {
-      "action": "runShell",
-      "match": "declare a collection under",
-      "note": "No paths and no config exits 2 and names collections:."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Explicit paths take priority: `manni meta validate README.md` validates only README.md."
     },
     {
-      "action": "runShell",
-      "match": "1 passed",
-      "note": "Explicit file arguments are validated regardless of config."
+      "stepType": "runShell",
+      "match": ["meta validate", "is no longer a meta key"],
+      "note": "A config with meta.paths is refused with the quoted message, exit 2."
     },
     {
-      "action": "runShell",
-      "match": "3 files checked, 3 passed",
-      "note": "A bare run reads every declared collection."
+      "stepType": "runShell",
+      "match": ["meta validate", "--collection authors"],
+      "note": "`--collection authors` narrows the run to one collection."
     },
     {
-      "action": "runShell",
-      "match": "1 file checked, 1 passed",
-      "note": "--collection narrows the run to one collection."
+      "stepType": "runShell",
+      "match": ["meta validate", "--collection pages"],
+      "note": "`--collection authors --collection pages`: repeatable, one name per occurrence."
     },
     {
-      "action": "runShell",
-      "match": "cannot be combined with paths",
-      "note": "--collection refuses a typed path, exit 2."
+      "stepType": "runShell",
+      "match": ["meta validate", "--collection", "cannot be combined with paths"],
+      "note": "`--collection` refuses positional paths with the quoted message."
     },
     {
-      "action": "runShell",
-      "match": "no collection named",
-      "note": "--collection never splits on commas; the refusal lists configured names."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "A complete example: run a bare validate from the repo root."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "manni.config.yaml is the page's complete example plus the `authors` collection from its collections example: pages (docs/**/*.md), articles (articles/**/*.md, excluding **/drafts/**, with ./schemas/article.json layered on), authors (authors/**).",
+    "docs/index.md, articles/launch.md, authors/sara.md pass; articles/drafts/roadmap.md lacks `type` but is excluded; README.md has no frontmatter. A bare run checks 3 files and passes.",
+    "The meta.paths refusal needs a config in the old shape, so a spec writes one and points `-c` at it."
   ]
 }

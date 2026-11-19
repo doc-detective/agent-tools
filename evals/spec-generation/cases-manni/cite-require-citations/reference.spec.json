@@ -1,85 +1,82 @@
 {
-  "specId": "manni-cite-set-up-require-citations",
-  "description": "Inline tests from manni docs/src/content/docs/cite/set-up/require-citations.mdx",
+  "specId": "manni-cite-require-citations",
+  "description": "manni docs cite/set-up/require-citations, run in a repo that holds the page's schema/ pair, the manni.config.yaml that wires them to the reference collection, the three docs/reference/ pages and lib/limits.ts.",
   "tests": [
     {
       "testId": "cite-require-citations",
-      "description": "Composing the citations vocabulary with a house schema that requires the key, and moving a rule's severity.",
       "steps": [
         {
-          "description": "A house schema cannot reach the vocabulary through $ref: only the bundled built-ins are registered, so the schema fails to compile and the run exits 2.",
+          "description": "Try the $ref composition the page warns about: add an allOf $ref to the vocabulary in the house schema.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/citations-ref.schema.json test/fixtures/cite/pages/current.md",
+            "command": "node -e \"const f=require('fs'),p='schema/reference-page.schema.json',s=JSON.parse(f.readFileSync(p,'utf8'));s.allOf=[{['\\x24ref']:'manni:citations:1.0.0-proposal.4'}];f.writeFileSync(p,JSON.stringify(s,null,2))\""
+          }
+        },
+        {
+          "description": "The schema fails to compile when the first page it governs is validated, exit 2.",
+          "runShell": {
+            "command": "manni meta validate docs/reference/",
             "exitCodes": [
               2
             ],
-            "stdio": "failed to compile: can't resolve reference manni:citations:1.0.0-proposal.4"
+            "stdio": "failed to compile: can't resolve reference manni:citations:1.0.0-proposal.4 from id https://example.com/reference-page.schema.json"
           }
         },
         {
-          "description": "Composed as a set, a page that carries a well-formed citation satisfies both members.",
+          "description": "Back out the $ref: compose the two as a set instead.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/current.md",
+            "command": "node -e \"const f=require('fs'),p='schema/reference-page.schema.json',s=JSON.parse(f.readFileSync(p,'utf8'));delete s.allOf;f.writeFileSync(p,JSON.stringify(s,null,2))\""
+          }
+        },
+        {
+          "description": "Three pages, three outcomes: the page with no citation fails under the house schema.",
+          "runShell": {
+            "command": "manni meta validate docs/reference/",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/retries\\.md\\s+\\(root\\)\\s+must have required property 'citations'.*\\[\\.\\/schema\\/reference-page\\.schema\\.json\\]/"
+          }
+        },
+        {
+          "description": "The malformed entry fails under the vocabulary, the two warnings don't fail the run, and the summary matches.",
+          "runShell": {
+            "command": "manni meta validate docs/reference/",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/must have required property 'integrity'.*\\[\\.\\/schema\\/citations-1\\.0\\.0-proposal\\.4\\.json\\][\\s\\S]*3 files checked, 1 passed, 2 failed, 2 errors, 2 warnings/"
+          }
+        },
+        {
+          "description": "claim-changed at its default is a warning: reported and green.",
+          "runShell": {
+            "command": "manni cite check docs/reference/limits.md",
             "exitCodes": [
               0
             ],
-            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+            "stdio": "/↕ fetch-timeout\\s+:15 changed\\s+lib\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 1 passed, 0 failed, 1 finding \\(1 warning\\)/"
           }
         },
         {
-          "description": "A page with no citations fails under the house schema, and the finding names that schema.",
+          "description": "Add the page's cite: severity section to manni.config.yaml.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/no-citations.md",
+            "command": "node -e \"require('fs').appendFileSync('manni.config.yaml','\\ncite:\\n  severity:\\n    claim-changed: error\\n    source-moved: error\\n    marker-repeated: off\\n')\""
+          }
+        },
+        {
+          "description": "With claim-changed: error the same run blocks, exit 1.",
+          "runShell": {
+            "command": "manni cite check docs/reference/limits.md",
             "exitCodes": [
               1
             ],
-            "stdio": "/\\(root\\)\\s+must have required property 'citations'[\\s\\S]*requires-citations\\.schema\\.json\\]/"
+            "stdio": "/✗ fetch-timeout\\s+:15 changed\\s+lib\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 0 passed, 1 failed, 1 finding/"
           }
         },
         {
-          "description": "A malformed entry fails under the vocabulary instead, and the finding names the vocabulary.",
+          "description": "A duplicate id is refused at check time, on the second entry's line.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/entry-invalid.md",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "/citations\\/1\\.0\\.0-proposal\\.4\\.json\\]/"
-          }
-        },
-        {
-          "description": "The required key is satisfied by the merged view, so a page whose entries live in a sidecar manifest passes with no citation YAML of its own, while a page with none still fails.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/cite-sidecar/manni.config.yaml -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite-sidecar/pages/limits.md test/fixtures/cite-sidecar/pages/retries.md",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "/✓ \\S*pages\\/limits\\.md[\\s\\S]*must have required property 'citations'/"
-          }
-        },
-        {
-          "description": "claim-changed at its default is a warning: reported, and the run exits 0.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-changed.md",
-            "exitCodes": [
-              0
-            ],
-            "stdio": "/↕ fetch-timeout\\s+:15 changed[\\s\\S]*1 finding \\(1 warning\\)/"
-          }
-        },
-        {
-          "description": "Moved to error under severity:, the same page fails the run and exits 1.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite/strict/manni.config.yaml test/fixtures/cite/pages/claim-changed.md",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "/✗ fetch-timeout\\s+:15 changed[\\s\\S]*0 passed, 1 failed, 1 finding/"
-          }
-        },
-        {
-          "description": "A duplicate id is not something the schema can refuse, so cite check refuses it, on the second entry's line.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/entry-invalid.md",
+            "command": "manni cite check docs/reference/entry-invalid.md",
             "exitCodes": [
               1
             ],

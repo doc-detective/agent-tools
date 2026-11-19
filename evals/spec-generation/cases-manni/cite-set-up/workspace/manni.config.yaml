@@ -1,0 +1,4 @@
+collections:
+  - name: docs-pages
+    paths: ["docs/**/*.md"]
+    exclude: ["docs/drafts/**"]

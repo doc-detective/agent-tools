@@ -1,0 +1,8 @@
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+    externalMetadata:
+      - file: ./docs-meta.orphan.yaml
+        keys: [jira]
+        join: id

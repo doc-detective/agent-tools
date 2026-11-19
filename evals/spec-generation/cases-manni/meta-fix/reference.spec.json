@@ -1,55 +1,30 @@
 {
-  "specId": "manni-meta-fix-index",
-  "description": "Inline tests from manni docs/src/content/docs/meta/fix/index.mdx",
+  "specId": "manni-meta-fix",
+  "description": "manni docs meta/fix, run in a repo whose docs/guide.md fails the check the page decodes.",
   "tests": [
     {
-      "testId": "fix-a-failing-check",
-      "description": "The common-failures catalog and the reproduce-locally loop, mapped to fixtures.",
+      "testId": "reproduce-and-confirm",
       "steps": [
         {
-          "description": "Missing a required field: (root) ... must have required property, tagged with the schema.",
+          "description": "Run manni meta on just the file: the missing-field failure the page decodes.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md",
+            "command": "npx @hawkeyexl/manni meta validate docs/guide.md",
             "exitCodes": [
               1
             ],
-            "stdio": "must have required property 'type'"
+            "stdio": "/✗ docs/guide.md[\\s\\S]*\\(root\\)  must have required property 'type'[\\s\\S]*\\[google:okf:0\\.1\\]/"
           }
         },
         {
-          "description": "A value in the wrong format: a malformed timestamp is flagged on its source line.",
+          "description": "Apply the fix: add the type field to the frontmatter.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/bad-timestamp.md",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "/timestamp  must match format \"date-time\"  \\(line 4\\)/"
+            "command": "node -e \"const f=require('fs'),p='docs/guide.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace(/^description:.*\\n/m,m=>m+'type: concept\\n'))\""
           }
         },
         {
-          "description": "A frontmatter parse error (malformed YAML) reports the schema as [(parse)] rather than a real schema id.",
+          "description": "Run it again and confirm the green check.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/dd/malformed-yaml.md",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "[(parse)]"
-          }
-        },
-        {
-          "description": "Schema not found is a setup problem, not a document problem: it exits 2 to stderr.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s google:okf:0.2",
-            "exitCodes": [
-              2
-            ],
-            "stdio": "Unknown built-in schema"
-          }
-        },
-        {
-          "description": "Reproduce and confirm locally: after the fix, the file passes with a green summary.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md",
+            "command": "npx @hawkeyexl/manni meta validate docs/guide.md",
             "exitCodes": [
               0
             ],

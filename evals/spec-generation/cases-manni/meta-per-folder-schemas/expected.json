@@ -1,29 +1,21 @@
 {
   "source": "manni/docs/src/content/docs/meta/set-up/different-schemas-per-folder.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-per-folder-schemas.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "google:okf:0.1",
-      "note": "Validate one file against a set of two schemas; it passes both."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Verify your overrides: run `manni meta validate` and read the per-file output."
     },
     {
-      "action": "runShell",
-      "match": "must have required property 'type'",
-      "note": "The file must satisfy every schema in the set."
-    },
-    {
-      "action": "runShell",
-      "match": "1 passed",
-      "note": "CLI --schema sits at the top of the resolution chain."
-    },
-    {
-      "action": "runShell",
-      "match": "--collection notes",
-      "note": "Overlapping collections: --collection addresses either one."
+      "stepType": "runShell",
+      "match": ["meta validate", "--collection api"],
+      "note": "To read one area on its own, narrow the run with `--collection api`."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "manni.config.yaml declares collections api (api/**/*.md) and guides (guides/**/*.md) with the baseline google:okf:0.1 and no overrides yet: the page has the reader add them, so a spec writes the overrides it wants to verify.",
+    "schemas/api-reference.json, schemas/guide.json, schemas/deprecated.json exist. api/auth.md, api/deprecated/v1.md, and guides/quickstart.md satisfy every schema set the page's examples assign them, so any of the page's configs passes."
   ]
 }

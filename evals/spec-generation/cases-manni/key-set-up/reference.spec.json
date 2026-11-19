@@ -1,15 +1,15 @@
 {
-  "specId": "manni-key-set-up-index",
-  "description": "Inline tests from manni docs/src/content/docs/key/set-up/index.mdx",
+  "specId": "manni-key-set-up",
+  "description": "manni docs key/set-up, run in a repo with no key yet, whose manni.config.yaml joins encrypted owners to docs/ pages, and whose docs/limits.md cites an encrypted source. The no-key behaviors run first, then `manni key set` writes the key.",
   "tests": [
     {
       "testId": "key-set-up",
-      "description": "Where the key lives and what runs without it, over committed fixtures and with no key ever written.",
+      "description": "What each command does before a key exists, then writing the key to the config.",
       "steps": [
         {
           "description": "`key set --dry-run` reports the write it would make and writes nothing.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni key set --dry-run",
+            "command": "manni key set --dry-run",
             "exitCodes": [
               0
             ],
@@ -17,9 +17,9 @@
           }
         },
         {
-          "description": "The same run warns on stderr that the config it would write is not ignored by git.",
+          "description": "The same run warns that the config it would write is not ignored by git.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni key set --dry-run",
+            "command": "manni key set --dry-run",
             "exitCodes": [
               0
             ],
@@ -27,29 +27,27 @@
           }
         },
         {
-          "description": "`key rotate` with no key available refuses, exit 2, and names `key set`.",
+          "description": "The dry run wrote nothing: the config still has no encryptionKey.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni key rotate",
+            "command": "node -e \"process.exit(/encryptionKey/.test(require('fs').readFileSync('manni.config.yaml','utf8'))?1:0)\"",
             "exitCodes": [
-              2
-            ],
-            "stdio": "No encryption key is available, so nothing can be re-encrypted. Run `manni key set` first."
+              0
+            ]
           }
         },
         {
-          "description": "A key shorter than 32 characters is refused and never written.",
+          "description": "`key rotate` with no key available is refused with exit 2.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni key set tooshort",
+            "command": "manni key rotate",
             "exitCodes": [
               2
-            ],
-            "stdio": "The key must be at least 32 hex or base64url characters."
+            ]
           }
         },
         {
-          "description": "With no key, validate warns once on stderr with the count of values it could not verify.",
+          "description": "With no key, validate warns with the count of values it could not verify.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/encrypted/manifest-encrypted/manni.config.yaml",
+            "command": "manni meta validate",
             "exitCodes": [
               0
             ],
@@ -57,9 +55,9 @@
           }
         },
         {
-          "description": "The findings under those values are dropped, so the same run passes every page and exits 0.",
+          "description": "The findings under those values are dropped, so every page passes and the run exits 0.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/encrypted/manifest-encrypted/manni.config.yaml",
+            "command": "manni meta validate",
             "exitCodes": [
               0
             ],
@@ -67,9 +65,9 @@
           }
         },
         {
-          "description": "With no key, an encrypted citation source is source-missing and the check fails.",
+          "description": "With no key, the encrypted citation source is missing and the check fails.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/encrypted.md",
+            "command": "manni cite check docs/limits.md",
             "exitCodes": [
               1
             ],
@@ -77,13 +75,52 @@
           }
         },
         {
-          "description": "--no-check-sources reports the same encrypted source as skipped and passes.",
+          "description": "--no-check-sources reports the same source as skipped and passes.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni cite check --no-config --no-check-sources --root test/fixtures/cite test/fixtures/cite/pages/encrypted.md",
+            "command": "manni cite check --no-check-sources docs/limits.md",
             "exitCodes": [
               0
             ],
             "stdio": "/:2 skipped[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+          }
+        },
+        {
+          "description": "Off a terminal, a query write to an encrypted field refuses with exit 2.",
+          "runShell": {
+            "command": "manni meta query \"UPDATE docs SET owner = 'billing' WHERE _path = 'docs/auth.md'\"",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "owner must be encrypted, and no encryption key is available."
+          }
+        },
+        {
+          "description": "Off a terminal, cite add --encrypt refuses with exit 2.",
+          "runShell": {
+            "command": "manni cite add docs/auth.md:5 src/limits.ts:1 --id max-files --encrypt --dry-run",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "src/limits.ts:1 must be encrypted, and no encryption key is available."
+          }
+        },
+        {
+          "description": "Step 3: write it. The key lands in manni.config.yaml.",
+          "runShell": {
+            "command": "manni key set",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "Encryption key written to manni.config.yaml."
+          }
+        },
+        {
+          "description": "The key lands at the top level as 64 hex characters, outside every tool section, beside collections:.",
+          "runShell": {
+            "command": "node -e \"const t=require('fs').readFileSync('manni.config.yaml','utf8');process.exit(/^encryptionKey: [0-9a-f]{64}$/m.test(t)&&/^collections:/m.test(t)?0:1)\"",
+            "exitCodes": [
+              0
+            ]
           }
         }
       ]

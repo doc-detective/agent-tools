@@ -1,49 +1,44 @@
 {
-  "specId": "manni-meta-set-up-different-schemas-per-folder",
-  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/different-schemas-per-folder.mdx",
+  "specId": "manni-meta-per-folder-schemas",
+  "description": "manni docs meta/set-up/different-schemas-per-folder, run in a repo with api/ and guides collections, the page's three local schemas, and a baseline-only config.",
   "tests": [
     {
       "testId": "schemas-per-folder",
-      "description": "Multi-schema-set and precedence claims, demonstrated with repeated --schema flags.",
       "steps": [
         {
-          "description": "Validate one file against a set of two schemas; a file satisfying both passes.",
+          "description": "Add the page's overrides: the narrow deprecated glob first, then the api collection (baseline plus api-reference), then guides.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/schema-ref.md -s google:okf:0.1 -s ./test/fixtures/extra.schema.json",
-            "exitCodes": [
-              0
-            ],
-            "stdio": "1 passed"
+            "command": "node -e \"require('fs').writeFileSync('manni.config.yaml','collections:\\n  - name: api\\n    paths: [\\'api/**/*.md\\']\\n  - name: guides\\n    paths: [\\'guides/**/*.md\\']\\nmeta:\\n  schemas:\\n    - google:okf:0.1\\n  overrides:\\n    - files: \\'api/deprecated/**/*.md\\'\\n      schemas:\\n        - ./schemas/deprecated.json\\n    - collection: api\\n      schemas:\\n        - google:okf:0.1\\n        - ./schemas/api-reference.json\\n    - collection: guides\\n      schemas:\\n        - ./schemas/guide.json\\n')\""
           }
         },
         {
-          "description": "The file must satisfy EVERY schema in the set: missing `type` fails the set even though it has a title.",
+          "description": "Verify your overrides: a bare run reads the config and every file passes its schema set.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md -s google:okf:0.1 -s ./test/fixtures/extra.schema.json",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "must have required property 'type'"
-          }
-        },
-        {
-          "description": "CLI --schema sits at the top of the resolution chain: forcing a schema the file satisfies makes it pass, overriding the default OKF set it would otherwise fail.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md -s ./test/fixtures/extra.schema.json",
+            "command": "npx @hawkeyexl/manni meta validate",
             "exitCodes": [
               0
             ],
-            "stdio": "1 passed"
+            "stdio": "/api/auth\\.md[\\s\\S]*api/deprecated/v1\\.md[\\s\\S]*guides/quickstart\\.md[\\s\\S]*3 files checked, 3 passed, 0 failed, 0 errors/"
           }
         },
         {
-          "description": "A file may belong to two collections whose globs overlap, and --collection addresses either of them on its own.",
+          "description": "First match wins: the deprecated page resolves to deprecated.json, the other api page to the baseline plus api-reference.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/collections/manni.config.yaml --collection notes",
+            "command": "npx @hawkeyexl/manni meta validate --format json",
             "exitCodes": [
               0
             ],
-            "stdio": "/authors\\/deep\\.md[\\s\\S]*1 file checked, 1 passed/"
+            "stdio": "/\"file\": \"api/auth\\.md\"[\\s\\S]*\"google:okf:0\\.1\",\\s*\"\\./schemas/api-reference\\.json\"[\\s\\S]*\"file\": \"api/deprecated/v1\\.md\"[\\s\\S]*\"schemas\": \\[\\s*\"\\./schemas/deprecated\\.json\"\\s*\\]/"
+          }
+        },
+        {
+          "description": "Narrow the run to the api collection.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --collection api",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed, 0 failed, 0 errors"
           }
         }
       ]

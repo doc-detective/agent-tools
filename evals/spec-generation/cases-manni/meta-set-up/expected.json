@@ -1,25 +1,30 @@
 {
   "source": "manni/docs/src/content/docs/meta/set-up/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-set-up.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "files checked",
-      "note": "Validate a folder with no setup: a mixed folder fails, exit 1."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Step 1: validate a folder with no setup (docs/)."
     },
     {
-      "action": "runShell",
-      "match": "No files to validate",
-      "note": "No paths and no config is an operational error, exit 2."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Step 3: a bare `manni meta validate` reads the stored config."
     },
     {
-      "action": "runShell",
-      "match": "::error file=",
-      "note": "`--format github` turns failures into inline annotations and still fails."
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Caution: a bare validate with no config file and no paths exits 2."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--format github"],
+      "note": "Step 4: the CI gate, `--format github`."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`.",
-    "The reference excludes test/fixtures/dd/** only to keep the folder walk deterministic."
+    "docs/intro.md passes the built-in OKF schema and docs/billing.md has no `type`, so validating docs/ fails with exit 1. No manni.config.yaml: the page has the reader add it in step 2, so a spec writes it (or runs the no-config check before it does)."
   ]
 }

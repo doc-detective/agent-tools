@@ -4,23 +4,29 @@
 // workspace. The grade runs the spec it wrote with Doc Detective and compares
 // its steps to the steps a human checked the page needs.
 //
-// Two slices:
-//   web    evals/spec-generation/cases/<id>/        docs for doc-detective's local
-//          test server (pages on :8092, API on :8093)
-//   manni  evals/spec-generation/cases-manni/<id>/  real manni CLI docs with their
-//          inline tests removed; generated in, and run against, an export of manni
+// Three slices:
+//   web      evals/spec-generation/cases/<id>/          docs for doc-detective's local
+//            test server (pages on :8092, API on :8093)
+//   manni    evals/spec-generation/cases-manni/<id>/    manni CLI docs with their inline
+//            tests removed, in a small user repo holding what the page names
+//   dd-docs  evals/spec-generation/cases-dd-docs/<id>/  Doc Detective's own docs with their
+//            inline tests removed; run against the shell and the test servers
+//
+// A case's `workspace/` folder, when present, is the repo the session starts in.
+// The page goes to `expected.doc_path` (web: docs/<id>.md). manni and dd-docs
+// workspaces become a one-commit git repo, so the page's original tests are in
+// no history the session can read.
 //
 // Environment (see evals/README.md):
 //   DD_REPO        doc-detective checkout with `npm ci` done; its test servers are
-//                  started here when :8092 isn't already up (web slice)
-//   MANNI_DIR      manni clone at the case commit, built (`npm ci && npm run build`)
+//                  started here when :8092 isn't already up (web and dd-docs slices)
 //   MANNI_PREFIX   npm prefix the manni CLI is linked into (`npm link` with npm_config_prefix);
 //                  its bin dir goes first on PATH and npx resolves `@hawkeyexl/manni` from it
 //   DD_NODE_DIR    optional: a Node >= 22.22.2 / 24.15 directory put first on PATH
 //                  for Doc Detective (its Appium refuses older Node)
 
-import { cpSync, mkdirSync, readdirSync, readFileSync, statSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFileSync } from 'node:child_process';
 import { tempWorkspace } from '../lib/claude-run.mjs';
@@ -28,30 +34,33 @@ import { tempWorkspace } from '../lib/claude-run.mjs';
 const WIN = process.platform === 'win32';
 
 const EVAL_DIR = dirname(fileURLToPath(import.meta.url));
-const DD_VERSION = '5.5.0';
-const MANNI_COMMIT = '3a8b3d51399c4bac38021656b338af0f57376e88';
+// What `doc-detective@5` resolves to, so the session's own runs and the grade agree.
+export const DD_VERSION = '5.6.0';
 const SEP = WIN ? ';' : ':';
+const SLICES = [['web', 'cases'], ['manni', 'cases-manni'], ['dd-docs', 'cases-dd-docs']];
+export const usesServers = c => c.slice !== 'manni';
 
-function ddEnv(extraPath = []) {
-  const path = [...extraPath, process.env.DD_NODE_DIR, process.env.PATH].filter(Boolean).join(SEP);
-  return { ...process.env, PATH: path, Path: path };
+/** PATH and npm prefix that put DD_NODE_DIR and the linked manni CLI first. The session gets it too. */
+export function toolEnv(base = process.env) {
+  const prefix = base.MANNI_PREFIX;
+  const extra = [prefix && (WIN ? prefix : join(prefix, 'bin')), base.DD_NODE_DIR];
+  const path = [...extra, base.PATH ?? base.Path].filter(Boolean).join(SEP);
+  return { ...base, PATH: path, Path: path, ...(prefix ? { npm_config_prefix: prefix } : {}) };
 }
 
 export async function loadCases() {
   const cases = [];
-  for (const [slice, dir] of [['web', 'cases'], ['manni', 'cases-manni']]) {
+  for (const [slice, dir] of SLICES) {
     for (const id of readdirSync(join(EVAL_DIR, dir)).sort()) {
       const cdir = join(EVAL_DIR, dir, id);
       if (!statSync(cdir).isDirectory()) continue;
       const expected = JSON.parse(readFileSync(join(cdir, 'expected.json'), 'utf8'));
-      const docFile = slice === 'web' ? 'doc.md' : 'doc.mdx';
-      // web docs go to docs/<id>.md; manni docs go back to their real path.
-      const docPath = slice === 'web'
-        ? `docs/${id}.md`
-        : expected.source.replace(/^manni\//, '').replace(/@[0-9a-f]+$/, '');
+      const docFile = ['doc.md', 'doc.mdx'].find(f => existsSync(join(cdir, f)));
+      const docPath = slice === 'web' ? `docs/${id}.md` : expected.doc_path;
+      if (!docFile || !docPath) throw new Error(`${dir}/${id}: needs doc.md or doc.mdx, and doc_path in expected.json`);
       const steps = expected.steps.length;
       cases.push({
-        id: `${slice}-${id}`, slice, cdir, docFile, docPath, expected,
+        id: `${slice}-${id}`, name: id, slice, cdir, docFile, docPath, expected,
         prompt: `/doc-detective:doc-detective-generate ${docPath} --output tests/${id}.spec.json`,
         tags: [slice, steps <= 5 ? 'small' : steps <= 12 ? 'medium' : 'large'],
         meta: { expected_steps: steps },
@@ -66,26 +75,23 @@ export async function loadCases() {
 
 export function makeWorkspace(c) {
   const ws = tempWorkspace(`specgen-${c.slice}`);
-  if (c.slice === 'manni') {
-    const dir = process.env.MANNI_DIR;
-    if (!dir) throw Object.assign(new Error('MANNI_DIR is not set'), { failure_class: 'harness' });
-    // A plain export (no .git), so the page's original tests aren't one `git show` away.
-    const tar = execFileSync('git', ['-C', dir, 'archive', MANNI_COMMIT], { maxBuffer: 1 << 30 });
-    execFileSync('tar', ['-x', '-C', ws], { input: tar });
-  }
+  const repo = join(c.cdir, 'workspace');
+  if (existsSync(repo)) cpSync(repo, ws, { recursive: true });
+  // Stored as _gitignore so it doesn't apply to this repo.
+  for (const f of readdirSync(ws, { recursive: true })) if (basename(f) === '_gitignore') renameSync(join(ws, f), join(ws, dirname(f), '.gitignore'));
   mkdirSync(join(ws, dirname(c.docPath)), { recursive: true });
   cpSync(join(c.cdir, c.docFile), join(ws, c.docPath));
+  // An empty tests/ reads as missing; the placeholder keeps it visible.
   mkdirSync(join(ws, 'tests'), { recursive: true });
-  if (c.slice === 'manni') {
-    // manni's docs check git-ignore state, so the export needs a repo. Its one
-    // commit holds the page with its tests already removed.
-    const git = (...a) => execFileSync('git', ['-c', 'user.name=eval', '-c', 'user.email=eval@example.invalid', ...a], { cwd: ws, stdio: 'ignore' });
+  writeFileSync(join(ws, 'tests', '.gitkeep'), '');
+  if (c.slice !== 'web') {
+    const git = (...a) => execFileSync('git', ['-c', 'user.name=eval', '-c', 'user.email=eval@example.invalid', '-c', 'core.autocrlf=false', ...a], { cwd: ws, stdio: 'ignore' });
     git('init', '-q'); git('add', '-A'); git('commit', '-qm', 'eval workspace');
   }
   return ws;
 }
 
-// --- test servers (web slice) -----------------------------------------------
+// --- test servers (web and dd-docs slices) ----------------------------------
 
 let servers = null;
 export async function ensureServers() {
@@ -105,7 +111,7 @@ export async function ensureServers() {
 
 /** The spec the session wrote: the requested path, else any new spec-like JSON. */
 export function findSpec(ws, c) {
-  const want = join(ws, 'tests', `${c.id.replace(/^(web|manni)-/, '')}.spec.json`);
+  const want = join(ws, 'tests', `${c.name}.spec.json`);
   const candidates = [want];
   const walk = (d, depth) => {
     if (depth > 3) return;
@@ -127,16 +133,12 @@ export function findSpec(ws, c) {
 
 export function runDocDetective(c, ws, specPath) {
   const out = join(ws, '.dd-out');
-  const config = c.slice === 'web' ? join(EVAL_DIR, 'doc-detective.config.json') : join(ws, '.doc-detective.json');
-  const args = ['-y', `doc-detective@${DD_VERSION}`, '-i', specPath, '-c', config,
+  // One config for every slice: headless Chrome, relative paths from the workspace root.
+  const args = ['-y', `doc-detective@${DD_VERSION}`, '-i', specPath, '-c', join(EVAL_DIR, 'doc-detective.config.json'),
                 '-o', join(out, 'results.json'), '--output-dir', out,
                 '--no-auto-update', '--no-telemetry', '--no-hints', '--no-input'];
-  const prefix = process.env.MANNI_PREFIX;
-  const env = c.slice === 'manni'
-    ? { ...ddEnv([WIN ? prefix : join(prefix, 'bin')]), npm_config_prefix: prefix }
-    : ddEnv();
   return new Promise(resolvePromise => {
-    const child = spawn(WIN ? 'npx.cmd' : 'npx', args, { cwd: ws, env, shell: WIN, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn(WIN ? 'npx.cmd' : 'npx', args, { cwd: ws, env: toolEnv(), shell: WIN, stdio: ['ignore', 'pipe', 'pipe'] });
     let log = '';
     child.stdout.on('data', d => { log += d; });
     child.stderr.on('data', d => { log += d; });

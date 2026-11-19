@@ -1,65 +1,96 @@
 {
   "source": "manni/docs/src/content/docs/cite/get-started/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-get-started.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "src/limits.ts:2 current",
-      "note": "Check it: both ends match their pins and the summary is green."
+      "stepType": "runShell",
+      "match": ["cite add", "--id", "--dry-run"],
+      "note": "Preview the citation: `add` with `--dry-run` prints the diff and writes nothing."
     },
     {
-      "action": "runShell",
-      "match": "-16 current",
-      "note": "A claim range is reported as a range of file lines."
+      "stepType": "runShell",
+      "match": ["cite add", "--id", "added fetch-timeout"],
+      "note": "Write it: drop `--dry-run`; the report says it added fetch-timeout to frontmatter."
     },
     {
-      "action": "runShell",
-      "match": ":16 current",
-      "note": "Editing frontmatter does not move a claim."
+      "stepType": "runShell",
+      "match": ["cite check", "0 findings"],
+      "note": "Check it: both ends current, and the summary reads 0 findings."
     },
     {
-      "action": "runShell",
-      "match": "1 warning",
-      "note": "A moved source is a warning that names the new range and exits 0."
+      "stepType": "runShell",
+      "match": ["cite check", "changed since"],
+      "note": "When the source changes: the check reports `changed since <commit>, 1 commit`, an error."
     },
     {
-      "action": "runShell",
-      "match": "cite update",
-      "note": "`cite update --dry-run` previews the rewrite to the source end."
+      "stepType": "runShell",
+      "match": ["cite check", "--show-diff"],
+      "note": "`--show-diff` puts the commit subject and the diff on screen."
     },
     {
-      "action": "runShell",
-      "match": "src/changed.ts:2 changed",
-      "note": "A changed source is an error beside a still-current claim, exit 1."
+      "stepType": "runShell",
+      "match": ["cite update", "1 skipped"],
+      "note": "A plain `update` won't touch a changed source, says so, and exits 1."
     },
     {
-      "action": "runShell",
-      "match": "1 notice",
-      "note": "An inserted paragraph makes the claim moved: a notice, exit 0."
+      "stepType": "runShell",
+      "match": ["cite update", "--accept", "re-pinned"],
+      "note": "After fixing the sentence, `update --accept` re-pins both ends at HEAD."
     },
     {
-      "action": "runShell",
-      "match": ":15 changed",
-      "note": "An edited sentence is claim-changed, a warning, exit 0."
+      "stepType": "runShell",
+      "match": ["cite check", "moved ->"],
+      "note": "When the source moves: the check finds the line at its new number, a warning, exit 0."
     },
     {
-      "action": "runShell",
-      "match": "3 files checked",
-      "note": "Markers are read in MDX, AsciiDoc and reStructuredText."
+      "stepType": "runShell",
+      "match": ["cite update", "--dry-run"],
+      "note": "`update --dry-run` shows the diff first."
     },
     {
-      "action": "runShell",
-      "match": "marker :14 current",
-      "note": "A marker-anchored claim reads as marker plus the anchored line."
+      "stepType": "runShell",
+      "match": ["cite update", "rewritten"],
+      "note": "`update` rewrites the range: 1 citation rewritten."
     },
     {
-      "action": "runShell",
-      "match": "1 file checked, 1 passed, 0 failed, 0 findings",
-      "note": "A quoted fenced block that still reproduces its source passes."
+      "stepType": "runShell",
+      "match": ["cite check", "moved ->"],
+      "note": "When the page changes: an inserted paragraph moves the claim, a notice."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite update", "rewritten"],
+      "note": "`update` rewrites `claim.lines` as it rewrites the source's."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "18-19 changed"],
+      "note": "Edit the sentence: claim-changed, a warning."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite update", "--accept", "--only", "re-pinned"],
+      "note": "Accept the edited claim with `update --accept --only fetch-timeout`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "--marker", "added retries"],
+      "note": "Anchor with a marker: `--marker` writes the marker and pins what it anchors."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "--quote", "added limits-block"],
+      "note": "Pin a code block with `--quote`; `add` checks the block reproduces the cited lines."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "0 findings"],
+      "note": "All three citations show up in one check with 0 findings."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "`node --version` prerequisite check (page says Node 24+).",
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "lib/limits.ts and docs/limits.md hold the page's example source and page; manni.config.yaml declares the docs-pages collection over docs/**/*.md so a bare `manni cite check` reads docs/limits.md.",
+    "The workspace is the starting state: no citations yet. The page has the reader (or someone) change the source, commit it, move it, and edit the page, so a spec makes those edits and the source commit itself (`changed since <commit>, 1 commit` and the --show-diff subject need that commit in history)."
   ]
 }

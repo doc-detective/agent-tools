@@ -1,39 +1,85 @@
 {
-  "specId": "manni-meta-set-up-retrofit",
-  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/retrofit.mdx",
+  "specId": "manni-meta-retrofit",
+  "description": "manni docs meta/set-up/retrofit, run in a docs repo with no metadata validation yet.",
   "tests": [
     {
-      "testId": "set-up-retrofit",
-      "description": "Start-permissive claim, demonstrated with a require-nothing schema fixture vs. OKF.",
+      "testId": "retrofit",
       "steps": [
         {
-          "description": "The coverage probe reports what the docset has, and counts the files with no metadata block at all.",
+          "description": "Step 1: the coverage reading counts files and the ones with no metadata block.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta schemas infer test/fixtures/infer --no-config",
+            "command": "npx @hawkeyexl/manni meta schemas infer docs/",
             "exitCodes": [
               0
             ],
-            "stdio": "with no metadata block"
+            "stdio": "/files scanned · 1 with no metadata block/"
           }
         },
         {
-          "description": "A frontmatter-free file passes the permissive schema (nothing is required).",
+          "description": "Step 2: --out writes a require-nothing draft schema.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/no-frontmatter.md -s ./test/fixtures/dd/permissive.schema.json",
+            "command": "npx @hawkeyexl/manni meta schemas infer docs/ --out ./schemas/permissive.json",
             "exitCodes": [
               0
             ],
-            "stdio": "1 passed"
+            "stdio": "nothing required"
           }
         },
         {
-          "description": "The same file fails OKF, which requires `type` — the avalanche the permissive start avoids.",
+          "description": "Point the config at the schema, as the page shows.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/no-frontmatter.md -s google:okf:0.1",
+            "command": "node -e \"require('fs').writeFileSync('manni.config.yaml','collections:\\n  - name: pages\\n    paths:\\n      - docs/**/*.md\\n\\nmeta:\\n  schemas:\\n    - ./schemas/permissive.json\\n')\""
+          }
+        },
+        {
+          "description": "A full pass is green as the repo stands.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
             "exitCodes": [
-              1
+              0
             ],
-            "stdio": "must have required property 'type'"
+            "stdio": "0 failed"
+          }
+        },
+        {
+          "description": "Step 3: the CI gate command exits 0 on the green repo.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate --format github",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "Step 6: add a field to required.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='schemas/permissive.json',s=JSON.parse(f.readFileSync(p,'utf8'));s.required=['type'];f.writeFileSync(p,JSON.stringify(s,null,2))\""
+          }
+        },
+        {
+          "description": "Record the existing violations once.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --write-baseline",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "Baseline written to .manni-baseline.json"
+          }
+        },
+        {
+          "description": "Point the config at the baseline.",
+          "runShell": {
+            "command": "node -e \"require('fs').appendFileSync('manni.config.yaml','  baseline: .manni-baseline.json\\n')\""
+          }
+        },
+        {
+          "description": "The build is green with the stricter rule and reports the outstanding debt.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 baselined finding"
           }
         }
       ]

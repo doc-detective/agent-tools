@@ -1,0 +1,18 @@
+---
+title: Limits
+citations:
+  - id: fetch-timeout
+    claim:
+      lines: 3
+      integrity: sha256-921b21cccab21a4577f224ec4171aa56a3414bb3a5a4704ab8b6f314c46aa094
+    source:
+      file: lib/limits.ts
+      lines: 2
+      integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+      commit-sha: 7293de75da95372112e761bc107addccdccf4842
+---
+# Limits
+
+The fetch timeout is 10 seconds.
+
+Retries default to 3.

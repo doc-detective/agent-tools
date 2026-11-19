@@ -1,34 +1,46 @@
 {
   "source": "manni/docs/src/content/docs/cite/ci/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-ci.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "-f github",
-      "note": "A clean page exits 0 so the job stays green."
+      "stepType": "runShell",
+      "match": ["cite check", "-f github"],
+      "note": "The workflow's command, `cite check \"docs/**/*.md\" -f github`: findings become workflow commands and the exit code drives the job."
     },
     {
-      "action": "runShell",
-      "match": "::error",
-      "note": "A changed source exits 1 with an ::error annotation titled with the rule id."
+      "stepType": "runShell",
+      "match": ["cite check", "--write-baseline", "baselined"],
+      "note": "Record the backlog once: `--write-baseline` prints `2 findings (2 baselined)` and writes the baseline file."
     },
     {
-      "action": "runShell",
-      "match": "::warning",
-      "note": "A moved source is a ::warning and exits 0."
+      "stepType": "runShell",
+      "match": ["cite check", "--baseline", "baselined"],
+      "note": "Make the PR job report-only: `--baseline` counts the backlog as baselined."
     },
     {
-      "action": "runShell",
-      "match": "::notice",
-      "note": "A moved claim is a ::notice and exits 0."
+      "stepType": "runShell",
+      "match": ["cite check", "-f github", "source-changed"],
+      "note": "Verify: a change to a cited line makes the job red with a `manni:cite/source-changed` annotation."
     },
     {
-      "action": "runShell",
-      "match": "No files to check",
-      "note": "An operational error (no inputs, no config) exits 2."
+      "stepType": "runShell",
+      "match": ["cite check", "-f github", "source-moved"],
+      "note": "Verify: lines added above a cited one leave it green with a `manni:cite/source-moved` warning."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "-f github", "claim-moved"],
+      "note": "Verify: a paragraph added above a cited sentence leaves it green with a `manni:cite/claim-moved` notice."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite update"],
+      "note": "Verify: running `manni cite update` clears both."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "docs/limits.md carries two citations of lib/limits.ts: fetch-timeout is current; retries has drifted (a comment line above its source line, a paragraph above its sentence), so the first run finds 2 findings (1 warning) (1 notice) for the baseline to record. manni.config.yaml declares the docs-pages collection over docs/**/*.md, so a bare `manni cite check` checks the page.",
+    "The entries' commit-sha names a commit outside the one-commit workspace history: a changed source reads `changed (history unavailable ...)`, still source-changed, as the page's Full history section describes. The verify scenarios are edits a spec makes itself."
   ]
 }

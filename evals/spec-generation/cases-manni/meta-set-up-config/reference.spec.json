@@ -1,15 +1,14 @@
 {
   "specId": "manni-meta-set-up-config",
-  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/config.mdx",
+  "description": "manni docs meta/set-up/config, run in a repo whose manni.config.yaml declares pages, articles (drafts excluded, plus an article schema) and authors.",
   "tests": [
     {
       "testId": "set-up-config",
-      "description": "Config-handling claims that are deterministic from the repo root.",
       "steps": [
         {
-          "description": "Explicit `-c <path>` to a missing file errors out (exit 2) rather than falling back to discovery.",
+          "description": "Explicit -c to a missing file errors out (exit 2) rather than falling back to discovery.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c does-not-exist.yaml test/fixtures/valid.md",
+            "command": "npx @hawkeyexl/manni meta validate -c does-not-exist.yaml",
             "exitCodes": [
               2
             ],
@@ -17,63 +16,69 @@
           }
         },
         {
-          "description": "No positional paths and no config found exits 2, and the message names collections: as the place to declare a document set.",
+          "description": "Explicit paths take priority over the collections: only README.md is validated.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate --no-config",
+            "command": "npx @hawkeyexl/manni meta validate README.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/README\\.md[\\s\\S]*1 file checked/"
+          }
+        },
+        {
+          "description": "Write a config that still has meta.paths, the pre-collections shape.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs');f.mkdirSync('legacy',{recursive:true});f.writeFileSync('legacy/manni.config.yaml','meta:\\n  paths:\\n    - docs/**/*.md\\n')\""
+          }
+        },
+        {
+          "description": "meta.paths is refused with exit 2, and the message names its new home.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c legacy/manni.config.yaml",
             "exitCodes": [
               2
             ],
-            "stdio": "No files to validate. Pass paths/globs, or declare a collection under"
+            "stdio": "\"paths\" is no longer a meta key. Document sets are declared once for every tool, under a top-level collections: list."
           }
         },
         {
-          "description": "Explicit file arguments are validated regardless of config; a passing fixture exits 0.",
+          "description": "--collection authors runs over that collection only.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md",
+            "command": "npx @hawkeyexl/manni meta validate --collection authors",
             "exitCodes": [
               0
             ],
-            "stdio": "1 passed"
+            "stdio": "/authors/sara\\.md[\\s\\S]*1 file checked, 1 passed/"
           }
         },
         {
-          "description": "A bare run reads every declared collection, in declaration order.",
+          "description": "--collection is repeatable, one name per occurrence.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --no-checks",
+            "command": "npx @hawkeyexl/manni meta validate --collection authors --collection pages",
             "exitCodes": [
               0
             ],
-            "stdio": "3 files checked, 3 passed"
+            "stdio": "2 files checked, 2 passed"
           }
         },
         {
-          "description": "--collection narrows the run to one declared collection.",
+          "description": "--collection cannot be combined with positional paths.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection blog",
-            "exitCodes": [
-              0
-            ],
-            "stdio": "1 file checked, 1 passed"
-          }
-        },
-        {
-          "description": "--collection selects from the config, so it refuses to be combined with a typed path (exit 2).",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection blog test/fixtures/valid.md",
+            "command": "npx @hawkeyexl/manni meta validate --collection authors README.md",
             "exitCodes": [
               2
             ],
-            "stdio": "it cannot be combined with paths"
+            "stdio": "--collection selects a configured collection; it cannot be combined with paths."
           }
         },
         {
-          "description": "The flag never splits on commas: one name per occurrence, and the refusal lists the configured names.",
+          "description": "The complete example, run from the repo root: every collection, drafts excluded.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection guides,blog",
+            "command": "npx @hawkeyexl/manni meta validate",
             "exitCodes": [
-              2
+              0
             ],
-            "stdio": "/no collection named \"guides,blog\"[\\s\\S]*Configured: guides, blog/"
+            "stdio": "/Using manni.config.yaml[\\s\\S]*3 files checked, 3 passed, 0 failed, 0 errors/"
           }
         }
       ]

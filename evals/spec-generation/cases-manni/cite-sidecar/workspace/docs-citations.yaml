@@ -1,0 +1,55 @@
+# The site collection's citations, keyed by page path relative to the config file.
+# Each page under docs/ that cites code has an entry here.
+docs/limits.md:
+  citations:
+    - id: fetch-timeout
+      claim:
+        lines: 3
+        integrity: sha256-921b21cccab21a4577f224ec4171aa56a3414bb3a5a4704ab8b6f314c46aa094
+      source:
+        file: lib/limits.ts
+        lines: 2
+        integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+
+# Fetch timeout, as the moved page states it.
+docs/moved.md:
+  citations:
+    - id: fetch-timeout
+      claim:
+        lines: 3
+        integrity: sha256-921b21cccab21a4577f224ec4171aa56a3414bb3a5a4704ab8b6f314c46aa094
+      source:
+        file: lib/moved.ts
+        lines: 2
+        integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+
+# The same claim on the second moved page.
+#
+docs/moved-two.md:
+  citations:
+    - id: fetch-timeout
+      claim:
+        lines: 3
+        integrity: sha256-921b21cccab21a4577f224ec4171aa56a3414bb3a5a4704ab8b6f314c46aa094
+      source:
+        file: lib/moved.ts
+        lines: 2
+        integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+
+# Pinned by hand.
+docs/entry-invalid.md:
+  citations:
+    - id: bad-pin
+      source:
+        file: lib/limits.ts
+        lines: 2
+        integrity: nonsense
+
+# Two channels.
+#
+docs/own.md:
+  citations:
+    - id: from-the-manifest
+      source:
+        file: lib/limits.ts
+        integrity: sha256-aebba92fe4cddf100cc781281d1f24ad7c234b6189413e2130d5fe71ed86e023

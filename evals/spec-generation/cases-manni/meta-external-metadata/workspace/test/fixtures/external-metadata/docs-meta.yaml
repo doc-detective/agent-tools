@@ -1,0 +1,8 @@
+# Keys are document paths relative to this config's directory.
+docs/auth.md:
+  source: internal/auth-design.md
+  jira: PLAT-412
+docs/billing.md:
+  jira: not-a-ticket
+docs/ops.md:
+  jira: PLAT-9

@@ -8,11 +8,11 @@ active at a time.
 
 1. Go to `http://localhost:8092`.
 
-2. Under **Radio Buttons**, select **Option 2**.
+2. In the **Radio Buttons:** group, select **Option 2**.
 
    **Option 2** is now the selected billing frequency.
 
-3. Changed your mind? Under **Radio Buttons**, select **Option 3**.
+3. Changed your mind? In the **Radio Buttons:** group, select **Option 3**.
 
    **Option 3** becomes selected, and **Option 2** clears automatically.
 

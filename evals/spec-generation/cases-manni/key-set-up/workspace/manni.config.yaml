@@ -1,0 +1,15 @@
+collections:
+  - name: site
+    paths:
+      - "docs/**/*.md"
+    exclude:
+      - "docs/limits.md"
+    externalMetadata:
+      - file: ./owners.yaml
+        keys: [owner]
+
+meta:
+  overrides:
+    - collection: site
+      schemas:
+        - ./schemas/encrypted.schema.json

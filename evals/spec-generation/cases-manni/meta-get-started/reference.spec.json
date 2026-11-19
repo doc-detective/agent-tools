@@ -1,35 +1,21 @@
 {
-  "specId": "manni-meta-get-started-index",
-  "description": "Inline tests from manni docs/src/content/docs/meta/get-started/index.mdx",
+  "specId": "manni-meta-get-started",
+  "description": "manni docs meta/get-started, run in a repo that holds the page's path/to/your-doc.md.",
   "tests": [
     {
       "testId": "get-started",
-      "description": "Install/validate flow and result reading, run against the local CLI build and committed fixtures.",
       "steps": [
         {
-          "description": "Node.js prerequisite: `node --version` reports a version (page requires Node 24+).",
+          "description": "Node.js prerequisite: node --version prints a version.",
           "runShell": {
             "command": "node --version",
-            "exitCodes": [
-              0
-            ],
             "stdio": "/v\\d+\\./"
           }
         },
         {
-          "description": "Validate a passing file: a fixture satisfying OKF exits 0 with a green summary.",
+          "description": "Validate the passing file: exit 0 and the summary line the page shows.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md",
-            "exitCodes": [
-              0
-            ],
-            "stdio": "1 passed"
-          }
-        },
-        {
-          "description": "Read a passing result: the summary line format the page documents.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md",
+            "command": "manni meta validate path/to/your-doc.md",
             "exitCodes": [
               0
             ],
@@ -37,9 +23,15 @@
           }
         },
         {
-          "description": "Read a failing result: a file missing `type` exits 1 and names the missing property.",
+          "description": "Remove the type field, as the page says.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md",
+            "command": "node -e \"const f=require('fs'),p='path/to/your-doc.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace(/^type:.*\\n/m,''))\""
+          }
+        },
+        {
+          "description": "The failing result names the missing property.",
+          "runShell": {
+            "command": "manni meta validate path/to/your-doc.md",
             "exitCodes": [
               1
             ],
@@ -47,13 +39,13 @@
           }
         },
         {
-          "description": "The failing result also cites the flagging schema in brackets.",
+          "description": "It cites the flagging schema in brackets, and the summary counts one failure.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md",
+            "command": "manni meta validate path/to/your-doc.md",
             "exitCodes": [
               1
             ],
-            "stdio": "google:okf:0.1"
+            "stdio": "/\\[google:okf:0\\.1\\][\\s\\S]*1 file checked, 0 passed, 1 failed, 1 error/"
           }
         }
       ]

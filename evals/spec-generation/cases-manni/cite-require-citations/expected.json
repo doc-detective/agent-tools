@@ -1,50 +1,43 @@
 {
   "source": "manni/docs/src/content/docs/cite/set-up/require-citations.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-require-citations.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "can't resolve reference",
-      "note": "A house schema cannot $ref the vocabulary: it fails to compile, exit 2."
+      "stepType": "runShell",
+      "match": ["meta validate", "can't resolve reference"],
+      "note": "A `$ref` to the vocabulary inside the house schema is a compile failure, exit 2, when the first page it governs is validated."
     },
     {
-      "action": "runShell",
-      "match": "1 file checked, 1 passed, 0 failed, 0 errors",
-      "note": "Composed as a set, a page with a well-formed citation passes both."
+      "stepType": "runShell",
+      "match": ["meta validate", "required property 'citations'"],
+      "note": "Three pages, three outcomes: the page with no citation fails under your schema."
     },
     {
-      "action": "runShell",
-      "match": "must have required property 'citations'",
-      "note": "A page with no citations fails under the house schema."
+      "stepType": "runShell",
+      "match": ["meta validate", "required property 'integrity'"],
+      "may_share": true,
+      "note": "The page with a malformed entry fails under the vocabulary. Same `meta validate docs/reference/` run."
     },
     {
-      "action": "runShell",
-      "match": "proposal.4.json]",
-      "note": "A malformed entry fails under the vocabulary, and the finding names it."
+      "stepType": "runShell",
+      "match": ["cite check", "1 warning"],
+      "note": "At its default, `claim-changed` is a warning, reported and green."
     },
     {
-      "action": "runShell",
-      "match": "sidecar",
-      "note": "A page whose entries live in a sidecar manifest satisfies the required key."
+      "stepType": "runShell",
+      "match": ["cite check", "1 failed"],
+      "note": "With `claim-changed: error` the same run blocks the branch."
     },
     {
-      "action": "runShell",
-      "match": "1 finding (1 warning)",
-      "note": "claim-changed at its default is a warning and exits 0."
-    },
-    {
-      "action": "runShell",
-      "match": "1 failed, 1 finding",
-      "note": "Moved to error under `severity:`, the same page fails, exit 1."
-    },
-    {
-      "action": "runShell",
-      "match": "duplicate id \"fetch-timeout\"",
-      "note": "cite check refuses a duplicate id on the second entry's line."
+      "stepType": "runShell",
+      "match": ["cite check", "duplicate id"],
+      "note": "A duplicate id is `entry-invalid` at check time, on the second entry's line."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`.",
-    "The citations vocabulary schema is docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json in the manni repo."
+    "schema/reference-page.schema.json is the page's house schema; schema/citations-1.0.0-proposal.4.json is the vocabulary already copied in, as the page says to.",
+    "manni.config.yaml declares the `reference` collection (docs/reference/**/*.md) and the meta override with both schemas as a set; it has no `cite:` section, so a spec adds the page's `severity:` block before the blocking run.",
+    "docs/reference/ holds entry-invalid.md (an entry missing source integrity, plus duplicate ids), limits.md (a pinned sentence since edited, so claim-changed), and retries.md (no citations); lib/limits.ts is the cited source."
   ]
 }

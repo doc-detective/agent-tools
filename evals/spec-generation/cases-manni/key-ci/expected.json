@@ -1,29 +1,131 @@
 {
   "source": "manni/docs/src/content/docs/key/ci/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/key-ci.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "--to must be at least 32",
-      "note": "A --to shorter than 32 characters is refused."
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "2 passed"
+      ],
+      "note": "Runbook step 1: meta validate is green under the current key."
     },
     {
-      "action": "runShell",
-      "match": "takes no stdin",
-      "note": "rotate takes no stdin."
+      "stepType": "runShell",
+      "match": [
+        "cite check",
+        "2 passed"
+      ],
+      "note": "Runbook step 1: cite check is green under the current key."
     },
     {
-      "action": "runShell",
-      "match": "Use pretty or json",
-      "note": "rotate reports in pretty or json only."
+      "stepType": "runShell",
+      "match": [
+        "key rotate",
+        "--dry-run",
+        "Dry run: nothing written"
+      ],
+      "note": "Step 2: preview the whole rotation."
     },
     {
-      "action": "runShell",
-      "match": "nothing can be re-encrypted",
-      "note": "With no key configured, rotate refuses."
+      "stepType": "runShell",
+      "match": [
+        "key rotate",
+        "Encryption key written"
+      ],
+      "note": "Step 3: rotate the whole family; the key is written to manni.config.yaml."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "cite check",
+        "--write-baseline",
+        "Baseline written"
+      ],
+      "note": "Step 5: re-record the citation baseline."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "2 passed"
+      ],
+      "note": "Step 6: meta validate reads as it did in step 1."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "cite check",
+        "2 passed"
+      ],
+      "note": "Step 6: cite check reads as it did in step 1."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "key rotate",
+        "needs --to"
+      ],
+      "note": "Rotate one area at a time: a narrowed run without --to is refused."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "key rotate",
+        "--to",
+        "covered part of the family"
+      ],
+      "note": "The narrowed run with --to does not write the key."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "encrypted:unreadable"
+      ],
+      "note": "Between the two runs the gate is red."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "key rotate",
+        "--to",
+        "Encryption key written"
+      ],
+      "note": "The whole run under the same --to finishes and writes the key."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "key rotate",
+        "--to",
+        "must be at least 32"
+      ],
+      "note": "What stops a rotation: a --to shorter than 32 characters."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "key rotate",
+        "takes no stdin"
+      ],
+      "note": "What stops a rotation: rotate takes no stdin (`-`)."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "key rotate",
+        "sarif",
+        "Use pretty or json"
+      ],
+      "note": "What stops a rotation: any format but pretty or json."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "No manni encryption key may be configured for the run."
+    "Built with the CLI in a scratch copy and committed: manni.config.yaml declares collection `site` (docs/**/*.md), schemas/page.schema.json (owner marked x-manni-encrypt), and the `encryptionKey:` that `manni key set` wrote. docs/auth.md holds /owner encrypted under it; docs/limits.md cites src/limits.ts:2 with an encrypted source; .manni-cite-baseline.json exists, so rotate prints the re-record line.",
+    "No MANNI_ENCRYPTION_KEY, so the environment variant (and its window) is not required. The no-key refusal is not required: the bare command finds the configured key.",
+    "$NEW_KEY in the page is a placeholder: a spec passes a literal 32+ hex value. The resume section needs an interrupted state, which a spec makes: rotate one page with --to, then write that value as encryptionKey with the old key as encryptionKeyPrevious.",
+    "The resume section is not scored: the page never has the reader interrupt a rotation. The reference still crafts that state and checks it."
   ]
 }

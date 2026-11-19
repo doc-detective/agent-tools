@@ -1,54 +1,50 @@
 {
   "source": "manni/docs/src/content/docs/meta/ci/exit-codes-and-annotations.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-ci-exit-codes.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "meta validate",
-      "note": "Exit 0: every validated file satisfies its schema set."
+      "stepType": "runShell",
+      "match": ["meta validate", "--nope"],
+      "note": "`manni meta validate --nope docs/` exits 2, not 1."
     },
     {
-      "action": "runShell",
-      "match": "meta validate",
-      "note": "Exit 1: one or more files failed validation."
+      "stepType": "runShell",
+      "match": ["meta validate", "must match format"],
+      "note": "pretty: `manni meta validate bad-timestamp.md` prints the quoted error line and summary."
     },
     {
-      "action": "runShell",
-      "match": "Unknown --format",
-      "note": "Exit 2: an unknown --format."
+      "stepType": "runShell",
+      "match": ["meta validate", "--format json"],
+      "note": "json: `manni meta validate bad-timestamp.md --format json`."
     },
     {
-      "action": "runShell",
-      "match": "unknown option",
-      "note": "Exit 2: an unknown flag is a usage error."
+      "stepType": "runShell",
+      "match": ["meta validate", "--format github", "::error"],
+      "note": "github: the quoted `::error file=bad-timestamp.md,line=4::` annotation."
     },
     {
-      "action": "runShell",
-      "match": "missing required argument",
-      "note": "Exit 2: a missing required argument."
+      "stepType": "runShell",
+      "match": ["meta validate", "--format github", "col="],
+      "note": "The same violation in an HTML document also carries a column (`line=6,col=28`)."
     },
     {
-      "action": "runShell",
-      "match": "Specify at least one field",
-      "note": "Exit 2: get with no field list."
+      "stepType": "runShell",
+      "match": ["meta validate", "--format sarif"],
+      "note": "sarif: `manni meta validate \"docs/**/*.md\" --format sarif > manni.sarif`."
     },
     {
-      "action": "runShell",
-      "match": "::error file=",
-      "note": "github annotations carry file= and line=."
+      "stepType": "runShell",
+      "match": ["meta validate", "--format junit"],
+      "note": "junit: `manni meta validate \"docs/**/*.md\" --format junit > manni-junit.xml`."
     },
     {
-      "action": "runShell",
-      "match": "meta get",
-      "note": "get has no github output (exit 2)."
-    },
-    {
-      "action": "runShell",
-      "match": "meta fill",
-      "note": "fill accepts github; other findings formats are validate-only."
+      "stepType": "runShell",
+      "match": ["--no-color", "validate"],
+      "note": "`manni meta --no-color validate docs/`: the global flag goes before the subcommand."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "bad-timestamp.md, bad-timestamp.html, and missing-type.md at the root (the page's example files), and docs/ with two pages, one with a malformed timestamp. No config, so the built-in OKF schema applies. The missing-type annotation is not expected: the CLI prints `line=1` where the page says `line=` is dropped. fill's github annotations need an LLM provider."
   ]
 }

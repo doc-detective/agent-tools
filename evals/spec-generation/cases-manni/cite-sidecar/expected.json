@@ -1,69 +1,77 @@
 {
   "source": "manni/docs/src/content/docs/cite/set-up/citations-in-a-sidecar.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-sidecar.mdx",
   "steps": [
     {
-      "action": "runShell",
-      "match": "citations=(unset)",
-      "note": "Read alone, the page's own frontmatter has no citations."
+      "stepType": "runShell",
+      "match": ["meta get", "--no-config", "citations=(unset)"],
+      "note": "Confirm the page came out clean: `meta get` under `--no-config` reads the page alone, and citations is unset."
     },
     {
-      "action": "runShell",
-      "match": "citations=[{\"id\":\"fetch-timeout\"",
-      "note": "With the config, the merged view carries the manifest's entry."
+      "stepType": "runShell",
+      "match": ["meta get", "citations=["],
+      "note": "With the config governing the run, `meta get` reads the merged view, which carries the entry."
     },
     {
-      "action": "runShell",
-      "match": "citations.yaml:5",
-      "note": "The check passes and the row names the manifest and the entry's line."
+      "stepType": "runShell",
+      "match": ["cite check", "docs-citations.yaml:5"],
+      "note": "Check exactly as before: a fourth column names the manifest and the line the entry starts on."
     },
     {
-      "action": "runShell",
-      "match": "must match pattern",
-      "note": "A finding about the entry is located on the manifest's line."
+      "stepType": "runShell",
+      "match": ["cite check", "must match pattern"],
+      "note": "A finding about the entry itself sits on the manifest, on the entry's own first line."
     },
     {
-      "action": "runShell",
-      "match": "citations.yaml,line=42",
-      "note": "github format annotates the manifest at that line."
+      "stepType": "runShell",
+      "match": ["cite check", "-f github", "::error"],
+      "note": "`-f github` annotates the manifest, so the comment appears on the manifest's diff."
     },
     {
-      "action": "runShell",
-      "match": "is owned by manifest",
-      "note": "A page that still carries its own citations is an error."
+      "stepType": "runShell",
+      "match": ["cite check", "is owned by manifest"],
+      "note": "A half-moved page has two owners for one key: an error naming the manifest and the collection."
     },
     {
-      "action": "runShell",
-      "match": "added retries to",
-      "note": "`cite add` writes the entry to the manifest; the page is untouched."
+      "stepType": "runShell",
+      "match": ["meta validate", "external:owned"],
+      "note": "`meta validate` reports the same page as `external:owned`."
     },
     {
-      "action": "runShell",
-      "match": "2 citations rewritten in 2 files",
-      "note": "`cite update` repairs two entries and writes the manifest once."
+      "stepType": "runShell",
+      "match": ["cite add", "--dry-run", "added retries to"],
+      "note": "`add` needs no flag: the entry goes to the manifest, and the claim stays at the line typed."
     },
     {
-      "action": "runShell",
-      "match": "--collection guides",
-      "note": "A manifest keyed by a page field matches on that field."
+      "stepType": "runShell",
+      "match": ["cite update", "--dry-run", "2 citations rewritten"],
+      "note": "`update` writes each manifest once per run, however many entries it repaired."
     },
     {
-      "action": "runShell",
-      "match": "cannot come from a URL manifest",
-      "note": "Refusal: a URL manifest cannot own citations, exit 2."
+      "stepType": "runShell",
+      "match": ["cite check", "guides-citations.yaml:4"],
+      "note": "The page that carries `slug: guide-one` owns the `join:`-keyed entry."
     },
     {
-      "action": "runShell",
-      "match": "both keep citations in a manifest",
-      "note": "Refusal: a page in two owning collections, exit 2."
+      "stepType": "runShell",
+      "match": ["cannot come from a URL manifest"],
+      "note": "Refusal one: a URL in `file:` on the manifest that owns citations, exit 2."
     },
     {
-      "action": "runShell",
-      "match": "A page read from stdin has no path",
-      "note": "Refusal: `cite add` from stdin has no path to key the entry by."
+      "stepType": "runShell",
+      "match": ["both keep citations in a manifest"],
+      "note": "Refusal two: two collections matching one page, both with a manifest owning citations, exit 2."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "read from stdin has no path"],
+      "note": "Refusal three: `-` on `add`, to read the page from stdin, exit 2."
     }
   ],
   "must_not": [],
   "scaffolding": [
-    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+    "The page's example repository: manni.config.yaml declares the `site` collection (docs/**/*.md, manifest docs-citations.yaml) and the `guides` collection (guides/**/*.md, manifest guides-citations.yaml joined on `slug`).",
+    "docs/ holds limits.md, retries.md, moved.md, moved-two.md, own.md (still carries its own citations) and entry-invalid.md (its manifest entry has a malformed integrity); guides/guide.md carries `slug: guide-one`; lib/ holds limits.ts and moved.ts (lines shifted by two).",
+    "The refusals need configs the repo doesn't have (a URL manifest; two owning collections), so a spec writes them."
   ]
 }

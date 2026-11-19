@@ -1,0 +1,12 @@
+collections:
+  - name: site
+    paths: ["docs/**/*.md"]
+    externalMetadata:
+      - file: ./docs-citations.yaml
+        keys: [citations]
+  - name: guides
+    paths: ["guides/**/*.md"]
+    externalMetadata:
+      - file: ./guides-citations.yaml
+        keys: [citations]
+        join: slug

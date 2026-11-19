@@ -1,109 +1,64 @@
 {
-  "specId": "manni-meta-schemas-index",
-  "description": "Inline tests from manni docs/src/content/docs/meta/schemas/index.mdx",
+  "specId": "manni-meta-schemas",
+  "description": "manni docs meta/schemas, run in a docs repo with a schema at schemas/metadata.schema.json and the page's example document.",
   "tests": [
     {
       "testId": "author-a-schema",
-      "description": "Schema-authoring claims, demonstrated with the committed fixtures the page itself cites.",
       "steps": [
         {
-          "description": "A document points itself at a schema via $schema (schema-ref.md names google:okf:0.1) and validates against it.",
+          "description": "manni meta schemas lists the built-ins, including the vocabularies the page names.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/schema-ref.md",
+            "command": "manni meta schemas",
             "exitCodes": [
               0
             ],
-            "stdio": "1 passed"
+            "stdio": "/google:okf:0\\.1[\\s\\S]*diataxis:diataxis:1\\.0[\\s\\S]*passo-uno:seven-action:1\\.0[\\s\\S]*tgdp:templates:1\\.0/"
           }
         },
         {
-          "description": "The minimal title.schema.json shape (the extra.schema.json fixture) passes a doc that has a title.",
+          "description": "Reference your own schema file by path.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/extra.schema.json",
+            "command": "manni meta validate docs/ -s ./schemas/metadata.schema.json",
             "exitCodes": [
               0
             ],
-            "stdio": "1 passed"
+            "stdio": "0 failed"
           }
         },
         {
-          "description": "A required field that is absent is a hard failure: a frontmatter-free doc fails the required `title`.",
+          "description": "Stack a type vocabulary with OKF; both apply in full.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/no-frontmatter.md -s ./test/fixtures/extra.schema.json",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "must have required property 'title'"
-          }
-        },
-        {
-          "description": "The date-time format is enforced: a malformed timestamp fails against OKF.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/bad-timestamp.md",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "date-time"
-          }
-        },
-        {
-          "description": "`schemas` lists the built-in OKF schema the page documents as the fallback.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta schemas",
+            "command": "manni meta validate docs/ -s diataxis:diataxis:1.0 -s google:okf:0.1",
             "exitCodes": [
               0
             ],
-            "stdio": "google:okf:0.1"
+            "stdio": "0 failed"
           }
         },
         {
-          "description": "`schemas` also lists the Diataxis vocabulary this page points readers at.",
+          "description": "Add $schema: to the document's frontmatter, pointing at the schema file.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta schemas",
+            "command": "node -e \"const f=require('fs'),p='path/to/document.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace(/^---\\n/,'---\\n\\x24schema: ./schemas/metadata.schema.json\\n'))\""
+          }
+        },
+        {
+          "description": "Validate it.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate path/to/document.md",
             "exitCodes": [
               0
             ],
-            "stdio": "diataxis:diataxis:1.0"
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
           }
         },
         {
-          "description": "Stacking OKF with a taxonomy schema passes a document carrying a canonical Diataxis type.",
+          "description": "The document was validated against the schema it names.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/diataxis-how-to.md -s google:okf:0.1 -s diataxis:diataxis:1.0",
+            "command": "npx @hawkeyexl/manni meta validate path/to/document.md -f json",
             "exitCodes": [
               0
             ],
-            "stdio": "1 passed"
-          }
-        },
-        {
-          "description": "The vocabulary is closed: a near-miss spelling fails against the Diataxis schema.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/diataxis-bad-type.md -s diataxis:diataxis:1.0",
-            "exitCodes": [
-              1
-            ],
-            "stdio": "allowed values"
-          }
-        },
-        {
-          "description": "`schemas` also lists the Good Docs Project vocabulary this page points readers at.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta schemas",
-            "exitCodes": [
-              0
-            ],
-            "stdio": "tgdp:templates:1.0"
-          }
-        },
-        {
-          "description": "The TGDP vocabulary accepts a template slug that has no Diataxis equivalent.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/tgdp-installation-guide.md -s tgdp:templates:1.0",
-            "exitCodes": [
-              0
-            ],
-            "stdio": "1 passed"
+            "stdio": "\"./schemas/metadata.schema.json\""
           }
         }
       ]

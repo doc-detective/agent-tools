@@ -16,7 +16,7 @@ where you left it.
 
 ## Add a note to the record
 
-3. In the new tab, click the **Echo input** field and enter `draft note`.
+3. In the new tab, click the **Echo input:** field and enter `draft note`.
 
    Your note appears next to the field as you type.
 

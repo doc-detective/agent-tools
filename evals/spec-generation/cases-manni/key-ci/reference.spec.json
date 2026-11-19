@@ -1,15 +1,238 @@
 {
-  "specId": "manni-key-ci-index",
-  "description": "Inline tests from manni docs/src/content/docs/key/ci/index.mdx",
+  "specId": "manni-key-ci",
+  "description": "manni docs key/ci, run in a repo whose manni.config.yaml holds a key, with an encrypted /owner on docs/auth.md, an encrypted citation source on docs/limits.md, and a citation baseline. One run walks the runbook, a narrowed rotation, a resumed rotation, and the refusals.",
   "tests": [
     {
-      "testId": "key-ci-rotation",
-      "description": "The refusals that guard a rotation, each of which writes nothing.",
+      "testId": "key-ci-runbook",
+      "description": "The runbook, steps 1 to 6.",
       "steps": [
         {
-          "description": "A --to shorter than 32 characters is refused before anything is read.",
+          "description": "Step 1: meta validate is green under the current key.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni key rotate --to tooshort",
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "Step 1: cite check is green under the current key.",
+          "runShell": {
+            "command": "manni cite check",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:\\d+ current\\s+~\\S+:2 current[\\s\\S]*2 files checked, 2 passed, 0 failed, 0 findings/"
+          }
+        },
+        {
+          "description": "Step 2: the dry run re-encrypts both values in memory and writes nothing.",
+          "runShell": {
+            "command": "manni key rotate --dry-run",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/auth\\.md: \\/owner[\\s\\S]*docs\\/limits\\.md: fetch-timeout[\\s\\S]*2 values re-encrypted in 2 files, 0 skipped\\s+Dry run: nothing written\\./"
+          }
+        },
+        {
+          "description": "Step 2: nothing was written, so the gate still reads the same.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "Step 3: rotate the whole family; the new key is written to the config and the baseline is flagged.",
+          "runShell": {
+            "command": "manni key rotate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/2 values re-encrypted in 2 files, 0 skipped\\s+Encryption key written to manni\\.config\\.yaml\\.\\s+The citation baseline fingerprints id-less encrypted citations by their pin/"
+          }
+        },
+        {
+          "description": "Step 5: re-record the citation baseline.",
+          "runShell": {
+            "command": "manni cite check --write-baseline",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/2 files checked, 2 passed, 0 failed, 0 findings\\s+Baseline written to \\.manni-cite-baseline\\.json/"
+          }
+        },
+        {
+          "description": "Step 6: meta validate reads as it did in step 1.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "Step 6: cite check reads as it did in step 1.",
+          "runShell": {
+            "command": "manni cite check",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:\\d+ current\\s+~\\S+:2 current[\\s\\S]*2 files checked, 2 passed, 0 failed, 0 findings/"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "key-ci-narrowed",
+      "description": "Rotate one area at a time.",
+      "steps": [
+        {
+          "description": "A narrowed run needs --to.",
+          "runShell": {
+            "command": "manni key rotate docs/auth.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "A run over part of the family needs --to, and never writes the key."
+          }
+        },
+        {
+          "description": "The narrowed run with --to re-encrypts auth.md and does not write the key.",
+          "runShell": {
+            "command": "manni key rotate docs/auth.md --to 2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/1 value re-encrypted in 1 file, 0 skipped\\s+Key not written: this run covered part of the family\\./"
+          }
+        },
+        {
+          "description": "Between the two runs the gate is red.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/docs\\/auth\\.md\\s+\\/owner  \\/owner does not decrypt under the current key[\\s\\S]*\\[encrypted:unreadable\\][\\s\\S]*2 files checked, 1 passed, 1 failed, 1 error/"
+          }
+        },
+        {
+          "description": "The whole run under the same value re-encrypts only limits.md and writes the key.",
+          "runShell": {
+            "command": "manni key rotate --to 2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/limits\\.md: fetch-timeout[\\s\\S]*1 value re-encrypted in 1 file, 0 skipped\\s+Encryption key written to manni\\.config\\.yaml\\./"
+          }
+        },
+        {
+          "description": "Green again.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed, 0 failed, 0 errors"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "key-ci-resume",
+      "description": "Resume an interrupted rotation. A run stopped between its first and last write leaves limits.md under the new key, auth.md under the old one, and both keys in the config.",
+      "steps": [
+        {
+          "description": "Re-encrypt limits.md alone under the new key.",
+          "runShell": {
+            "command": "manni key rotate docs/limits.md --to 3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "Key not written"
+          }
+        },
+        {
+          "description": "Write the config a stopped run leaves: the new key, with the old one beside it.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='manni.config.yaml';f.writeFileSync(p,f.readFileSync(p,'utf8').replace(/^encryptionKey:.*$/m,'encryptionKey: 3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b3b\\nencryptionKeyPrevious: 2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a'))\""
+          }
+        },
+        {
+          "description": "The page the run did not reach reports encrypted:unreadable.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/docs\\/auth\\.md\\s+\\/owner  \\/owner does not decrypt under the current key[\\s\\S]*\\[encrypted:unreadable\\][\\s\\S]*2 files checked, 1 passed, 1 failed, 1 error/"
+          }
+        },
+        {
+          "description": "key set is refused until the rotation finishes.",
+          "runShell": {
+            "command": "manni key set",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "A rotation is unfinished in manni.config.yaml. Run `manni key rotate` with no --to to finish it."
+          }
+        },
+        {
+          "description": "rotate --to is refused until the rotation finishes.",
+          "runShell": {
+            "command": "manni key rotate --to 4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c4c",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "A rotation is unfinished in manni.config.yaml. Run `manni key rotate` with no --to to finish it."
+          }
+        },
+        {
+          "description": "rotate with no --to finishes the job and says so above the counts.",
+          "runShell": {
+            "command": "manni key rotate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/Finished the interrupted rotation in manni\\.config\\.yaml\\.\\s+1 value re-encrypted in 1 file, 0 skipped/"
+          }
+        },
+        {
+          "description": "encryptionKeyPrevious is removed.",
+          "runShell": {
+            "command": "node -e \"process.exit(/encryptionKeyPrevious/.test(require('fs').readFileSync('manni.config.yaml','utf8'))?1:0)\"",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "Green under the finished key.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed, 0 failed, 0 errors"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "key-ci-refusals",
+      "description": "What stops a rotation before it starts.",
+      "steps": [
+        {
+          "description": "A --to shorter than 32 characters.",
+          "runShell": {
+            "command": "manni key rotate --to tooshort",
             "exitCodes": [
               2
             ],
@@ -17,33 +240,23 @@
           }
         },
         {
-          "description": "rotate takes no stdin, because it writes the files it reads.",
+          "description": "rotate takes no stdin.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni key rotate - --to 0123456789abcdef0123456789abcdef",
+            "command": "manni key rotate - --to 2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a2a",
             "exitCodes": [
               2
             ],
-            "stdio": "key rotate reads and writes files, so it takes no stdin"
+            "stdio": "key rotate reads and writes files, so it takes no stdin (`-`). Name the files instead."
           }
         },
         {
-          "description": "rotate reports in pretty or json only; any other format is refused.",
+          "description": "Only pretty or json.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni key rotate -f sarif",
+            "command": "manni key rotate -f sarif",
             "exitCodes": [
               2
             ],
             "stdio": "Unknown --format \"sarif\". Use pretty or json."
-          }
-        },
-        {
-          "description": "With no key configured there is nothing to re-encrypt from, and the run refuses.",
-          "runShell": {
-            "command": "npx @hawkeyexl/manni key rotate",
-            "exitCodes": [
-              2
-            ],
-            "stdio": "No encryption key is available, so nothing can be re-encrypted. Run `manni key set` first."
           }
         }
       ]

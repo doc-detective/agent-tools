@@ -1,49 +1,122 @@
 {
-  "specId": "manni-meta-set-up-new-required-field",
-  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/new-required-field.mdx",
+  "specId": "manni-meta-new-required-field",
+  "description": "manni docs meta/set-up/new-required-field, run in a repo whose manni.config.yaml validates docs/ against schemas/doc.json. Two pages predate the new `owner` field.",
   "tests": [
     {
       "testId": "new-required-field",
-      "description": "Required-from-day-one plus a baseline, demonstrated with the `owner` schema fixtures.",
       "steps": [
         {
-          "description": "Step 1 (make it required): a doc lacking `owner` fails once the field is in `required`.",
+          "description": "Step 1: add `owner` to the schema's properties and required.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/dd/owner-required.schema.json",
+            "command": "node -e \"const f=require('fs'),p='schemas/doc.json',s=JSON.parse(f.readFileSync(p,'utf8'));s.required=['type','owner'];s.properties.owner={type:'string',minLength:1};f.writeFileSync(p,JSON.stringify(s,null,2)+'\\n')\""
+          }
+        },
+        {
+          "description": "Step 1: the run exits 1 and lists every doc missing `owner`.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
             "exitCodes": [
               1
             ],
-            "stdio": "must have required property 'owner'"
+            "stdio": "/docs/api/errors\\.md\\s+\\(root\\)  must have required property 'owner'[\\s\\S]*docs/api/legacy\\.md\\s+\\(root\\)  must have required property 'owner'/"
           }
         },
         {
-          "description": "Step 2 (record the backlog): --write-baseline records that finding and exits 0, reporting the additions.",
+          "description": "Step 2: record the backlog.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/dd/owner-required.schema.json --write-baseline .dd-baseline.json",
+            "command": "npx @hawkeyexl/manni meta validate --write-baseline",
             "exitCodes": [
               0
             ],
-            "stdio": "1 finding recorded (+1 new, -0 no longer occur)"
+            "stdio": "/Baseline written to \\.manni-baseline\\.json\\s+2 findings recorded \\(\\+2 new, -0 no longer occur\\)/"
           }
         },
         {
-          "description": "Step 3 (turn it on): the same run now passes, with the forgiven finding still counted.",
+          "description": "Step 3: point the config at the baseline.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/dd/owner-required.schema.json --baseline .dd-baseline.json",
+            "command": "node -e \"require('fs').appendFileSync('manni.config.yaml','\\n  baseline: .manni-baseline.json\\n')\""
+          }
+        },
+        {
+          "description": "Step 3: green build, with the forgiven findings counted.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
             "exitCodes": [
               0
             ],
-            "stdio": "1 baselined finding"
+            "stdio": "/legacy\\.md  \\(1 baselined\\)[\\s\\S]*3 files checked, 3 passed, 0 failed, 0 errors\\s+2 baselined findings/"
           }
         },
         {
-          "description": "Step 4 (new violations still fail): a second file's finding is not in the baseline, so the run exits 1.",
+          "description": "Step 4.1: a doc that lands without `owner` is not in the baseline.",
           "runShell": {
-            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md -s ./test/fixtures/dd/owner-required.schema.json --baseline .dd-baseline.json",
+            "command": "node -e \"require('fs').writeFileSync('docs/guides/new-page.md','---\\ntype: guide\\ntitle: New page\\n---\\n\\n# New page\\n')\""
+          }
+        },
+        {
+          "description": "Step 4.1: new violations fail immediately, naming only that file.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
             "exitCodes": [
               1
             ],
-            "stdio": "must have required property 'owner'"
+            "stdio": "/docs/guides/new-page\\.md\\s+\\(root\\)  must have required property 'owner'[\\s\\S]*4 files checked, 3 passed, 1 failed/"
+          }
+        },
+        {
+          "description": "Step 4.2: the new page gets its owner, and someone adds the missing field to legacy.md.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs');for(const[p,o]of[['docs/guides/new-page.md','docs-team'],['docs/api/legacy.md','api-team']])f.writeFileSync(p,f.readFileSync(p,'utf8').replace(/^title: .*/m,m=>m+'\\nowner: '+o))\""
+          }
+        },
+        {
+          "description": "Step 4.2: fixed violations are reported, not forgotten.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/2 baselined findings, 1 no longer occurs?\\W+run --write-baseline to prune/"
+          }
+        },
+        {
+          "description": "Step 4.3: prune the entries that no longer apply.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --write-baseline",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/Baseline written to \\.manni-baseline\\.json\\s+1 finding recorded \\(\\+0 new, -1 no longer occurs?\\)/"
+          }
+        },
+        {
+          "description": "The one-statement ratchet: preview the ALTER first.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --dry-run \"ALTER TABLE docs ADD COLUMN reviewed TEXT NOT NULL DEFAULT 'pending'\" docs/",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/schema schemas/doc\\.json: \\+ reviewed[\\s\\S]*dry run/"
+          }
+        },
+        {
+          "description": "The ALTER adds `reviewed` as required and backfills every file.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query \"ALTER TABLE docs ADD COLUMN reviewed TEXT NOT NULL DEFAULT 'pending'\" docs/",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "written"
+          }
+        },
+        {
+          "description": "Afterwards validate is green: no document is missing the field.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "4 files checked, 4 passed, 0 failed, 0 errors"
           }
         }
       ]

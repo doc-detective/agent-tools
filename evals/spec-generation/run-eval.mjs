@@ -138,7 +138,7 @@ const REF_EXTS = ['', '.html', '.txt', '.json'];
 // Spec-generation eval: see grade.mjs for the case slices, workspaces, and grading.
 
 import { runClaude, buildPlugin, removeWorkspace } from '../lib/claude-run.mjs';
-import { loadCases as loadSpecCases, makeWorkspace, ensureServers, findSpec, runDocDetective, gradeRun, stepsOf } from './grade.mjs';
+import { loadCases as loadSpecCases, makeWorkspace, ensureServers, usesServers, toolEnv, findSpec, runDocDetective, gradeRun, stepsOf } from './grade.mjs';
 
 // --- run (hooks) --------------------------------------------------------------------
 
@@ -146,11 +146,13 @@ import { loadCases as loadSpecCases, makeWorkspace, ensureServers, findSpec, run
 // a build per worker would race on the output folders.
 async function loadCases() {
   buildPlugin();
+  // The session inherits this env, so its own manni and Doc Detective runs use what the grade uses.
+  Object.assign(process.env, toolEnv());
   return loadSpecCases();
 }
 
 async function runCase(c, ctx) {
-  if (c.slice === 'web') await ensureServers();
+  if (usesServers(c)) await ensureServers();
   const ws = makeWorkspace(c);
   try {
     const run = await runClaude({ prompt: c.prompt, cwd: ws, model: ctx.model });
