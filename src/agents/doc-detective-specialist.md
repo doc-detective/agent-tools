@@ -18,6 +18,7 @@ Your knowledge comes from the following in-repo references and external document
 - **Actions reference**: `skills/doc-detective-doc-testing/references/actions.md` — complete action syntax and examples
 - **Configuration guidance**: `skills/doc-detective-project-bootstrap/references/config-guidance.md` — config schema, best practices, project-type examples
 - **Procedure heuristics**: `skills/doc-detective-project-bootstrap/references/procedure-heuristics.md` — identifying testable procedures in docs
+- **Audit coverage**: `skills/doc-detective-project-bootstrap/references/audit-coverage.md`, for finding untested procedure steps with `doc-detective audit` and acting on its guidance
 - **Doc patterns**: `skills/doc-detective-project-bootstrap/references/doc-patterns.md` — documentation structure patterns
 - **Markup patterns**: `skills/doc-detective-inline-test-injection/references/markup-patterns.md` — inline test comment formats
 

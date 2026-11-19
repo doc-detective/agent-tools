@@ -81,6 +81,10 @@ Insert the step comment right after the line the rule selects. The rules run fro
 | `find` | Bold or emphasized text |
 | `type` | Text in quotes after a type verb (`type`, `enter`, `input`) |
 
+## Confirm coverage
+
+After applying, if `npx doc-detective --help` lists `audit`, run `npx doc-detective audit <source-file> --json` to confirm the injected steps give credit. Each procedure step a test covers is now `hasStep`, or `inTest` when it sits inside an injected test without a step of its own. A step still `untested` is outside every test that runs. Check any step near it marked `<!-- TODO: verify step placement -->`, and move that step or its test statements so the test encloses it. For the report's fields, and for using `audit` to choose what to inject, see `skills/doc-detective-project-bootstrap/references/audit-coverage.md`.
+
 ## Example
 
 **Spec (`tests/search.yaml`):**

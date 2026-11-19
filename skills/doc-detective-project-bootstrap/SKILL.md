@@ -43,9 +43,9 @@ Use this skill when the user wants to set up Doc Detective or asks for initial t
 
 Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`. See [references/doc-patterns.md](references/doc-patterns.md) for detection patterns.
 
-Tests are worth generating only for files that walk a reader through a task. Flag a file as procedure-heavy when it has three or more numbered steps, or sequential bullet points with action verbs. Such verbs include navigate, click, enter, verify, type, and select. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
+Tests are worth generating only for files that walk a reader through a task. Run `npx doc-detective audit <docs-dir> --json` and flag each file with untested procedure steps as procedure-heavy. For the fields to read and how to tell whether `audit` is available, read [references/audit-coverage.md](references/audit-coverage.md). `audit` finds procedures only in numbered lists, so also flag files with sequential bullet points that use action verbs. Such verbs include navigate, click, enter, verify, type, and select. Without `audit`, flag any file that has three or more numbered steps or such bullet points. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
 
-Report the file counts, the key directories, and the procedure-heavy files to the user.
+Report the file counts, the key directories, the procedure-heavy files, and the audit's procedure step counts to the user.
 
 ## Configure
 
@@ -93,6 +93,8 @@ With `--auto-fix`, apply the fix. Otherwise, apply it when its confidence is at 
 
 Skip injection with `--skip-inject`, or with `--ci` and no `--inject-all`. Otherwise, for each source file with passing tests, preview the injection with the `inline-test-injection` skill without `--apply`. With `--inject-all`, apply each previewed injection with `--apply`. Otherwise, apply it after the user confirms. The injection tool selects the comment format for each file type.
 
+After injecting, if `audit` is available, run it again on the injected files. A procedure step the tests cover is now `hasStep`, or `inTest` when it sits inside an injected test without a step of its own. Report how many procedure steps the tests now cover and list each step still `untested` with its file and line. Check any step near one marked `<!-- TODO: verify step placement -->`. See [references/audit-coverage.md](references/audit-coverage.md).
+
 ## Offer CI
 
 Offer the GitHub Action only in an initialized GitHub repository: `.git` exists as a file or directory, and a remote URL references `github.com`. In any other repository, or with `--dry-run`, say nothing about it.
@@ -110,4 +112,5 @@ Without `--ci`, ask the user whether they want the Doc Detective GitHub Action, 
 - The specs are generated, validated, and run, unless `--dry-run` is set.
 - Each failing test passes or is reported as "needs manual review".
 - Passing tests are in their source files, unless `--skip-inject` is set, or `--ci` is set without `--inject-all`.
+- After injection, coverage is audited and the user has the procedure step counts and the remaining untested steps, if `audit` is available.
 - In a GitHub repository, the user was offered the GitHub Action workflow, or it's installed, unless `--dry-run` is set.

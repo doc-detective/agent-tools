@@ -83,5 +83,6 @@ For complete documentation, read these files:
 - Actions reference: `skills/doc-detective-doc-testing/references/actions.md`
 - Configuration guidance: `skills/doc-detective-project-bootstrap/references/config-guidance.md`
 - Procedure heuristics: `skills/doc-detective-project-bootstrap/references/procedure-heuristics.md`
+- Audit coverage: `skills/doc-detective-project-bootstrap/references/audit-coverage.md`
 - Markup patterns: `skills/doc-detective-inline-test-injection/references/markup-patterns.md`
 - Doc Detective docs: https://docs.doc-detective.com
