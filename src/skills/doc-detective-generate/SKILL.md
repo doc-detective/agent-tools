@@ -41,7 +41,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright.
 - **Output only a spec that passed validation.** Validation passes when `validate_spec` returns `valid: true` or the validator prints `Validation PASSED`. An invalid spec fails for every caller, so when you can't fix an error, report it and output nothing.
 - **Make the action name the step's key.** Write `{ "goTo": "https://example.com" }`. Doc Detective has no `"action"` property, and it rejects a step such as `{ "action": "goTo" }`.
 - **Don't guess the inputs.** The source is a doc file, or doc text the user pasted into the message. Ask the user for it when there's neither. Also ask when the file can't be read or the source has no step-by-step content. Also ask when the `--output` directory doesn't exist, or when the `--merge` spec is missing or isn't valid JSON. A spec built from a guessed source tests the wrong document.
-- **When you merge, keep each `testId` unique.** Skip a new test whose `testId` matches an existing test, unless the user asked to update that test. Then replace it. A duplicate ID makes results ambiguous.
+- **When you merge, keep each `testId` unique.** Skip a new test whose `testId` matches an existing test, unless the user asked to update that test. Then update it in place. A duplicate ID makes results ambiguous.
 
 ## Build the spec
 
@@ -96,7 +96,7 @@ Fix the step each error names, then validate again. Each step needs exactly one 
 
 - **No flags:** Print the JSON spec to stdout.
 - **`--output <path>`:** Write the spec to that path.
-- **`--merge <file>`:** Load the existing spec, and add each new test whose `testId` isn't already there. When the user asked to update the spec because the docs changed, replace each existing test whose `testId` matches a regenerated one. Validate the merged spec, then output it.
+- **`--merge <file>`:** Load the existing spec, and add each new test whose `testId` isn't already there. When the user asked to update the spec because the docs changed, update each existing test whose `testId` matches. Start from its current steps, change the ones the docs changed, and keep the rest. Validate the merged spec, then output it.
 
 ## Example
 
