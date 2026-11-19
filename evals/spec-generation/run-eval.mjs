@@ -173,7 +173,8 @@ async function runCase(c, ctx) {
 }
 
 
-async function gradeCase(c, run) { return gradeRun(c, run); }
+// No judge and no pairwise reference here, so `ref` and `ctx` go unused.
+async function gradeCase(c, run, _ref, _ctx) { return gradeRun(c, run); }
 
 /** Side-channel perf fields beyond the built-ins (latency_s etc.). */
 function perfFrom(run) {

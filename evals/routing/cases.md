@@ -1,6 +1,6 @@
 # Routing eval cases (102)
 
-Each case is one request sent to Claude Code with only this plugin loaded. `expected` is the one correct route (the headline score). Routes in `also accepted` count only toward the secondary lenient score. `none` means no skill and no Doc Detective agent should be invoked. Cases tagged `hard-set` target the ways routing went wrong in the first baseline: task requests phrased as questions, validity checks, "why" questions, indirect phrasing, two intents, and requests that look like Doc Detective work but aren't.
+Each case is one request sent to Claude Code with only this plugin loaded. `expected` is the one correct route (the headline score). Routes in `also accepted` count only toward the secondary lenient score. `none` means no skill and no Doc Detective agent should be invoked. Cases tagged `hard-set` target the ways routing went wrong in the first baseline. They include task requests phrased as questions, validity checks, and "why" questions. Others use indirect phrasing or two intents, or look like Doc Detective work but aren't.
 
 | id | expected | also accepted | workspace | source | difficulty |
 |---|---|---|---|---|---|

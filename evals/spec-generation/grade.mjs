@@ -141,6 +141,12 @@ export function runDocDetective(c, ws, specPath) {
     child.stdout.on('data', d => { log += d; });
     child.stderr.on('data', d => { log += d; });
     const timer = setTimeout(() => child.kill(), 300_000);
+    // A spawn failure (npx missing, not executable) emits 'error' instead of
+    // 'close'; without a listener it would crash the whole run.
+    child.on('error', err => {
+      clearTimeout(timer);
+      resolvePromise({ code: null, summary: null, log: `Couldn't start Doc Detective: ${err.message}` });
+    });
     child.on('close', code => {
       clearTimeout(timer);
       let summary = null;
