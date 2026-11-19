@@ -98,7 +98,7 @@ permissions:
 
 ## Platform Limitations
 
-- **Node.js 24.15 or later.** `npx` runs Doc Detective 5 on the job's Node.js, not the action's own runtime. Add `actions/setup-node` with `node-version: 24` before the action, as every template below does. On older Node.js, the action logs a warning and runs anyway.
+- **Node.js 24.22.1 or later on the 24 line, or 26.12.1 or later.** Node.js 25 and 26.0 through 26.12.0 aren't supported. `npx` runs Doc Detective 5 on the job's Node.js, not the action's own runtime. Add `actions/setup-node` with `node-version: 24` before the action, as every template below does. Below Node.js 24.15, the action logs a warning and runs anyway. On other unsupported versions, the action doesn't warn, and npm prints only an `EBADENGINE` warning during install.
 - **Headless browsers on Ubuntu.** Ubuntu runners have no display, so Chrome and Firefox run headless. Doc Detective records headless Chrome, but not headless Firefox. To run headed or record Firefox, install Xvfb, or use a `macos-latest` or `windows-latest` runner.
 - **Android emulator tests are Linux-only.** The `android` input enables KVM only on Linux runners. macOS and Windows runners can't accelerate the hosted emulator, so `android` contexts don't run there. See [Android emulator tests](#android-emulator-tests).
 - **iOS tests are macOS-only.** iOS simulators run only on macOS runners, so `ios` platform contexts don't run on Linux or Windows. To speed up those runs, prebuild the WebDriverAgent build with the Doc Detective CLI. See [iOS tests](#ios-tests).
