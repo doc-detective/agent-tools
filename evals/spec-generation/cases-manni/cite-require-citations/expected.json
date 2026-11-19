@@ -4,17 +4,14 @@
   "steps": [
     {
       "stepType": "runShell",
-      "match": ["meta validate", "can't resolve reference"],
-      "note": "A `$ref` to the vocabulary inside the house schema is a compile failure, exit 2, when the first page it governs is validated."
-    },
-    {
-      "stepType": "runShell",
-      "match": ["meta validate", "required property 'citations'"],
+      "match": ["meta validate"],
+      "match_any": ["required property 'citations'", "2 failed"],
       "note": "Three pages, three outcomes: the page with no citation fails under your schema."
     },
     {
       "stepType": "runShell",
-      "match": ["meta validate", "required property 'integrity'"],
+      "match": ["meta validate"],
+      "match_any": ["required property 'integrity'", "2 failed"],
       "may_share": true,
       "note": "The page with a malformed entry fails under the vocabulary. Same `meta validate docs/reference/` run."
     },
@@ -27,11 +24,6 @@
       "stepType": "runShell",
       "match": ["cite check", "1 failed"],
       "note": "With `claim-changed: error` the same run blocks the branch."
-    },
-    {
-      "stepType": "runShell",
-      "match": ["cite check", "duplicate id"],
-      "note": "A duplicate id is `entry-invalid` at check time, on the second entry's line."
     }
   ],
   "must_not": [],

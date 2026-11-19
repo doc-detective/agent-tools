@@ -35,8 +35,9 @@ export const removeWorkspace = dir => rmSync(dir, { recursive: true, force: true
  * @param {string[]} [o.disallowedTools]
  * @param {(ev: object, state: object) => boolean} [o.stopWhen]  kill the session once this returns true
  * @param {number} [o.maxTurns]
+ * @param {object} [o.env]      extra environment for the session
  */
-export function runClaude({ prompt, cwd, model, disallowedTools = [], stopWhen, maxTurns }) {
+export function runClaude({ prompt, cwd, model, disallowedTools = [], stopWhen, maxTurns, env }) {
   const args = [
     '-p', prompt,
     '--output-format', 'stream-json', '--verbose',
@@ -51,7 +52,7 @@ export function runClaude({ prompt, cwd, model, disallowedTools = [], stopWhen, 
   if (maxTurns) args.push('--max-turns', String(maxTurns));
 
   return new Promise((resolvePromise, reject) => {
-    const child = spawn('claude', args, { cwd, stdio: ['ignore', 'pipe', 'pipe'] });
+    const child = spawn('claude', args, { cwd, env: env ? { ...process.env, ...env } : process.env, stdio: ['ignore', 'pipe', 'pipe'] });
     const state = { init: null, model: null, usageById: new Map(), toolCalls: [], transcript: [],
                     result: null, stopped: false, stderr: '' };
     let buf = '';

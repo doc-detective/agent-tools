@@ -41,6 +41,30 @@ const SLICES = [['web', 'cases'], ['manni', 'cases-manni'], ['dd-docs', 'cases-d
 export const usesServers = c => c.slice !== 'manni';
 
 /** PATH and npm prefix that put DD_NODE_DIR and the linked manni CLI first. The session gets it too. */
+/**
+ * The model session's environment: the same tools on PATH, but its own empty npm
+ * prefix in the workspace. A page that tells the reader to `npm install -g` then
+ * installs into the workspace, not into the pinned prefix the grade runs against.
+ */
+export function sessionEnv(ws, base = process.env) {
+  const env = toolEnv(base);
+  const prefix = join(ws, '.npm-global');
+  mkdirSync(prefix, { recursive: true });
+  return { ...env, npm_config_prefix: prefix };
+}
+
+/** Fail the case as a harness error if the pinned manni CLI is no longer the expected version. */
+export function checkToolchain() {
+  const want = process.env.MANNI_VERSION;
+  if (!want) return;
+  let got = '';
+  try {
+    got = execFileSync(WIN ? 'manni.cmd' : 'manni', ['--version'], { env: toolEnv(), shell: WIN, encoding: 'utf8' }).trim();
+  } catch (e) { got = `unavailable (${String(e.message).split(/\r?\n/)[0]})`; }
+  if (!got.includes(want))
+    throw Object.assign(new Error(`pinned manni is ${got}, expected ${want}: something changed MANNI_PREFIX`), { failure_class: 'harness' });
+}
+
 export function toolEnv(base = process.env) {
   const prefix = base.MANNI_PREFIX;
   const extra = [prefix && (WIN ? prefix : join(prefix, 'bin')), base.DD_NODE_DIR];
@@ -169,24 +193,55 @@ export function stepsOf(spec) {
   return tests.flatMap(t => Array.isArray(t?.steps) ? t.steps : []);
 }
 
-/** One-to-one, in document order: each expected step claims the first unused generated step that matches. */
+/**
+ * The text a step is matched against: its action's payload and the `variables` it
+ * captures, so a step's `description` can't satisfy a match. JSON escapes for line
+ * breaks become spaces. With `args`, the command line `command arg1 arg2` is added too.
+ */
+function stepText(s) {
+  const p = s?.[actionOf(s)];
+  const json = JSON.stringify([p ?? null, s?.variables ?? null]).replace(/\\(.)/g, (_, c) => 'nrt'.includes(c) ? ' ' : c === '\\' ? '' : c).toLowerCase();
+  const line = Array.isArray(p?.args) ? norm([p.command, ...p.args].join(' ')) : '';
+  return `${json}\n${line}`;
+}
+
+// A token starting with `-` is a flag: it matches only as a whole token, so `-s` misses `-spec-tmp`.
+const WORD = /[a-z0-9_-]/;
+function has(text, m) {
+  if (!m.startsWith('-')) return text.includes(m);
+  const closed = WORD.test(m.at(-1));
+  for (let i = text.indexOf(m); i >= 0; i = text.indexOf(m, i + 1)) {
+    if (!WORD.test(text[i - 1] ?? ' ') && (!closed || !WORD.test(text[i + m.length] ?? ' '))) return true;
+  }
+  return false;
+}
+
+/**
+ * Maximum one-to-one matching between expected entries and generated steps.
+ * An entry with `may_share` can live in a step another entry already claims,
+ * so it only needs some step that matches.
+ */
 export function coverage(expected, steps) {
-  const used = new Set();
-  const misses = [];
-  for (const e of expected) {
+  const texts = steps.map(stepText);
+  const hits = expected.map(e => {
     const types = [].concat(e.stepType ?? e.action);
     const all = [].concat(e.match ?? []).map(norm);
     const any = [].concat(e.match_any ?? []).map(norm);
-    const hit = s => {
-      if (!types.includes(actionOf(s))) return false;
-      const text = norm(JSON.stringify(s));
-      return all.every(m => text.includes(m)) && (!any.length || any.some(m => text.includes(m)));
-    };
-    let i = steps.findIndex((s, k) => !used.has(k) && hit(s));
-    // may_share: an assertion that can live in the same step as an earlier one.
-    if (i < 0 && e.may_share) i = steps.findIndex(hit);
-    if (i >= 0) used.add(i); else misses.push(`${types.join('|')} ${JSON.stringify(e.match ?? e.match_any)}`);
-  }
+    return steps.flatMap((s, k) => types.includes(actionOf(s)) && all.every(m => has(texts[k], m)) && (!any.length || any.some(m => has(texts[k], m))) ? [k] : []);
+  });
+  // Kuhn's augmenting paths, in document order, so earlier entries keep their claim.
+  const owner = new Map();
+  const augment = (j, seen) => hits[j].some(k => {
+    if (seen.has(k)) return false;
+    seen.add(k);
+    if (!owner.has(k) || augment(owner.get(k), seen)) { owner.set(k, j); return true; }
+    return false;
+  });
+  const misses = [];
+  expected.forEach((e, j) => {
+    const ok = e.may_share ? hits[j].length > 0 : augment(j, new Set());
+    if (!ok) misses.push(`${[].concat(e.stepType ?? e.action).join('|')} ${JSON.stringify(e.match ?? e.match_any)}`);
+  });
   return { score: expected.length ? (expected.length - misses.length) / expected.length : 1, misses };
 }
 

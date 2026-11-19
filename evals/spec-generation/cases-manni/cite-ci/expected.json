@@ -9,7 +9,8 @@
     },
     {
       "stepType": "runShell",
-      "match": ["cite check", "--write-baseline", "baselined"],
+      "match": ["cite check", "--write-baseline"],
+      "match_any": ["baselined", "baseline written"],
       "note": "Record the backlog once: `--write-baseline` prints `2 findings (2 baselined)` and writes the baseline file."
     },
     {

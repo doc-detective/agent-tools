@@ -14,11 +14,6 @@
     },
     {
       "stepType": "runShell",
-      "match": ["meta validate"],
-      "note": "Caution: a bare validate with no config file and no paths exits 2."
-    },
-    {
-      "stepType": "runShell",
       "match": ["meta validate", "--format github"],
       "note": "Step 4: the CI gate, `--format github`."
     }

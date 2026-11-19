@@ -28,7 +28,7 @@ Each case is a request from [routing/cases.json](routing/cases.json), sent with 
 ## Run the spec-generation eval
 
 ```bash
-DD_REPO=<doc-detective checkout> MANNI_PREFIX=<npm prefix> \
+DD_REPO=<doc-detective checkout> MANNI_PREFIX=<npm prefix> MANNI_VERSION=2.6.0 \
   node evals/spec-generation/run-eval.mjs --flow .claude/hillclimb/spec-generation --variant baseline --model claude-sonnet-5-5
 ```
 
@@ -48,7 +48,7 @@ There are three slices:
   npm_config_prefix="$PWD/../npm-global" npm link
   ```
 
-  Then set `MANNI_PREFIX` to the `npm-global` directory. The runner puts it first on `PATH` and sets `npm_config_prefix` for the session and the grade, so `manni` and `npx @hawkeyexl/manni` both run that build.
+  Then set `MANNI_PREFIX` to the `npm-global` directory, and `MANNI_VERSION` to the build's version (`2.6.0`). The grade puts that prefix first on `PATH`, so `manni` and `npx @hawkeyexl/manni` run that build. The model's session gets the same `PATH` but its own empty npm prefix in the workspace. A page that tells the reader to `npm install -g` then installs into the workspace, not over the build the grade uses. Before grading each manni case, the runner checks `manni --version` against `MANNI_VERSION` and records the case as an error, not a score, on a mismatch.
 - **dd-docs** ([spec-generation/cases-dd-docs/](spec-generation/cases-dd-docs/)): 8 pages from Doc Detective's own docs with their inline tests removed. They run against the shell and the test servers. Two call `python` and `bash`, so both must be on `PATH`.
 
 [spec-generation/cases.md](spec-generation/cases.md), [spec-generation/cases-manni.md](spec-generation/cases-manni.md), and [spec-generation/cases-dd-docs.md](spec-generation/cases-dd-docs.md) describe every case. Each case's `reference.spec.json` passes and covers every expected step, so it scores `complete`, and a one-step spec scores 0.
