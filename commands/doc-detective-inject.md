@@ -36,7 +36,7 @@ Without a spec file, build one for the source file first, as `/doc-detective-gen
   - A missing or empty `tests` array: `Error: spec file contains no tests: <path>`.
   - A file extension that isn't in the syntax table: `Error: unsupported file type: <extension>`. An included partial is the exception. See [Shared snippets and partials](#shared-snippets-and-partials).
   - When the user didn't name the source file, ask for it.
-- **Never let `*/` into an MDX comment.** The MDX comment `{/* … */}` ends at the first `*/`, and there's no way to escape it. A step whose JSON contains `*/`, such as the glob `**/dir/**`, closes the comment early and breaks the MDX or Astro build. Scan each step's JSON for `*/` before you inject into MDX, including a partial that an `.mdx` page includes. Rewrite such a payload only to a form that matches exactly the same inputs. Never narrow a glob to dodge the rule. When no such form exists, leave the step out of the MDX file and keep it in a standalone spec. Tell the user which steps you moved. Markdown and HTML `<!-- … -->` comments aren't affected.
+- **Never let `*/` into an MDX comment.** The MDX comment `{/* … */}` ends at the first `*/`, and there's no way to escape it. A step whose JSON contains `*/`, such as the glob `**/dir/**`, closes the comment early and breaks the MDX or Astro build. Scan each step's JSON for `*/` before you inject into MDX, including a partial that an `.mdx` page includes. Rewrite such a payload only to a form that matches exactly the same inputs. Never narrow a glob to dodge the rule. When no such form exists, leave that step's whole test out of the MDX file and keep the test intact in a standalone spec. Moving one step alone would split the test and change its order or state. Tell the user which tests you kept out. Markdown and HTML `<!-- … -->` comments aren't affected.
 - **Write each reStructuredText comment as its own block.** Doc Detective reads `.. test {...}`, `.. step {...}`, `.. test end`, and `.. test ignore start` / `.. test ignore end` only when the comment starts its own block, with a blank line before and after. A `..` line that continues a paragraph is prose. A multi-line payload continues on lines indented under the `.. step` line.
 - **Mark every step you couldn't match.** On the line after its comment, add a `TODO: verify step placement` comment so a person checks it. Use the file's own comment syntax. Markdown, HTML, and XML take `<!-- TODO: verify step placement -->`, and MDX takes `{/* TODO: verify step placement */}`. AsciiDoc takes `// TODO: verify step placement`, and reStructuredText takes `.. TODO: verify step placement` as its own block. MDX rejects `<!-- -->`, and the other formats render it as text.
 - **Keep the spec's order.** Step comments follow the order of the spec's steps.
@@ -155,7 +155,7 @@ Injected `test` and `step` comments always run, whatever `detectSteps` says. `de
 
 ## Done when
 
-- Each step has a comment, and each comment the placement rules didn't match has the TODO comment after it.
+- Each step has a comment, and each comment the placement rules didn't match has the TODO comment after it. A test kept out of an MDX file for the `*/` rule is the exception: it stays whole in a standalone spec, with no partial copy in the file.
 - `test` and `test end` comments wrap each test.
 - Each step comment uses the syntax for its file type, or the `--syntax` override.
 - Step comments appear in the same order as the spec's steps.
