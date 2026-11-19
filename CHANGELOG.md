@@ -1,3 +1,10 @@
+## [2.1.1](https://github.com/doc-detective/agent-tools/compare/v2.1.0...v2.1.1) (2026-11-19)
+
+
+### Bug Fixes
+
+* **skills:** correct stale paths, examples, and config facts ([#91](https://github.com/doc-detective/agent-tools/issues/91)) ([5a555ba](https://github.com/doc-detective/agent-tools/commit/5a555baadf477e6a769806da8743b97e77591ab0))
+
 # [2.1.0](https://github.com/doc-detective/agent-tools/compare/v2.0.2...v2.1.0) (2026-11-17)
 
 
