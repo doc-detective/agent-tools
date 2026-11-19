@@ -52,7 +52,7 @@ node skills/doc-detective-inject/scripts/inline-test-injection.js <spec-file> <s
 node skills/doc-detective-inject/scripts/inline-test-injection.js <spec-file> <source-file> --apply
 ```
 
-It also takes `--syntax json|yaml|xml` and `--config <path>`. Write a spec you built yourself to a temporary file first. For a spec that covers several source files, inject each file separately. The script doesn't check the MDX `*/` rule or follow includes, so apply those guardrails yourself. Check its preview before you apply it. Every step comment must come after the test's start and after the step before it. Move any comment the script placed earlier. For a step it couldn't match, it prints a warning but writes no TODO comment, so add that comment yourself. Without the script, place the comments by hand as the next sections describe.
+It also takes `--syntax json|yaml|xml` and `--config <path>`. Write a spec you built yourself to a temporary file first. For a spec that covers several source files, inject each file separately. The script doesn't check the MDX `*/` rule or follow includes, so apply those guardrails yourself. Check its preview before you apply it. Every step comment must come after the test's start and after the step before it, and `test end` must come after the test's last step. When the preview needs a correction, don't rerun the script with `--apply`: it recomputes the placements and writes the uncorrected ones. Instead, correct the previewed result and write that to the file yourself, after the user confirms. For a step it couldn't match, it prints a warning but writes no TODO comment, so add that comment yourself. Without the script, place the comments by hand as the next sections describe.
 
 ## Write the comments
 
