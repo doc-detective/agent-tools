@@ -45,18 +45,20 @@ function runHook(scriptName, stdinData, opts = {}) {
 /**
  * Make a temp bin dir holding the coreutils the bash hooks need, plus
  * `stubs` ({ name: scriptBody }). Wrapper scripts, not symlinks: Windows
- * can't follow a symlink to a Git Bash path like /usr/bin/cat.
+ * can't follow a symlink to a Git Bash path like /usr/bin/cat. A tool the
+ * host lacks (macOS has no `timeout` by default) is left out.
  */
 function makeFakeBin(stubs = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hook-fakebin-'));
+  const scripts = { ...stubs };
   for (const tool of ['cat', 'sed', 'tr', 'timeout']) {
-    const real = execFileSync('bash', ['-c', `command -v ${tool}`], { encoding: 'utf8' }).trim();
-    stubs = { [tool]: `exec ${real} "$@"`, ...stubs };
+    try {
+      const real = execFileSync('bash', ['-c', `command -v ${tool}`], { encoding: 'utf8' }).trim();
+      scripts[tool] ??= `exec ${real} "$@"`;
+    } catch { /* not on this host */ }
   }
-  for (const [name, body] of Object.entries(stubs)) {
-    fs.writeFileSync(path.join(dir, name), `#!/bin/bash
-${body}
-`, { mode: 0o755 });
+  for (const [name, body] of Object.entries(scripts)) {
+    fs.writeFileSync(path.join(dir, name), `#!/bin/bash\n${body}\n`, { mode: 0o755 });
   }
   return dir;
 }
