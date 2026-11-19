@@ -1,0 +1,6 @@
+{
+  "steps": [
+    {"stepType": "httpRequest", "match": ["8093/api/users", "post", "morpheus", "leader"], "note": "POST the JSON body; the response check should expect name morpheus and job leader with status 200."}
+  ],
+  "must_not": []
+}

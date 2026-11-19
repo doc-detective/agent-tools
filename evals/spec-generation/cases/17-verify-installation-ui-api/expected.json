@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": ["httpRequest", "checkLink"], "match": "8093/status/200", "note": "Step 1: GET /status/200 returns 200."},
+    {"stepType": "httpRequest", "match": ["8093/api/sessions", "post", "install-check"], "note": "Step 2: POST /api/sessions with user install-check; the response echoes it."},
+    {"stepType": "goTo", "match": "localhost:8092", "note": "Step 3: open the web app."},
+    {"stepType": "find", "match": "Common HTML Elements", "note": "Step 3: heading Common HTML Elements."},
+    {"stepType": "goTo", "match": "type-echo.html", "note": "Step 4: open the live preview page."},
+    {"stepType": "type", "match": "install-check", "note": "Step 4: enter install-check in Type here."},
+    {"stepType": "find", "match": "install-check", "note": "Step 4: the preview reads install-check."}
+  ],
+  "must_not": []
+}

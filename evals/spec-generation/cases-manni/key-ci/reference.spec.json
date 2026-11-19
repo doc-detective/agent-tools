@@ -1,0 +1,52 @@
+{
+  "specId": "manni-key-ci-index",
+  "description": "Inline tests from manni docs/src/content/docs/key/ci/index.mdx",
+  "tests": [
+    {
+      "testId": "key-ci-rotation",
+      "description": "The refusals that guard a rotation, each of which writes nothing.",
+      "steps": [
+        {
+          "description": "A --to shorter than 32 characters is refused before anything is read.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni key rotate --to tooshort",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "--to must be at least 32 hex or base64url characters."
+          }
+        },
+        {
+          "description": "rotate takes no stdin, because it writes the files it reads.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni key rotate - --to 0123456789abcdef0123456789abcdef",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "key rotate reads and writes files, so it takes no stdin"
+          }
+        },
+        {
+          "description": "rotate reports in pretty or json only; any other format is refused.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni key rotate -f sarif",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "Unknown --format \"sarif\". Use pretty or json."
+          }
+        },
+        {
+          "description": "With no key configured there is nothing to re-encrypt from, and the run refuses.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni key rotate",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "No encryption key is available, so nothing can be re-encrypted. Run `manni key set` first."
+          }
+        }
+      ]
+    }
+  ]
+}

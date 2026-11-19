@@ -1,0 +1,42 @@
+{
+  "specId": "manni-meta-set-up-retrofit",
+  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/retrofit.mdx",
+  "tests": [
+    {
+      "testId": "set-up-retrofit",
+      "description": "Start-permissive claim, demonstrated with a require-nothing schema fixture vs. OKF.",
+      "steps": [
+        {
+          "description": "The coverage probe reports what the docset has, and counts the files with no metadata block at all.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta schemas infer test/fixtures/infer --no-config",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "with no metadata block"
+          }
+        },
+        {
+          "description": "A frontmatter-free file passes the permissive schema (nothing is required).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/no-frontmatter.md -s ./test/fixtures/dd/permissive.schema.json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        },
+        {
+          "description": "The same file fails OKF, which requires `type` — the avalanche the permissive start avoids.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/no-frontmatter.md -s google:okf:0.1",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "must have required property 'type'"
+          }
+        }
+      ]
+    }
+  ]
+}

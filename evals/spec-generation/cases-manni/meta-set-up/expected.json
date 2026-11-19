@@ -1,0 +1,25 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "files checked",
+      "note": "Validate a folder with no setup: a mixed folder fails, exit 1."
+    },
+    {
+      "action": "runShell",
+      "match": "No files to validate",
+      "note": "No paths and no config is an operational error, exit 2."
+    },
+    {
+      "action": "runShell",
+      "match": "::error file=",
+      "note": "`--format github` turns failures into inline annotations and still fails."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`.",
+    "The reference excludes test/fixtures/dd/** only to keep the folder walk deterministic."
+  ]
+}

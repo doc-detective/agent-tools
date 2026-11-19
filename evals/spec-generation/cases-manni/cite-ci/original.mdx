@@ -1,0 +1,327 @@
+---
+title: Run it in CI
+description: Add the citation check to CI with inline PR annotations, SARIF or JUnit output, the 0/1/2 exit-code contract, a baseline for ramping in, and full git history so every status can be told apart.
+---
+
+import { Steps, Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+This page wires `manni cite check` into CI. It runs it on every push and pull
+request. It turns findings into annotations on the line of the sentence, and
+fails the job only on an error. It also covers the two things a citation check
+needs that a metadata check does not. One is full git history. The other is a
+way to adopt it on a corpus whose pins have already drifted.
+
+Nothing is installed into the repository. The recipes run `npx`, which fetches
+the published package on demand; the runner needs Node.js 24 or newer.
+
+## How the gate works
+
+Two properties carry the integration, and they are the same two manni meta
+rests on.
+
+**Exit codes drive the gate.**
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Every citation is current, or every finding is a warning or a notice. |
+| `1` | At least one finding is an error and not in the baseline. |
+| `2` | The check could not run. No inputs and no config, an unknown format, a bad flag. The message goes to stderr, prefixed `manni:`. |
+
+{/* cite default-severity-moved-changed */}
+{/* cite warnings-never-fail */}
+**Warnings and notices never fail the job.** `source-moved` and
+`claim-changed` are warnings by default, and `claim-moved` is a notice. A page
+that says something true should not go red for a comment added above the cited
+line. Nor for a typo fixed beside the sentence. The summary counts each apart:
+
+```
+1 file checked, 1 passed, 0 failed, 2 findings (1 warning) (1 notice)
+```
+
+{/* cite other-rules-error */}
+{/* cite severity-map-levels */}
+{/* cite fourteen-rules */}
+{/* cite severity-levels-off */}
+Every other rule is an error by default. The `severity:` map under `cite:` in
+`manni.config.yaml` can move any of the sixteen rules to `error`, `warning`,
+`notice` or `off`. See the
+[configuration reference](/manni/cite/reference/configuration/#severity).
+
+{/* cite github-one-command-per-finding */}
+**`-f github` produces inline annotations.** One workflow command per finding,
+pinned to the page and the line of the sentence, with the rule id as the
+title. An error and a warning look like this:
+
+```
+::error file=docs/limits.md,line=13,title=manni%3Acite/source-changed::fetch-timeout (lib/limits.ts:2): changed since 9265563, 1 commit
+::warning file=docs/limits.md,line=13,title=manni%3Acite/claim-changed::fetch-timeout: the claim at line 13 has changed since it was pinned.
+```
+
+{/* cite github-source-finding-message */}
+{/* cite github-claim-finding-as-is */}
+{/* cite github-sidecar-on-manifest */}
+GitHub renders each as an annotation on the pull request diff, so a reviewer
+sees which sentence went stale without opening the log. A source finding names
+the citation by `id`, then its source as the entry spelled it, then the status.
+A claim, marker or anchor finding is already a sentence about the entry, so it
+is annotated as it stands. A finding about an entry a sidecar owns is
+annotated on the manifest.
+
+## Output formats
+
+| Format | Use it for | Shape |
+| --- | --- | --- |
+| `pretty` | People, and local runs. The default. | One line per citation under its page; a summary line. `-q` hides current citations and clean pages. |
+| `github` | GitHub Actions annotations. | `::error` / `::warning` / `::notice` workflow commands, one per finding, `title=manni:cite/<rule>`. |
+| `json` | Scripts and dashboards. | `summary` plus `pages[]`, each with every citation's `claim` and `source` ends, its `origin` and `anchor`, its `marker` where one anchors it, and every finding's `rule`, `ruleId`, `severity`, `message` and `line`. Under `--no-check-sources`, source statuses are `skipped` and appear here only. |
+| `sarif` | GitHub code scanning and any SARIF consumer. | One result per finding with `ruleId: manni:cite/<rule>`, `level`, the annotation's message, the page as `artifactLocation.uri`, `region.startLine`, and a fingerprint stable across a move. Each rule has a plain description and a `helpUri` to its row in the [citations reference](/manni/cite/reference/citations/#source-end-rules). Code scanning drops a location outside the repository, so a manifest that sits outside it is reported on the page. |
+| `junit` | The CI "Tests" tab. | One `testcase` per page, classname `manni.cite`, a `failure` per error with `type` set to the rule id and the annotation's message. |
+
+{/* cite update-formats-pretty-json */}
+{/* cite source-spelled-as-page */}
+`update` takes `pretty` or `json` only. The [CLI reference](/manni/cite/reference/cli/)
+has every flag. The same output rule holds in every format. A source is
+spelled as the page spelled it, never as the decrypted path. See
+[Public docs, private code](/manni/cite/set-up/public-docs-private-code/) for
+why that matters.
+
+<Aside type="caution" title="SARIF wants the pages' repository root">
+  Code scanning resolves each result's URI against the repository root and
+  drops results that do not resolve. Run the check from the root of the
+  repository that holds the pages. Outside a git repository the tool says so
+  on stderr, and the upload may report nothing.
+</Aside>
+
+## Full history
+
+{/* cite never-true-needs-commit */}
+{/* cite show-diff-from-commit */}
+{/* cite shallow-clone-degrades */}
+`actions/checkout` fetches one commit by default. A citation records the
+commit its pin was minted at, and two of the check's answers need the file as
+it was then. `source-never-true` is the finding that the pin never matched at
+that commit, and the diff under `--show-diff` runs from that commit to the working tree.
+On a shallow clone neither is possible, and the check degrades honestly rather
+than guessing:
+
+```
+manni: commit 9265563 not found in history; use fetch-depth: 0 to enable never-true and diffs
+✗ docs/limits.md
+    ✗ fetch-timeout   :13 current   lib/limits.ts:2 changed (history unavailable: commit 9265563 not found; fetch-depth: 0)
+```
+
+{/* cite shallow-still-source-changed */}
+{/* cite shallow-still-error */}
+{/* cite claim-end-no-history */}
+The status is still `source-changed`, still an error, so the gate holds. The
+claim end needs no history, so it is judged either way. What is lost
+is the distinction between a line that changed since and a pin that was
+wrong from the start. Set `fetch-depth: 0` on the checkout that holds the
+sources and both come back.
+
+{/* cite git-when-available */}
+{/* cite no-git-directory-walk */}
+There is no flag to turn git off. The check uses git whenever it is
+available, which means git on `PATH` and the root inside a work tree. A job
+without it still runs. The sources are indexed by a directory walk instead of
+`git ls-files`, and the run says once what it gave up:
+
+```
+manni: git is not available here, so citations are checked without history: no never-true, no reanchored claims, no diffs, no commit subjects.
+```
+
+{/* cite no-git-notice-when-commit */}
+{/* cite no-git-notice-show-diff */}
+It says so only when a citation carries a commit, or under `--show-diff`. The
+statuses degrade as on a shallow clone, and the gate still holds. To get the
+history back, run the job in an image that has git, on a checkout rather than
+an unpacked archive.
+
+## Standalone workflow
+
+<Steps>
+
+1. **Create the workflow file.** Add `.github/workflows/citations.yml`:
+
+   ```yaml title=".github/workflows/citations.yml"
+   # Check every citation against its source on every push and pull request.
+   name: Check citations
+
+   on:
+     push:
+     pull_request:
+
+   jobs:
+     cite:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v7
+           with:
+             fetch-depth: 0   # never-true and --show-diff need the pin's commit
+
+         - uses: actions/setup-node@v6
+           with:
+             node-version: 24
+
+         # `-f github` turns findings into annotations on the line of the
+         # sentence; the exit code fails the job on any error.
+         - name: Check citations
+           run: npx -y @hawkeyexl/manni cite check "docs/**/*.md" -f github
+   ```
+
+2. **Adapt the targets.** Replace `"docs/**/*.md"` with the paths, directories
+   or globs to check, quoted so the shell hands them to the tool intact. With
+   the pages declared as a collection under `collections:` in
+   `manni.config.yaml`, drop the argument entirely and the same command works
+   locally and in CI.
+
+3. **Commit and push.** On the next pull request the job runs. A clean run
+   passes, a moved end warns or notices without failing, and a changed source
+   fails the job and annotates the sentence.
+
+</Steps>
+
+<Aside type="note" title="Pin the version for reproducible runs">
+  `npx -y @hawkeyexl/manni` resolves the latest published version each run.
+  Pin the major, as in `npx -y @hawkeyexl/manni@2 cite check …`, and bump it
+  deliberately.
+</Aside>
+
+## Ramp in with a baseline
+
+{/* cite baseline-own-file */}
+A pin can go stale in a commit that touches no page. So on a corpus that has
+been cited for a while, the first run will find drift nobody's pull request
+caused. The baseline is how the check goes in without blocking on that
+backlog. It is the same mechanism manni meta uses, in its own file, so the two
+tools cannot erase each other's backlog.
+
+<Steps>
+
+1. **Record the backlog once.** `--write-baseline` runs the check, writes
+   every current finding's fingerprint to `.manni-cite-baseline.json`, and
+   exits `0`:
+
+   ```sh
+   manni cite check --write-baseline
+   ```
+
+   ```
+   1 file checked, 1 passed, 0 failed, 2 findings (2 baselined)
+   Baseline written to .manni-cite-baseline.json
+   ```
+
+   ```json title=".manni-cite-baseline.json"
+   {
+     "version": 1,
+     "generatedWith": "4.13.1",
+     "entries": {
+       "docs/limits.md": [
+         "0e5c9308b4e5fd13",
+         "d086e4e02879a3dd"
+       ]
+     }
+   }
+   ```
+
+   Commit the file.
+
+2. **Make the PR job report-only.** With `--baseline`, a finding in the file
+   is shown with a `·` and counted as baselined. Only a finding that is not
+   in the file fails the job:
+
+   ```sh
+   manni cite check --baseline
+   ```
+
+   ```
+   1 file checked, 1 passed, 0 failed, 2 findings (2 baselined)
+   ```
+
+3. **Let a scheduled sweep escalate.** A second job, on a schedule, runs the
+   check without `--baseline`. It fails until the backlog is worked off. It is
+   also where a pin that drifted in a commit touching no page shows up. So
+   that pin never lands on an unrelated pull request.
+
+4. **Burn the backlog down.** Each `update` or `update --accept` that resolves
+   a finding removes it from the picture. A fingerprint is made of the schema, the
+   rule, the entry's position in `citations` and its `id` (or its
+   `source.integrity` when it has none). So a baselined finding survives a
+   move on either end, and accepting a changed claim never reopens one.
+   Reordering the entries, or inserting one above it, does reopen it. It
+   disappears when the source pin is re-minted, which is the act that
+   resolves it. Regenerate the file with `--write-baseline` whenever it is
+   convenient. It records every finding the run sees, so it grows when new
+   findings have appeared since the last one.
+   One exception: `manni key rotate` re-keys the pin of every encrypted
+   citation, so an id-less one returns as new. Re-record the baseline after
+   a rotation.
+
+</Steps>
+
+<Aside type="caution" title="Both flags take an optional path">
+  `--baseline [path]` and `--write-baseline [path]` accept a file name, so a
+  page argument written straight after them is read as the baseline file.
+  Put the paths first, `manni cite check docs/ --baseline`, or attach the
+  file with `=`: `--baseline=.ci/cite.json docs/`. A `baseline:` key in config
+  makes the flag unnecessary, and `--no-baseline` ignores it for one run.
+</Aside>
+
+## Public docs, private code
+
+{/* cite no-check-sources-claim-end */}
+{/* cite encryption-key-env */}
+When the pages are public and the sources are not, the check splits into two
+jobs. A public one runs `--no-check-sources` and needs no secret, and it still
+checks every claim end, because the claim is page-side. A private one checks
+the code out beside the docs and runs with `--root ../code`. It reads the
+family encryption key from a secret, `MANNI_ENCRYPTION_KEY`. The layout, the
+encrypted source, the sidecar manifest, and what a reader of the public site
+can still see are on their own page.
+
+<LinkCard
+  title="Public docs, private code"
+  href="/manni/cite/set-up/public-docs-private-code/"
+  description="The two-repo layout, the encryption key that hides private source paths, and both GitHub Actions jobs."
+/>
+
+## Verify it works
+
+Open a pull request that changes a cited line in a source file. Then check
+that:
+
+- The job is red, and the changed sentence carries an inline annotation
+  titled `manni:cite/source-changed`.
+- A pull request that only adds lines above a cited one leaves the job green
+  with a `manni:cite/source-moved` warning.
+- One that only adds a paragraph above a cited sentence leaves it green with a
+  `manni:cite/claim-moved` notice.
+- Running `manni cite update` in that branch clears both.
+
+To see the same lines locally, run with `-f github` from your shell; drop the
+flag for the readable report.
+
+<CardGrid>
+  <LinkCard
+    title="Fix a failing check"
+    href="/manni/cite/fix/"
+    description="Every status the job can report, what it means, and which update flag clears it."
+  />
+  <LinkCard
+    title="CLI reference"
+    href="/manni/cite/reference/cli/"
+    description="Every flag of check, including the reporters, the baseline and the root."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni cite behavior
+    against the local build, exposed as `manni cite` / `npx @hawkeyexl/manni cite` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"cite-ci","description":"The properties the CI integration rests on, run against the local CLI build and committed fixtures."} */}
+{/* step {"description":"A clean page exits 0 so the job stays green.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/current.md -f github","exitCodes":[0]}} */}
+{/* step {"description":"A changed source exits 1 and emits an ::error workflow command titled with the rule id, pinned to the sentence line.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/source-changed.md -f github","exitCodes":[1],"stdio":"/::error file=.*line=15,title=manni%3Acite\\/source-changed::/"}} */}
+{/* step {"description":"A moved source is a ::warning and exits 0: warnings never fail the job.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/moved.md -f github","exitCodes":[0],"stdio":"/::warning file=.*title=manni%3Acite\\/source-moved::/"}} */}
+{/* step {"description":"A moved claim is a ::notice and exits 0: a notice never fails the job either.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-moved.md -f github","exitCodes":[0],"stdio":"/::notice file=.*title=manni%3Acite\\/claim-moved::/"}} */}
+{/* step {"description":"An operational error (no inputs, no config) exits 2, distinct from a finding.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config","exitCodes":[2],"stdio":"No files to check"}} */}
+{/* test end */}

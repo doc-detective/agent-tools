@@ -1,0 +1,9 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "wait-delay.html", "note": "Step 1: go to the activity page."},
+    {"stepType": "find", "match": "Loaded after 2 seconds", "note": "Step 2: after about two seconds the startup notice appears (an explicit wait before it is fine but not required)."},
+    {"stepType": "click", "match": "Trigger delayed action", "note": "Step 3: click Trigger delayed action."},
+    {"stepType": "find", "match": "Action complete!", "note": "Step 3: Action complete! appears below the button."}
+  ],
+  "must_not": []
+}

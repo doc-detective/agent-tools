@@ -1,0 +1,142 @@
+{
+  "specId": "manni-meta-ci-query-gates",
+  "description": "Inline tests from manni docs/src/content/docs/meta/ci/query-gates.mdx",
+  "tests": [
+    {
+      "testId": "query-gates",
+      "description": "SQL over the metadata corpus: retrieval, --check gates, --dry-run previews, and the refusal posture.",
+      "steps": [
+        {
+          "description": "A tag census: json_each reaches into array values, plain SQL aggregates.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query \"SELECT t.value tag, count(*) n FROM docs, json_each(docs.tags) t GROUP BY tag ORDER BY n DESC, tag\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/guide  2[\\s\\S]*3 rows/"
+          }
+        },
+        {
+          "description": "Every declared collection is a view, so the dangling-author rule joins FROM authors and --check turns the row into exit 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query -c test/fixtures/collections/manni.config.yaml --check \"SELECT d._path, d.author FROM docs d LEFT JOIN authors a ON a.slug = d.author WHERE d.author IS NOT NULL AND a._path IS NULL\"",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/ghost[\\s\\S]*check failed/"
+          }
+        },
+        {
+          "description": "The no-config fallback: the same rule as a path self-join over bare inputs.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --check \"SELECT d._path, d.author FROM docs d LEFT JOIN docs a ON a.slug = d.author AND a._path LIKE '%authors%' WHERE d._path LIKE '%query/docs%' AND d.author IS NOT NULL AND a._path IS NULL\" test/fixtures/query/docs test/fixtures/query/authors",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/ghost[\\s\\S]*check failed/"
+          }
+        },
+        {
+          "description": "Duplicate slugs, the GROUP BY ... HAVING shape of the same gate.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --check \"SELECT slug, count(*) n FROM docs GROUP BY slug HAVING n > 1\" test/fixtures/query/docs",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/alpha  2[\\s\\S]*check failed/"
+          }
+        },
+        {
+          "description": "--dry-run previews a mutating statement: the exact diff, files untouched, exit 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --dry-run \"UPDATE docs SET reviewed = 'todo' WHERE reviewed IS NULL AND _present = 1\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/reviewed: \\(unset\\) -> todo[\\s\\S]*dry run; run again without --dry-run to apply/"
+          }
+        },
+        {
+          "description": "DROP TABLE refuses by name and points at the statements that do the real jobs (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query \"DROP TABLE docs\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "DROP TABLE is refused"
+          }
+        },
+        {
+          "description": "A named check in config: a bare validate over the declared collection runs it, and -f github annotates the offending line of the offending file.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks/manni.config.yaml -f github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=docs\\/a\\.md,line=3::.*check:unique-slugs/"
+          }
+        },
+        {
+          "description": "A check may read a collection as a view: FROM guides finds the guide with no owner and leaves the blog post alone.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml -f github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=guides\\/orphan\\.md::.*check:guide-needs-owner/"
+          }
+        },
+        {
+          "description": "A run scoped by positional paths skips checks with one stderr notice, so a half-corpus never answers a corpus question.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks/manni.config.yaml test/fixtures/checks/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "corpus checks skipped: run is scoped"
+          }
+        },
+        {
+          "description": "--collection is scoped too: the notice names the collections the run was narrowed to, and the guides check does not run.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection guides",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "corpus checks skipped: run is scoped to collections guides"
+          }
+        },
+        {
+          "description": "query --check -f github: the ad-hoc spelling of the same findings pipeline.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --check \"SELECT _path AS path, 'duplicate slug ' || slug AS message FROM docs WHERE slug IN (SELECT slug FROM docs GROUP BY slug HAVING count(*) > 1)\" test/fixtures/query/docs -f github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=test\\/fixtures\\/query\\/docs\\/alpha\\.md::/"
+          }
+        },
+        {
+          "description": "--param binds a runtime value into the gate; the row comes back and --check exits 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --check --param author=ghost \"SELECT _path FROM docs WHERE author = :author\" test/fixtures/query/docs",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/gamma\\.md[\\s\\S]*check failed/"
+          }
+        },
+        {
+          "description": "-f csv prints result rows as CSV, header row first.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query -f csv \"SELECT _path, title FROM docs WHERE _present = 1 ORDER BY _path\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/_path,title\\n[\\s\\S]*alpha\\.md,Alpha/"
+          }
+        }
+      ]
+    }
+  ]
+}

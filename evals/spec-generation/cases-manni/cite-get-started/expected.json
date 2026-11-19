@@ -1,0 +1,65 @@
+{
+  "source": "manni/docs/src/content/docs/cite/get-started/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "src/limits.ts:2 current",
+      "note": "Check it: both ends match their pins and the summary is green."
+    },
+    {
+      "action": "runShell",
+      "match": "-16 current",
+      "note": "A claim range is reported as a range of file lines."
+    },
+    {
+      "action": "runShell",
+      "match": ":16 current",
+      "note": "Editing frontmatter does not move a claim."
+    },
+    {
+      "action": "runShell",
+      "match": "1 warning",
+      "note": "A moved source is a warning that names the new range and exits 0."
+    },
+    {
+      "action": "runShell",
+      "match": "cite update",
+      "note": "`cite update --dry-run` previews the rewrite to the source end."
+    },
+    {
+      "action": "runShell",
+      "match": "src/changed.ts:2 changed",
+      "note": "A changed source is an error beside a still-current claim, exit 1."
+    },
+    {
+      "action": "runShell",
+      "match": "1 notice",
+      "note": "An inserted paragraph makes the claim moved: a notice, exit 0."
+    },
+    {
+      "action": "runShell",
+      "match": ":15 changed",
+      "note": "An edited sentence is claim-changed, a warning, exit 0."
+    },
+    {
+      "action": "runShell",
+      "match": "3 files checked",
+      "note": "Markers are read in MDX, AsciiDoc and reStructuredText."
+    },
+    {
+      "action": "runShell",
+      "match": "marker :14 current",
+      "note": "A marker-anchored claim reads as marker plus the anchored line."
+    },
+    {
+      "action": "runShell",
+      "match": "1 file checked, 1 passed, 0 failed, 0 findings",
+      "note": "A quoted fenced block that still reproduces its source passes."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "`node --version` prerequisite check (page says Node 24+).",
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

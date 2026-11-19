@@ -1,0 +1,69 @@
+{
+  "source": "manni/docs/src/content/docs/cite/set-up/citations-in-a-sidecar.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "citations=(unset)",
+      "note": "Read alone, the page's own frontmatter has no citations."
+    },
+    {
+      "action": "runShell",
+      "match": "citations=[{\"id\":\"fetch-timeout\"",
+      "note": "With the config, the merged view carries the manifest's entry."
+    },
+    {
+      "action": "runShell",
+      "match": "citations.yaml:5",
+      "note": "The check passes and the row names the manifest and the entry's line."
+    },
+    {
+      "action": "runShell",
+      "match": "must match pattern",
+      "note": "A finding about the entry is located on the manifest's line."
+    },
+    {
+      "action": "runShell",
+      "match": "citations.yaml,line=42",
+      "note": "github format annotates the manifest at that line."
+    },
+    {
+      "action": "runShell",
+      "match": "is owned by manifest",
+      "note": "A page that still carries its own citations is an error."
+    },
+    {
+      "action": "runShell",
+      "match": "added retries to",
+      "note": "`cite add` writes the entry to the manifest; the page is untouched."
+    },
+    {
+      "action": "runShell",
+      "match": "2 citations rewritten in 2 files",
+      "note": "`cite update` repairs two entries and writes the manifest once."
+    },
+    {
+      "action": "runShell",
+      "match": "--collection guides",
+      "note": "A manifest keyed by a page field matches on that field."
+    },
+    {
+      "action": "runShell",
+      "match": "cannot come from a URL manifest",
+      "note": "Refusal: a URL manifest cannot own citations, exit 2."
+    },
+    {
+      "action": "runShell",
+      "match": "both keep citations in a manifest",
+      "note": "Refusal: a page in two owning collections, exit 2."
+    },
+    {
+      "action": "runShell",
+      "match": "A page read from stdin has no path",
+      "note": "Refusal: `cite add` from stdin has no path to key the entry by."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

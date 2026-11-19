@@ -1,0 +1,132 @@
+{
+  "specId": "manni-cite-set-up-citations-in-a-sidecar",
+  "description": "Inline tests from manni docs/src/content/docs/cite/set-up/citations-in-a-sidecar.mdx",
+  "tests": [
+    {
+      "testId": "cite-sidecar",
+      "description": "A collection whose manifest owns citations: the clean page, the manifest column, a finding on the entry's line, the half-moved page, the writes, and the three refusals.",
+      "steps": [
+        {
+          "description": "The page's own frontmatter carries no citations: read alone, the key is unset.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta get test/fixtures/cite-sidecar/pages/limits.md --no-config --fields title,citations",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/citations=\\(unset\\)/"
+          }
+        },
+        {
+          "description": "With the config governing the run, the merged view carries the manifest's entry.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta get test/fixtures/cite-sidecar/pages/limits.md -c test/fixtures/cite-sidecar/manni.config.yaml --fields title,citations",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/citations=\\[\\{\"id\":\"fetch-timeout\"/"
+          }
+        },
+        {
+          "description": "The check passes, and the row gains a fourth column naming the manifest and the entry's first line.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml test/fixtures/cite-sidecar/pages/limits.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:6 current\\s+src\\/limits\\.ts:2 current\\s+\\S*citations\\.yaml:5/"
+          }
+        },
+        {
+          "description": "A finding about the entry itself is located on the manifest, on the entry's own line, and the page is what failed.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml test/fixtures/cite-sidecar/pages/entry-invalid.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/bad-pin\\s+\\/source\\/integrity must match pattern[\\s\\S]*citations\\.yaml:42\\)/"
+          }
+        },
+        {
+          "description": "github annotates the manifest at that line, so the comment lands on the manifest's diff.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml -f github test/fixtures/cite-sidecar/pages/entry-invalid.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=\\S*citations\\.yaml,line=42,title=manni%3Acite\\/entry-invalid::bad-pin/"
+          }
+        },
+        {
+          "description": "A page that still carries its own citations while a manifest owns the key is an error naming the manifest and the collection.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml test/fixtures/cite-sidecar/pages/own.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/\"citations\" is owned by manifest \\S*citations\\.yaml \\(collection site\\); remove it from the document/"
+          }
+        },
+        {
+          "description": "add writes the entry to the manifest, and the claim stays on the line that was typed, because the page is not touched.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite add test/fixtures/cite-sidecar/pages/retries.md:6 src/limits.ts:3 --id retries --dry-run -c test/fixtures/cite-sidecar/manni.config.yaml",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/added retries to \\S*citations\\.yaml:59 \\(claim at line 6, sha256-d33051d7…/"
+          }
+        },
+        {
+          "description": "update repairs two entries in one manifest and writes that manifest once.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite update -c test/fixtures/cite-sidecar/manni.config.yaml --dry-run test/fixtures/cite-sidecar/pages/moved.md test/fixtures/cite-sidecar/pages/moved-two.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 citations rewritten in 2 files, 0 skipped"
+          }
+        },
+        {
+          "description": "A manifest keyed by a page field matches on that field, so the entry travels with the page rather than with its path.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml --collection guides",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:7 current\\s+src\\/limits\\.ts:2 current\\s+slugs\\.yaml:4/"
+          }
+        },
+        {
+          "description": "Refusal one: a URL manifest cannot own citations, because cite writes them. Exit 2, before any page is read.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/url/manni.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "collection site: citations cannot come from a URL manifest, because cite writes them."
+          }
+        },
+        {
+          "description": "Refusal two: a page in two collections whose manifests both own citations has no owner the tool can pick.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/conflict/manni.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "docs/page.md is in collections site and api, and both keep citations in a manifest."
+          }
+        },
+        {
+          "description": "Refusal three: add from stdin has no path to key the manifest entry by.",
+          "runShell": {
+            "command": "printf -- '---\\ntitle: T\\n---\\n# T\\n\\nThe fetch timeout is 10 seconds.\\n' | npx @hawkeyexl/manni cite add -:6 src/limits.ts:2 --as markdown --id t -c test/fixtures/cite-sidecar/manni.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "A page read from stdin has no path, and its citations live in"
+          }
+        }
+      ]
+    }
+  ]
+}

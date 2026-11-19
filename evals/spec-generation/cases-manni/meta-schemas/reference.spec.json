@@ -1,0 +1,112 @@
+{
+  "specId": "manni-meta-schemas-index",
+  "description": "Inline tests from manni docs/src/content/docs/meta/schemas/index.mdx",
+  "tests": [
+    {
+      "testId": "author-a-schema",
+      "description": "Schema-authoring claims, demonstrated with the committed fixtures the page itself cites.",
+      "steps": [
+        {
+          "description": "A document points itself at a schema via $schema (schema-ref.md names google:okf:0.1) and validates against it.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/schema-ref.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        },
+        {
+          "description": "The minimal title.schema.json shape (the extra.schema.json fixture) passes a doc that has a title.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/extra.schema.json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        },
+        {
+          "description": "A required field that is absent is a hard failure: a frontmatter-free doc fails the required `title`.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/no-frontmatter.md -s ./test/fixtures/extra.schema.json",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "must have required property 'title'"
+          }
+        },
+        {
+          "description": "The date-time format is enforced: a malformed timestamp fails against OKF.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/bad-timestamp.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "date-time"
+          }
+        },
+        {
+          "description": "`schemas` lists the built-in OKF schema the page documents as the fallback.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta schemas",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "google:okf:0.1"
+          }
+        },
+        {
+          "description": "`schemas` also lists the Diataxis vocabulary this page points readers at.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta schemas",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "diataxis:diataxis:1.0"
+          }
+        },
+        {
+          "description": "Stacking OKF with a taxonomy schema passes a document carrying a canonical Diataxis type.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/diataxis-how-to.md -s google:okf:0.1 -s diataxis:diataxis:1.0",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        },
+        {
+          "description": "The vocabulary is closed: a near-miss spelling fails against the Diataxis schema.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/diataxis-bad-type.md -s diataxis:diataxis:1.0",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "allowed values"
+          }
+        },
+        {
+          "description": "`schemas` also lists the Good Docs Project vocabulary this page points readers at.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta schemas",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "tgdp:templates:1.0"
+          }
+        },
+        {
+          "description": "The TGDP vocabulary accepts a template slug that has no Diataxis equivalent.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/tgdp-installation-guide.md -s tgdp:templates:1.0",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        }
+      ]
+    }
+  ]
+}

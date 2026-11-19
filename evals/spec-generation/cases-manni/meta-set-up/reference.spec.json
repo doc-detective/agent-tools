@@ -1,0 +1,42 @@
+{
+  "specId": "manni-meta-set-up-index",
+  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/index.mdx",
+  "tests": [
+    {
+      "testId": "set-up-overview",
+      "description": "Stand-it-up steps, mapped to the local CLI build over the fixtures directory.",
+      "steps": [
+        {
+          "description": "Validate a folder with no setup: walking a directory of mixed fixtures fails (exit 1). Excludes the dd/ support fixtures so the walk is deterministic regardless of what lands there.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures --exclude \"test/fixtures/dd/**\"",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "files checked"
+          }
+        },
+        {
+          "description": "No positional paths and no config is an operational error: exit 2 with a clear message.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --no-config",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "No files to validate"
+          }
+        },
+        {
+          "description": "The CI command shape: `--format github` turns failures into inline annotations and still fails.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md --format github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "::error file="
+          }
+        }
+      ]
+    }
+  ]
+}

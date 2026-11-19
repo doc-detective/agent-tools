@@ -1,0 +1,44 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/external-metadata.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "docs-meta.yaml:6",
+      "note": "A bad manifest value is reported at the manifest line."
+    },
+    {
+      "action": "runShell",
+      "match": "is owned by manifest",
+      "note": "The owned-key finding names the manifest and collection."
+    },
+    {
+      "action": "runShell",
+      "match": "did not load",
+      "note": "A manifest entry naming an unloaded page is exit 2."
+    },
+    {
+      "action": "runShell",
+      "match": "PLAT-412 -> PLAT-1",
+      "note": "A write to a manifest-owned key lands in the manifest."
+    },
+    {
+      "action": "runShell",
+      "match": "cannot tell them apart",
+      "note": "A field-joined manifest flags a duplicate id on both pages."
+    },
+    {
+      "action": "runShell",
+      "match": "no loaded document carries",
+      "note": "A field entry no page carries is exit 2."
+    },
+    {
+      "action": "runShell",
+      "match": "joins on",
+      "note": "An UPDATE of the join field is refused, exit 2."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

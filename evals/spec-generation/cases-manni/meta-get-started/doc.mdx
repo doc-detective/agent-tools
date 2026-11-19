@@ -1,0 +1,159 @@
+---
+title: Get started
+description: Install manni meta and validate your first file in under a minute. Read a passing and a failing result.
+---
+
+import { Steps, Tabs, TabItem, Aside, LinkCard } from '@astrojs/starlight/components';
+
+This page takes you from nothing to a validated file. You'll install manni meta, or
+skip install entirely, then validate one document. You'll also learn to read
+both a passing and a failing result, including the summary line that CI watches.
+
+## Before you start
+
+manni meta runs on [Node.js](https://nodejs.org/) 24 or newer. Check your version:
+
+```sh
+node --version
+```
+
+If that prints `v24` or higher, you're ready.
+
+## Install and validate
+
+<Steps>
+
+1. **Get manni meta.**
+
+   You have two options. For a quick try or a one-off CI step, `npx` runs the
+   latest version without installing anything. For day-to-day local use, install
+   it globally.
+
+   <Tabs>
+     <TabItem label="npx (no install)">
+       ```sh
+       npx @hawkeyexl/manni meta validate path/to/your-doc.md
+       ```
+     </TabItem>
+     <TabItem label="Global install">
+       ```sh
+       npm install -g @hawkeyexl/manni
+       manni meta validate path/to/your-doc.md
+       ```
+     </TabItem>
+   </Tabs>
+
+   <Aside type="tip">
+     The rest of this page writes commands as `manni meta …`. If you didn't install
+     globally, prefix each one with `npx`.
+   </Aside>
+
+2. **Validate a file.**
+
+   Point manni meta at any Markdown file. With no schema configured, it validates
+   the file's YAML frontmatter against the built-in [OKF
+   schema](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md).
+   That schema requires a `type` field, and recommends a handful of others.
+
+   ```sh
+   manni meta validate path/to/your-doc.md
+   ```
+
+</Steps>
+
+## Read a passing result
+
+A file whose frontmatter satisfies the schema passes. Given a document like this:
+
+```md title="your-doc.md"
+---
+type: concept
+title: A Valid Document
+description: A single-sentence summary of this concept.
+timestamp: 2026-06-25T10:00:00Z
+---
+
+# A Valid Document
+
+Body content goes here.
+```
+
+manni meta prints a green check and a summary:
+
+```
+✓ path/to/your-doc.md
+
+1 file checked, 1 passed, 0 failed, 0 errors
+```
+
+The `✓` marks each file that passed. manni meta exits with code `0`, which CI reads
+as success.
+
+## Read a failing result
+
+Now remove the `type` field. manni meta marks the file with a red `✗` and lists
+every problem it found:
+
+```
+✗ path/to/your-doc.md
+    (root)  must have required property 'type'  [google:okf:0.1]
+
+1 file checked, 0 passed, 1 failed, 1 error
+```
+
+Each error line names **the field**, **what's wrong**, the **line** (when manni meta
+can locate it), and the **schema** that flagged it, in brackets. Here `(root)`
+means the problem is with the document as a whole rather than one field. The
+required `type` is missing entirely, so there's no line to point at. When the
+fix isn't obvious, the [Fix a failing check](/manni/meta/fix/) page decodes every part of
+this line.
+
+<Aside type="note">
+  manni meta reports the *metadata* it can read. It never inspects the body of your
+  document below the frontmatter.
+</Aside>
+
+## Read the summary line
+
+Every run ends with one summary line. CI and humans both read it at a glance:
+
+```
+N files checked, M passed, K failed, E errors
+```
+
+| Field | Meaning |
+| --- | --- |
+| `N files checked` | How many files manni meta resolved and validated. |
+| `M passed` | Files with no errors. |
+| `K failed` | Files with at least one error. |
+| `E errors` | Total errors across all files. A single file can contribute several. |
+
+A run is green only when `K failed` is `0`. The exit code follows: `0` when
+nothing failed, `1` when one or more files failed validation. (A third code,
+`2`, signals an operational problem such as a missing schema or no files to
+check; see [Fix a failing check](/manni/meta/fix/) for those.)
+
+## What manni meta is, and isn't
+
+manni meta is a **metadata gate**. It confirms that the structured data attached to
+your documents is present and correctly formatted, according to a schema you
+control. It is not a linter for your writing, a link checker, or a renderer. If
+your schema requires a `type` and a valid `timestamp`, that's what manni meta
+enforces, no more and no less.
+
+## Next steps
+
+You've validated one file by hand. To make this a standing guarantee for your
+whole repo, add a config file and a schema, then wire it into CI.
+
+<LinkCard
+  title="Set up validation for your repo"
+  href="/manni/meta/set-up/"
+  description="Add a manni.config.yaml, choose or author a schema, and land a passing CI step."
+/>
+
+<LinkCard
+  title="Fix a failing check"
+  href="/manni/meta/fix/"
+  description="Hit a red check? Decode the error, find the field and line, and fix it fast."
+/>

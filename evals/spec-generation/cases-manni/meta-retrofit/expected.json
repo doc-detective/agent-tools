@@ -1,0 +1,24 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/retrofit.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "schemas infer",
+      "note": "The coverage probe counts files with no metadata block."
+    },
+    {
+      "action": "runShell",
+      "match": "1 passed",
+      "note": "A frontmatter-free file passes the permissive schema."
+    },
+    {
+      "action": "runShell",
+      "match": "must have required property 'type'",
+      "note": "The same file fails OKF, which requires `type`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

@@ -1,0 +1,109 @@
+{
+  "specId": "manni-meta-ci-exit-codes-and-annotations",
+  "description": "Inline tests from manni docs/src/content/docs/meta/ci/exit-codes-and-annotations.mdx",
+  "tests": [
+    {
+      "testId": "exit-codes-and-annotations",
+      "description": "The contract between manni meta and a pipeline, exercised against the local build.",
+      "steps": [
+        {
+          "description": "Exit 0: every validated file satisfies its schema set.",
+          "runShell": {
+            "command": "manni meta validate test/fixtures/valid.md",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "Exit 1: one or more files failed validation.",
+          "runShell": {
+            "command": "manni meta validate test/fixtures/missing-type.md",
+            "exitCodes": [
+              1
+            ]
+          }
+        },
+        {
+          "description": "Exit 2: an operational/usage error (unknown --format).",
+          "runShell": {
+            "command": "manni meta validate test/fixtures/valid.md -f xml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "Unknown --format"
+          }
+        },
+        {
+          "description": "Exit 2: an unknown flag is a usage error, not a validation failure.",
+          "runShell": {
+            "command": "manni meta validate --nope test/fixtures/valid.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "unknown option"
+          }
+        },
+        {
+          "description": "Exit 2: a missing required argument is a usage error.",
+          "runShell": {
+            "command": "manni meta schemas vendor",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "missing required argument"
+          }
+        },
+        {
+          "description": "Exit 2: get with no field list is an operational error, not an empty report.",
+          "runShell": {
+            "command": "manni meta get",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "Specify at least one field"
+          }
+        },
+        {
+          "description": "github annotation line carries file= and line= for an error with a known line.",
+          "runShell": {
+            "command": "manni meta validate test/fixtures/bad-timestamp.md --format github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=test/fixtures/bad-timestamp.md,line=4::/"
+          }
+        },
+        {
+          "description": "get has no github output: it reports values, not findings (exit 2).",
+          "runShell": {
+            "command": "manni meta get type test/fixtures/valid.md --format github",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "Unknown --format"
+          }
+        },
+        {
+          "description": "fill does accept github, for the required properties it could not fill. --provider mock --dry-run keeps this away from a real provider and from writing to the fixture.",
+          "runShell": {
+            "command": "manni meta fill test/fixtures/valid.md --format github --provider mock --dry-run --no-cache",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "junit stays validate-only on fill (exit 2), and so does sarif.",
+          "runShell": {
+            "command": "manni meta fill test/fixtures/valid.md --format junit --provider mock --dry-run --no-cache",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "Unknown --format"
+          }
+        }
+      ]
+    }
+  ]
+}

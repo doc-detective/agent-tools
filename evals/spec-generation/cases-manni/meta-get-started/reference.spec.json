@@ -1,0 +1,62 @@
+{
+  "specId": "manni-meta-get-started-index",
+  "description": "Inline tests from manni docs/src/content/docs/meta/get-started/index.mdx",
+  "tests": [
+    {
+      "testId": "get-started",
+      "description": "Install/validate flow and result reading, run against the local CLI build and committed fixtures.",
+      "steps": [
+        {
+          "description": "Node.js prerequisite: `node --version` reports a version (page requires Node 24+).",
+          "runShell": {
+            "command": "node --version",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/v\\d+\\./"
+          }
+        },
+        {
+          "description": "Validate a passing file: a fixture satisfying OKF exits 0 with a green summary.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        },
+        {
+          "description": "Read a passing result: the summary line format the page documents.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "Read a failing result: a file missing `type` exits 1 and names the missing property.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "must have required property 'type'"
+          }
+        },
+        {
+          "description": "The failing result also cites the flagging schema in brackets.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "google:okf:0.1"
+          }
+        }
+      ]
+    }
+  ]
+}

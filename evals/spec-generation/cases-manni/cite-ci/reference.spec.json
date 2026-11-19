@@ -1,0 +1,61 @@
+{
+  "specId": "manni-cite-ci-index",
+  "description": "Inline tests from manni docs/src/content/docs/cite/ci/index.mdx",
+  "tests": [
+    {
+      "testId": "cite-ci",
+      "description": "The properties the CI integration rests on, run against the local CLI build and committed fixtures.",
+      "steps": [
+        {
+          "description": "A clean page exits 0 so the job stays green.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/current.md -f github",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "A changed source exits 1 and emits an ::error workflow command titled with the rule id, pinned to the sentence line.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/source-changed.md -f github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=.*line=15,title=manni%3Acite\\/source-changed::/"
+          }
+        },
+        {
+          "description": "A moved source is a ::warning and exits 0: warnings never fail the job.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/moved.md -f github",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/::warning file=.*title=manni%3Acite\\/source-moved::/"
+          }
+        },
+        {
+          "description": "A moved claim is a ::notice and exits 0: a notice never fails the job either.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-moved.md -f github",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/::notice file=.*title=manni%3Acite\\/claim-moved::/"
+          }
+        },
+        {
+          "description": "An operational error (no inputs, no config) exits 2, distinct from a finding.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "No files to check"
+          }
+        }
+      ]
+    }
+  ]
+}

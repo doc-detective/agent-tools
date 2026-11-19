@@ -1,0 +1,30 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/new-required-field.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "must have required property 'owner'",
+      "note": "Step 1: a doc lacking the new field fails once it is required."
+    },
+    {
+      "action": "runShell",
+      "match": "--write-baseline",
+      "note": "Step 2: --write-baseline records the finding and exits 0."
+    },
+    {
+      "action": "runShell",
+      "match": "baselined finding",
+      "note": "Step 3: with --baseline the same run passes, still counting the finding."
+    },
+    {
+      "action": "runShell",
+      "match": "--baseline",
+      "note": "Step 4: a new violation not in the baseline still fails."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`.",
+    "The baseline file is written to the cwd; delete it after the run."
+  ]
+}

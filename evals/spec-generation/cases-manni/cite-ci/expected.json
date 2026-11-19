@@ -1,0 +1,34 @@
+{
+  "source": "manni/docs/src/content/docs/cite/ci/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "-f github",
+      "note": "A clean page exits 0 so the job stays green."
+    },
+    {
+      "action": "runShell",
+      "match": "::error",
+      "note": "A changed source exits 1 with an ::error annotation titled with the rule id."
+    },
+    {
+      "action": "runShell",
+      "match": "::warning",
+      "note": "A moved source is a ::warning and exits 0."
+    },
+    {
+      "action": "runShell",
+      "match": "::notice",
+      "note": "A moved claim is a ::notice and exits 0."
+    },
+    {
+      "action": "runShell",
+      "match": "No files to check",
+      "note": "An operational error (no inputs, no config) exits 2."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "specId": "manni-cite-set-up-require-citations",
+  "description": "Inline tests from manni docs/src/content/docs/cite/set-up/require-citations.mdx",
+  "tests": [
+    {
+      "testId": "cite-require-citations",
+      "description": "Composing the citations vocabulary with a house schema that requires the key, and moving a rule's severity.",
+      "steps": [
+        {
+          "description": "A house schema cannot reach the vocabulary through $ref: only the bundled built-ins are registered, so the schema fails to compile and the run exits 2.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/citations-ref.schema.json test/fixtures/cite/pages/current.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "failed to compile: can't resolve reference manni:citations:1.0.0-proposal.4"
+          }
+        },
+        {
+          "description": "Composed as a set, a page that carries a well-formed citation satisfies both members.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/current.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "A page with no citations fails under the house schema, and the finding names that schema.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/no-citations.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/\\(root\\)\\s+must have required property 'citations'[\\s\\S]*requires-citations\\.schema\\.json\\]/"
+          }
+        },
+        {
+          "description": "A malformed entry fails under the vocabulary instead, and the finding names the vocabulary.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/entry-invalid.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/citations\\/1\\.0\\.0-proposal\\.4\\.json\\]/"
+          }
+        },
+        {
+          "description": "The required key is satisfied by the merged view, so a page whose entries live in a sidecar manifest passes with no citation YAML of its own, while a page with none still fails.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/cite-sidecar/manni.config.yaml -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite-sidecar/pages/limits.md test/fixtures/cite-sidecar/pages/retries.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/✓ \\S*pages\\/limits\\.md[\\s\\S]*must have required property 'citations'/"
+          }
+        },
+        {
+          "description": "claim-changed at its default is a warning: reported, and the run exits 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-changed.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/↕ fetch-timeout\\s+:15 changed[\\s\\S]*1 finding \\(1 warning\\)/"
+          }
+        },
+        {
+          "description": "Moved to error under severity:, the same page fails the run and exits 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check -c test/fixtures/cite/strict/manni.config.yaml test/fixtures/cite/pages/claim-changed.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/✗ fetch-timeout\\s+:15 changed[\\s\\S]*0 passed, 1 failed, 1 finding/"
+          }
+        },
+        {
+          "description": "A duplicate id is not something the schema can refuse, so cite check refuses it, on the second entry's line.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/entry-invalid.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/duplicate id \"fetch-timeout\"\\s+\\(line 13\\)/"
+          }
+        }
+      ]
+    }
+  ]
+}

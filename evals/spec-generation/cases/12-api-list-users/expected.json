@@ -1,0 +1,8 @@
+{
+  "steps": [
+    {"stepType": "httpRequest", "match": ["8093/api/users", "page"], "note": "GET http://localhost:8093/api/users?page=2 (page may be in the URL or as a request parameter); the response check should expect page \"2\" and status 200."}
+  ],
+  "must_not": [
+    "A goTo to the API URL in a browser instead of an httpRequest."
+  ]
+}

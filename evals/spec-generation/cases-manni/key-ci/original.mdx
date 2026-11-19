@@ -1,0 +1,391 @@
+---
+title: Rotate the key without breaking CI
+description: "Generate a new key, re-encrypt the whole family, update the CI secret, re-record the citation baseline, verify under the new key, and resume a run that stopped part of the way."
+sidebar:
+  order: 1
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+A key rotation touches two things at once. Every encrypted value in the
+repository has to be written again, and every job that reads one has to learn
+the new key. Do them in the wrong order and the metadata gate goes red across
+the whole docset, on pages nobody edited.
+
+This page is the runbook. It assumes the key already lives somewhere, which
+[Put the key where every tool finds it](/manni/key/set-up/) settles.
+
+Every transcript below is real output from the built tool.
+
+## Before you start
+
+- **Run it on a clean working tree.** `manni key rotate` rewrites pages,
+  manifests and the config. A clean tree is what lets you read the diff.
+- **Run it where the sources are reachable.** An encrypted citation's pin is
+  keyed over the cited lines, so rotation reads them. Point `--root` at the
+  code checkout when the pages and the code live apart.
+- **Know which key you are replacing.** A key in `manni.config.yaml` is
+  replaced for you. A key in `MANNI_ENCRYPTION_KEY` is replaced by you, and
+  [the environment variant](#when-the-key-lives-in-the-environment) below is
+  the path for it.
+- **Do it on a branch.** The rotation is a content change to every page that
+  holds an encrypted value, and it wants the same review any of them would get.
+
+## The runbook
+
+<Steps>
+
+1. **Check that the repository is green under the current key.** A rotation
+   cannot fix a value that was already wrong. A run that meets a value it
+   cannot decrypt reports it, exits `1`, and writes nothing.
+
+   ```console
+   $ manni meta validate
+   Using manni.config.yaml (.)
+   ✓ docs/auth.md
+   ✓ docs/limits.md
+
+   2 files checked, 2 passed, 0 failed, 0 errors
+   # exit 0
+
+   $ manni cite check
+   Using manni.config.yaml (.)
+   ✓ docs/auth.md
+   ✓ docs/limits.md
+       ✓ fetch-timeout   :17 current   ~Afnt…:2 current
+
+   2 files checked, 2 passed, 0 failed, 0 findings
+   # exit 0
+   ```
+
+2. **Preview the whole rotation.** `--dry-run` re-encrypts everything in memory
+   and writes nothing at all, not a page, not a manifest and not the config:
+
+   ```console
+   $ manni key rotate --dry-run
+   docs/auth.md: /owner  ~AZVg…  -> ~AT6O…
+   docs/limits.md: fetch-timeout  ~Afnt…:2 -> ~AdMQ…:2
+   2 values re-encrypted in 2 files, 0 skipped
+   Dry run: nothing written.
+   # exit 0
+   ```
+
+   Read the skip count. A single skipped value means nothing would be written,
+   and the run would exit `1`. The new key is never written beside a value it
+   cannot decrypt.
+
+3. **Rotate the whole family.** With no paths and no `--collection`, one run
+   covers every collection, its pages and its local manifests. `rotate`
+   generates the new key when you do not pass `--to`, and never prints it:
+
+   ```console
+   $ manni key rotate
+   docs/auth.md: /owner  ~AZVg…  -> ~AeLw…
+   docs/limits.md: fetch-timeout  ~Afnt…:2 -> ~Abq5…:2
+   2 values re-encrypted in 2 files, 0 skipped
+   Encryption key written to manni.config.yaml.
+   The citation baseline fingerprints id-less encrypted citations by their pin; re-record it with `manni cite check --write-baseline`.
+   # exit 0
+   ```
+
+   The metadata values are named by their JSON Pointer, `/owner`. The citation
+   is named by its id, and keeps its source lines after the ciphertext.
+
+4. **Update the CI secret, if the job reads one.** Nothing to do when the key
+   lives in `manni.config.yaml` and CI reads the committed file. When the job
+   reads `MANNI_ENCRYPTION_KEY`, follow
+   [the environment variant](#when-the-key-lives-in-the-environment) instead of
+   this step, because the whole run above would have refused.
+
+5. **Re-record the citation baseline.** The last line of step 3 asks for this,
+   and it only appears when a baseline exists. A baseline fingerprints a
+   citation that carries no id by its pin, and a new key changes every keyed
+   pin:
+
+   ```console
+   $ manni cite check --write-baseline
+   Using manni.config.yaml (.)
+   ✓ docs/auth.md
+   ✓ docs/limits.md
+       ✓ fetch-timeout   :17 current   ~Abq5…:2 current
+
+   2 files checked, 2 passed, 0 failed, 0 findings
+   Baseline written to .manni-cite-baseline.json
+   # exit 0
+   ```
+
+   The file is whatever `cite.baseline` names, else `.manni-cite-baseline.json`
+   beside the config. Commit it with the rotated pages.
+
+6. **Verify under the new key.** Both gates should read exactly as they did in
+   step 1, over different ciphertexts:
+
+   ```console
+   $ manni meta validate
+   Using manni.config.yaml (.)
+   ✓ docs/auth.md
+   ✓ docs/limits.md
+
+   2 files checked, 2 passed, 0 failed, 0 errors
+   # exit 0
+
+   $ manni cite check
+   Using manni.config.yaml (.)
+   ✓ docs/auth.md
+   ✓ docs/limits.md
+       ✓ fetch-timeout   :17 current   ~Abq5…:2 current
+
+   2 files checked, 2 passed, 0 failed, 0 findings
+   # exit 0
+   ```
+
+</Steps>
+
+Commit the pages, the manifests, the config and the baseline together. They are
+one change, and a pull request that carries half of it fails on the other half.
+
+## When the key lives in the environment
+
+The tool cannot reach into your secret store, so it will not pretend the key
+was replaced. A run with no `--to` refuses and says what to do:
+
+```console
+$ manni key rotate
+manni: The key comes from MANNI_ENCRYPTION_KEY; pass --to <value>, re-encrypt with it, then update the secret. Nothing is written to config.
+# exit 2
+```
+
+{/* cite env-config-never-touched */}
+Generate the new value, pass it as `--to`, and let the run rewrite the pages.
+The config is never touched:
+
+```console
+$ manni key rotate --to "$NEW_KEY"
+docs/auth.md: /owner  ~AeLw…  -> ~Aa0O…
+docs/limits.md: fetch-timeout  ~Abq5…:2 -> ~AY9Z…:2
+2 values re-encrypted in 2 files, 0 skipped
+Key not written: it comes from MANNI_ENCRYPTION_KEY. Update the secret to the value you passed.
+The citation baseline fingerprints id-less encrypted citations by their pin; re-record it with `manni cite check --write-baseline`.
+# exit 0
+```
+
+<Aside type="caution" title="There is a window where the old secret fails">
+Between that run and the secret update, a job holding the old value cannot read
+the rotated pages. Every one of them reports `encrypted:unreadable`, exit `1`:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+✗ docs/auth.md
+    /owner  /owner does not decrypt under the current key: encrypted under another key, or edited by hand.  (line 3)  [encrypted:unreadable]
+✓ docs/limits.md
+
+2 files checked, 1 passed, 1 failed, 1 error
+# exit 1
+```
+
+Update the secret to the new value when the rotated pages merge, not before.
+</Aside>
+
+With the secret updated, the same check is green again:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+✓ docs/auth.md
+✓ docs/limits.md
+
+2 files checked, 2 passed, 0 failed, 0 errors
+# exit 0
+```
+
+## Rotate one area at a time
+
+{/* cite narrowed-definition */}
+{/* cite narrowed-never-writes-key */}
+A repository too large to rewrite in one commit can be rotated area by area.
+Positional paths and `--collection` both narrow a run, and a narrowed run never
+writes the key. Writing it would leave everything outside the run encrypted
+under a key the config no longer holds.
+
+{/* cite narrowed-needs-to */}
+That is why a narrowed run needs `--to`:
+
+```console
+$ manni key rotate docs/auth.md
+manni: A run over part of the family needs --to, and never writes the key.
+# exit 2
+```
+
+Pass the same `--to` to every narrowed run, then finish with a whole run under
+that value:
+
+```console
+$ manni key rotate docs/auth.md --to "$NEW_KEY"
+docs/auth.md: /owner  ~AeLw…  -> ~Aa0O…
+1 value re-encrypted in 1 file, 0 skipped
+Key not written: this run covered part of the family. Finish with a whole run under the same key: `manni key rotate --to <the same value>`.
+The citation baseline fingerprints id-less encrypted citations by their pin; re-record it with `manni cite check --write-baseline`.
+# exit 0
+
+$ manni key rotate --to "$NEW_KEY"
+docs/limits.md: fetch-timeout  ~Abq5…:2 -> ~AY9Z…:2
+1 value re-encrypted in 1 file, 0 skipped
+Encryption key written to manni.config.yaml.
+The citation baseline fingerprints id-less encrypted citations by their pin; re-record it with `manni cite check --write-baseline`.
+# exit 0
+```
+
+{/* cite already-under-new-key-done */}
+{/* cite whole-run-after-narrowed */}
+{/* cite already-under-new-key-done-cite */}
+The whole run re-encrypted only what the first run had not reached. A value
+already under the new key counts as done, which is the one rule that makes
+narrowed runs compose.
+
+Between the two runs the gate is red, because half the pages are under each
+key:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+✗ docs/auth.md
+    /owner  /owner does not decrypt under the current key: encrypted under another key, or edited by hand.  (line 3)  [encrypted:unreadable]
+✓ docs/limits.md
+
+2 files checked, 1 passed, 1 failed, 1 error
+# exit 1
+```
+
+Keep the area-by-area runs on one branch, and merge when the whole run has
+finished. The [CLI reference](/manni/key/reference/cli/#a-narrowed-run) has the
+rules for what a narrowed run selects.
+
+## Resume an interrupted rotation
+
+{/* cite stopped-run-both-keys */}
+A run stopped between its first write and its last leaves the config holding
+both keys:
+
+```yaml title="manni.config.yaml"
+encryptionKey: <the new key>
+encryptionKeyPrevious: <the old key>
+```
+
+{/* cite nothing-lost-write-order */}
+Nothing is lost. The new key reached the config before the first page, and the
+old one stays beside it until the last page is written. Every value still
+decrypts under one of the two.
+
+Meanwhile the pages the run did not reach report the same
+`encrypted:unreadable` finding, so the gate tells you the rotation is unfinished
+before anything else does:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+✗ docs/auth.md
+    /owner  /owner does not decrypt under the current key: encrypted under another key, or edited by hand.  (line 3)  [encrypted:unreadable]
+✓ docs/limits.md
+
+2 files checked, 1 passed, 1 failed, 1 error
+# exit 1
+```
+
+{/* cite unfinished-refuses-set */}
+{/* cite unfinished-refuses-rotate-to */}
+Until it finishes, the two commands that would replace the key again are
+refused with one line each:
+
+```console
+$ manni key set
+manni: A rotation is unfinished in manni.config.yaml. Run `manni key rotate` with no --to to finish it.
+# exit 2
+
+$ manni key rotate --to "$SOME_OTHER_KEY"
+manni: A rotation is unfinished in manni.config.yaml. Run `manni key rotate` with no --to to finish it.
+# exit 2
+```
+
+{/* cite finish-from-previous */}
+{/* cite finish-report-above-counts */}
+{/* cite finish-removes-previous */}
+Run `manni key rotate` with no `--to`, and it finishes the job it started. The
+report says so above the counts, and `encryptionKeyPrevious:` is removed:
+
+```console
+$ manni key rotate
+docs/auth.md: /owner  ~AeLw…  -> ~Aa0O…
+docs/limits.md: fetch-timeout  ~Abq5…:2 -> ~AY9Z…:2
+Finished the interrupted rotation in manni.config.yaml.
+2 values re-encrypted in 2 files, 0 skipped
+The citation baseline fingerprints id-less encrypted citations by their pin; re-record it with `manni cite check --write-baseline`.
+# exit 0
+```
+
+Then pick the runbook back up at step 5.
+
+## What stops a rotation before it starts
+
+Each of these is one line on stderr, and nothing is written.
+
+```console
+$ manni key rotate --to tooshort
+manni: --to must be at least 32 hex or base64url characters.
+# exit 2
+
+$ manni key rotate - --to "$NEW_KEY"
+manni: key rotate reads and writes files, so it takes no stdin (`-`). Name the files instead.
+# exit 2
+
+$ manni key rotate -f sarif
+manni: Unknown --format "sarif". Use pretty or json.
+# exit 2
+
+$ manni key rotate
+manni: No encryption key is available, so nothing can be re-encrypted. Run `manni key set` first.
+# exit 2
+```
+
+{/* cite skip-exits-1 */}
+{/* cite skip-stops-write */}
+A value that will not re-encrypt is the one failure that exits `1` rather than
+`2`, and it stops the whole write. The
+[CLI reference](/manni/key/reference/cli/#refusals) lists every refusal.
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Put the key where every tool finds it"
+    href="/manni/key/set-up/"
+    description="Config or environment, the git-ignore warning, who on the team needs the key, and what each command does without one."
+  />
+  <LinkCard
+    title="key CLI reference"
+    href="/manni/key/reference/cli/"
+    description="Every flag of set and rotate, how rotation finds values, the order of the writes, and the JSON shape."
+  />
+  <LinkCard
+    title="Gate citations in CI"
+    href="/manni/cite/ci/"
+    description="Where cite check sits in a pipeline, which output your tooling reads, and the baseline this runbook re-records."
+  />
+  <LinkCard
+    title="Mark a field encrypted"
+    href="/manni/meta/schemas/encrypted-fields/"
+    description="What a rotation means for the schema that owns a marked property, and what it does not change."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni key behavior
+    against the local build, exposed as `manni key` / `npx @hawkeyexl/manni key` via `npm link`
+    (see .github/workflows/docs-as-tests.yml).
+    Nothing here writes a key: every step is a refusal that writes nothing.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"key-ci-rotation","description":"The refusals that guard a rotation, each of which writes nothing."} */}
+{/* step {"description":"A --to shorter than 32 characters is refused before anything is read.","runShell":{"command":"npx @hawkeyexl/manni key rotate --to tooshort","exitCodes":[2],"stdio":"--to must be at least 32 hex or base64url characters."}} */}
+{/* step {"description":"rotate takes no stdin, because it writes the files it reads.","runShell":{"command":"npx @hawkeyexl/manni key rotate - --to 0123456789abcdef0123456789abcdef","exitCodes":[2],"stdio":"key rotate reads and writes files, so it takes no stdin"}} */}
+{/* step {"description":"rotate reports in pretty or json only; any other format is refused.","runShell":{"command":"npx @hawkeyexl/manni key rotate -f sarif","exitCodes":[2],"stdio":"Unknown --format \"sarif\". Use pretty or json."}} */}
+{/* step {"description":"With no key configured there is nothing to re-encrypt from, and the run refuses.","runShell":{"command":"npx @hawkeyexl/manni key rotate","exitCodes":[2],"stdio":"No encryption key is available, so nothing can be re-encrypted. Run `manni key set` first."}} */}
+{/* test end */}

@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "testId": "resource-links",
+      "steps": [
+        {
+          "checkLink": "http://localhost:8092/"
+        },
+        {
+          "checkLink": "http://localhost:8092/drag-drop-test.html"
+        },
+        {
+          "checkLink": "http://localhost:8092/type-echo.html"
+        },
+        {
+          "checkLink": {
+            "url": "http://localhost:8093/status/200",
+            "statusCodes": [
+              200
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

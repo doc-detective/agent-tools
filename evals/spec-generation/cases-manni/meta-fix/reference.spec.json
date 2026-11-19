@@ -1,0 +1,62 @@
+{
+  "specId": "manni-meta-fix-index",
+  "description": "Inline tests from manni docs/src/content/docs/meta/fix/index.mdx",
+  "tests": [
+    {
+      "testId": "fix-a-failing-check",
+      "description": "The common-failures catalog and the reproduce-locally loop, mapped to fixtures.",
+      "steps": [
+        {
+          "description": "Missing a required field: (root) ... must have required property, tagged with the schema.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "must have required property 'type'"
+          }
+        },
+        {
+          "description": "A value in the wrong format: a malformed timestamp is flagged on its source line.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/bad-timestamp.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/timestamp  must match format \"date-time\"  \\(line 4\\)/"
+          }
+        },
+        {
+          "description": "A frontmatter parse error (malformed YAML) reports the schema as [(parse)] rather than a real schema id.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/dd/malformed-yaml.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "[(parse)]"
+          }
+        },
+        {
+          "description": "Schema not found is a setup problem, not a document problem: it exits 2 to stderr.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s google:okf:0.2",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "Unknown built-in schema"
+          }
+        },
+        {
+          "description": "Reproduce and confirm locally: after the fix, the file passes with a green summary.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        }
+      ]
+    }
+  ]
+}

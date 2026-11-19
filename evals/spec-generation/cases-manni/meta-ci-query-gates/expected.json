@@ -1,0 +1,74 @@
+{
+  "source": "manni/docs/src/content/docs/meta/ci/query-gates.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "json_each",
+      "note": "A tag census with json_each and plain SQL aggregates."
+    },
+    {
+      "action": "runShell",
+      "match": "JOIN authors",
+      "note": "A declared collection is a view; the dangling-author rule joins FROM authors."
+    },
+    {
+      "action": "runShell",
+      "match": "LEFT JOIN docs a",
+      "note": "The no-config fallback: the same rule as a self-join."
+    },
+    {
+      "action": "runShell",
+      "match": "HAVING",
+      "note": "Duplicate slugs, the GROUP BY ... HAVING shape."
+    },
+    {
+      "action": "runShell",
+      "match": "-> todo",
+      "note": "--dry-run previews a mutating statement."
+    },
+    {
+      "action": "runShell",
+      "match": "DROP TABLE",
+      "note": "DROP TABLE is refused, exit 2."
+    },
+    {
+      "action": "runShell",
+      "match": "check:unique-slugs",
+      "note": "A named check in config annotates the offending line."
+    },
+    {
+      "action": "runShell",
+      "match": "check:guide-needs-owner",
+      "note": "A check may read a collection as a view."
+    },
+    {
+      "action": "runShell",
+      "match": "corpus checks skipped",
+      "note": "A run scoped by paths skips checks with a notice."
+    },
+    {
+      "action": "runShell",
+      "match": "scoped to collections guides",
+      "note": "--collection is scoped too."
+    },
+    {
+      "action": "runShell",
+      "match": "duplicate slug",
+      "note": "query --check -f github: the ad-hoc spelling."
+    },
+    {
+      "action": "runShell",
+      "match": "--param",
+      "note": "--param binds a runtime value into the gate."
+    },
+    {
+      "action": "runShell",
+      "match": "-f csv",
+      "note": "-f csv prints rows as CSV, header first."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

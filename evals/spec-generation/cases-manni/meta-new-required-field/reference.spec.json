@@ -1,0 +1,52 @@
+{
+  "specId": "manni-meta-set-up-new-required-field",
+  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/new-required-field.mdx",
+  "tests": [
+    {
+      "testId": "new-required-field",
+      "description": "Required-from-day-one plus a baseline, demonstrated with the `owner` schema fixtures.",
+      "steps": [
+        {
+          "description": "Step 1 (make it required): a doc lacking `owner` fails once the field is in `required`.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/dd/owner-required.schema.json",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "must have required property 'owner'"
+          }
+        },
+        {
+          "description": "Step 2 (record the backlog): --write-baseline records that finding and exits 0, reporting the additions.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/dd/owner-required.schema.json --write-baseline .dd-baseline.json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 finding recorded (+1 new, -0 no longer occur)"
+          }
+        },
+        {
+          "description": "Step 3 (turn it on): the same run now passes, with the forgiven finding still counted.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/dd/owner-required.schema.json --baseline .dd-baseline.json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 baselined finding"
+          }
+        },
+        {
+          "description": "Step 4 (new violations still fail): a second file's finding is not in the baseline, so the run exits 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md -s ./test/fixtures/dd/owner-required.schema.json --baseline .dd-baseline.json",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "must have required property 'owner'"
+          }
+        }
+      ]
+    }
+  ]
+}

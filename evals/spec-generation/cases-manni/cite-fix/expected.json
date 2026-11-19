@@ -1,0 +1,69 @@
+{
+  "source": "manni/docs/src/content/docs/cite/fix/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "moved -> src/moved.ts:4",
+      "note": "source-moved: a warning naming the new range, exit 0."
+    },
+    {
+      "action": "runShell",
+      "match": "src/changed.ts:2 changed",
+      "note": "source-changed: an error on the source end, exit 1."
+    },
+    {
+      "action": "runShell",
+      "match": "missing",
+      "note": "source-missing: no tracked file at the path, exit 1."
+    },
+    {
+      "action": "runShell",
+      "match": ":15 moved -> :17",
+      "note": "claim-moved: a notice naming both lines, exit 0."
+    },
+    {
+      "action": "runShell",
+      "match": "2 candidates",
+      "note": "claim-moved-ambiguous: a warning naming both candidates."
+    },
+    {
+      "action": "runShell",
+      "match": ":15 changed",
+      "note": "claim-changed: a warning on the claim's line, exit 0."
+    },
+    {
+      "action": "runShell",
+      "match": "no entry has id",
+      "note": "marker-orphan: a marker naming an id no entry has, exit 1."
+    },
+    {
+      "action": "runShell",
+      "match": "A marker names an entry by id",
+      "note": "marker-invalid: a JSON payload is told where the entry belongs."
+    },
+    {
+      "action": "runShell",
+      "match": "has claim lines and a marker",
+      "note": "anchor-invalid: claim lines and a marker together, exit 1."
+    },
+    {
+      "action": "runShell",
+      "match": "duplicate id",
+      "note": "entry-invalid: a duplicate id is named on the entry's line."
+    },
+    {
+      "action": "runShell",
+      "match": "hmac-sha256-",
+      "note": "entry-invalid: an encrypted source pinned with sha256- names the prefix it needs."
+    },
+    {
+      "action": "runShell",
+      "match": "1 file checked, 1 passed, 0 failed, 0 findings",
+      "note": "Reproduce and confirm locally: a fixed page passes."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

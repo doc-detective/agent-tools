@@ -1,0 +1,292 @@
+{
+  "specId": "manni-meta-reference-query",
+  "description": "Inline tests from manni docs/src/content/docs/meta/reference/query.mdx",
+  "tests": [
+    {
+      "testId": "query-reference",
+      "description": "The docs table contract, the DML/DDL vocabulary, collections as views, findings, and the refusal posture.",
+      "steps": [
+        {
+          "description": "SELECT * returns the four system columns first, then the data columns sorted by name.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config \"SELECT * FROM docs\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/_path +_format +_present +_data +author +draft +last_reviewed +sidebar position +slug +tags +title/"
+          }
+        },
+        {
+          "description": "A frontmatter key named _path is not lifted to a column; it stays reachable through _data.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config \"SELECT _path, _data ->> '$._path' AS shadowed FROM docs\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/gamma\\.md +sneaky/"
+          }
+        },
+        {
+          "description": "A key that is not a bare identifier is an ordinary quoted identifier.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config 'SELECT \"sidebar position\" AS sp FROM docs WHERE sp IS NOT NULL' test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/sp[\\s\\S]*3[\\s\\S]*1 row/"
+          }
+        },
+        {
+          "description": "_present is 0 for a file with no metadata block at all.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config \"SELECT _path FROM docs WHERE _present = 0\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/plain\\.md[\\s\\S]*1 row/"
+          }
+        },
+        {
+          "description": "Each collection is a view of the files its own globs match.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query -c test/fixtures/collections/manni.config.yaml \"SELECT _path, slug FROM authors\"",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/ada\\.md +ada[\\s\\S]*4 rows/"
+          }
+        },
+        {
+          "description": "A file whose own $schema outranks its override is still a member: membership no longer follows resolution.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query -c test/fixtures/collections/manni.config.yaml \"SELECT _path FROM authors\"",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/self\\.md/"
+          }
+        },
+        {
+          "description": "Views may overlap: authors/deep.md is matched by the authors collection and by the notes collection, so it is in both.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query -c test/fixtures/collections/manni.config.yaml \"SELECT count(*) n FROM notes\"",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/n[\\s\\S]*1[\\s\\S]*1 row/"
+          }
+        },
+        {
+          "description": "A collection view is read-only, and the refusal completes itself with the write-through-docs spelling (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query -c test/fixtures/collections/manni.config.yaml --dry-run \"UPDATE authors SET slug = 'x'\"",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "because it is a view"
+          }
+        },
+        {
+          "description": "SET k = NULL removes the key; the preview says (deleted), not (null).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run \"UPDATE docs SET author = NULL WHERE slug = 'beta'\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/author: grace -> \\(deleted\\)/"
+          }
+        },
+        {
+          "description": "A paired SET renames a key: the deletion and the creation pair up, and the original value is carried over.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run \"UPDATE docs SET byline = author, author = NULL WHERE slug = 'beta'\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/author -> byline \\(key renamed\\)/"
+          }
+        },
+        {
+          "description": "A _path move may not change the extension (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run \"UPDATE docs SET _path = 'test/fixtures/query/docs/beta.txt' WHERE slug = 'beta'\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "a rename may not change the extension"
+          }
+        },
+        {
+          "description": "explicit_null() is the literal-null spelling SET k = NULL cannot express.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run \"UPDATE docs SET author = explicit_null() WHERE slug = 'beta'\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/author: grace -> \\(null\\)/"
+          }
+        },
+        {
+          "description": "DELETE strips the front matter block and names the keys it removes; the file and body survive.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run \"DELETE FROM docs WHERE slug = 'beta'\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/frontmatter removed: title, slug, author, tags, draft, last_reviewed/"
+          }
+        },
+        {
+          "description": "A system column other than _path is read-only (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run \"UPDATE docs SET _format = 'x' WHERE slug = 'beta'\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "system columns are read-only"
+          }
+        },
+        {
+          "description": "--check implies the dry run: pending changes are findings, exit 1, files untouched.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --check \"UPDATE docs SET reviewed = 'todo' WHERE _present = 1\" test/fixtures/query/docs",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/3 changes across 3 files — check failed/"
+          }
+        },
+        {
+          "description": "The type bridge: a declared format name previews as the whole property the schema will gain.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --dry-run -c test/fixtures/ddl-bridge/manni.config.yaml \"ALTER TABLE docs ADD COLUMN reviewed_on DATE NOT NULL DEFAULT '2026-08-26'\" test/fixtures/ddl-bridge/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "+ reviewed_on (string, format date, required)"
+          }
+        },
+        {
+          "description": "A CHECK (k IN (...)) on the added column becomes an enum on the property.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --dry-run -c test/fixtures/ddl-bridge/manni.config.yaml \"ALTER TABLE docs ADD COLUMN tier TEXT CHECK (tier IN ('a','b'))\" test/fixtures/ddl-bridge/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/\\+ tier \\(string, enum \\[\"a\", \"b\"\\]\\)/"
+          }
+        },
+        {
+          "description": "A corpus on the built-in default set has no schema of yours to evolve, so DDL refuses and names the data-only spellings (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run \"ALTER TABLE docs ADD COLUMN x TEXT\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "runs on the built-in default set"
+          }
+        },
+        {
+          "description": "-s names the DDL target set directly, replacing the per-file walk for the planner.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run -s ./test/fixtures/ddl-bridge/schemas/house.json \"ALTER TABLE docs ADD COLUMN reviewed TEXT NOT NULL DEFAULT 'pending'\" test/fixtures/ddl-bridge/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "+ reviewed (string, required)"
+          }
+        },
+        {
+          "description": "-s on a statement with no schema-evolving effect refuses before anything is applied (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --dry-run -s ./test/fixtures/ddl-bridge/schemas/house.json \"SELECT _path FROM docs\" test/fixtures/ddl-bridge/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "no schema-evolving effects"
+          }
+        },
+        {
+          "description": "An unbound named parameter is refused rather than binding NULL into a silently-green gate (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --check \"SELECT _path FROM docs WHERE author = :who\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "with nothing bound"
+          }
+        },
+        {
+          "description": "The column convention in the ad-hoc spelling: path, key, lineFor, and message become a GitHub annotation under check:query.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config --check -f github \"SELECT _path AS path, 'slug' AS key, lineFor(_path, 'slug') AS line, 'duplicate slug ' || slug AS message FROM docs WHERE slug IN (SELECT slug FROM docs GROUP BY slug HAVING count(*) > 1)\" test/fixtures/query/docs",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=test\\/fixtures\\/query\\/docs\\/alpha\\.md,line=3::\\[check:query\\] \\/slug duplicate slug alpha/"
+          }
+        },
+        {
+          "description": "A findings format without --check is refused before the run (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config -f sarif \"SELECT _path AS path FROM docs\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "which only --check produces"
+          }
+        },
+        {
+          "description": "CSV always emits a header row; arrays stay JSON text, RFC 4180 quoted.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config -f csv \"SELECT _path, title, tags FROM docs WHERE _present = 1 ORDER BY _path\" test/fixtures/query/docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/_path,title,tags\\n[\\s\\S]*alpha\\.md,Alpha,\"\\[\"\"guide\"\",\"\"intro\"\"\\]\"/"
+          }
+        },
+        {
+          "description": "CSV refuses a statement that produced changes, and says nothing was applied (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config -f csv \"UPDATE docs SET reviewed = 'todo'\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "nothing was applied"
+          }
+        },
+        {
+          "description": "ATTACH is refused by name because it can write outside the docs table (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config \"ATTACH DATABASE 'x.db' AS y\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "ATTACH is refused"
+          }
+        },
+        {
+          "description": "A second statement after a semicolon is refused rather than silently compiled away (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config \"SELECT 1; SELECT 2\" test/fixtures/query/docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "single SQL statement"
+          }
+        },
+        {
+          "description": "A write cannot touch <stdin>, since there is no file behind it (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta query --no-config \"UPDATE docs SET title = 'X'\" - --as markdown < test/fixtures/query/docs/alpha.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "cannot touch <stdin>"
+          }
+        }
+      ]
+    }
+  ]
+}

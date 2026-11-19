@@ -1,0 +1,132 @@
+{
+  "specId": "manni-cite-get-started-index",
+  "description": "Inline tests from manni docs/src/content/docs/cite/get-started/index.mdx",
+  "tests": [
+    {
+      "testId": "cite-get-started",
+      "description": "Pin, check, move and change on each end, then a marker: the statuses this page walks through, over committed fixtures.",
+      "steps": [
+        {
+          "description": "Node.js prerequisite: `node --version` reports a version (page requires Node 24+).",
+          "runShell": {
+            "command": "node --version",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/v\\d+\\./"
+          }
+        },
+        {
+          "description": "Check it: both ends match their pins, and the summary is green.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/current.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:15 current\\s+src\\/limits\\.ts:2 current/"
+          }
+        },
+        {
+          "description": "A claim range reads as a range of file lines, though the entry stores body lines.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-range.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/:15-16 current/"
+          }
+        },
+        {
+          "description": "Editing the frontmatter does not move a claim: a page with an extra tag is still current.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/frontmatter-tag.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/:16 current/"
+          }
+        },
+        {
+          "description": "When the source moves: a moved source is a warning, names the new range, and exits 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/moved.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/moved -> src\\/moved\\.ts:4[\\s\\S]*\\(1 warning\\)/"
+          }
+        },
+        {
+          "description": "update --dry-run prints the rewrite it would make to the source end, and writes nothing.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite update --no-config --root test/fixtures/cite --dry-run test/fixtures/cite/pages/moved.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout source src\\/moved\\.ts:2 -> src\\/moved\\.ts:4 \\(moved\\)/"
+          }
+        },
+        {
+          "description": "When the source changes: an error beside a claim end that is still current, exit 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/source-changed.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/:15 current\\s+src\\/changed\\.ts:2 changed/"
+          }
+        },
+        {
+          "description": "When the page changes: an inserted paragraph makes the claim moved, a notice, and exits 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-moved.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/:15 moved -> :17[\\s\\S]*\\(1 notice\\)/"
+          }
+        },
+        {
+          "description": "An edited sentence is claim-changed, a warning, and exits 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-changed.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:15 changed/"
+          }
+        },
+        {
+          "description": "Markers in every format are read: mdx, asciidoc and rst pages each report their citation.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/marker.mdx test/fixtures/cite/pages/marker.adoc test/fixtures/cite/pages/marker.rst",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "3 files checked, 3 passed, 0 failed, 0 findings"
+          }
+        },
+        {
+          "description": "A marker-anchored claim reads as marker plus the line it anchors.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/marker.mdx",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/marker :14 current/"
+          }
+        },
+        {
+          "description": "A quoted fenced block that still reproduces its source passes.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/quote.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 findings"
+          }
+        }
+      ]
+    }
+  ]
+}

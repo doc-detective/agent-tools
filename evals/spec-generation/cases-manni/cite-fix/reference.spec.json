@@ -1,0 +1,132 @@
+{
+  "specId": "manni-cite-fix-index",
+  "description": "Inline tests from manni docs/src/content/docs/cite/fix/index.mdx",
+  "tests": [
+    {
+      "testId": "cite-fix-a-failing-check",
+      "description": "The rule catalog, mapped to fixtures.",
+      "steps": [
+        {
+          "description": "source-moved: a warning naming the new range, exit 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/moved.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/moved -> src\\/moved\\.ts:4/"
+          }
+        },
+        {
+          "description": "source-changed: an error on the source end, with the claim end still current, exit 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/source-changed.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/:15 current\\s+src\\/changed\\.ts:2 changed/"
+          }
+        },
+        {
+          "description": "source-missing: no tracked file at the path, exit 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/missing.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/src\\/gone\\.ts:2 missing/"
+          }
+        },
+        {
+          "description": "claim-moved: an inserted paragraph is a notice that names both lines, exit 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-moved.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:15 moved -> :17/"
+          }
+        },
+        {
+          "description": "claim-moved-ambiguous: the pinned text at two places is a warning that names both, exit 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-moved-ambiguous.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/retries\\s+:15 moved, 2 candidates \\(:17, :21\\)/"
+          }
+        },
+        {
+          "description": "claim-changed: an edited sentence is a warning on the claim's line, exit 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-changed.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:15 changed/"
+          }
+        },
+        {
+          "description": "marker-orphan: a marker naming an id no entry has, exit 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/marker-orphan.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "no entry has id \"nope\""
+          }
+        },
+        {
+          "description": "marker-invalid: a JSON payload hears where the entry belongs, exit 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/marker-json.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "A marker names an entry by id. Write the entry in frontmatter or the sidecar."
+          }
+        },
+        {
+          "description": "anchor-invalid: claim lines and a marker together, exit 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/anchor-both.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "has claim lines and a marker. Keep one."
+          }
+        },
+        {
+          "description": "entry-invalid: a duplicate id and a missing integrity are named on the entry's line.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/entry-invalid.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "duplicate id \"fetch-timeout\""
+          }
+        },
+        {
+          "description": "entry-invalid: an encrypted source pinned with sha256- names the prefix it needs.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/hmac-mismatch.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "an encrypted source is pinned with hmac-sha256-, not sha256-."
+          }
+        },
+        {
+          "description": "Reproduce and confirm locally: a fixed page passes with a green summary.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/current.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 findings"
+          }
+        }
+      ]
+    }
+  ]
+}

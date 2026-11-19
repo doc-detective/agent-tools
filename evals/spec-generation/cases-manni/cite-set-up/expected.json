@@ -1,0 +1,39 @@
+{
+  "source": "manni/docs/src/content/docs/cite/set-up/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "cite add",
+      "note": "Preview the first `cite add` with --dry-run: it prints the entry and writes nothing."
+    },
+    {
+      "action": "runShell",
+      "match": "added fetch-timeout to frontmatter",
+      "note": "The report names both pins and the claim's file line after the write."
+    },
+    {
+      "action": "runShell",
+      "match": "1 file checked, 1 passed, 0 failed, 0 findings",
+      "note": "The first check: both ends current and a green summary."
+    },
+    {
+      "action": "runShell",
+      "match": "limits.ts:2 missing",
+      "note": "A root that does not hold the source reports missing, exit 1."
+    },
+    {
+      "action": "runShell",
+      "match": "cite check -q",
+      "note": "A declared collection makes a bare check cover the right pages."
+    },
+    {
+      "action": "runShell",
+      "match": "No files to check",
+      "note": "No paths and no config is an operational error, exit 2."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

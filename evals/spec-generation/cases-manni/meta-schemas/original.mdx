@@ -1,0 +1,359 @@
+---
+title: Author a schema for your metadata standard
+description: Write a JSON Schema that manni meta validates against, covering required vs. recommended fields, value formats, and how a document names its own schema.
+sidebar:
+  label: Author a schema
+  order: 1
+---
+
+import { Steps, Tabs, TabItem, CardGrid, LinkCard, Aside } from '@astrojs/starlight/components';
+
+Your metadata standard already exists, even if it only lives in a style guide or in people's heads. Every page needs a `type`. A `timestamp` should be an ISO date. API pages must declare a `version`. A JSON Schema turns those agreements into a file that manni meta can enforce on every commit. This page walks through writing that schema, from a minimal one-field example up to the fuller built-in OKF schema. It also shows how a document points itself at the schema you wrote.
+
+<Aside type="note" title="What manni meta checks, and what it doesn't">
+manni meta validates the **presence and format** of metadata. It checks that required fields exist, that values match the types and formats your schema declares, and that no disallowed fields slipped in. It does **not** judge prose quality, check that a `description` is *well written*, or follow links to confirm a `resource` URI resolves. Your schema is a contract about the *shape* of the frontmatter, not its meaning.
+</Aside>
+
+## A schema is just a JSON file
+
+manni meta validates against standard [JSON Schema](https://json-schema.org/). If you can write JSON, you can write a manni meta schema; there is no manni-specific schema format to learn. A schema describes the frontmatter object: which keys are required, what type each value should be, and whether unexpected keys are allowed.
+
+Here is the smallest schema worth shipping. It says: the metadata must be an object, it must have a `title`, and that `title` must be a non-empty string.
+
+```json title="title.schema.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["title"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 }
+  }
+}
+```
+
+This is the [`extra.schema.json`](https://github.com/hawkeyexl/manni/blob/main/test/fixtures/extra.schema.json) fixture that manni meta's own test suite runs, so you can trust it compiles and validates exactly as shown. Four things are doing the work:
+
+- **`"$schema"`** at the top names the JSON Schema *dialect* this file is written in, which here is draft 2020-12. The line tells manni meta which validation engine to use. This is the schema's own dialect declaration. It differs from the `$schema` key you put in a *document* to choose a schema, covered [below](#point-a-document-at-its-schema).
+- **`"type": "object"`** says the metadata is a set of key/value pairs, which frontmatter always is.
+- **`"required": ["title"]`** is the list of fields that *must* be present. A document missing `title` fails validation.
+- **`"properties"`** describes individual fields. `title` must be a string, and `minLength: 1` rejects an empty `title:` that a contributor left blank.
+
+A document with this frontmatter passes:
+
+```markdown
+---
+title: Getting started
+---
+```
+
+A document with empty or missing `title` fails. That is the whole loop: declare the shape, and manni meta holds every file to it.
+
+## Required vs. recommended fields
+
+The single most important decision in a metadata schema is which fields are *required* and which are merely *recommended*. JSON Schema models this with one list:
+
+- **Required.** List the field in `"required"`. Its absence is a hard failure.
+- **Recommended (optional).** Describe the field in `"properties"` but leave it out of `"required"`. If the field is present, manni meta checks its type and format; if it's absent, that's fine.
+
+This distinction is what lets you encode a standard that has a strict core and a softer edge. In the example below, `type` is mandatory, while `title` and `tags` are validated *when present* but never demanded:
+
+```json title="metadata.schema.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["type"],
+  "properties": {
+    "type": { "type": "string", "minLength": 1 },
+    "title": { "type": "string" },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  }
+}
+```
+
+<Aside type="tip" title="Start small, ratchet up">
+A common pattern is to require almost nothing at first, so existing docs pass. Then promote fields from recommended to required over time, as the repo catches up. The usual move is to add a new field to `"properties"` first, where it is validated when present but not yet demanded. Land it across your docs, then move it into `"required"` once coverage is high. Moving a field into `"required"` is the lever for tightening the standard. The [Versioning &amp; dialects](/manni/meta/schemas/versioning/) guide covers staging that rollout across a large repo.
+</Aside>
+
+## Constrain values with types and formats
+
+Requiring a field guarantees it exists; constraining it guarantees it's *usable*. JSON Schema gives you the building blocks, and manni meta supports the standard `format` checks through [ajv-formats](https://github.com/ajv-validator/ajv-formats). Two formats come up constantly in document metadata:
+
+<Tabs>
+<TabItem label="date-time">
+
+Use `"format": "date-time"` to require an ISO 8601 timestamp. This catches the classic fat-fingered date: `2026-13-01`, `June 5th`, or a bare `2026-06-25` where a full timestamp was expected.
+
+```json
+"timestamp": {
+  "type": "string",
+  "format": "date-time",
+  "description": "ISO 8601 datetime of last meaningful change."
+}
+```
+
+Passes: `2026-06-25T14:30:00Z`
+Fails: `June 5th`, `2026-13-01`
+
+</TabItem>
+<TabItem label="uri">
+
+Use `"format": "uri"` for fields that must hold a well-formed URI, such as a canonical resource link. This checks the *shape* of the URI; it does not fetch the URL.
+
+```json
+"resource": {
+  "type": "string",
+  "format": "uri",
+  "description": "A URI uniquely identifying the underlying asset."
+}
+```
+
+Passes: `https://example.com/asset/42`
+Fails: `not a url`, `example.com` (no scheme)
+
+</TabItem>
+</Tabs>
+
+Beyond formats, the everyday constraints carry most of the weight:
+
+- **`enum`**: restrict a field to a fixed set of values, ideal for a controlled `type` or `status`: `"enum": ["guide", "reference", "tutorial"]`.
+- **`minLength`**: reject empty strings (`"minLength": 1`).
+- **`array` + `items`**: validate every element of a list, as with the `tags` example above.
+
+## Decide whether unknown fields are allowed
+
+By default, JSON Schema lets a document carry fields your schema never mentions. Whether to permit that is a deliberate choice, controlled by `additionalProperties`:
+
+- **`"additionalProperties": true`** (or omitting it): extra keys are tolerated. Contributors can add experimental or tool-specific frontmatter without tripping the check. This is the lenient default and a good fit for a young or shared standard.
+- **`"additionalProperties": false`**: every key must be declared in `"properties"`. An unexpected key is a failure. Use this to catch typos like `titel:` or to keep frontmatter tightly governed.
+
+<Aside type="caution" title="Strict schemas and the $schema directive">
+Setting `"additionalProperties": false`? A document's own `$schema:` key won't trip it, because manni meta strips `$schema` before validating, so you never need to add it to your schema's `properties`. See [The `$schema` key is reserved](/manni/meta/schemas/resolution/#the-schema-key-is-reserved) for the full mechanism.
+</Aside>
+
+## The built-in OKF schema, a fuller example
+
+The schema anchoring manni meta's default set is [Open Knowledge Format (OKF) v0.1](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md), addressed as `google:okf:0.1`. Run `manni meta schemas` for the full built-in list. OKF is a useful reference because it combines every technique on this page in a realistic standard. Reading it is the fastest way to see how the pieces fit together. When no other schema applies, manni meta falls back to a *set* rather than to OKF alone. That set is `google:okf:0.1` together with [`passo-uno:seven-action:1.0`](/manni/meta/reference/taxonomy-schemas/), which constrains an optional `action` field and requires nothing of its own.
+
+```json title="src/schemas/okf/0.1.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "google:okf:0.1",
+  "title": "Open Knowledge Format (OKF) v0.1",
+  "description": "Frontmatter schema for OKF v0.1 concept files. OKF requires only `type`; all other fields are recommended, and unknown keys are explicitly tolerated.",
+  "type": "object",
+  "required": ["type"],
+  "additionalProperties": true,
+  "properties": {
+    "type": {
+      "type": "string",
+      "minLength": 1,
+      "description": "A short string identifying the kind of concept."
+    },
+    "title": {
+      "type": "string",
+      "description": "Human-readable display name."
+    },
+    "description": {
+      "type": "string",
+      "description": "Single-sentence summary used for indexing and previews."
+    },
+    "resource": {
+      "type": "string",
+      "format": "uri",
+      "description": "A URI uniquely identifying the underlying asset."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Short strings for categorization."
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 datetime of last meaningful change."
+    }
+  }
+}
+```
+
+Notice the design choices OKF makes, each one a decision you'll face in your own schema:
+
+- **Exactly one required field** (`type`). OKF demands the bare minimum, so adopting it rarely breaks existing files.
+- **`additionalProperties: true`**, stated explicitly. Unknown keys are welcome by design, because OKF is meant to be extended.
+- **Recommended fields with real constraints.** `title`, `description`, and `tags` are optional, but if present they're checked. `resource` and `timestamp` carry `uri` and `date-time` formats.
+- **A `$id` and human-readable `title`/`description`.** Validation does not need these, but they document the schema for the humans who read it. `$id` is what gives the *built-in* its `google:okf:0.1` address. Setting a `$id` in a schema file of your own does not register a new built-in id, because built-ins are bundled into manni meta. You reference your own schema by its file path or URL, never by its `$id`. Give it an id of your own, or leave it out; see the warning below before reusing one.
+
+<Aside type="note" title="Give a copied built-in your own `$id`">
+The block above is the shipped `google:okf:0.1`, so copying it verbatim leaves you with a *local* file claiming a *built-in's* `$id`.
+
+Your edits still apply. manni meta judges a schema by the file you pointed it at, not by the id it claims. A copy you tightened rejects what you told it to reject, even while a built-in holds the same id. What you lose is legibility. Two different contracts answer to one name in reports and in `$ref`s from other schemas. Any other JSON Schema tool that reads the file sees the same clash.
+
+Change `$id` to something of your own (`acme:docs:1.0`), or delete the line. Then reference the file by path:
+
+```bash
+manni meta validate docs/ -s ./schemas/metadata.schema.json
+```
+</Aside>
+
+<Aside type="tip" title="Start from OKF or start from scratch">
+If OKF's field set is close to what you need, copy it into a file and adjust it. Add your required fields, tighten `additionalProperties`, change the formats, and give it your own `$id`. If your standard is very different, start from the minimal one-field schema at the top of this page and grow it. Either way, keep the `$schema` dialect line; manni meta needs it to choose a validation engine.
+</Aside>
+
+## Borrow a schema instead of writing one
+
+Everything above assumes you're defining the field set yourself. manni meta ships twenty-three schemas you can adopt without authoring anything. The [built-in schema registry](/manni/meta/reference/built-in-schemas/) lists all of them in one table, with what each constrains and which two are on by default.
+
+If your site is built with Docusaurus, start with [`docusaurus:docs:3.10`](/manni/meta/reference/docusaurus-schemas/) and its blog and pages counterparts. They encode the front matter contract of Docusaurus 3.10 and require nothing. Switching one on cannot fail a page that was already building. It only catches a `sidebar_position: "2"` that your site would have rejected later. They claim none of the `type` or `action` keys below, so they stack with any of the vocabularies. They do share `tags` with OKF, which allows only strings where Docusaurus also allows tag objects. See [the overlap note](/manni/meta/reference/built-in-schemas/#two-kinds-of-built-in) before pairing those two.
+
+If what you need is a *closed list of document types*, three of the built-ins are vocabularies:
+
+- `diataxis:diataxis:1.0` requires `type` and constrains it to the four [Diátaxis](https://diataxis.fr/) forms.
+- `tgdp:templates:1.0` requires `type` and constrains it to the 25 template slugs of [The Good Docs Project](https://www.thegooddocsproject.dev/template).
+- `passo-uno:seven-action:1.0` constrains `action` to the seven reader actions of the [Seven-Action model](https://passo.uno/seven-action-model/).
+
+The first two both claim `type`, so they are alternatives; either one pairs with the third.
+
+The two `type` vocabularies each demand the key as well as constraining it, so neither needs a partner for presence-checking. Stack one with OKF for the *other* OKF fields. Both schemas apply in full, in either order:
+
+```bash
+manni meta validate docs/ -s diataxis:diataxis:1.0 -s google:okf:0.1
+```
+
+Seven-Action is the exception: it rules that an `action`, if present, is
+legitimate, without insisting on one. That is what makes it safe to layer onto
+what you already have. Every value of all three, which combinations compose, and
+the crosswalk from Seven-Action to Diátaxis are in the [taxonomy schemas
+reference](/manni/meta/reference/taxonomy-schemas/).
+
+## Point a document at its schema
+
+A schema only matters once documents are validated against it. The most direct way to connect the two is to let a document name its own schema with a `$schema` key in its frontmatter. manni meta reads that key and validates the file against whatever it points to.
+
+Here is a document naming the built-in OKF schema, the [`schema-ref.md`](https://github.com/hawkeyexl/manni/blob/main/test/fixtures/schema-ref.md) fixture:
+
+```markdown title="schema-ref.md"
+---
+$schema: google:okf:0.1
+type: guide
+title: Self-Describing Document
+---
+
+# Self-Describing Document
+
+This file names its own schema via `$schema`.
+```
+
+The `$schema` value can be a built-in id (as here), a path to a `.json` file you wrote, or a URL. To point at a local schema file instead:
+
+```markdown
+---
+$schema: ./schemas/metadata.schema.json
+type: guide
+title: My page
+---
+```
+
+<Aside type="caution" title="Where a relative path resolves from">
+A relative file path like `./schemas/metadata.schema.json` resolves from the **working directory where you run manni meta**, not from the document. In CI, that's usually the repo root, so prefer a path from the repo root over one that looks relative to the file. See [the three reference kinds](/manni/meta/schemas/resolution/#the-three-reference-kinds) for how manni meta classifies file, built-in, and URL references.
+</Aside>
+
+<Steps>
+
+1. **Write your schema** as a `.json` file using the patterns above, keeping the `"$schema"` dialect line at the top.
+
+2. **Add `$schema:` to a document's frontmatter**, pointing at your file (or a built-in id, or a URL).
+
+3. **Validate it:**
+
+   ```sh
+   npx @hawkeyexl/manni meta validate path/to/document.md
+   ```
+
+   manni meta resolves the document's `$schema`, validates the frontmatter, and reports any missing or malformed fields.
+
+</Steps>
+
+<Aside type="note" title="$schema is one of several ways to wire a schema">
+Naming the schema inside a document is the most self-contained option. You can also apply a schema to a whole directory from config, or set one from the command line. When several could apply to one file, a fixed precedence order decides which wins. The next guide, [How schema resolution works](/manni/meta/schemas/resolution/), lays out that order and the three kinds of schema reference (built-in, file, and URL).
+</Aside>
+
+## Keep a value encrypted on the page
+
+Some fields your standard requires are not for publishing. An `owner`, an
+internal ticket, a service name. Mark the property `x-manni-encrypt`, and the
+page has to hold that value encrypted:
+
+```json title="schemas/page.json"
+"owner": { "type": "string", "enum": ["platform", "billing"], "x-manni-encrypt": true }
+```
+
+The field stays required and your `enum` still holds, because validation checks
+the decrypted value against the property's whole schema. [Require a field and
+keep its value private](/manni/meta/schemas/encrypted-fields/) follows one such
+value through every command that touches it. [Put the key where every tool
+finds it](/manni/key/set-up/) settles where the key lives first.
+
+## Say where each field lives
+
+Some fields are for whoever fetches the page, and some only serve the people
+and the CI that maintain it. Mark a property `x-manni-location` to say which:
+
+```json title="schemas/page.json"
+"owner": { "type": "string", "x-manni-location": "external" }
+```
+
+`page` keeps a value in the document, and `external` keeps it in the
+collection's external-metadata manifest. `validate` warns about a value on the
+wrong side, and `manni meta relocate` moves it. [Keep maintainer metadata out
+of delivered pages](/manni/meta/schemas/field-location/) follows the mark
+through every command.
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Built-in schemas"
+    href="/manni/meta/reference/built-in-schemas/"
+    description="The registry: every schema manni meta ships, what it constrains, and which two are on by default."
+  />
+  <LinkCard
+    title="How schema resolution works"
+    href="/manni/meta/schemas/resolution/"
+    description="The precedence order that decides which schema applies to a file, and the three reference kinds."
+  />
+  <LinkCard
+    title="Versioning & dialects"
+    href="/manni/meta/schemas/versioning/"
+    description="Evolve a schema, and tighten required fields, without breaking CI in every consuming repo."
+  />
+  <LinkCard
+    title="Schema resolution reference"
+    href="/manni/meta/reference/schema-resolution/"
+    description="The lookup table for precedence, reference kinds, and supported JSON Schema dialects."
+  />
+  <LinkCard
+    title="Built-in OKF schema, explained"
+    href="/manni/meta/reference/okf-schema/"
+    description="Every field in google:okf:0.1, its dialect, and the upstream spec."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"author-a-schema","description":"Schema-authoring claims, demonstrated with the committed fixtures the page itself cites."} */}
+{/* step {"description":"A document points itself at a schema via $schema (schema-ref.md names google:okf:0.1) and validates against it.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/schema-ref.md","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"The minimal title.schema.json shape (the extra.schema.json fixture) passes a doc that has a title.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/valid.md -s ./test/fixtures/extra.schema.json","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"A required field that is absent is a hard failure: a frontmatter-free doc fails the required `title`.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/no-frontmatter.md -s ./test/fixtures/extra.schema.json","exitCodes":[1],"stdio":"must have required property 'title'"}} */}
+{/* step {"description":"The date-time format is enforced: a malformed timestamp fails against OKF.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/bad-timestamp.md","exitCodes":[1],"stdio":"date-time"}} */}
+{/* step {"description":"`schemas` lists the built-in OKF schema the page documents as the fallback.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"google:okf:0.1"}} */}
+{/* step {"description":"`schemas` also lists the Diataxis vocabulary this page points readers at.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"diataxis:diataxis:1.0"}} */}
+{/* step {"description":"Stacking OKF with a taxonomy schema passes a document carrying a canonical Diataxis type.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/diataxis-how-to.md -s google:okf:0.1 -s diataxis:diataxis:1.0","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"The vocabulary is closed: a near-miss spelling fails against the Diataxis schema.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/diataxis-bad-type.md -s diataxis:diataxis:1.0","exitCodes":[1],"stdio":"allowed values"}} */}
+{/* step {"description":"`schemas` also lists the Good Docs Project vocabulary this page points readers at.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"tgdp:templates:1.0"}} */}
+{/* step {"description":"The TGDP vocabulary accepts a template slug that has no Diataxis equivalent.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/taxonomy/tgdp-installation-guide.md -s tgdp:templates:1.0","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* test end */}

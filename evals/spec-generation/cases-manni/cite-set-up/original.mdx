@@ -1,0 +1,235 @@
+---
+title: Set up citations in one repository
+description: "Wire manni cite into a repository whose pages and code sit together: declare the pages as a collection, let the root default to the git root, mint the first citation, and run the first check."
+sidebar:
+  order: 1
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Your pages and the code they describe live in one repository. This page wires
+`manni cite` into it once, so that a bare `manni cite check` covers the right
+pages and finds the right sources. That is the whole of the setup for a single
+repository. There are two more pages beside this one for the repositories that
+need more.
+
+[Get started](/manni/cite/get-started/) teaches the loop, meaning pin, check,
+read the finding, fix, re-pin. This page is the repository around that loop.
+
+Every transcript below is real output from the built tool.
+
+## What you configure, and what you do not
+
+| Thing | Where it comes from |
+| --- | --- |
+| Which pages are checked | A [collection](/manni/meta/reference/configuration/#collections) in `manni.config.yaml`, read by every manni tool. |
+| Where `source.file` resolves from | The git root, unless you say otherwise. One repository rarely says otherwise. |
+| Where an entry is written | The page's frontmatter, unless a collection declares a [sidecar manifest](/manni/cite/reference/citations/#the-sidecar). |
+| Which findings fail the build | The default [severities](/manni/cite/reference/configuration/#severity), unless the team moves one. |
+
+<Steps>
+
+1. **Declare the pages as a collection.** `collections:` is a top-level key of
+   the family's one config file, not a `cite:` key. Every tool reads it, so
+   the pages you validate metadata on are the pages you check citations on:
+
+   ```yaml title="manni.config.yaml"
+   collections:
+     - name: docs-pages
+       paths: ["docs/**/*.md"]
+       exclude: ["docs/drafts/**"]
+   ```
+
+   `paths` and `exclude` are globs, relative to the config file. With this in
+   place, `manni cite check` with no arguments covers every declared
+   collection, and `--collection docs-pages` narrows a run to one of them.
+   Named paths on the command line beat both.
+
+   Every key of a collection is in the metadata tool's
+   [configuration reference](/manni/meta/reference/configuration/#collections).
+   The `cite:` keys, all six of them, are in the
+   [configuration reference](/manni/cite/reference/configuration/#keys) for
+   this tool.
+
+   <Aside type="note" title="A config with no cite: section is still a config">
+     A file that declares `collections:` and nothing else is this tool's
+     config. The documents are declared, and every `cite:` key takes its
+     default. Add a `cite:` section when you want to move one of them.
+   </Aside>
+
+2. **Leave the root alone.** A `source.file` is a path relative to one root,
+   settled once per run. In a single repository that root is the git root
+   above your working directory, which is what you want, so there is nothing
+   to set. `cd docs && manni cite check` reaches the same sources as a run
+   from the top.
+
+   You find out when the root is wrong, because the source end reads
+   `missing` rather than resolving to the wrong file:
+
+   ```
+   ✗ docs/limits.md
+       ✗ fetch-timeout   :16 current   lib/limits.ts:2 missing
+
+   1 file checked, 0 passed, 1 failed, 1 finding
+   ```
+
+   Where git is available, sources resolve through tracked files only, from
+   `git ls-files`, under a realpath containment check. So a file you have not
+   committed is `missing` too. Without git, a directory walk stands in, and an
+   uncommitted file resolves. [Where sources resolve from](/manni/cite/reference/cli/#where-sources-resolve-from)
+   has the full order, and `--root` is how a second checkout is reached.
+
+3. **Mint the first citation.** `add` takes the page with its lines, then the
+   source with its lines. `--dry-run` prints the diff and writes nothing:
+
+   ```sh
+   manni cite add docs/limits.md:6 lib/limits.ts:2 --id fetch-timeout --dry-run
+   ```
+
+   ```diff
+   --- docs/limits.md
+   +++ docs/limits.md
+   @@ -2,2 +2,12 @@
+    title: Limits
+   +citations:
+   +  - id: fetch-timeout
+   +    claim:
+   +      lines: 3
+   +      integrity: sha256-921b21cccab21a4577f224ec4171aa56a3414bb3a5a4704ab8b6f314c46aa094
+   +    source:
+   +      file: lib/limits.ts
+   +      lines: 2
+   +      integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+   +      commit-sha: 9265563d8ea84a13fea0001b7e531c119f47d070
+    ---
+   ```
+
+   Drop `--dry-run` to write it. The report names both pins and the line each
+   end sits on:
+
+   ```
+   docs/limits.md: added fetch-timeout to frontmatter (claim at line 16, sha256-921b21cc…; source lib/limits.ts:2 "export const FETCH_TIMEOUT_MS = 10_000;", sha256-78af1d33…, 9265563)
+   ```
+
+   You typed line 6 and the report says line 16, because the entry pushed the
+   sentence down by ten lines. The entry itself stored `lines: 3`, which
+   counts the page body rather than the file, so editing the frontmatter never
+   moves a claim. [Body lines and file
+   lines](/manni/cite/reference/citations/#body-lines-and-file-lines) states
+   the rule once.
+
+4. **Run the first check.** With the collection declared, no arguments are
+   needed:
+
+   ```sh
+   manni cite check
+   ```
+
+   ```
+   ✓ docs/limits.md
+       ✓ fetch-timeout   :16 current   lib/limits.ts:2 current
+
+   1 file checked, 1 passed, 0 failed, 0 findings
+   ```
+
+   Both ends read in file lines, whatever the entry stored. `-q` hides the
+   clean files once the corpus is larger than a screen. [Read a
+   result](/manni/cite/get-started/#read-a-result) decodes the row, and
+   [Fix a failing check](/manni/cite/fix/) decodes every status it can carry.
+
+5. **Commit the page and the config, then gate it.** `manni cite check` is
+   something CI runs on every push, next to the metadata gate.
+   [Run it in CI](/manni/cite/ci/) has the workflow, the output formats and
+   the exit-code contract. It also has the baseline, which lets an existing
+   backlog ramp in rather than block the first pull request.
+
+</Steps>
+
+## When nothing is declared and nothing is named
+
+{/* cite no-inputs-is-an-error */}
+{/* cite no-inputs-exits-2 */}
+A run with no positional paths and no config is an operational error, exit
+`2`, rather than a silently empty pass:
+
+```sh
+manni cite check --no-config
+```
+
+```
+manni: No files to check. Pass paths/globs, or declare a collection under `collections:` in manni.config.yaml.
+```
+
+{/* cite update-shares-input-model */}
+That is the metadata tool's [shared input
+model](/manni/meta/reference/cli/#shared-input-model), which `check` and
+`update` both follow. `add` is the exception, because it takes one page and
+one source rather than a set.
+
+## Choose an anchor
+
+An entry anchors its sentence in one of two ways. **Claim lines** name the
+sentence by its body lines. A **marker** is a comment in the body that names
+the entry. Either way the entry itself stays in frontmatter or a sidecar. The
+choice is per entry, so one page can use both.
+
+Neither anchor always wins. They differ in what a prose edit costs:
+
+| When the prose changes | Claim lines | A marker |
+| --- | --- | --- |
+| Text above the sentence is added or cut | `claim-moved`, a notice. `manni cite update` rewrites the lines. | Nothing to do. The marker moves with its sentence. |
+| The sentence is reworded | `claim-changed`. `update --accept` re-pins the text at the recorded line. | `claim-changed`. `update --accept` re-pins what the marker anchors. |
+| The sentence is reworded and moved | `claim-changed`, and the recorded line holds other text. `cite add` it again. | `claim-changed`. `update --accept` re-pins it. |
+| Two branches edit prose near the sentence | The body holds no citation, so the merge sees only prose. | The marker line sits among the edits, so the merge can conflict on it. |
+
+A marker also adds a line to the page source for every citation. On a page
+many people edit at once, those lines are where merges collide. Claim lines
+leave the body untouched. In a [sidecar](/manni/cite/set-up/citations-in-a-sidecar/),
+they leave the frontmatter untouched too.
+
+So markers suit a page whose sentences move and get reworded. Claim lines
+suit a page many people edit at once, with `manni cite update` after each
+merge. [Anchoring](/manni/cite/reference/citations/#anchoring) has the full
+rule.
+
+## Where entries are written
+
+{/* cite default-entry-in-frontmatter */}
+By default an entry goes into the page's own frontmatter, and nothing in the
+body repeats it. Two things change that, and each has a page of its own.
+
+<CardGrid>
+  <LinkCard
+    title="Keep citations out of the page"
+    href="/manni/cite/set-up/citations-in-a-sidecar/"
+    description="Declare a manifest that owns the citations key for a collection, so the pages carry no citation YAML at all."
+  />
+  <LinkCard
+    title="Require citations in the standard"
+    href="/manni/cite/set-up/require-citations/"
+    description="Compose the citations vocabulary into your house schema, require the key on a class of pages, and choose the severities."
+  />
+  <LinkCard
+    title="Public docs, private code"
+    href="/manni/cite/set-up/public-docs-private-code/"
+    description="Encrypt a private repository's source paths, so a public docs site can cite it without publishing them."
+  />
+  <LinkCard
+    title="Run it in CI"
+    href="/manni/cite/ci/"
+    description="PR annotations, SARIF and JUnit output, the exit-code contract, and the baseline ramp."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni cite behavior
+    against the local build, exposed as `manni cite` / `npx @hawkeyexl/manni cite` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"cite-set-up-index","description":"The single-repository path: the first add, the first check, a wrong root, and the usage error when nothing is declared."} */}
+{/* step {"description":"The first add, previewed: --dry-run prints the entry it would splice into the page's frontmatter and writes nothing.","runShell":{"command":"npx @hawkeyexl/manni cite add test/fixtures/cite/pages/no-citations.md:6 src/limits.ts:2 --id fetch-timeout --no-config --root test/fixtures/cite --dry-run","exitCodes":[0],"stdio":"/\\+    claim:[\\s\\S]*\\+      lines: 3/"}} */}
+{/* step {"description":"The report names both pins and the file line the claim sits on after the write, which is ten lines below the line that was typed.","runShell":{"command":"npx @hawkeyexl/manni cite add test/fixtures/cite/pages/no-citations.md:6 src/limits.ts:2 --id fetch-timeout --no-config --root test/fixtures/cite --dry-run","exitCodes":[0],"stdio":"/added fetch-timeout to frontmatter \\(claim at line 16, sha256-921b21cc…; source src\\/limits\\.ts:2 \"export const FETCH_TIMEOUT_MS = 10_000;\", sha256-78af1d33…/"}} */}
+{/* step {"description":"The first check: both ends hash to their pins, both read in file lines, and the summary is green.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/current.md","exitCodes":[0],"stdio":"/fetch-timeout\\s+:15 current\\s+src\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"}} */}
+{/* step {"description":"A root that does not hold the source reports missing rather than resolving to the wrong file, and exits 1.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root . test/fixtures/cite/pages/current.md","exitCodes":[1],"stdio":"/src\\/limits\\.ts:2 missing/"}} */}
+{/* step {"description":"A declared collection makes a bare check cover the right pages: this repository's own config checks its own docs with no arguments.","runShell":{"command":"npx @hawkeyexl/manni cite check -q","exitCodes":[0],"stdio":"/\\d+ files checked, \\d+ passed, 0 failed, 0 findings/"}} */}
+{/* step {"description":"No positional paths and no config is an operational error, exit 2, not a silently empty pass.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config","exitCodes":[2],"stdio":"No files to check. Pass paths/globs, or declare a collection under `collections:` in manni.config.yaml."}} */}
+{/* test end */}

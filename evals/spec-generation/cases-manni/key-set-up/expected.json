@@ -1,0 +1,50 @@
+{
+  "source": "manni/docs/src/content/docs/key/set-up/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "Would write encryptionKey",
+      "note": "`key set --dry-run` reports the write and writes nothing."
+    },
+    {
+      "action": "runShell",
+      "match": "is not ignored by git",
+      "note": "It warns that the config it would write is not git-ignored."
+    },
+    {
+      "action": "runShell",
+      "match": "No encryption key is available",
+      "note": "`key rotate` with no key refuses, exit 2, and names `key set`."
+    },
+    {
+      "action": "runShell",
+      "match": "at least 32",
+      "note": "A key shorter than 32 characters is refused."
+    },
+    {
+      "action": "runShell",
+      "match": "encrypted values were not verified",
+      "note": "With no key, validate warns once with the count it could not verify."
+    },
+    {
+      "action": "runShell",
+      "match": "3 files checked, 3 passed",
+      "note": "The findings under those values are dropped; the run passes."
+    },
+    {
+      "action": "runShell",
+      "match": "no encryption key is available to decrypt it",
+      "note": "With no key, an encrypted citation source is source-missing."
+    },
+    {
+      "action": "runShell",
+      "match": "--no-check-sources",
+      "note": "--no-check-sources reports the encrypted source as skipped and passes."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`.",
+    "No manni encryption key may be configured for the run (no MANNI key env var, no encryptionKey in a discovered config)."
+  ]
+}

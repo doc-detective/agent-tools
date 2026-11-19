@@ -1,0 +1,25 @@
+{
+  "source": "manni/docs/src/content/docs/meta/get-started/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "1 passed",
+      "note": "Validate a passing file: exit 0 with a green summary."
+    },
+    {
+      "action": "runShell",
+      "match": "must have required property 'type'",
+      "note": "A failing file exits 1 and names the missing property."
+    },
+    {
+      "action": "runShell",
+      "match": "google:okf:0.1",
+      "note": "The failing result cites the flagging schema."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "`node --version` prerequisite check (page says Node 24+).",
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

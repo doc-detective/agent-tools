@@ -1,0 +1,34 @@
+{
+  "source": "manni/docs/src/content/docs/meta/fix/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "must have required property",
+      "note": "Missing a required field."
+    },
+    {
+      "action": "runShell",
+      "match": "date-time",
+      "note": "A malformed timestamp is flagged on its source line."
+    },
+    {
+      "action": "runShell",
+      "match": "(parse)",
+      "note": "Malformed YAML reports the schema as [(parse)]."
+    },
+    {
+      "action": "runShell",
+      "match": "Unknown built-in schema",
+      "note": "Schema not found exits 2."
+    },
+    {
+      "action": "runShell",
+      "match": "1 file checked, 1 passed, 0 failed, 0 errors",
+      "note": "After the fix, the file passes."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

@@ -1,0 +1,9 @@
+{
+  "steps": [
+    {"stepType": "httpRequest", "match": ["status/404", "statusCodes", "404"], "note": "GET /status/404 must accept 404 via statusCodes (the default accepts only success codes, so omitting it FAILs)."},
+    {"stepType": "httpRequest", "match": ["status/503", "statusCodes", "503"], "note": "GET /status/503 must accept 503 via statusCodes."}
+  ],
+  "must_not": [
+    "A request to /status/{code} with the literal placeholder."
+  ]
+}

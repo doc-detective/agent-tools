@@ -1,0 +1,52 @@
+{
+  "specId": "manni-meta-set-up-different-schemas-per-folder",
+  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/different-schemas-per-folder.mdx",
+  "tests": [
+    {
+      "testId": "schemas-per-folder",
+      "description": "Multi-schema-set and precedence claims, demonstrated with repeated --schema flags.",
+      "steps": [
+        {
+          "description": "Validate one file against a set of two schemas; a file satisfying both passes.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/schema-ref.md -s google:okf:0.1 -s ./test/fixtures/extra.schema.json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        },
+        {
+          "description": "The file must satisfy EVERY schema in the set: missing `type` fails the set even though it has a title.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md -s google:okf:0.1 -s ./test/fixtures/extra.schema.json",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "must have required property 'type'"
+          }
+        },
+        {
+          "description": "CLI --schema sits at the top of the resolution chain: forcing a schema the file satisfies makes it pass, overriding the default OKF set it would otherwise fail.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md -s ./test/fixtures/extra.schema.json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        },
+        {
+          "description": "A file may belong to two collections whose globs overlap, and --collection addresses either of them on its own.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/collections/manni.config.yaml --collection notes",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/authors\\/deep\\.md[\\s\\S]*1 file checked, 1 passed/"
+          }
+        }
+      ]
+    }
+  ]
+}

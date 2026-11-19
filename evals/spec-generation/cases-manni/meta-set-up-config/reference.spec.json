@@ -1,0 +1,82 @@
+{
+  "specId": "manni-meta-set-up-config",
+  "description": "Inline tests from manni docs/src/content/docs/meta/set-up/config.mdx",
+  "tests": [
+    {
+      "testId": "set-up-config",
+      "description": "Config-handling claims that are deterministic from the repo root.",
+      "steps": [
+        {
+          "description": "Explicit `-c <path>` to a missing file errors out (exit 2) rather than falling back to discovery.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c does-not-exist.yaml test/fixtures/valid.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "Config file not found"
+          }
+        },
+        {
+          "description": "No positional paths and no config found exits 2, and the message names collections: as the place to declare a document set.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --no-config",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "No files to validate. Pass paths/globs, or declare a collection under"
+          }
+        },
+        {
+          "description": "Explicit file arguments are validated regardless of config; a passing fixture exits 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate test/fixtures/valid.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 passed"
+          }
+        },
+        {
+          "description": "A bare run reads every declared collection, in declaration order.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --no-checks",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "3 files checked, 3 passed"
+          }
+        },
+        {
+          "description": "--collection narrows the run to one declared collection.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection blog",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed"
+          }
+        },
+        {
+          "description": "--collection selects from the config, so it refuses to be combined with a typed path (exit 2).",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection blog test/fixtures/valid.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "it cannot be combined with paths"
+          }
+        },
+        {
+          "description": "The flag never splits on commas: one name per occurrence, and the refusal lists the configured names.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection guides,blog",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "/no collection named \"guides,blog\"[\\s\\S]*Configured: guides, blog/"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,819 @@
+[
+  {
+    "id": "real-inline-page",
+    "prompt": "choose a docs page and write doc detecrive inline tests for it.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject",
+      "doc-detective-inline-test-injection",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "inject",
+      "real",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-inline-api",
+    "prompt": "write Doc Detective tests for docs/api.md. Every API call should have a valid, inline Doc Detective test.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject",
+      "doc-detective-inline-test-injection",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "inject",
+      "real",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-ci-single-action",
+    "prompt": "For CI I want just a single Doc Detective action that picks up and runs all tests from the docs.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "real",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-ci-make-sure",
+    "prompt": "Make sure our CI actually runs Doc Detective tests against the docs.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "real",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-run-yourself",
+    "prompt": "Run the Doc Detective tests in this repo yourself and tell me what fails.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "test",
+      "real",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-authoritative-gate",
+    "prompt": "Doc Detective needs to be the authoritative gate for these docs. Run it against docs/ and show me which procedures break.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "test",
+      "real",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-valid-or-invalid",
+    "prompt": "Can I inject this test spec into documentation? {\"notTests\":[{\"steps\":[{\"goTo\":\"http://localhost:8092\"}]}]} Just say VALID or INVALID.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "real",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-comment-syntax",
+    "prompt": "What comment syntax should I use for injecting Doc Detective steps into .md, .mdx, and .adoc files?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist",
+      "doc-detective-inline-test-injection",
+      "doc-detective-inject",
+      "doc-detective-doc-testing",
+      "none"
+    ],
+    "tags": [
+      "concept",
+      "real",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-map-instructions",
+    "prompt": "Given this documentation: 'Navigate to https://example.com, click the Login button, and verify the dashboard appears.' What Doc Detective actions would each instruction map to?",
+    "workspace": "empty",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate",
+      "doc-detective-doc-testing",
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "generate",
+      "real",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "real-author-guide-tests",
+    "prompt": "Author Doc Detective tests for the getting started guide.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "generate",
+      "real",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "neg-dev-claude-md",
+    "prompt": "Bootstrap a CLAUDE.md for this repo that ports the conventions and behaviors of ../doc-detective.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "real",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-dev-bootstrap-guardrails",
+    "prompt": "bootstrap this repo with infrastrucrure, guidelines, and gaurdrails found in ../doc-detective",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "real",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-dev-rename-workflow",
+    "prompt": "Rename the `doc-detective` workflow to something more meaningful.",
+    "workspace": "configured-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "real",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-dev-v2-regression",
+    "prompt": "doc detective should still be supporting the v2 schema syntax. this is a regression.",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "real",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-dev-monitor-pr",
+    "prompt": "run the monitor-pr skill from ../doc-detective on PR 554",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "real",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-dev-talk",
+    "prompt": "I need to present Docs as Tests to a group of documentation managers. Help me outline a 20-minute talk.",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none",
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "none",
+      "real",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "init-plain",
+    "prompt": "Set up Doc Detective in this repo.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init",
+      "doc-detective-project-bootstrap"
+    ],
+    "tags": [
+      "init",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "init-start-testing",
+    "prompt": "I want to start testing our docs. Can you get Doc Detective configured here and write a first round of tests?",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init",
+      "doc-detective-project-bootstrap"
+    ],
+    "tags": [
+      "init",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "init-lowercase",
+    "prompt": "get docs-as-tests going for this project",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init",
+      "doc-detective-project-bootstrap"
+    ],
+    "tags": [
+      "init",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "init-adopted",
+    "prompt": "We just adopted Doc Detective. Add whatever config it needs and make sure the getting-started guide passes.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init",
+      "doc-detective-project-bootstrap"
+    ],
+    "tags": [
+      "init",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "gen-dont-run",
+    "prompt": "Generate a Doc Detective test spec from docs/getting-started.md. Don't run it.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "generate",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "gen-review-json",
+    "prompt": "Turn the steps in docs/getting-started.md into a test spec JSON file I can review.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "generate",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "gen-api-to-tests",
+    "prompt": "Convert our API page into Doc Detective tests and save them under tests/.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "generate",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "gen-run-later",
+    "prompt": "Draft tests for the widget creation procedure. I'll run them myself later.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "generate",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "test-plain",
+    "prompt": "Run the Doc Detective tests.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "test",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "test-still-work",
+    "prompt": "Do the procedures in docs/getting-started.md still work? Test them.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "test",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "test-run-and-fix",
+    "prompt": "Run tests/login.spec.json and fix whatever fails.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "test",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "test-release",
+    "prompt": "Our release is tomorrow. Verify every documented procedure in this repo actually works.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "test",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "test-matches-app",
+    "prompt": "Check that the procedure in docs/getting-started.md matches what the app actually does.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test",
+      "doc-detective-doc-testing"
+    ],
+    "tags": [
+      "test",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "val-spec-file",
+    "prompt": "Is tests/login.spec.json a valid Doc Detective spec?",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "val-config",
+    "prompt": "Check my .doc-detective.json config for errors.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "val-before-commit",
+    "prompt": "Validate this spec before I commit it: {\"tests\":[{\"steps\":[{\"action\":\"goTo\",\"url\":\"http://localhost:8092\"}]}]}",
+    "workspace": "empty",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "val-will-it-accept",
+    "prompt": "Will Doc Detective accept this config? {\"input\": \"docs/\", \"recursive\": \"yes\"}",
+    "workspace": "empty",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "inj-from-spec",
+    "prompt": "Put the tests from tests/login.spec.json into docs/getting-started.md as inline comments.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject",
+      "doc-detective-inline-test-injection"
+    ],
+    "tags": [
+      "inject",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "inj-api",
+    "prompt": "Inject inline Doc Detective tests into docs/api.md.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject",
+      "doc-detective-inline-test-injection"
+    ],
+    "tags": [
+      "inject",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "inj-move-into-md",
+    "prompt": "Instead of a separate spec file, I want the tests to live inside the markdown. Move them in.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject",
+      "doc-detective-inline-test-injection"
+    ],
+    "tags": [
+      "inject",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "inj-self-testing",
+    "prompt": "Add test comments next to each step in the getting started guide so the doc tests itself.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject",
+      "doc-detective-inline-test-injection"
+    ],
+    "tags": [
+      "inject",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "gha-every-pr",
+    "prompt": "Add Doc Detective to our GitHub Actions so docs get tested on every PR.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "gha-nightly",
+    "prompt": "Set up a CI workflow that runs our doc tests nightly.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "gha-open-issue",
+    "prompt": "I want failing doc tests to open an issue automatically in GitHub.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "variant",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "concept-spec-vs-inline",
+    "prompt": "What's the difference between a test spec and inline tests in Doc Detective?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist",
+      "doc-detective-doc-testing",
+      "none"
+    ],
+    "tags": [
+      "concept",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "concept-file-scanning",
+    "prompt": "How does Doc Detective decide which markdown files to scan for tests?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist",
+      "doc-detective-doc-testing",
+      "none"
+    ],
+    "tags": [
+      "concept",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "concept-why",
+    "prompt": "Explain the Docs as Tests approach and why it matters.",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist",
+      "doc-detective-doc-testing",
+      "none"
+    ],
+    "tags": [
+      "concept",
+      "variant",
+      "easy",
+      "positive"
+    ]
+  },
+  {
+    "id": "neg-unit-tests",
+    "prompt": "Write unit tests for a date parser in src/utils.js.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "easy",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-typo",
+    "prompt": "Fix the typo in step 3 of docs/getting-started.md.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "easy",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-playwright",
+    "prompt": "Set up Playwright end-to-end tests for our sign-in page.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-ci-npm-test",
+    "prompt": "Add a GitHub Actions workflow that runs npm test on every PR.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-proofread",
+    "prompt": "Proofread docs/api.md for style issues.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "easy",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-openapi",
+    "prompt": "Validate this JSON against our OpenAPI schema: {\"id\": 1, \"name\": \"Widget\"}",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-reference-docs",
+    "prompt": "Generate API reference docs from the code comments.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "easy",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-write-tutorial",
+    "prompt": "Write a tutorial for creating widgets, with numbered steps.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "neg-vitepress",
+    "prompt": "Set up a VitePress docs site in this repo.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "variant",
+      "hard",
+      "negative"
+    ]
+  }
+]

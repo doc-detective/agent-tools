@@ -1,0 +1,92 @@
+{
+  "specId": "manni-key-set-up-index",
+  "description": "Inline tests from manni docs/src/content/docs/key/set-up/index.mdx",
+  "tests": [
+    {
+      "testId": "key-set-up",
+      "description": "Where the key lives and what runs without it, over committed fixtures and with no key ever written.",
+      "steps": [
+        {
+          "description": "`key set --dry-run` reports the write it would make and writes nothing.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni key set --dry-run",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "Would write encryptionKey to manni.config.yaml."
+          }
+        },
+        {
+          "description": "The same run warns on stderr that the config it would write is not ignored by git.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni key set --dry-run",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "manni.config.yaml is not ignored by git"
+          }
+        },
+        {
+          "description": "`key rotate` with no key available refuses, exit 2, and names `key set`.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni key rotate",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "No encryption key is available, so nothing can be re-encrypted. Run `manni key set` first."
+          }
+        },
+        {
+          "description": "A key shorter than 32 characters is refused and never written.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni key set tooshort",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "The key must be at least 32 hex or base64url characters."
+          }
+        },
+        {
+          "description": "With no key, validate warns once on stderr with the count of values it could not verify.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/encrypted/manifest-encrypted/manni.config.yaml",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "3 encrypted values were not verified: no encryption key is available."
+          }
+        },
+        {
+          "description": "The findings under those values are dropped, so the same run passes every page and exits 0.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c test/fixtures/encrypted/manifest-encrypted/manni.config.yaml",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "3 files checked, 3 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "With no key, an encrypted citation source is source-missing and the check fails.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/encrypted.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "missing (no encryption key is available to decrypt it)"
+          }
+        },
+        {
+          "description": "--no-check-sources reports the same encrypted source as skipped and passes.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-config --no-check-sources --root test/fixtures/cite test/fixtures/cite/pages/encrypted.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/:2 skipped[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+          }
+        }
+      ]
+    }
+  ]
+}

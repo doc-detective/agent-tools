@@ -1,0 +1,44 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/config.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "Config file not found",
+      "note": "An explicit -c to a missing file exits 2."
+    },
+    {
+      "action": "runShell",
+      "match": "declare a collection under",
+      "note": "No paths and no config exits 2 and names collections:."
+    },
+    {
+      "action": "runShell",
+      "match": "1 passed",
+      "note": "Explicit file arguments are validated regardless of config."
+    },
+    {
+      "action": "runShell",
+      "match": "3 files checked, 3 passed",
+      "note": "A bare run reads every declared collection."
+    },
+    {
+      "action": "runShell",
+      "match": "1 file checked, 1 passed",
+      "note": "--collection narrows the run to one collection."
+    },
+    {
+      "action": "runShell",
+      "match": "cannot be combined with paths",
+      "note": "--collection refuses a typed path, exit 2."
+    },
+    {
+      "action": "runShell",
+      "match": "no collection named",
+      "note": "--collection never splits on commas; the refusal lists configured names."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

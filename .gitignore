@@ -5,3 +5,11 @@ settings.local.json
 .score_cache/
 # Vale styles are fetched by `vale sync`, not committed
 .vale/styles/
+# Scratch output (worktree-local)
+.tmp/
+# Eval runs: transcripts, rendered reports, and per-run scratch stay local
+.claude/hillclimb/**/traces/
+.claude/hillclimb/**/report.html
+.claude/hillclimb/**/trajectory/
+.claude/hillclimb/**/progress.txt
+.claude/hillclimb/**/ref/

@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "type-echo.html", "note": "Step 2: open the code entry page."},
+    {"stepType": "type", "match": "INV-2048", "note": "Step 3: enter INV-2048 in Type here."},
+    {"stepType": "find", "match": "INV-2048", "note": "Step 3: the code appears below the field."}
+  ],
+  "must_not": [
+    "A step for asking the administrator for a code (step 1): a human hand-off, not automatable.",
+    "Any step that opens, polls, or waits on an email inbox (step 4), including a long wait such as 600000 ms.",
+    "A click on 'Accept invitation' (step 5): that button is in an email, not in the demo app."
+  ]
+}

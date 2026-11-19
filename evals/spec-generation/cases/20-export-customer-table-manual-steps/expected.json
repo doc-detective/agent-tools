@@ -1,0 +1,15 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "localhost:8092", "note": "Step 1: go to the home page (the SSO part is not automatable)."},
+    {"stepType": "find", "match": "Simple Data Table", "note": "Step 3: the Simple Data Table is shown."},
+    {"stepType": "find", "match": "John Doe", "note": "Step 3: John Doe is listed."},
+    {"stepType": "find", "match": "Jane Smith", "note": "Step 3: Jane Smith is listed."},
+    {"stepType": "find", "match": "Bob Johnson", "note": "Step 3: Bob Johnson is listed."}
+  ],
+  "must_not": [
+    "Steps for contacting IT or requesting the Analyst role (Before you begin).",
+    "An SSO sign-in step or any credentials (step 1); there is no SSO portal in the demo app.",
+    "Pressing Ctrl+P/Cmd+P or driving a print dialog (step 4).",
+    "Uploading files or sending email (step 5)."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "source": "manni/docs/src/content/docs/key/ci/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "--to must be at least 32",
+      "note": "A --to shorter than 32 characters is refused."
+    },
+    {
+      "action": "runShell",
+      "match": "takes no stdin",
+      "note": "rotate takes no stdin."
+    },
+    {
+      "action": "runShell",
+      "match": "Use pretty or json",
+      "note": "rotate reports in pretty or json only."
+    },
+    {
+      "action": "runShell",
+      "match": "nothing can be re-encrypted",
+      "note": "With no key configured, rotate refuses."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "No manni encryption key may be configured for the run."
+  ]
+}

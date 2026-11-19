@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "testId": "join-workspace",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/type-echo.html"
+        },
+        {
+          "type": {
+            "keys": "INV-2048",
+            "selector": "#type-input"
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo",
+            "elementText": "INV-2048"
+          }
+        }
+      ]
+    }
+  ]
+}

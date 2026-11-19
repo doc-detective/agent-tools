@@ -1,0 +1,149 @@
+{
+  "source": "manni/docs/src/content/docs/meta/reference/query.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "SELECT *",
+      "note": "SELECT * returns system columns first, then data columns."
+    },
+    {
+      "action": "runShell",
+      "match": "_data",
+      "note": "A frontmatter key named _path stays reachable through _data."
+    },
+    {
+      "action": "runShell",
+      "match": "sidebar position",
+      "note": "A non-identifier key is a quoted identifier."
+    },
+    {
+      "action": "runShell",
+      "match": "_present = 0",
+      "note": "_present is 0 for a file with no metadata block."
+    },
+    {
+      "action": "runShell",
+      "match": "FROM authors",
+      "note": "Each collection is a view of its globs' files."
+    },
+    {
+      "action": "runShell",
+      "match": "FROM authors",
+      "note": "A file whose own $schema outranks its override is still a member."
+    },
+    {
+      "action": "runShell",
+      "match": "FROM notes",
+      "note": "Views may overlap."
+    },
+    {
+      "action": "runShell",
+      "match": "because it is a view",
+      "note": "A collection view is read-only, exit 2."
+    },
+    {
+      "action": "runShell",
+      "match": "(deleted)",
+      "note": "SET k = NULL removes the key."
+    },
+    {
+      "action": "runShell",
+      "match": "key renamed",
+      "note": "A paired SET renames a key."
+    },
+    {
+      "action": "runShell",
+      "match": "may not change the extension",
+      "note": "A _path move may not change the extension."
+    },
+    {
+      "action": "runShell",
+      "match": "explicit_null()",
+      "note": "explicit_null() writes a literal null."
+    },
+    {
+      "action": "runShell",
+      "match": "frontmatter removed",
+      "note": "DELETE strips the frontmatter block."
+    },
+    {
+      "action": "runShell",
+      "match": "read-only",
+      "note": "System columns other than _path are read-only."
+    },
+    {
+      "action": "runShell",
+      "match": "check failed",
+      "note": "--check implies the dry run: pending changes are findings."
+    },
+    {
+      "action": "runShell",
+      "match": "format date",
+      "note": "A declared format name previews as the property the schema gains."
+    },
+    {
+      "action": "runShell",
+      "match": "enum",
+      "note": "A CHECK (k IN (...)) becomes an enum."
+    },
+    {
+      "action": "runShell",
+      "match": "built-in default set",
+      "note": "DDL on the built-in default set refuses."
+    },
+    {
+      "action": "runShell",
+      "match": "(string, required)",
+      "note": "-s names the DDL target set directly."
+    },
+    {
+      "action": "runShell",
+      "match": "no schema-evolving effects",
+      "note": "-s on a statement with no schema effect refuses."
+    },
+    {
+      "action": "runShell",
+      "match": "nothing bound",
+      "note": "An unbound named parameter is refused."
+    },
+    {
+      "action": "runShell",
+      "match": "lineFor",
+      "note": "path/key/lineFor/message columns become a GitHub annotation."
+    },
+    {
+      "action": "runShell",
+      "match": "only --check produces",
+      "note": "A findings format without --check is refused."
+    },
+    {
+      "action": "runShell",
+      "match": "_path,title,tags",
+      "note": "CSV emits a header row; arrays stay JSON text."
+    },
+    {
+      "action": "runShell",
+      "match": "nothing was applied",
+      "note": "CSV refuses a statement that produced changes."
+    },
+    {
+      "action": "runShell",
+      "match": "ATTACH",
+      "note": "ATTACH is refused."
+    },
+    {
+      "action": "runShell",
+      "match": "single SQL statement",
+      "note": "A second statement is refused."
+    },
+    {
+      "action": "runShell",
+      "match": "<stdin>",
+      "note": "A write cannot touch <stdin>."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

@@ -1,0 +1,59 @@
+{
+  "source": "manni/docs/src/content/docs/meta/schemas/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "steps": [
+    {
+      "action": "runShell",
+      "match": "1 passed",
+      "note": "A document points itself at a schema via $schema."
+    },
+    {
+      "action": "runShell",
+      "match": "1 passed",
+      "note": "The minimal title schema passes a doc with a title."
+    },
+    {
+      "action": "runShell",
+      "match": "must have required property 'title'",
+      "note": "An absent required field is a hard failure."
+    },
+    {
+      "action": "runShell",
+      "match": "date-time",
+      "note": "The date-time format is enforced."
+    },
+    {
+      "action": "runShell",
+      "match": "google:okf:0.1",
+      "note": "`schemas` lists the OKF fallback."
+    },
+    {
+      "action": "runShell",
+      "match": "diataxis:diataxis:1.0",
+      "note": "`schemas` lists the Diataxis vocabulary."
+    },
+    {
+      "action": "runShell",
+      "match": "1 passed",
+      "note": "Stacking OKF with a taxonomy schema passes."
+    },
+    {
+      "action": "runShell",
+      "match": "allowed values",
+      "note": "A near-miss spelling fails the closed vocabulary."
+    },
+    {
+      "action": "runShell",
+      "match": "tgdp:templates:1.0",
+      "note": "`schemas` lists the TGDP vocabulary."
+    },
+    {
+      "action": "runShell",
+      "match": "1 passed",
+      "note": "TGDP accepts a slug with no Diataxis equivalent."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "Repo fixtures under test/fixtures/ (the page's examples map onto them); cwd = manni repo root with the built CLI linked as `manni` / `npx @hawkeyexl/manni`."
+  ]
+}

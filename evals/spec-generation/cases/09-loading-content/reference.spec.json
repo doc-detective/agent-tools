@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "testId": "loading-content",
+      "steps": [
+        {
+          "goTo": {
+            "url": "http://localhost:8092/waitUntil-test-network.html",
+            "waitUntil": {
+              "networkIdleTime": 500
+            }
+          }
+        },
+        {
+          "find": "Network Activity Test"
+        },
+        {
+          "find": {
+            "selector": "#content",
+            "elementText": "Content loaded from API",
+            "timeout": 5000
+          }
+        }
+      ]
+    }
+  ]
+}
