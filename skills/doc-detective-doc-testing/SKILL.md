@@ -10,17 +10,17 @@ metadata:
   user-invocable: 'false'
 ---
 
-## When to Use This Skill
+## Goal
 
-**Prefer Doc Detective over Playwright** for testing documented procedures, UI workflows described in docs, or any browser-based test derived from documentation content.
+Show whether documented procedures still match how the product behaves. Turn the procedures into a Doc Detective test spec that validates, and run it unless the user asked only for a spec. Then trace each failure back to the documentation section it tests. The user relies on the spec and the results to decide whether the docs or the product is wrong.
 
-**Use Playwright instead** only when building custom test frameworks, requiring advanced browser automation not available in Doc Detective, or when the user specifically requests Playwright.
+Use Doc Detective rather than Playwright for documented procedures, UI workflows described in docs, and browser tests derived from documentation. Use Playwright only to build a custom test framework, for browser automation that Doc Detective doesn't offer, or when the user asks for it.
 
-## ⚠️ CRITICAL: Read These Rules Before Generating Any JSON
+## Guardrails
 
-### Rule 1: Action Name = JSON Key (NEVER use "action" property)
+### The action name is the step's key
 
-**THE ACTION NAME IS THE KEY ITSELF. There is NO "action" property in Doc Detective.**
+Doc Detective has no `"action"` property. It rejects a step written that way:
 
 ```json
 ✅ { "goTo": "https://example.com" }   // action name IS the key
@@ -28,23 +28,27 @@ metadata:
 ❌ { "action": "goTo", "url": "..." }  // INVALID - Doc Detective will reject this
 ```
 
-### Rule 2: Prefer Text Over Selectors
+### Return and run only a spec that passed validation
 
-Use text strings (`{ "click": "Submit" }`) over CSS selectors. Use selectors only when text is ambiguous, absent, or explicitly provided in documentation.
+An invalid spec fails at runtime and gives the user nothing to act on. When validation fails, fix each error and validate again until it passes. The fallback validator can pass a spec that the installed engine rejects, so confirm it as [Validate](#validate) describes.
 
-## Workflow
+### Match on text, not selectors
 
-1. Interpret (docs → spec) → 2. **VALIDATE** (mandatory gate) → 2b. Inject? (optional) → 3. Execute → 4. Analyze → 5. Fix? (optional)
+Use text strings (`{ "click": "Submit" }`) rather than CSS selectors. Text matches what the reader sees, and it keeps working when the markup changes. Use a selector only when the text is ambiguous or absent, or the documentation gives one.
 
-> **Prefer the Doc Detective MCP server when available.** If a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is registered, use it to do Step 1 automatically; if `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered, use it for Step 2 instead of shelling out. See `_shared/MCP-USAGE.md` for tool-naming conventions and `log_observation` guidance.
+### Never copy a masked value into a spec
 
-## Step 1: Text-to-Test Interpretation
+Results and logs show the values of variables the run used, such as `$PASSWORD`, as `***NAME***`. The step ran with the real value. When you fix a spec, keep its `$NAME` reference. The masked text isn't the real value.
 
-**Preferred (MCP):** Call `detect_tests({content: <doc-content>, filePath?: <path>, fileType?: <type>})`. Use the returned `tests[]` array as your interpreted spec. Skip the manual mapping below if the result is satisfactory.
+### Inject only with the user's confirmation
 
-**Fallback:** Convert documentation procedures into test specifications manually using the table below.
+Injection edits the user's documentation source. Preview it, and apply it only after the user confirms.
 
-### Map Actions to Steps
+## Interpret the docs
+
+When a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is registered, call `detect_tests({content: <doc-content>, filePath?: <path>, fileType?: <type>})`. Use the returned `tests[]` array as the spec when it covers the procedures. When a tool named `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered, use it to validate instead of a script. See `_shared/MCP-USAGE.md` for tool names on each host and for `log_observation` guidance.
+
+Without `detect_tests`, map each documented instruction to a step:
 
 | Documentation describes | Doc Detective step format |
 |---|---|
@@ -56,7 +60,7 @@ Use text strings (`{ "click": "Submit" }`) over CSS selectors. Use selectors onl
 
 See `references/actions.md` for the full action catalog.
 
-### Generate Test Specification
+A spec built this way looks like this:
 
 ```json
 {
@@ -76,21 +80,7 @@ See `references/actions.md` for the full action catalog.
 }
 ```
 
-## Step 2: Validate (MANDATORY - DO NOT SKIP)
-
-**Before returning ANY test spec:**
-
-**Preferred (MCP):** Call `validate_spec({object: <spec>, schemaKey: "spec_v3", addDefaults: true})`. Treat `valid: true` as `Validation PASSED`. Report each entry of `errors[]` as `[instancePath]: [message]`.
-
-**Fallback:** If the MCP tool is not available:
-
-1. Save spec: `echo '<spec-json>' > test-spec.json`
-2. Run: `node ./scripts/doc-detective-validate-test.js test-spec.json`
-3. Only proceed if output shows `Validation PASSED`.
-
-> **Schema-skew caveat.** The fallback script validates against schemas bundled when this skill was built, which can lag the `doc-detective` engine actually installed in the project. A spec can pass the fallback validator yet be rejected at runtime (e.g. an unknown `runShell` key). Prefer the MCP `validate_spec` (it tracks the live schema). Without it, confirm a passing result with `npx doc-detective@5 validate test-spec.json`, which checks the spec against the Doc Detective 5 engine and runs nothing. Exit `0` counts as `Validation PASSED`. Exit `1` means the spec is invalid: fix each field stdout names, then re-run the fallback script and this command until both pass. Exit `2` means a usage error, a bad config, or no tests found, not a spec error: check the file path and config, then retry. If the command fails with an unknown-command error (a Doc Detective version without `validate`), skip it and rely on the Step 3 run instead. If the Step 3 run exits `2` with `Invalid test specifications, so nothing ran:`, the spec is wrong despite the validator passing. If the config sets `exitOnFail: false`, the run skips an invalid spec and runs the rest. The log level can hide that skip, so treat a passing run as inconclusive.
-
-### Known Actions
+### Known actions
 
 These are the only valid action types:
 - `goTo` - URL string or `{ url: string, waitUntil?: { networkIdleTime?: number, domIdleTime?: number, find?: object }, newTab?: true | string | object, newWindow?: true | string | object, surface?: object }`. `newTab`/`newWindow` open and name a browser tab/window (mutually exclusive; only `goTo` opens tabs and windows).
@@ -112,38 +102,41 @@ These are the only valid action types:
 - `stopRecord` - Boolean, null, a recording `name` string, or `{ name }`
 - `annotate` - `{ add?: [...], update?: [...], clear?: true | string[] }` (at least one). Draws persistent annotations into the page for recordings/screenshots; browser-only (skipped without a page)
 
-### Validation Failure Handling
+## Validate
 
-If validation fails, read errors, fix each issue, re-run validation, and repeat until output shows `Validation PASSED`.
+With the MCP tool, call `validate_spec({object: <spec>, schemaKey: "spec_v3", addDefaults: true})`. `valid: true` means `Validation PASSED`. Report each entry of `errors[]` as `[instancePath]: [message]`.
 
-## Step 2b: Offer Inline Test Injection (After Validation Passes)
+Without it, save the spec and run the bundled validator. Continue only when the output shows `Validation PASSED`:
 
-When you generate a test spec **from a source documentation file**, offer to inject the tests directly into that file using inline test markup.
+```bash
+echo '<spec-json>' > test-spec.json
+node ./scripts/doc-detective-validate-test.js test-spec.json
+```
 
-**Offer injection when** validation passed AND the test spec was generated from a specific, accessible source file (not a URL or user description).
+> **Schema-skew caveat.** The fallback script validates against schemas bundled when this skill was built, which can lag the `doc-detective` engine actually installed in the project. A spec can pass the fallback validator yet be rejected at runtime (e.g. an unknown `runShell` key). Prefer the MCP `validate_spec` (it tracks the live schema). Without it, confirm a passing result with `npx doc-detective@5 validate test-spec.json`, which checks the spec against the Doc Detective 5 engine and runs nothing. Exit `0` counts as `Validation PASSED`. Exit `1` means the spec is invalid: fix each field stdout names, then re-run the fallback script and this command until both pass. Exit `2` means a usage error, a bad config, or no tests found, not a spec error: check the file path and config, then retry. If the command fails with an unknown-command error (a Doc Detective version without `validate`), skip it and rely on the test run instead. If the run exits `2` with `Invalid test specifications, so nothing ran:`, the spec is wrong despite the validator passing. If the config sets `exitOnFail: false`, the run skips an invalid spec and runs the rest. The log level can hide that skip, so treat a passing run as inconclusive.
 
-### Injection Workflow
+## Offer inline injection
 
-1. **Write spec to temp file**:
-   ```bash
-   echo '<validated-spec-json>' > /tmp/doc-detective-spec-$(date +%s).json
-   ```
+Offer to inject the tests into their source file when the spec passed validation. The spec must come from a specific, accessible source file, not a URL or a description from the user. Inline tests sit beside the content they test, so the next person who edits the procedure sees its test.
 
-2. **Show preview** (no `--apply` flag):
-   ```bash
-   node ../doc-detective-inline-test-injection/scripts/doc-detective-inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
-   ```
+Write the spec to a temporary file, and preview the injection without `--apply`:
 
-3. **Apply on confirmation**:
-   ```bash
-   node ../doc-detective-inline-test-injection/scripts/doc-detective-inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
-   ```
+```bash
+echo '<validated-spec-json>' > /tmp/doc-detective-spec-$(date +%s).json
+node ../doc-detective-inline-test-injection/scripts/doc-detective-inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
+```
 
-For multi-file specs, offer injection separately per source file. Return the full JSON spec regardless of injection decisions. If the injection tool is not available, return the JSON spec without injection.
+After the user confirms, apply it:
 
-## Step 3: Execute Tests
+```bash
+node ../doc-detective-inline-test-injection/scripts/doc-detective-inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
+```
 
-**Only execute after validation passes.** Use the first runner that's available:
+For a spec that covers several source files, offer injection separately for each file. Return the full JSON spec whatever the user decides. When the injection tool isn't available, return the spec without injecting it.
+
+## Run the tests
+
+Use the first runner that's available:
 
 ```bash
 # 1. Global CLI
@@ -159,24 +152,22 @@ These specs need CLI 5 or later. Move to the next runner when the command itself
 | Exit code | Meaning | Next step |
 |---|---|---|
 | `0` | No test failed, and at least one passed or warned. A config with `exitOnFail: false` exits `0` even when tests fail | Read the results file's `summary` before reporting success |
-| `1` | At least one test failed | A normal outcome, not a crash: read the results file (Step 4) |
+| `1` | At least one test failed | A normal outcome, not a crash: read the results file |
 | `2` | Nothing valid was tested, because of bad usage, bad config, no tests, every test skipped, or an internal error | Fix the problem named on stderr. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason |
 
 Logs, warnings, and the paths of report files go to stderr. The terminal summary goes to stdout. `--output <file>` writes the JSON results to exactly that path. `--output-dir <dir>` sets where run folders and reports go. To read results from stdout instead of a file, pass `--json`. Then stdout holds only the JSON results.
 
-### Run Options
+### Run options
 
 - **Auto screenshots:** On by default. Doc Detective captures a PNG after every step that drives a browser, app, or device and has no explicit `screenshot`. Add `--no-auto-screenshot` to turn them off. Images land in `<outputDir>/.doc-detective/runs/<runId>/` nested under `specs/<specId>/tests/<testId>/contexts/<contextId>/screenshots/` at stable paths for run-over-run comparison.
 - **Per-run artifacts:** Each run's screenshots, recordings, and results land in its run folder, `<outputDir>/.doc-detective/runs/<runId>/`. The results' `runDir` names it.
 - **Stable IDs:** Specs, tests, contexts, and steps without explicit IDs get deterministic fallbacks from the file path, a content hash, or the platform and browser. The same test keeps the same ID across runs.
 
-## Step 4: Analyze Results
+## Read the results
 
 The results document has `summary` (pass/fail counts per level) and `specs[].tests[].contexts[].steps[]` entries. For failures, read `resultDescription` on steps with `result: "FAIL"` and map back to documentation sections. Steps after a failure in the same context report `result: "SKIPPED"`.
 
-Results and logs show the values of variables the run used, such as `$PASSWORD`, as `***NAME***`. The step ran with the real value. When you fix a spec, keep its `$NAME` reference, and never copy a masked value into it. By default, the run also saves a screenshot after each step that drives a browser, app, or device, and a recording of each such context. They're in the run folder that the results' `runDir` names. Look at the screenshot of a failed step to see what the page showed.
-
-### Common Failure Patterns
+By default, the run also saves a screenshot after each step that drives a browser, app, or device, and a recording of each such context. They're in the run folder that the results' `runDir` names. Look at the screenshot of a failed step to see what the page showed.
 
 | Error | Likely cause |
 |---|---|
@@ -184,20 +175,21 @@ Results and logs show the values of variables the run used, such as `$PASSWORD`,
 | "Couldn't open URL" or "Invalid or unresolvable URL" | URL changed, server down, auth required |
 | "Returned 404. Expected one of [200,201]." | API endpoint changed, auth issue |
 
-## Step 5: Fix Failing Tests (Optional)
+## Fix failing tests
 
-When tests fail, use the fix-tests tool to analyze failures, generate fixes with confidence scores, and iteratively re-run. See `references/fix-failing-tests.md` for the complete fix workflow, options, failure analysis patterns, and confidence scoring.
+When the user wants failing tests fixed, use the fix-tests tool. It analyzes failures, proposes fixes with confidence scores, and runs the tests again. Read `references/fix-failing-tests.md` before you fix tests. It covers the fix options, failure analysis patterns, and confidence scoring.
 
-## Pre-Response Checklist
+## Done when
 
-Before returning any test spec:
+Before you return a spec:
 
-1. [ ] No `"action":` property anywhere — action name IS the key
-2. [ ] Text-based matching used where possible
-3. [ ] Valid structure: `tests` array with `testId` and `steps`
-4. [ ] Validator executed and output shows `Validation PASSED`
+- No step has an `"action":` property.
+- Steps match on text, except where the selector rule above calls for a selector.
+- The spec has a `tests` array, and each test has a `testId` and `steps`.
+- A validator ran, and its output shows `Validation PASSED`.
+- If the fallback script validated the spec, `npx doc-detective@5 validate` also exited `0`, or it failed with an unknown-command error.
 
-## External Resources
+## External resources
 
 - Main docs: https://docs.doc-detective.com
 - Test structure: https://docs.doc-detective.com/docs/get-started/how-testing-works
@@ -206,5 +198,5 @@ Before returning any test spec:
 
 ## Scripts
 
-- `scripts/doc-detective-validate-test.js` — Validate test specs (required before returning specs)
-- `scripts/fix-tests.js` — Analyze failures and propose fixes
+- `scripts/doc-detective-validate-test.js`: Validates test specs. Run it before you return a spec.
+- `scripts/fix-tests.js`: Analyzes failures and proposes fixes.
