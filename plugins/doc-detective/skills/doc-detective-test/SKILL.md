@@ -101,7 +101,7 @@ Take each failure reason from `resultDescription` on the steps in `specs[].tests
 
 Fix tests only when the user set `--fix`. Without it, report each failing test with its failure reason.
 
-The bundled fix tool analyzes a results file and proposes fixes with confidence scores: `node skills/doc-detective-test/scripts/fix-tests.js <results-file> --spec <spec-file> --dry-run`. Read [references/fix-failing-tests.md](references/fix-failing-tests.md) for its options, failure patterns, and confidence scoring.
+The bundled fix tool analyzes a results file and proposes fixes with confidence scores: `node skills/doc-detective-test/scripts/fix-tests.js <results-file> --spec <spec-file> --dry-run`. It reads and writes JSON specs only, so apply a fix to a YAML spec by hand. Read [references/fix-failing-tests.md](references/fix-failing-tests.md) for its options, failure patterns, and confidence scoring.
 
 For each failing test, try fixes until the test passes or you reach `--max-fix-attempts`:
 
