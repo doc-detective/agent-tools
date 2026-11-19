@@ -5,7 +5,7 @@ skill: doc-detective-install-github-action
 
 # Install GitHub Action
 
-**Skill:** `doc-detective:install-github-action`
+**Skill:** `doc-detective:doc-detective-install-github-action`
 
 ## Goal
 
