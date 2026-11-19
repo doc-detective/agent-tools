@@ -103,7 +103,7 @@ permissions:
 - **Headless browsers on Ubuntu.** Ubuntu runners have no display, so Chrome and Firefox run headless. Doc Detective records headless Chrome, but not headless Firefox. To run headed or record Firefox, install Xvfb, or use a `macos-latest` or `windows-latest` runner.
 - **Android emulator tests are Linux-only.** The `android` input enables KVM only on Linux runners. macOS and Windows runners can't accelerate the hosted emulator, so `android` contexts don't run there. See [Android emulator tests](#android-emulator-tests).
 - **iOS tests are macOS-only.** iOS simulators run only on macOS runners, so `ios` platform contexts don't run on Linux or Windows. See [iOS tests](#ios-tests).
-- **Default token scope.** The default `GITHUB_TOKEN` can create issues within the same repository. It can open PRs only after **Settings** > **Actions** > **General** > **Allow GitHub Actions to create and approve pull requests** is on, and in an organization an owner must allow it first. For cross-repo operations or repos with strict token policies, a custom `token` input may be required.
+- **Default token scope.** The default `GITHUB_TOKEN` can create issues within the same repository. It can open PRs only after **Settings** > **Actions** > **General** > **Allow GitHub Actions to create and approve pull requests** is on. In an organization, an owner must allow it first. For cross-repo operations or repos with strict token policies, a custom `token` input may be required.
 
 ## Android emulator tests
 
@@ -115,7 +115,7 @@ KVM setup is best-effort. If the action can't grant access, it emits a warning a
 
 ## iOS tests
 
-Doc Detective runs `ios` platform tests on macOS runners through the XCUITest driver, which depends on WebDriverAgent (WDA), built for the runner's Xcode version. With Doc Detective 5.6.0 or later, the first iOS test on a runner builds WDA, which takes two to three minutes on GitHub-hosted macOS runners, and the action's `cache` input saves that build in a cache entry of its own. Later runs restore it in a few seconds. The workflow needs no extra steps. The action caches the build when the job runs on macOS, `cache` is on, `version` isn't empty, and a spec or config in `input`, `config`, or `working_directory` sets `ios` as a `platform` or `platforms` value.
+Doc Detective runs `ios` platform tests on macOS runners through the XCUITest driver, which depends on WebDriverAgent (WDA), built for the runner's Xcode version. With Doc Detective 5.6.0 or later, the first iOS test on a runner builds WDA. That takes two to three minutes on GitHub-hosted macOS runners. The action's `cache` input saves the build in a cache entry of its own. Later runs restore it in a few seconds. The workflow needs no extra steps. The action caches the build only when the job runs on macOS, `cache` is on, and `version` isn't empty. A spec or config in `input`, `config`, or `working_directory` must also set `ios` as a `platform` or `platforms` value.
 
 ### Doc Detective before 5.6.0, or `cache: false`
 
@@ -342,7 +342,7 @@ jobs:
       - uses: doc-detective/github-action@v2
 ```
 
-iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required: with Doc Detective 5.6.0 or later, the first iOS test builds WebDriverAgent, and the action's `cache` saves the build for later runs.
+iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required. With Doc Detective 5.6.0 or later, the first iOS test builds WebDriverAgent, and the action's `cache` saves the build for later runs.
 
 ### iOS tests on Doc Detective before 5.6.0, or with `cache: false`
 
@@ -380,7 +380,7 @@ jobs:
           cache: false
 ```
 
-This variant builds WebDriverAgent with the Doc Detective CLI and persists the whole Doc Detective cache folder itself, for Doc Detective before 5.6.0. That folder already holds the runtime and browsers, so `cache: false` keeps the action from storing them twice, and the action's `version` matches the `install ios` version. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at the folder, and `actions/cache` persists it across runs. With 5.6.0 or later and `cache: false`, leave out the `install ios` step. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry. When a runner image bumps Xcode or the driver version, the build refreshes instead of restoring a stale one. A cache saved by a `pull_request` run is visible only to that pull request. The `push` trigger on the default branch saves the entry that new pull requests restore. See [iOS tests](#ios-tests) for details.
+For Doc Detective before 5.6.0, this variant builds WebDriverAgent with the Doc Detective CLI and persists the whole Doc Detective cache folder itself. That folder already holds the runtime and browsers, so `cache: false` keeps the action from storing them twice. The action's `version` matches the `install ios` version. `DOC_DETECTIVE_CACHE_DIR` points Doc Detective at the folder, and `actions/cache` persists it across runs. With 5.6.0 or later and `cache: false`, leave out the `install ios` step. The run-scoped `key` always saves the freshly built products, and `restore-keys` restores the newest previous entry. When a runner image bumps Xcode or the driver version, the build refreshes instead of restoring a stale one. A cache saved by a `pull_request` run is visible only to that pull request. The `push` trigger on the default branch saves the entry that new pull requests restore. See [iOS tests](#ios-tests) for details.
 
 ### Using action outputs
 

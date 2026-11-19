@@ -647,7 +647,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 }
 ```
 
-**Options** (the object form is strict: `additionalProperties: false`, so an unknown key — e.g. `stdout` — makes the whole spec invalid. By default, Doc Detective then runs nothing and exits `2`):
+**Options** (the object form is strict: `additionalProperties: false`, so an unknown key, such as `stdout`, makes the whole spec invalid. By default, Doc Detective then runs nothing and exits `2`):
 - `command`: Shell command to execute (required)
 - `shell`: Shell to run the command in: `bash` (default), `cmd`, or `powershell`. `cmd` and `powershell` are Windows-only; gate those steps to Windows with a `runOn` context (for example, `"runOn": [{ "platforms": ["windows"] }]`) if the spec also runs elsewhere. If unset, falls back to the config-level `shell`, which also defaults to `bash`.
 - `args`: Array of string arguments for the command (default: `[]`)

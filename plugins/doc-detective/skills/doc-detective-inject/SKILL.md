@@ -5,7 +5,7 @@ metadata:
   version: '2.1.1'
   organization: Doc Detective
   date: November 2026
-  abstract: Inject Doc Detective test specifications into documentation source files as inline comments, placing test steps close to their associated content using semantic pattern matching. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA.
+  abstract: Inject Doc Detective test specifications into documentation source files as inline comments, next to the content each step tests. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA.
   references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
 user-invocable: true
@@ -46,7 +46,7 @@ Without a spec file, build one for the source file first, as `/doc-detective-gen
   - When the user didn't name the source file, ask for it.
 - **Never let `*/` into an MDX comment.** The MDX comment `{/* … */}` ends at the first `*/`, and there's no way to escape it. A step whose JSON contains `*/`, such as the glob `**/dir/**`, closes the comment early and breaks the MDX or Astro build. Scan each step's JSON for `*/` before you inject into MDX, including a partial that an `.mdx` page includes. Rewrite a payload that contains it, for example to `test/dir/**`, and tell the user which payloads you rewrote. Markdown and HTML `<!-- … -->` comments aren't affected.
 - **Write each reStructuredText comment as its own block.** Doc Detective reads `.. test {...}`, `.. step {...}`, `.. test end`, and `.. test ignore start` / `.. test ignore end` only when the comment starts its own block, with a blank line before and after. A `..` line that continues a paragraph is prose. A multi-line payload continues on lines indented under the `.. step` line.
-- **Mark every step you couldn't match.** Put a `TODO: verify step placement` comment on the line after its comment, in the file's own comment syntax, so a person checks it: `<!-- TODO: verify step placement -->` in Markdown, HTML, and XML, `{/* TODO: verify step placement */}` in MDX, `// TODO: verify step placement` in AsciiDoc, and `.. TODO: verify step placement` as its own block in reStructuredText. MDX rejects `<!-- -->`, and the other formats render it as text.
+- **Mark every step you couldn't match.** On the line after its comment, add a `TODO: verify step placement` comment so a person checks it. Use the file's own comment syntax. Markdown, HTML, and XML take `<!-- TODO: verify step placement -->`, and MDX takes `{/* TODO: verify step placement */}`. AsciiDoc takes `// TODO: verify step placement`, and reStructuredText takes `.. TODO: verify step placement` as its own block. MDX rejects `<!-- -->`, and the other formats render it as text.
 - **Keep the spec's order.** Step comments follow the order of the spec's steps.
 
 ## Inject with the bundled script
@@ -103,7 +103,7 @@ Search from the line after the previous step's comment, or from line 1 for the f
 3. **Pattern match:** A line matches the action's content pattern in the table below.
 4. **No match:** Use the line after the previous step's comment, or line 1 for the first step. Mark the step with the TODO comment.
 
-Insert the step comment right after the line the rule selects, and keep that line's indentation. When several lines satisfy a rule, select the earliest one.
+Insert the step comment right after the line the rule selects, and keep that line's indentation. When several lines in that search range satisfy a rule, select the earliest one.
 
 | Action | Matches Line Containing |
 |--------|------------------------|
@@ -148,7 +148,7 @@ tests:
 
 Before Doc Detective looks for tests, it replaces each include directive with the included file's content, so it reads a page as it renders. Supported directives are AsciiDoc `include::`, MkDocs `--8<--`, mdBook `{{#include}}`, Fern `<Markdown src>`, MDX component imports, and reStructuredText `.. include::`. The `resolveIncludes` config field controls this and defaults to `true`.
 
-- **A step's text can come from an included file.** Open that file and inject the step marker there, next to the content it tests, in the partial's own comment syntax. For a partial whose extension matches no file type, such as `.txt`, use the including page's syntax instead of stopping with the unsupported file type error.
+- **A step's text can come from an included file.** Open that file and inject the step marker there, next to the content it tests, in the partial's own comment syntax. A partial's extension may match no file type, such as `.txt`. Then use the including page's syntax, and don't stop with the unsupported file type error.
 - **Keep each test's `test` and `test end` markers in the same file.** For a test that spans an include, put both markers in the page around the include directive, and put the step markers in the partial.
 - **A test in a partial runs inside each page that includes it,** once per page, and not on its own. Results name the partial in `location.file`, so fix a failing step there, not in the page.
 - **A broken include doesn't fail the run.** Doc Detective prints a warning on stderr. If a partial's tests are missing from the results, check stderr.

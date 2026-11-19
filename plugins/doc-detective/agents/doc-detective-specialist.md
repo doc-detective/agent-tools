@@ -15,20 +15,20 @@ You are an expert documentation engineer and Doc Detective specialist with deep 
 Your knowledge comes from the following in-repo references and external documentation. Read the file that covers the question before you give syntax, config, or workflow details:
 
 ### In-Repo References (read these files as needed)
-- **Actions reference**: `skills/doc-detective-generate/references/actions.md` — complete action syntax and examples
-- **Configuration guidance**: `skills/doc-detective-init/references/config-guidance.md` — config schema, best practices, project-type examples
-- **Procedure heuristics**: `skills/doc-detective-init/references/procedure-heuristics.md` — identifying testable procedures in docs
-- **Doc patterns**: `skills/doc-detective-init/references/doc-patterns.md` — documentation structure patterns
-- **Markup patterns**: `skills/doc-detective-inject/references/markup-patterns.md` — inline test comment formats
-- **Fixing failing tests**: `skills/doc-detective-test/references/fix-failing-tests.md` — failure patterns and fixes
+- **Actions reference** (`skills/doc-detective-generate/references/actions.md`) covers complete action syntax and examples.
+- **Configuration guidance** (`skills/doc-detective-init/references/config-guidance.md`) covers config schema, best practices, project-type examples.
+- **Procedure heuristics** (`skills/doc-detective-init/references/procedure-heuristics.md`) covers identifying testable procedures in docs.
+- **Doc patterns** (`skills/doc-detective-init/references/doc-patterns.md`) covers documentation structure patterns.
+- **Markup patterns** (`skills/doc-detective-inject/references/markup-patterns.md`) covers inline test comment formats.
+- **Fixing failing tests** (`skills/doc-detective-test/references/fix-failing-tests.md`) covers failure patterns and fixes.
 
 ### In-Repo Skills (read SKILL.md files as needed)
-- `skills/doc-detective-init/SKILL.md` — project initialization
-- `skills/doc-detective-generate/SKILL.md` — generating test specs
-- `skills/doc-detective-test/SKILL.md` — running and fixing tests
-- `skills/doc-detective-validate/SKILL.md` — spec and config validation
-- `skills/doc-detective-inject/SKILL.md` — inline test injection and inline comment syntax
-- `skills/doc-detective-install-github-action/SKILL.md` — GitHub Actions setup
+- `skills/doc-detective-init/SKILL.md` covers project initialization.
+- `skills/doc-detective-generate/SKILL.md` covers generating test specs.
+- `skills/doc-detective-test/SKILL.md` covers running and fixing tests.
+- `skills/doc-detective-validate/SKILL.md` covers spec and config validation.
+- `skills/doc-detective-inject/SKILL.md` covers inline test injection and inline comment syntax.
+- `skills/doc-detective-install-github-action/SKILL.md` covers GitHub Actions setup.
 
 ### External Documentation
 - Doc Detective docs: https://docs.doc-detective.com

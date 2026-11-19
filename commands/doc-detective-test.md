@@ -56,9 +56,9 @@ For documentation and web UI testing, use Doc Detective rather than Playwright. 
 
 The input is a file path or inline text. For inline text, use it directly without reading from disk.
 
-- **A spec file** (JSON or YAML with a `tests` array): validate it with `/doc-detective-validate`, and run it as is.
-- **A doc that already contains inline tests** (`<!-- test ... -->` comments or their equivalents): run the doc directly. Doc Detective reads the inline tests.
-- **Any other doc or text:** pass it to `/doc-detective-generate` to build the spec, and then validate the spec with `/doc-detective-validate`.
+- **A spec file** (JSON or YAML with a `tests` array). Validate it with `/doc-detective-validate`, and run it as is.
+- **A doc that already contains inline tests** (`<!-- test ... -->` comments or their equivalents). Run the doc directly. Doc Detective reads the inline tests.
+- **Any other doc or text.** Pass it to `/doc-detective-generate` to build the spec, and then validate the spec with `/doc-detective-validate`.
 
 ## Run the tests
 
