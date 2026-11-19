@@ -1,7 +1,8 @@
 'use strict';
 
 const assert = require('assert');
-const { runHook, parseOutput } = require('./helpers');
+const fs = require('fs');
+const { runHook, makeFakeBin, parseOutput } = require('./helpers');
 
 describe('Hook 4: session-start-check-install', function () {
   this.timeout(30000);
@@ -31,21 +32,8 @@ describe('Hook 4: session-start-check-install', function () {
   });
 
   it('should include installation instructions when not available', async function () {
-    // Create a minimal PATH with only coreutils (bash, cat, printf, sed, tr, timeout)
-    // but without npx, docker, or doc-detective
-    const fs = require('fs');
-    const os = require('os');
-    const path = require('path');
-
-    const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'hook4-fakebin-'));
-    // Symlink only the tools the script needs to run
-    for (const tool of ['bash', 'cat', 'printf', 'sed', 'tr', 'timeout']) {
-      try {
-        const realPath = require('child_process')
-          .execFileSync('which', [tool], { encoding: 'utf8' }).trim();
-        if (realPath) fs.symlinkSync(realPath, path.join(fakeBin, tool));
-      } catch { /* tool not found, skip */ }
-    }
+    // A PATH with only the coreutils the script needs: no npx, docker, or doc-detective
+    const fakeBin = makeFakeBin();
 
     const result = await runHook('session-start-check-install.sh', '{}', {
       env: { PATH: fakeBin, HOME: process.env.HOME },
@@ -64,20 +52,8 @@ describe('Hook 4: session-start-check-install', function () {
   // `latest` can still be a CLI 4 image that misreads CLI 5 specs.
   for (const [label, available] of [['5.0.0', true], ['4.38.1', false]]) {
     it(`should ${available ? '' : 'not '}report a cached ${label} Docker image as available`, async function () {
-      const fs = require('fs');
-      const os = require('os');
-      const path = require('path');
-
-      const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'hook4-docker-'));
-      for (const tool of ['bash', 'cat', 'printf', 'sed', 'tr', 'timeout']) {
-        try {
-          const realPath = require('child_process')
-            .execFileSync('which', [tool], { encoding: 'utf8' }).trim();
-          if (realPath) fs.symlinkSync(realPath, path.join(fakeBin, tool));
-        } catch { /* tool not found, skip */ }
-      }
       // `docker image inspect --format ...` prints the image's version label
-      fs.writeFileSync(path.join(fakeBin, 'docker'), `#!/bin/bash\necho ${label}\n`, { mode: 0o755 });
+      const fakeBin = makeFakeBin({ docker: `echo ${label}` });
 
       const result = await runHook('session-start-check-install.sh', '{}', {
         env: { PATH: fakeBin, HOME: process.env.HOME },
@@ -97,19 +73,7 @@ describe('Hook 4: session-start-check-install', function () {
   // CLI misreads CLI 5 specs, so the hook falls through and says why.
   for (const [version, available] of [['5.0.0', true], ['4.26.0', false]]) {
     it(`should ${available ? '' : 'not '}report a global ${version} CLI as available`, async function () {
-      const fs = require('fs');
-      const os = require('os');
-      const path = require('path');
-
-      const fakeBin = fs.mkdtempSync(path.join(os.tmpdir(), 'hook4-global-'));
-      for (const tool of ['bash', 'cat', 'printf', 'sed', 'tr', 'timeout']) {
-        try {
-          const realPath = require('child_process')
-            .execFileSync('which', [tool], { encoding: 'utf8' }).trim();
-          if (realPath) fs.symlinkSync(realPath, path.join(fakeBin, tool));
-        } catch { /* tool not found, skip */ }
-      }
-      fs.writeFileSync(path.join(fakeBin, 'doc-detective'), `#!/bin/bash\necho ${version}\n`, { mode: 0o755 });
+      const fakeBin = makeFakeBin({ 'doc-detective': `echo ${version}` });
 
       const result = await runHook('session-start-check-install.sh', '{}', {
         env: { PATH: fakeBin, HOME: process.env.HOME },
