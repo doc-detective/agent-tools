@@ -1,6 +1,8 @@
 'use strict';
 
-const { execFile } = require('child_process');
+const { execFile, execFileSync } = require('child_process');
+const fs = require('fs');
+const os = require('os');
 const path = require('path');
 
 const SCRIPTS_DIR = path.resolve(__dirname, '../../src/hooks/scripts');
@@ -8,16 +10,22 @@ const SCRIPTS_DIR = path.resolve(__dirname, '../../src/hooks/scripts');
 /**
  * Run a hook script with JSON piped to stdin.
  * Returns { code, stdout, stderr }.
+ *
+ * `opts.env.PATH` is applied inside bash, not to the spawn: on Windows, Node
+ * looks `bash` up in the child's PATH, which a fake bin doesn't contain.
  */
 function runHook(scriptName, stdinData, opts = {}) {
   const scriptPath = path.join(SCRIPTS_DIR, scriptName);
   const isBash = scriptName.endsWith('.sh');
-  const cmd = isBash ? 'bash' : 'node';
+  const { PATH: hookPath, ...env } = opts.env || {};
+  const [cmd, args] = isBash && hookPath
+    ? ['bash', ['-c', 'PATH="$HOOK_PATH" exec "$BASH" "$0"', scriptPath]]
+    : [isBash ? 'bash' : 'node', [scriptPath]];
 
   return new Promise((resolve) => {
-    const child = execFile(cmd, [scriptPath], {
+    const child = execFile(cmd, args, {
       timeout: opts.timeout || 15000,
-      env: { ...process.env, ...opts.env },
+      env: { ...process.env, ...env, ...(hookPath && { HOOK_PATH: hookPath }) },
     }, (err, stdout, stderr) => {
       resolve({
         code: err ? (err.code || 1) : 0,
@@ -32,6 +40,27 @@ function runHook(scriptName, stdinData, opts = {}) {
     child.stdin.write(input);
     child.stdin.end();
   });
+}
+
+/**
+ * Make a temp bin dir holding the coreutils the bash hooks need, plus
+ * `stubs` ({ name: scriptBody }). Wrapper scripts, not symlinks: Windows
+ * can't follow a symlink to a Git Bash path like /usr/bin/cat. A tool the
+ * host lacks (macOS has no `timeout` by default) is left out.
+ */
+function makeFakeBin(stubs = {}) {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hook-fakebin-'));
+  const scripts = { ...stubs };
+  for (const tool of ['cat', 'sed', 'tr', 'timeout']) {
+    try {
+      const real = execFileSync('bash', ['-c', `command -v ${tool}`], { encoding: 'utf8' }).trim();
+      scripts[tool] ??= `exec ${real} "$@"`;
+    } catch { /* not on this host */ }
+  }
+  for (const [name, body] of Object.entries(scripts)) {
+    fs.writeFileSync(path.join(dir, name), `#!/bin/bash\n${body}\n`, { mode: 0o755 });
+  }
+  return dir;
 }
 
 /**
@@ -122,6 +151,7 @@ function isGeminiAvailable() {
 module.exports = {
   SCRIPTS_DIR,
   runHook,
+  makeFakeBin,
   parseOutput,
   runClaude,
   runGemini,
