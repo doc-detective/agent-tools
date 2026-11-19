@@ -1,0 +1,136 @@
+---
+name: doc-detective-validate
+description: 'Check whether a Doc Detective test spec or config is valid, whether it is a file such as .doc-detective.json or JSON pasted into the message, and name each invalid field, without running any tests. Use for yes-or-no questions about whether a specific spec or config would load or be rejected, and for lint or schema-check requests. Use it rather than judging validity from memory. To run tests, use doc-detective-test. To write a new spec, use doc-detective-generate. Not for generic JSON or YAML syntax checks.'
+metadata:
+  version: '2.1.1'
+  organization: Doc Detective
+  date: November 2026
+  abstract: Validate Doc Detective test specifications or configuration files to ensure they are correctly structured.
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective, https://github.com/doc-detective/doc-detective-common
+  user-invocable: 'true'
+---
+
+# Validate Command
+
+**Skill:** `doc-detective:doc-detective-validate`
+
+## Goal
+
+Tell the user whether a Doc Detective test specification or configuration file is valid, and name every field that isn't. The user, or the skill that called this one, decides whether to run, fix, or discard the input based on this verdict. A verdict that says `Validation PASSED` for an invalid file lets a broken spec reach a test run.
+
+## Usage
+
+Validate a test specification file:
+
+```bash
+/doc-detective-validate test-spec.json
+```
+
+Or run the command with no argument, and give the spec as inline JSON:
+
+```bash
+/doc-detective-validate
+```
+
+```json
+{
+  "tests": [{
+    "testId": "login-flow",
+    "steps": [
+      { "goTo": "https://example.com/login" },
+      { "click": "Sign In" }
+    ]
+  }]
+}
+```
+
+Validate a configuration file:
+
+```bash
+/doc-detective-validate --config .doc-detective.json
+```
+
+## Guardrails
+
+- **Report `Validation PASSED` only when a validator confirms that the input has no errors.** A missing or inconclusive check isn't a pass. When no validator can confirm the input, say so instead of giving a verdict. Callers act on this verdict without checking again.
+- **Report every error as `[FIELD]: [ERROR REASON]`.** The user fixes the file from this list, so a missing field name leaves them searching.
+- **Ask for the input when you don't have it.** When no file path or inline JSON was given, ask the user. Don't validate a file you found on your own.
+
+## Choose a validator
+
+**Doc Detective CLI, first.** It checks test files the way a run reads them, and runs nothing:
+
+```bash
+npx doc-detective@5 validate <spec-file>
+# Several files or a folder also work. For inline JSON, pipe it to stdin:
+echo '<spec-json>' | npx doc-detective@5 validate -
+```
+
+- Exit `0`: every file is valid. Report `Validation PASSED`.
+- Exit `1`: stdout names each invalid file, then one line per error, such as ``tests[0].steps[0]: unknown action `action`.`` Report each error line.
+- Exit `2`: usage error, a config that didn't load, or no tests found. Report stderr. A `.doc-detective.json`, `.yaml`, or `.yml` in the current directory loads on every run, so an invalid one fails with `Invalid config in <file>` before the spec is checked. That's a config error, not a spec verdict.
+
+Add `--json` for `{valid, files[{path, valid, errors}]}` on stdout.
+
+**Fallback, when `npx` isn't available.** Run the bundled validator. It prints `Validation PASSED` or the errors:
+
+```bash
+echo '<spec-json>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin
+```
+
+When a `validate_spec` tool is registered, you can call it instead: `validate_spec({object: <spec-or-config>, schemaKey: "spec_v3", addDefaults: true})`, with `"config_v3"` for a config. Report each `errors[]` entry as `[instancePath]: [message]`. `valid: true` means `Validation PASSED`. See `_shared/MCP-USAGE.md` for its names on each host.
+
+When no validator runs, tell the user.
+
+## What makes a test spec valid
+
+- The `tests` array exists and isn't empty.
+- Each test has a non-empty `steps` array.
+- Each step contains exactly one recognized Doc Detective action.
+- Action parameters have the expected types.
+
+## What makes a configuration file valid
+
+For a config file, run:
+
+```bash
+npx doc-detective@5 validate --config <config-file>
+```
+
+It loads the config and checks it against the schema first. A config that fails exits `2`, and stderr names why:
+
+- `Error: Invalid config in <config-file>:`, followed by one `field: reason` line per error. Report those lines, then `Validation FAILED`.
+- `Could not read config file` or `Could not parse config file`: the file is missing or isn't JSON or YAML. Report that.
+
+Without one of those errors, the config is valid, and the rest of the output is about the tests its `input` points to. Exit `2` with `Couldn't find tests` only means that `input` holds no tests. Don't pass the config as a positional input, because `validate` reads it as a test file.
+
+Without `npx`, call `validate_spec` with `"config_v3"` when it's registered. Otherwise, check the JSON against the `doc-detective-common` config schema yourself, say that no validator confirmed it, and report each field that fails as `[FIELD]: [ERROR REASON]`.
+
+- `input`: A string or string array of valid glob patterns or file paths.
+- `recursive`: A boolean.
+- `output`: A string, the path of the JSON results file, not a folder.
+- `outputDir`: A string, the folder for run folders and reports.
+- `logLevel`: One of `silent`, `error`, `warning`, `info`, `debug`.
+- No other top-level keys. The schema rejects unknown keys.
+
+**Valid config:**
+
+```json
+{ "input": ["docs/**/*.md"] }
+```
+
+**Invalid config:**
+
+```json
+{ "input": "docs/", "logLevel": "verbose", "recursive": "yes" }
+```
+
+Errors: `logLevel` isn't one of the allowed values, and `recursive` must be a boolean.
+
+See the [`config_v3` schema](https://github.com/doc-detective/doc-detective/blob/main/src/common/src/schemas/src_schemas/config_v3.schema.json) for the full configuration schema.
+
+## Done when
+
+- A validator ran against the input you were given.
+- Each error appears as `[FIELD]: [ERROR REASON]`.
+- The result ends with `Validation PASSED` or `Validation FAILED`, or it tells the user that no validator could confirm the input, and why.

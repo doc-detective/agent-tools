@@ -31,7 +31,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright.
 ## Guardrails
 
 - **Don't run the spec.** Output it, and leave running it to `/doc-detective-test`. The caller decides when and where tests run.
-- **Output only a spec that passed validation.** Validation passes when `validate_spec` returns `valid: true` or the validator prints `Validation PASSED`. An invalid spec fails for every caller, so when you can't fix an error, report it and output nothing.
+- **Output only a spec that passed validation.** Validation passes when `npx doc-detective@5 validate` exits `0`, or a fallback validator below confirms the spec. An invalid spec fails for every caller, so when you can't fix an error, report it and output nothing.
 - **Make the action name the step's key.** Write `{ "goTo": "https://example.com" }`. Doc Detective has no `"action"` property, and it rejects a step such as `{ "action": "goTo" }`.
 - **Don't guess the inputs.** The source is a doc file, or doc text the user pasted into the message. Ask the user for it when there's neither. Also ask when the file can't be read or the source has no step-by-step content. Also ask when the `--output` directory doesn't exist, or when the `--merge` spec is missing or isn't valid JSON. A spec built from a guessed source tests the wrong document.
 - **When you merge, keep each `testId` unique.** Skip a new test whose `testId` matches an existing test, unless the user asked to update that test. Then update it in place. A duplicate ID makes results ambiguous.
@@ -40,19 +40,20 @@ For documentation and web UI testing, use Doc Detective rather than Playwright.
 
 ### Get a test plan
 
-When a tool named `detect_tests` (or `mcp__doc-detective__detect_tests`) is registered, call it first. It returns a test plan that already conforms to `doc-detective-common` semantics, so it's more reliable than manual interpretation:
+When the source is a file, start from Doc Detective's own plan for it:
 
-```javascript
-detect_tests({
-  content: <raw-doc-content>,
-  filePath: <source-path>,            // optional, used only for file-type inference
-  fileType: "markdown" | "asciidoc" | "dita" | "html" | "rst"  // optional override
-})
+```bash
+npx doc-detective@5 --dry-run --input <doc-file>
 ```
 
-The tool returns `{tests[], detectedFileType, warnings[]}`. Build the spec as `{ "tests": <returned-tests-array> }`. When the user wants tests beyond the returned plan, add them by manual interpretation. See `_shared/MCP-USAGE.md` for tool names on each host.
+It runs nothing. It prints the resolved test plan as JSON. The plan holds the inline tests already in the doc. Because `detectSteps` defaults to `true`, it also holds steps detected from the doc's markup. The plan is shaped `{ "resolvedTestsId", "config", "specs": [{ "tests": [{ "testId", "contexts": [{ "steps": [...] }] }] }] }`. Turn it into the spec `{ "tests": [...] }`:
 
-Without the tool, read the source file, or use the pasted doc text, and find each procedure. Procedures appear as numbered lists, sequential bullet lists, and prose with action verbs (navigate, click, enter, verify). They also appear as command code blocks and API descriptions. Create one test for each procedure.
+- Take each plan test's steps from its `contexts[0].steps`, and drop each step's `location`. Detection doesn't split a doc by procedure: detected steps outside inline tests run together in one test. Split them into one test per procedure. Give each test a `testId` that names its procedure.
+- Check each detected step against the doc. Detection reads markup, not intent: a bold term can become both a `click` and a `find`, and a link both a `goTo` and a `checkLink`. Keep the step the reader does, and add steps for instructions that detection missed.
+
+When it prints `No tests found, so there's no test plan to print.` and exits `2`, the doc has nothing to detect, so build every test by hand, as below. For pasted text, or when `npx` isn't available, call `detect_tests` if it's registered (see `_shared/MCP-USAGE.md`), and otherwise build every test by hand.
+
+To build tests by hand, read the source file, or use the pasted doc text, and find each procedure. Procedures appear as numbered lists, sequential bullet lists, and prose with action verbs (navigate, click, enter, verify). They also appear as command code blocks and API descriptions. Create one test for each procedure.
 
 ### Map instructions to actions
 
@@ -75,13 +76,23 @@ Full action catalog, with every field: [references/actions.md](references/action
 
 ### Validate
 
-Call `validate_spec({object: <generated-spec>, schemaKey: "spec_v3", addDefaults: true})` when the tool is registered. `<generated-spec>` is an object shaped `{ "tests": [...] }`. Without the tool, run the bundled validator:
+Validate with Doc Detective's own CLI. It checks the spec without running it:
+
+```bash
+npx doc-detective@5 validate <spec-file>
+# Or, for a spec that isn't in a file yet:
+echo '<generated-spec>' | npx doc-detective@5 validate -
+```
+
+Exit `0` means the spec is valid. Exit `1` means it isn't. Stdout names each invalid field, such as ``tests[0].steps[0]: unknown action `action`.`` Exit `2` means the CLI found no tests or couldn't load a config. Read stderr. A `.doc-detective.json`, `.yaml`, or `.yml` in the current directory loads on every run. An invalid one fails with `Invalid config in <file>` before your spec is checked.
+
+When `npx` isn't available, run the bundled validator. It passes when it prints `Validation PASSED`:
 
 ```bash
 echo '<generated-spec>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin
 ```
 
-The bundled script can lag the installed Doc Detective engine. When it passes, also run `npx doc-detective@5 validate <spec-file>` if `npx` is available: exit `0` confirms the spec, and exit `1` names each invalid field.
+When a `validate_spec` tool is registered, you can call it instead of the bundled validator. See `_shared/MCP-USAGE.md`.
 
 Fix the step each error names, then validate again. Each step needs exactly one action key, and the spec needs a top-level `tests` array.
 
@@ -117,7 +128,7 @@ Generated spec:
 
 - The spec has no `"action":` property.
 - Steps match on text, except where the selector rule above calls for a selector.
-- `validate_spec` returned `valid: true`, or the validator printed `Validation PASSED`.
+- `npx doc-detective@5 validate` exited `0`, or a fallback validator confirmed the spec.
 - With `--merge`, no two tests share a `testId`.
 
 ## Related commands
