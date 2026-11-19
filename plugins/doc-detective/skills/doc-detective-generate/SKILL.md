@@ -1,6 +1,6 @@
 ---
 name: doc-detective-generate
-description: 'Interpret documentation procedures into Doc Detective test specifications without executing'
+description: 'Turn the procedures in a documentation file into a Doc Detective test spec (JSON) without running it. Use when the user wants a spec written or added to, not executed. To run tests or check that docs still work, use doc-detective-test. To put tests inside the doc source as comments, use doc-detective-inject.'
 metadata:
   version: '2.1.1'
   organization: Doc Detective
@@ -13,7 +13,7 @@ user-invocable: true
 
 # Generate Tests Command
 
-**Skill:** `generate`
+**Skill:** `doc-detective:doc-detective-generate`
 
 ## Goal
 
@@ -79,15 +79,17 @@ Without the tool, read the source file and find each procedure. Procedures appea
 
 Match elements by their visible text, as a reader does: write `{ "click": "Submit" }`, not `{ "click": { "selector": "button.submit" } }`. Text matching keeps working when the markup changes. Use a selector only when the docs give one, several elements share the same text, or the element has no visible text.
 
-Full action docs: `skills/doc-detective-doc-testing/references/actions.md`.
+Full action catalog, with every field: [references/actions.md](references/actions.md). Other skills and the specialist agent use it too.
 
 ### Validate
 
 Call `validate_spec({object: <generated-spec>, schemaKey: "spec_v3", addDefaults: true})` when the tool is registered. `<generated-spec>` is an object shaped `{ "tests": [...] }`. Without the tool, run the bundled validator:
 
 ```bash
-echo '<generated-spec>' | node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
+echo '<generated-spec>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin
 ```
+
+The bundled script can lag the installed Doc Detective engine. When it passes, also run `npx doc-detective@5 validate <spec-file>` if `npx` is available: exit `0` confirms the spec, and exit `1` names each invalid field.
 
 Fix the step each error names, then validate again. Each step needs exactly one action key, and the spec needs a top-level `tests` array.
 

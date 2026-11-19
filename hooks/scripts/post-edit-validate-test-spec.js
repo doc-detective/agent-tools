@@ -46,7 +46,7 @@ async function main() {
   const pluginRoot = path.resolve(__dirname, '../..');
   const validatorPath = path.join(
     pluginRoot,
-    'skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js'
+    'skills/doc-detective-test/scripts/doc-detective-validate-test.js'
   );
 
   if (!fs.existsSync(validatorPath)) {

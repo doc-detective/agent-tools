@@ -507,7 +507,7 @@ The plugin includes complete documentation for Doc Detective actions:
 | `saveCookie`/`loadCookie` | Manage session persistence           |
 | `record`/`stopRecord`     | Video recording                      |
 
-See `skills/doc-detective-doc-testing/references/actions.md` for detailed documentation.
+See `skills/doc-detective-generate/references/actions.md` for detailed documentation.
 
 ## Hooks
 

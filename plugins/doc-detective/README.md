@@ -10,22 +10,14 @@ Invoke these slash commands directly:
 
 - **`/doc-detective-generate`** — Interpret documentation procedures into Doc Detective test specifications without executing the tests. Parses docs, maps language to actions, validates the spec, and outputs the result.
 - **`/doc-detective-init`** — Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.
-- **`/doc-detective-inject`** — Inject Doc Detective test specifications into documentation source files as inline comments, placing test steps close to their associated content using semantic pattern matching.
+- **`/doc-detective-inject`** — Inject Doc Detective test specifications into documentation source files as inline comments, placing test steps close to their associated content using semantic pattern matching. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA.
 - **`/doc-detective-install-github-action`** — Install and configure the Doc Detective GitHub Action workflow for automated documentation testing in CI. Detects project context, creates workflow file, and configures action inputs including PR creation, issue creation, and integrations.
 - **`/doc-detective-test`** — Convert documentation procedures into executable Doc Detective test specifications, run them, fix failures, and verify the documentation matches actual behavior.
 - **`/doc-detective-validate`** — Validate Doc Detective test specifications or configuration files to ensure they are correctly structured.
 
-## Supporting skills
-
-Invoked automatically when relevant, not run directly:
-
-- **doc-detective-doc-testing** — Test documentation procedures by converting them to Doc Detective test specifications and executing them. Validates that documented workflows match actual application behavior through automated browser testing.
-- **doc-detective-inline-test-injection** — Inject Doc Detective test specifications directly into documentation files as inline comments. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA formats with automatic format detection and semantic step matching.
-- **doc-detective-project-bootstrap** — Initialize Doc Detective in a repository by detecting documentation, generating minimal configuration, creating tests for identified procedures, and iteratively running and fixing tests with confidence-based suggestions. Supports interactive and CI modes.
-
 ## Agents
 
-- **doc-detective-specialist** — Use this agent for Doc Detective work: configuring Doc Detective, writing or debugging doc tests and inline tests, explaining Docs as Tests concepts, or adding Doc Detective to CI. It answers from the plugin's Doc Detective references and returns working config or spec snippets.
+- **doc-detective-specialist** — Use this agent to answer questions about Doc Detective: how it works, Docs as Tests concepts, action and config syntax, inline test comment syntax, what an error or result means, and which option to choose. It answers from the plugin's Doc Detective references with working snippets. To carry out a task instead, use the matching skill: doc-detective-init (set up), doc-detective-generate (write a spec), doc-detective-test (run or fix tests), doc-detective-validate, doc-detective-inject, or doc-detective-install-github-action (CI). Not for Playwright or other test frameworks, or for developing Doc Detective itself.
 
 ## MCP server
 

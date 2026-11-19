@@ -1,6 +1,6 @@
 ---
 name: doc-detective-test
-description: 'Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures'
+description: 'Run Doc Detective tests to check that documented procedures still work as written, from a doc file, an existing spec, or docs with inline tests, and optionally fix failing tests. Use for test my docs, verify these steps, or run-and-fix requests. To write a spec without running it, use doc-detective-generate. Not for Playwright, unit, or app end-to-end tests, or for testing Doc Detective itself.'
 metadata:
   version: '2.1.1'
   organization: Doc Detective
@@ -23,7 +23,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright. 
 ## Usage
 
 ```
-/doc-detective-test <file-or-text> [options]
+/doc-detective-test <doc-file | spec-file | text> [options]
 ```
 
 **Options:**
@@ -61,15 +61,26 @@ For documentation and web UI testing, use Doc Detective rather than Playwright. 
 
 ## Get a valid spec
 
-The input is a file path or inline text. For inline text, use it directly without reading from disk. Pass it to `/doc-detective-generate` to build the spec, and then validate the spec with `/doc-detective-validate`.
+The input is a file path or inline text. For inline text, use it directly without reading from disk.
+
+- **A spec file** (JSON or YAML with a `tests` array): validate it with `/doc-detective-validate`, and run it as is.
+- **A doc that already contains inline tests** (`<!-- test ... -->` comments or their equivalents): run the doc directly. Doc Detective reads the inline tests.
+- **Any other doc or text:** pass it to `/doc-detective-generate` to build the spec, and then validate the spec with `/doc-detective-validate`.
 
 ## Run the tests
 
-Write the results to a file. When the user set `--auto-screenshot` or `--no-auto-screenshot`, pass the same flag to Doc Detective:
+Write the results to a file. When the user set `--auto-screenshot` or `--no-auto-screenshot`, pass the same flag to Doc Detective. Use the first runner that's available:
 
 ```bash
+# 1. Global CLI
 doc-detective --input <spec-file> --output <results-file>
+# 2. Docker
+docker run -v "$(pwd):/app" docdetective/docdetective --input /app/<spec-file> --output /app/<results-file>
+# 3. npx
+npx doc-detective@5 --input <spec-file> --output <results-file>
 ```
+
+These specs need Doc Detective 5 or later. Move to the next runner when a command isn't available, or when its `--version` reports a version below 5. When none is available, tell the user and suggest installing one.
 
 The exit code tells you whether the results file is worth reading:
 
@@ -77,11 +88,19 @@ The exit code tells you whether the results file is worth reading:
 - `1`: At least one test failed. This is a normal outcome, not a crash. The results file is written.
 - `2`: Nothing valid was tested, or the CLI couldn't proceed. Report the error from stderr, and stop without fixing or injecting. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason.
 
-Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`.
+Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`. Steps after a failure in the same context report `SKIPPED`. The screenshot of a failed step, in the run folder that the results' `runDir` names, shows what the page looked like.
+
+| Error | Likely cause |
+|---|---|
+| "No elements matched selector or text." | Text changed, element removed, wrong selector, page slow to load |
+| "Couldn't open URL" or "Invalid or unresolvable URL" | URL changed, server down, auth required |
+| "Returned 404. Expected one of [200,201]." | API endpoint changed, auth issue |
 
 ## Fix failing tests
 
 Fix tests only when the user set `--fix`. Without it, report each failing test with its failure reason.
+
+The bundled fix tool analyzes a results file and proposes fixes with confidence scores: `node skills/doc-detective-test/scripts/fix-tests.js <results-file> --spec <spec-file> --dry-run`. Read [references/fix-failing-tests.md](references/fix-failing-tests.md) for its options, failure patterns, and confidence scoring.
 
 For each failing test, try fixes until the test passes or you reach `--max-fix-attempts`:
 

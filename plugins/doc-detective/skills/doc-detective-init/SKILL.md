@@ -1,6 +1,6 @@
 ---
 name: doc-detective-init
-description: 'Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop'
+description: 'Set up Doc Detective in a repository that does not use it yet. Finds the docs, writes a config, generates and runs the first tests, fixes failures, and offers CI. Use for adopting, initializing, or getting started with Doc Detective in a project. If the project already has Doc Detective, use doc-detective-test to run tests or doc-detective-generate to add a spec. Not for developing Doc Detective or this plugin.'
 metadata:
   version: '2.1.1'
   organization: Doc Detective
@@ -51,9 +51,11 @@ Leave the repository with working Doc Detective test coverage for its documented
 
 ## Find the documentation
 
-Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`.
+Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`. See [references/doc-patterns.md](references/doc-patterns.md) for detection patterns.
 
-Tests are worth generating only for files that walk a reader through a task. Read each file. Flag it as procedure-heavy when it has three or more numbered steps, or sequential bullet points with action verbs. Such verbs include navigate, click, enter, verify, type, and select.
+Tests are worth generating only for files that walk a reader through a task. Read each file. Flag it as procedure-heavy when it has three or more numbered steps, or sequential bullet points with action verbs. Such verbs include navigate, click, enter, verify, type, and select. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
+
+Report the file counts, the key directories, and the procedure-heavy files to the user.
 
 ## Configure
 
@@ -63,7 +65,7 @@ Follow the "smallest reasonable config" principle: set only what the defaults do
 { "input": "docs", "outputDir": ".doc-detective/results", "detectSteps": false }
 ```
 
-See `skills/doc-detective-project-bootstrap/references/config-guidance.md` for full options.
+See [references/config-guidance.md](references/config-guidance.md) for full options and merge rules.
 
 ## Generate tests
 

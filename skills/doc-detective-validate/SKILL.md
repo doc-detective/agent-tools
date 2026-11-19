@@ -1,6 +1,6 @@
 ---
 name: doc-detective-validate
-description: 'Validate Doc Detective test specifications or configuration files'
+description: 'Check whether an existing Doc Detective test spec or config file (such as .doc-detective.json) is valid, and name each invalid field, without running any tests. To run tests, use doc-detective-test. To write a new spec, use doc-detective-generate.'
 metadata:
   version: '2.1.1'
   organization: Doc Detective
@@ -77,7 +77,7 @@ The tool returns `{valid, errors[], normalizedObject, schemaKey, schemaVersion}`
 
 ```bash
 # Option 1
-echo '<spec-json>' | node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
+echo '<spec-json>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin
 # Option 2: checks specs and inline tests without running them. Exit 0: all valid. Exit 1: some invalid; stdout names
 # each file and field. Exit 2: usage error, bad config, or no tests found. Add --json for {valid, files[{path, valid, errors}]}.
 npx doc-detective@5 validate <spec-file>
