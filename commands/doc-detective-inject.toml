@@ -154,7 +154,7 @@ Injected `test` and `step` comments always run, whatever `detectSteps` says. `de
 
 ## Done when
 
-- Each step has a comment, and each comment the placement rules didn't match has the TODO comment after it. A test kept out of an MDX file for the `*/` rule is the exception: it stays whole in a standalone spec, with no partial copy in the file.
+- Each step has a comment, and each comment the placement rules didn't match has the TODO comment after it. A test kept out of an MDX file for the `*/` rule is the exception. It stays whole in a standalone spec, and the file has no partial copy.
 - `test` and `test end` comments wrap each test.
 - Each step comment uses the syntax for its file type, or the `--syntax` override.
 - Step comments appear in the same order as the spec's steps.
