@@ -100,7 +100,7 @@
     "web-21-sync-feed-troubleshooting"
   ],
   "reps": 3,
-  "current_round": 1,
+  "current_round": 3,
   "goal": {
     "target": "verified_coverage",
     "direction": "higher",
@@ -130,6 +130,7 @@
   },
   "best": {
     "round": 1,
-    "test_score": 0.717
-  }
+    "test_score": 0.739
+  },
+  "stopped": "plateau after round 3: rounds 1-3 within noise on held-out test"
 }
