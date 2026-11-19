@@ -19,11 +19,11 @@ Documentation contains testable assertions — promises to users about what happ
 
 These scripts are available in the extension directory for validating, fixing, and injecting tests:
 
-- **Validate test spec:** `node skills/doc-detective-doc-testing/scripts/dist/doc-detective-validate-test.js <spec-file>`
-- **Validate from stdin:** `echo '<json>' | node skills/doc-detective-doc-testing/scripts/dist/doc-detective-validate-test.js --stdin`
-- **Fix failing tests:** `node skills/doc-detective-doc-testing/scripts/dist/fix-tests.js <results-file> --spec <spec-file> [--threshold 80] [--auto-fix] [--dry-run]`
-- **Inject inline tests (preview):** `node skills/doc-detective-inline-test-injection/scripts/dist/doc-detective-inline-test-injection.js <spec-file> <source-file>`
-- **Inject inline tests (apply):** `node skills/doc-detective-inline-test-injection/scripts/dist/doc-detective-inline-test-injection.js <spec-file> <source-file> --apply`
+- **Validate test spec:** `node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js <spec-file>`
+- **Validate from stdin:** `echo '<json>' | node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin`
+- **Fix failing tests:** `node skills/doc-detective-doc-testing/scripts/fix-tests.js <results-file> --spec <spec-file> [--threshold 80] [--auto-fix] [--dry-run]`
+- **Inject inline tests (preview):** `node skills/doc-detective-inline-test-injection/scripts/inline-test-injection.js <spec-file> <source-file>`
+- **Inject inline tests (apply):** `node skills/doc-detective-inline-test-injection/scripts/inline-test-injection.js <spec-file> <source-file> --apply`
 
 ## Doc Detective Action Reference
 

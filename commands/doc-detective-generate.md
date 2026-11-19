@@ -78,17 +78,10 @@ Full action docs: `skills/doc-detective-doc-testing/references/actions.md`.
 Call `validate_spec({object: <generated-spec>, schemaKey: "spec_v3", addDefaults: true})` when the tool is registered. `<generated-spec>` is an object shaped `{ "tests": [...] }`. Without the tool, run the bundled validator:
 
 ```bash
-echo '<generated-spec>' | node src/skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
+echo '<generated-spec>' | node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
 ```
 
-When validation fails, fix each error and validate again:
-
-| Error | Fix |
-|---|---|
-| "No recognized action" | Add exactly one action key to the step |
-| "type must be object with keys" | Change `"type": "text"` to `{ "type": { "keys": "text", "selector": "..." } }` |
-| "goTo must be string or object with url" | Set `goTo` to a URL string |
-| "tests array required" | Wrap all tests in `{ "tests": [...] }` |
+Fix the step each error names, then validate again. Each step needs exactly one action key, and the spec needs a top-level `tests` array.
 
 ### Output
 

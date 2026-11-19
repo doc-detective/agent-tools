@@ -4,7 +4,7 @@
 
 prompt = """# Install GitHub Action
 
-**Skill:** `doc-detective:install-github-action`
+**Skill:** `doc-detective:doc-detective-install-github-action`
 
 ## Goal
 
@@ -45,7 +45,7 @@ Add a GitHub Actions workflow that runs the project's Doc Detective tests in CI.
 
 The workflow must point at the project's real config and docs:
 
-- Look for an existing Doc Detective config, `.doc-detective.json` or `doc-detective.config.js`, and record its path.
+- Look for an existing Doc Detective config (`.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`), and record its path.
 - Note any existing `doc-detective*.yml` files in `.github/workflows/`, so the new file doesn't conflict with them.
 - Find the docs directory. Use the config's `input` field when there is one. Otherwise, look for common directories such as `docs/`, `documentation/`, `content/`, or `wiki/`. When none exists, use `.`.
 

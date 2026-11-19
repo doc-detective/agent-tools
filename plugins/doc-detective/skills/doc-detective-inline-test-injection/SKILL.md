@@ -1,6 +1,6 @@
 ---
 name: doc-detective-inline-test-injection
-description: 'Inject Doc Detective test specs into documentation source files as inline comments'
+description: 'Reference and script for placing Doc Detective test steps into documentation source as inline comments (Markdown, MDX, HTML, AsciiDoc, reStructuredText, XML/DITA). Used by the doc-testing and project-bootstrap workflows. For a direct user request to inject a spec, doc-detective-inject is the entry point.'
 metadata:
   version: '2.1.0'
   organization: Doc Detective
@@ -120,7 +120,7 @@ During placement, a step's matching text can come from an included file. Open th
 
 ## Configuration
 
-If `.doc-detective.json` or `.doc-detective.yaml` exists in the working directory, its `markupPatterns` field overrides the default content patterns used for placement. See [references/markup-patterns.md](references/markup-patterns.md) for the pattern schema and examples.
+If `.doc-detective.json` or `.doc-detective.yaml` exists in the working directory, its `fileTypes[].markup` patterns override the default content patterns used for placement. See [references/markup-patterns.md](references/markup-patterns.md) for the pattern schema and examples.
 
 > **MDX support.** `.mdx` is not in the default `fileTypes` *name* list, but the built-in `markdown` file type already covers the `.mdx` extension and recognizes the `{/* … */}` inline markers — so MDX inline tests work without extra config. To suppress markup auto-detection on MDX (code fences as `runCode`, etc.) while keeping inline statements, set `detectSteps: false`.
 
@@ -137,6 +137,6 @@ If `.doc-detective.json` or `.doc-detective.yaml` exists in the working director
 
 ## Related skills
 
-- `doc-detective:generate`: Generate test specs from documentation, the opposite direction.
-- `doc-detective:validate`: Validate test specs before injection.
-- `doc-detective:test`: Run test specs after injection.
+- `doc-detective:doc-detective-generate`: Generate test specs from documentation, the opposite direction.
+- `doc-detective:doc-detective-validate`: Validate test specs before injection.
+- `doc-detective:doc-detective-test`: Run test specs after injection.

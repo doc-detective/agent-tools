@@ -82,7 +82,7 @@ A spec built this way looks like this:
 
 ### Known actions
 
-These are the only valid action types:
+These are the valid action types. The validator rejects any other step key:
 - `goTo` - URL string or `{ url: string, waitUntil?: { networkIdleTime?: number, domIdleTime?: number, find?: object }, newTab?: true | string | object, newWindow?: true | string | object, surface?: object }`. `newTab`/`newWindow` open and name a browser tab/window (mutually exclusive; only `goTo` opens tabs and windows).
 - `click` - Text string or `{ selector: string }`
 - `find` - Text string or `{ selector: string, timeout?: number, elementText?: string }`
@@ -101,6 +101,8 @@ These are the only valid action types:
 - `record` - Path string or object (object supports an optional `name`)
 - `stopRecord` - Boolean, null, a recording `name` string, or `{ name }`
 - `annotate` - `{ add?: [...], update?: [...], clear?: true | string[] }` (at least one). Draws persistent annotations into the page for recordings/screenshots; browser-only (skipped without a page)
+- `dragAndDrop` - `{ source, target, duration?, surface? }`. `source` and `target` take a string or an element object (`selector`, `elementText`, `elementId`, ...).
+- `swipe` - A direction string (`"up"`, `"down"`, `"left"`, `"right"`), `{ direction, distance?, duration?, surface? }`, or `{ from: {x, y}, to: {x, y}, duration?, surface? }`.
 
 ## Validate
 
@@ -123,13 +125,13 @@ Write the spec to a temporary file, and preview the injection without `--apply`:
 
 ```bash
 echo '<validated-spec-json>' > /tmp/doc-detective-spec-$(date +%s).json
-node ../doc-detective-inline-test-injection/scripts/doc-detective-inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
+node ../doc-detective-inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path>
 ```
 
 After the user confirms, apply it:
 
 ```bash
-node ../doc-detective-inline-test-injection/scripts/doc-detective-inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
+node ../doc-detective-inline-test-injection/scripts/inline-test-injection.js /tmp/doc-detective-spec-<timestamp>.json <source-file-path> --apply
 ```
 
 For a spec that covers several source files, offer injection separately for each file. Return the full JSON spec whatever the user decides. When the injection tool isn't available, return the spec without injecting it.
