@@ -167,15 +167,16 @@ function routeOf(call) {
 }
 
 // EVAL_ONLY=id1,id2 runs a subset (a pilot, or a trimmed hillclimb slice).
+// loadCases runs once, before the workers start, so the plugin is built once here:
+// a build per worker would race on the output folders.
 async function loadCases() {
+  buildPlugin();
   const cases = JSON.parse(readFileSync(join(EVAL_DIR, 'cases.json'), 'utf8'));
   const only = process.env.EVAL_ONLY?.split(',').map(s => s.trim()).filter(Boolean);
   return only?.length ? cases.filter(c => only.includes(c.id)) : cases;
 }
 
-let built = false;
 async function runCase(input, ctx) {
-  if (!built) { buildPlugin(); built = true; }
   const ws = tempWorkspace('routing');
   try {
     cpSync(join(EVAL_DIR, 'workspaces', input.workspace), ws, { recursive: true });

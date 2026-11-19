@@ -815,5 +815,755 @@
       "hard",
       "negative"
     ]
+  },
+  {
+    "id": "hard-val-will-this-pass",
+    "prompt": "Quick sanity check before I push: would Doc Detective even load tests/login.spec.json, or is something in it malformed?",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-val-yaml-question",
+    "prompt": "Is this OK as a Doc Detective spec?\n\ntests:\n  - steps:\n      - goTo: https://example.com\n      - find:\n          text: Example Domain",
+    "workspace": "empty",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-val-which-field",
+    "prompt": "Something in my .doc-detective.json is wrong but I can't tell what. Which field is the problem?",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-val-schema-version",
+    "prompt": "Does this config still conform to the current schema? {\"input\": \"docs\", \"output\": \"results\", \"runTests\": {\"setup\": \"setup.json\"}}",
+    "workspace": "empty",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-val-pr-gate",
+    "prompt": "Before I open the PR, make sure none of the spec files I touched have errors. Don't run anything.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-val-lint-specs",
+    "prompt": "Lint my Doc Detective specs.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-agent-exit-code",
+    "prompt": "What does it mean when Doc Detective exits with code 2?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-agent-find-vs-click",
+    "prompt": "When should I use a find step with click: true instead of a separate click step?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-agent-why-fail",
+    "prompt": "Why would a goTo step pass but the next find step time out, in general? Not asking about a specific test.",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-agent-context-option",
+    "prompt": "How do contexts and runOn work in Doc Detective? I want to understand them before I touch my config.",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-agent-detect-steps",
+    "prompt": "What's detectSteps actually doing to my markdown?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-agent-compare-tools",
+    "prompt": "How is Doc Detective different from Cypress for checking that our docs are right?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-agent-variables",
+    "prompt": "Can a Doc Detective step read an environment variable? What is the syntax?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-gen-what-would-test",
+    "prompt": "What would a Doc Detective test for docs/api.md look like? Write it out, but leave it out of the doc and don't run it.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-gen-cover-procedure",
+    "prompt": "I need test coverage for the steps in the widget section of the getting started guide. Just the spec file for now.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-gen-from-pasted",
+    "prompt": "Make a Doc Detective spec out of this procedure:\n\n1. Open https://example.com/login\n2. Enter your username and password\n3. Click Sign in\n4. You should see Welcome back",
+    "workspace": "empty",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-gen-update-spec",
+    "prompt": "The sign-in page now asks for a one-time code after the email. Write a new version of the login spec that matches the docs, without running it.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-test-broken-docs",
+    "prompt": "Users say the getting started guide is broken. Find out which step fails.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-test-after-ui-change",
+    "prompt": "We shipped a UI redesign yesterday. Are our documented procedures still accurate?",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-test-flaky",
+    "prompt": "tests/login.spec.json failed in CI last night. Rerun it locally and fix it if it's our spec, not the app.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-test-smoke",
+    "prompt": "Smoke-test the docs.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-inj-keep-together",
+    "prompt": "I want the login test to live right next to the steps it checks, in the markdown, so writers see it when they edit.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject"
+    ],
+    "tags": [
+      "inject",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-inj-mdx",
+    "prompt": "Our docs are moving to MDX. Put Doc Detective steps into docs/getting-started.md as comments that will survive the move.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject"
+    ],
+    "tags": [
+      "inject",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-inj-annotate",
+    "prompt": "Annotate docs/api.md with test steps.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject"
+    ],
+    "tags": [
+      "inject",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-init-new-repo",
+    "prompt": "This docs repo has never been tested. Get it to the point where I can run one command and see which procedures work.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init"
+    ],
+    "tags": [
+      "init",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-init-where-start",
+    "prompt": "We want docs as tests here. Do whatever setup it takes; I don't know where to start.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init"
+    ],
+    "tags": [
+      "init",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-init-config-first",
+    "prompt": "Add Doc Detective to this project, starting with whatever config file it needs.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init"
+    ],
+    "tags": [
+      "init",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-gha-block-merge",
+    "prompt": "Block merges when a documented procedure breaks.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-gha-schedule",
+    "prompt": "Have GitHub check our docs against production every morning and tell us if something drifted.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-gha-pr-results",
+    "prompt": "I want doc test results to show up on every pull request.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-mix-gen-then-ci",
+    "prompt": "The specs are already in tests/. Now wire them into GitHub Actions so they run on every PR.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-mix-explain-then-run",
+    "prompt": "I don't really get how Doc Detective works, but just run the tests in this repo and tell me what failed.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-mix-validate-not-run",
+    "prompt": "Run a check on tests/login.spec.json, but only a schema check: the app isn't up, so don't execute it.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-mix-gen-not-inline",
+    "prompt": "Turn docs/getting-started.md into tests, as a separate JSON file. We do not want comments in the docs.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-pw-write-for-doc",
+    "prompt": "Write Playwright tests that check every step in docs/getting-started.md still works.",
+    "workspace": "docs-project",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-pw-which-tool",
+    "prompt": "Should I use Playwright or Doc Detective to test the procedures in our docs?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-pw-can-dd-run",
+    "prompt": "Can Doc Detective run our existing Playwright scripts, or do they need rewriting?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-pw-release-check",
+    "prompt": "Set up Playwright to verify the procedures in our docs on every release.",
+    "workspace": "docs-project",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-pw-convert",
+    "prompt": "We have Playwright tests in tests/docs/ that walk through our guides. Convert them into Doc Detective specs.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "hard-pw-app-only",
+    "prompt": "Add a Playwright test for the signup form's validation errors.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-python-doctest",
+    "prompt": "Write doc tests for this Python function so the examples in its docstring get checked:\n\ndef add(a, b):\n    \"\"\"Add two numbers.\"\"\"\n    return a + b",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-cypress",
+    "prompt": "Write a Cypress test that signs in and checks the dashboard loads.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-broken-links",
+    "prompt": "Run markdown-link-check over docs/ and fix the dead links it finds.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-frontmatter",
+    "prompt": "Validate the YAML front matter in every page under docs/ against our schema.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-api-contract",
+    "prompt": "Generate a Postman collection from the endpoints described in docs/api.md.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-screenshot-update",
+    "prompt": "Retake the screenshots in the getting started guide with Playwright and save them to docs/images.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-ci-docs-build",
+    "prompt": "Add a GitHub Actions workflow that builds the docs site and fails on broken internal links.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-dd-dev-test",
+    "prompt": "The doc-detective repo has a failing unit test in src/core/utils.test.ts. Figure out why.",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-explain-testing",
+    "prompt": "What is the difference between unit tests and end-to-end tests?",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "hard-neg-validate-json",
+    "prompt": "Is this valid JSON? {\"name\": \"widget\", \"tags\": [\"a\", \"b\",]}",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set",
+      "hard",
+      "negative"
+    ]
   }
 ]

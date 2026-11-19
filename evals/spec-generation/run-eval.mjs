@@ -138,13 +138,18 @@ const REF_EXTS = ['', '.html', '.txt', '.json'];
 // Spec-generation eval: see grade.mjs for the case slices, workspaces, and grading.
 
 import { runClaude, buildPlugin, removeWorkspace } from '../lib/claude-run.mjs';
-import { loadCases, makeWorkspace, ensureServers, findSpec, runDocDetective, gradeRun, stepsOf } from './grade.mjs';
+import { loadCases as loadSpecCases, makeWorkspace, ensureServers, findSpec, runDocDetective, gradeRun, stepsOf } from './grade.mjs';
 
 // --- run (hooks) --------------------------------------------------------------------
 
-let built = false;
+// loadCases runs once, before the workers start, so the plugin is built once here:
+// a build per worker would race on the output folders.
+async function loadCases() {
+  buildPlugin();
+  return loadSpecCases();
+}
+
 async function runCase(c, ctx) {
-  if (!built) { buildPlugin(); built = true; }
   if (c.slice === 'web') await ensureServers();
   const ws = makeWorkspace(c);
   try {
@@ -159,6 +164,7 @@ async function runCase(c, ctx) {
         ...(dd ? [{ role: 'tool_result', content: `[grader] doc-detective exit ${dd.code}: ${JSON.stringify(dd.summary)}` }] : [])],
       tool_calls: run.toolCalls.length,
       num_turns: run.num_turns,
+      cc_cost_usd: run.cost_usd_reported,
       spec, dd,
     };
   } finally {
@@ -171,7 +177,8 @@ async function gradeCase(c, run) { return gradeRun(c, run); }
 
 /** Side-channel perf fields beyond the built-ins (latency_s etc.). */
 function perfFrom(run) {
-  return { tool_calls: run.tool_calls, turns: run.num_turns, spec_steps: stepsOf(run.spec.json).length };
+  // cc_cost_usd: Claude Code's own cost figure, a cross-check on the cost derived from usage.
+  return { tool_calls: run.tool_calls, turns: run.num_turns, spec_steps: stepsOf(run.spec.json).length, cc_cost_usd: run.cc_cost_usd };
 }
 
 

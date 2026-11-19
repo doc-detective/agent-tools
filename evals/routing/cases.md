@@ -1,6 +1,6 @@
-# Routing eval cases (52)
+# Routing eval cases (102)
 
-Each case is one request sent to Claude Code with only this plugin loaded. `expected` is the one correct route (the headline score). Routes in `also accepted` count only toward the secondary lenient score. `none` means no skill and no Doc Detective agent should be invoked.
+Each case is one request sent to Claude Code with only this plugin loaded. `expected` is the one correct route (the headline score). Routes in `also accepted` count only toward the secondary lenient score. `none` means no skill and no Doc Detective agent should be invoked. Cases tagged `hard-set` target the ways routing went wrong in the first baseline: task requests phrased as questions, validity checks, "why" questions, indirect phrasing, two intents, and requests that look like Doc Detective work but aren't.
 
 | id | expected | also accepted | workspace | source | difficulty |
 |---|---|---|---|---|---|
@@ -56,6 +56,56 @@ Each case is one request sent to Claude Code with only this plugin loaded. `expe
 | neg-reference-docs | none | - | docs-project | variant | easy |
 | neg-write-tutorial | none | - | docs-project | variant | hard |
 | neg-vitepress | none | - | docs-project | variant | hard |
+| hard-val-will-this-pass | doc-detective-validate | - | configured-project | hard-set | hard |
+| hard-val-yaml-question | doc-detective-validate | - | empty | hard-set | hard |
+| hard-val-which-field | doc-detective-validate | - | configured-project | hard-set | hard |
+| hard-val-schema-version | doc-detective-validate | - | empty | hard-set | hard |
+| hard-val-pr-gate | doc-detective-validate | - | configured-project | hard-set | hard |
+| hard-val-lint-specs | doc-detective-validate | - | configured-project | hard-set | hard |
+| hard-agent-exit-code | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-agent-find-vs-click | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-agent-why-fail | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-agent-context-option | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-agent-detect-steps | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-agent-compare-tools | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-agent-variables | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-gen-what-would-test | doc-detective-generate | - | docs-project | hard-set | hard |
+| hard-gen-cover-procedure | doc-detective-generate | - | docs-project | hard-set | hard |
+| hard-gen-from-pasted | doc-detective-generate | - | empty | hard-set | hard |
+| hard-gen-update-spec | doc-detective-generate | - | configured-project | hard-set | hard |
+| hard-test-broken-docs | doc-detective-test | - | configured-project | hard-set | hard |
+| hard-test-after-ui-change | doc-detective-test | - | configured-project | hard-set | hard |
+| hard-test-flaky | doc-detective-test | - | configured-project | hard-set | hard |
+| hard-test-smoke | doc-detective-test | - | configured-project | hard-set | hard |
+| hard-inj-keep-together | doc-detective-inject | - | configured-project | hard-set | hard |
+| hard-inj-mdx | doc-detective-inject | - | docs-project | hard-set | hard |
+| hard-inj-annotate | doc-detective-inject | - | docs-project | hard-set | hard |
+| hard-init-new-repo | doc-detective-init | - | docs-project | hard-set | hard |
+| hard-init-where-start | doc-detective-init | - | docs-project | hard-set | hard |
+| hard-init-config-first | doc-detective-init | - | docs-project | hard-set | hard |
+| hard-gha-block-merge | doc-detective-install-github-action | - | configured-project | hard-set | hard |
+| hard-gha-schedule | doc-detective-install-github-action | - | configured-project | hard-set | hard |
+| hard-gha-pr-results | doc-detective-install-github-action | - | configured-project | hard-set | hard |
+| hard-mix-gen-then-ci | doc-detective-install-github-action | - | configured-project | hard-set | hard |
+| hard-mix-explain-then-run | doc-detective-test | - | configured-project | hard-set | hard |
+| hard-mix-validate-not-run | doc-detective-validate | - | configured-project | hard-set | hard |
+| hard-mix-gen-not-inline | doc-detective-generate | - | docs-project | hard-set | hard |
+| hard-pw-write-for-doc | agent:doc-detective-specialist | - | docs-project | hard-set | hard |
+| hard-pw-which-tool | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-pw-can-dd-run | agent:doc-detective-specialist | - | empty | hard-set | hard |
+| hard-pw-release-check | agent:doc-detective-specialist | - | docs-project | hard-set | hard |
+| hard-pw-convert | doc-detective-generate | - | docs-project | hard-set | hard |
+| hard-pw-app-only | none | - | docs-project | hard-set | hard |
+| hard-neg-python-doctest | none | - | empty | hard-set | hard |
+| hard-neg-cypress | none | - | docs-project | hard-set | hard |
+| hard-neg-broken-links | none | - | docs-project | hard-set | hard |
+| hard-neg-frontmatter | none | - | docs-project | hard-set | hard |
+| hard-neg-api-contract | none | - | docs-project | hard-set | hard |
+| hard-neg-screenshot-update | none | - | docs-project | hard-set | hard |
+| hard-neg-ci-docs-build | none | - | docs-project | hard-set | hard |
+| hard-neg-dd-dev-test | none | - | empty | hard-set | hard |
+| hard-neg-explain-testing | none | - | empty | hard-set | hard |
+| hard-neg-validate-json | none | - | empty | hard-set | hard |
 
 ## Requests
 
@@ -369,4 +419,319 @@ Write a tutorial for creating widgets, with numbered steps.
 
 ```text
 Set up a VitePress docs site in this repo.
+```
+
+### hard-val-will-this-pass
+
+```text
+Quick sanity check before I push: would Doc Detective even load tests/login.spec.json, or is something in it malformed?
+```
+
+### hard-val-yaml-question
+
+```text
+Is this OK as a Doc Detective spec?
+
+tests:
+  - steps:
+      - goTo: https://example.com
+      - find:
+          text: Example Domain
+```
+
+### hard-val-which-field
+
+```text
+Something in my .doc-detective.json is wrong but I can't tell what. Which field is the problem?
+```
+
+### hard-val-schema-version
+
+```text
+Does this config still conform to the current schema? {"input": "docs", "output": "results", "runTests": {"setup": "setup.json"}}
+```
+
+### hard-val-pr-gate
+
+```text
+Before I open the PR, make sure none of the spec files I touched have errors. Don't run anything.
+```
+
+### hard-val-lint-specs
+
+```text
+Lint my Doc Detective specs.
+```
+
+### hard-agent-exit-code
+
+```text
+What does it mean when Doc Detective exits with code 2?
+```
+
+### hard-agent-find-vs-click
+
+```text
+When should I use a find step with click: true instead of a separate click step?
+```
+
+### hard-agent-why-fail
+
+```text
+Why would a goTo step pass but the next find step time out, in general? Not asking about a specific test.
+```
+
+### hard-agent-context-option
+
+```text
+How do contexts and runOn work in Doc Detective? I want to understand them before I touch my config.
+```
+
+### hard-agent-detect-steps
+
+```text
+What's detectSteps actually doing to my markdown?
+```
+
+### hard-agent-compare-tools
+
+```text
+How is Doc Detective different from Cypress for checking that our docs are right?
+```
+
+### hard-agent-variables
+
+```text
+Can a Doc Detective step read an environment variable? What is the syntax?
+```
+
+### hard-gen-what-would-test
+
+```text
+What would a Doc Detective test for docs/api.md look like? Write it out, but leave it out of the doc and don't run it.
+```
+
+### hard-gen-cover-procedure
+
+```text
+I need test coverage for the steps in the widget section of the getting started guide. Just the spec file for now.
+```
+
+### hard-gen-from-pasted
+
+```text
+Make a Doc Detective spec out of this procedure:
+
+1. Open https://example.com/login
+2. Enter your username and password
+3. Click Sign in
+4. You should see Welcome back
+```
+
+### hard-gen-update-spec
+
+```text
+The sign-in page now asks for a one-time code after the email. Write a new version of the login spec that matches the docs, without running it.
+```
+
+### hard-test-broken-docs
+
+```text
+Users say the getting started guide is broken. Find out which step fails.
+```
+
+### hard-test-after-ui-change
+
+```text
+We shipped a UI redesign yesterday. Are our documented procedures still accurate?
+```
+
+### hard-test-flaky
+
+```text
+tests/login.spec.json failed in CI last night. Rerun it locally and fix it if it's our spec, not the app.
+```
+
+### hard-test-smoke
+
+```text
+Smoke-test the docs.
+```
+
+### hard-inj-keep-together
+
+```text
+I want the login test to live right next to the steps it checks, in the markdown, so writers see it when they edit.
+```
+
+### hard-inj-mdx
+
+```text
+Our docs are moving to MDX. Put Doc Detective steps into docs/getting-started.md as comments that will survive the move.
+```
+
+### hard-inj-annotate
+
+```text
+Annotate docs/api.md with test steps.
+```
+
+### hard-init-new-repo
+
+```text
+This docs repo has never been tested. Get it to the point where I can run one command and see which procedures work.
+```
+
+### hard-init-where-start
+
+```text
+We want docs as tests here. Do whatever setup it takes; I don't know where to start.
+```
+
+### hard-init-config-first
+
+```text
+Add Doc Detective to this project, starting with whatever config file it needs.
+```
+
+### hard-gha-block-merge
+
+```text
+Block merges when a documented procedure breaks.
+```
+
+### hard-gha-schedule
+
+```text
+Have GitHub check our docs against production every morning and tell us if something drifted.
+```
+
+### hard-gha-pr-results
+
+```text
+I want doc test results to show up on every pull request.
+```
+
+### hard-mix-gen-then-ci
+
+```text
+The specs are already in tests/. Now wire them into GitHub Actions so they run on every PR.
+```
+
+### hard-mix-explain-then-run
+
+```text
+I don't really get how Doc Detective works, but just run the tests in this repo and tell me what failed.
+```
+
+### hard-mix-validate-not-run
+
+```text
+Run a check on tests/login.spec.json, but only a schema check: the app isn't up, so don't execute it.
+```
+
+### hard-mix-gen-not-inline
+
+```text
+Turn docs/getting-started.md into tests, as a separate JSON file. We do not want comments in the docs.
+```
+
+### hard-pw-write-for-doc
+
+```text
+Write Playwright tests that check every step in docs/getting-started.md still works.
+```
+
+### hard-pw-which-tool
+
+```text
+Should I use Playwright or Doc Detective to test the procedures in our docs?
+```
+
+### hard-pw-can-dd-run
+
+```text
+Can Doc Detective run our existing Playwright scripts, or do they need rewriting?
+```
+
+### hard-pw-release-check
+
+```text
+Set up Playwright to verify the procedures in our docs on every release.
+```
+
+### hard-pw-convert
+
+```text
+We have Playwright tests in tests/docs/ that walk through our guides. Convert them into Doc Detective specs.
+```
+
+### hard-pw-app-only
+
+```text
+Add a Playwright test for the signup form's validation errors.
+```
+
+### hard-neg-python-doctest
+
+```text
+Write doc tests for this Python function so the examples in its docstring get checked:
+
+def add(a, b):
+    """Add two numbers."""
+    return a + b
+```
+
+### hard-neg-cypress
+
+```text
+Write a Cypress test that signs in and checks the dashboard loads.
+```
+
+### hard-neg-broken-links
+
+```text
+Run markdown-link-check over docs/ and fix the dead links it finds.
+```
+
+### hard-neg-frontmatter
+
+```text
+Validate the YAML front matter in every page under docs/ against our schema.
+```
+
+### hard-neg-api-contract
+
+```text
+Generate a Postman collection from the endpoints described in docs/api.md.
+```
+
+### hard-neg-screenshot-update
+
+```text
+Retake the screenshots in the getting started guide with Playwright and save them to docs/images.
+```
+
+### hard-neg-ci-docs-build
+
+```text
+Add a GitHub Actions workflow that builds the docs site and fails on broken internal links.
+```
+
+### hard-neg-dd-dev-test
+
+```text
+The doc-detective repo has a failing unit test in src/core/utils.test.ts. Figure out why.
+```
+
+### hard-neg-explain-testing
+
+```text
+What is the difference between unit tests and end-to-end tests?
+```
+
+### hard-neg-validate-json
+
+```text
+Is this valid JSON? {"name": "widget", "tags": ["a", "b",]}
 ```

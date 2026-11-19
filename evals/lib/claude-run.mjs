@@ -79,8 +79,12 @@ export function runClaude({ prompt, cwd, model, disallowedTools = [], stopWhen, 
         e.failure_class = 'harness';
         return reject(e);
       }
+      // The result event carries the session's final usage. Per-message usage
+      // in the stream is a mid-stream snapshot that undercounts output, so it's
+      // only the fallback for a session the eval stopped before it finished.
       const usage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 };
-      for (const u of state.usageById.values())
+      const source = state.result?.usage ? [state.result.usage] : state.usageById.values();
+      for (const u of source)
         for (const k of Object.keys(usage)) usage[k] += u?.[k] ?? 0;
       const transient = /overloaded|rate.?limit|529|429/i.test(state.stderr + JSON.stringify(state.result ?? ''));
       if (state.result?.is_error && transient) {
