@@ -127,7 +127,7 @@ The build has its own cache entry, about 70 MB, separate from the runtime and br
 
 ### Earlier Doc Detective versions, or `cache: false`
 
-Doc Detective versions before 5.6.0 build WDA into the cache folder only when you run `doc-detective install ios`. To keep that build between runs, point `DOC_DETECTIVE_CACHE_DIR` at a folder, restore and save that folder with `actions/cache`, and run `install ios` before the action. That folder already holds the runtime and browsers, so set `cache: false` on the action to avoid storing them twice.
+Doc Detective versions before 5.6.0 build WDA into the cache folder only when you run `doc-detective install ios`. To keep that build between runs, point `DOC_DETECTIVE_CACHE_DIR` at a folder, restore and save that folder with `actions/cache`, and run `npx doc-detective@<version> install ios --yes` before the action. That folder already holds the runtime and browsers, so set `cache: false` on the action to avoid storing them twice.
 
 Key the cache with a run-scoped key plus a `restore-keys` fallback. An exact cache hit never saves again, so a static key keeps restoring a build made for an older Xcode or driver. A run-scoped key always saves, and `restore-keys` restores the newest earlier entry.
 
@@ -339,6 +339,8 @@ name: Doc Detective
 
 on:
   pull_request:
+  push:
+    branches: [main]   # seeds the cache that every pull request can restore
 
 permissions:
   contents: read
@@ -354,7 +356,7 @@ jobs:
       - uses: doc-detective/github-action@v2
 ```
 
-iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required. With Doc Detective 5.6.0 or later, the first iOS test builds WebDriverAgent, and the action caches that build for later runs. See [iOS tests](#ios-tests) for details.
+iOS tests must run on a macOS runner (for example, `macos-latest`), since iOS simulators are macOS-only. Nothing beyond the action itself is required. With Doc Detective 5.6.0 or later, the first iOS test builds WebDriverAgent, and the action caches that build for later runs. A cache saved by a `pull_request` run is visible only to that pull request. The `push` trigger on the default branch saves the entry that new pull requests restore. See [iOS tests](#ios-tests) for details.
 
 ### iOS tests with a Doc Detective version before 5.6.0
 
