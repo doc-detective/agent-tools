@@ -32,7 +32,7 @@ DD_REPO=<doc-detective checkout> MANNI_PREFIX=<npm prefix> \
   node evals/spec-generation/run-eval.mjs --flow .claude/hillclimb/spec-generation --variant baseline --model claude-sonnet-5-5
 ```
 
-Each case runs `/doc-detective:doc-detective-generate <page> --output tests/<id>.spec.json` in a fresh workspace, then runs the spec it wrote with `doc-detective@5.6.0`, what `doc-detective@5` resolves to, so the session's own runs and the grade agree. The grade compares the spec's steps with the case's `expected.json`, one generated step per expected step. A spec that only opens the page passes but covers almost nothing, so `complete` needs both.
+Each case runs `/doc-detective:doc-detective-generate <page> --output tests/<id>.spec.json` in a fresh workspace. The runner then runs the spec it wrote with `doc-detective@5.6.0`. That's what `doc-detective@5` resolves to, so the session's own runs and the grade agree. The grade compares the spec's steps with the case's `expected.json`, one generated step per expected step. A spec that only opens the page passes but covers almost nothing, so `complete` needs both.
 
 A case's `workspace/` folder, when it has one, is the repo the session starts in: the files, folders, and config the page names. The runner adds the page and an empty `tests/` (with a `.gitkeep`). For manni and dd-docs it makes the result one git commit, so no history holds the page's original tests. Doc Detective runs from the workspace root with [doc-detective.config.json](spec-generation/doc-detective.config.json), which resolves relative paths from there (`relativePathBase: "cwd"`).
 

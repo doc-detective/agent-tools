@@ -37,8 +37,8 @@ test servers (`http://localhost:8092` static pages, `http://localhost:8093` echo
 The [manni](cases-manni.md) and [dd-docs](cases-dd-docs.md) slices use the same format,
 plus `doc_path` (where the page goes in the workspace) and a `workspace/` folder.
 
-Each doc writes a field or button label exactly as the page shows it, colon included
-(`Type here:`, `Echo input:`), so a spec that finds the label by its text matches.
+Each doc writes a field or button label exactly as the page shows it, colon included.
+For example, `Type here:` and `Echo input:`. A spec that finds the label by its text then matches.
 
 ## Cases
 
