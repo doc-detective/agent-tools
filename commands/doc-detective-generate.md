@@ -33,8 +33,8 @@ For documentation and web UI testing, use Doc Detective rather than Playwright.
 - **Don't run the spec.** Output it, and leave running it to `/doc-detective-test`. The caller decides when and where tests run.
 - **Output only a spec that passed validation.** Validation passes when `validate_spec` returns `valid: true` or the validator prints `Validation PASSED`. An invalid spec fails for every caller, so when you can't fix an error, report it and output nothing.
 - **Make the action name the step's key.** Write `{ "goTo": "https://example.com" }`. Doc Detective has no `"action"` property, and it rejects a step such as `{ "action": "goTo" }`.
-- **Don't guess the inputs.** When the source file is missing or can't be read, or it has no step-by-step content, ask the user for it. Also ask when the `--output` directory doesn't exist, or when the `--merge` spec is missing or isn't valid JSON. A spec built from a guessed source tests the wrong document.
-- **When you merge, keep each `testId` unique.** Skip a new test whose `testId` matches an existing test. A duplicate ID makes results ambiguous.
+- **Don't guess the inputs.** The source is a doc file, or doc text the user pasted into the message. Ask the user for it only when there's neither, when the file can't be read, or when the source has no step-by-step content. Also ask when the `--output` directory doesn't exist, or when the `--merge` spec is missing or isn't valid JSON. A spec built from a guessed source tests the wrong document.
+- **When you merge, keep each `testId` unique.** Skip a new test whose `testId` matches an existing test, unless the user asked to update that test. Then replace it. A duplicate ID makes results ambiguous.
 
 ## Build the spec
 
@@ -52,7 +52,7 @@ detect_tests({
 
 The tool returns `{tests[], detectedFileType, warnings[]}`. Build the spec as `{ "tests": <returned-tests-array> }`. When the user wants tests beyond the returned plan, add them by manual interpretation. See `_shared/MCP-USAGE.md` for tool names on each host.
 
-Without the tool, read the source file and find each procedure. Procedures appear as numbered lists, sequential bullet lists, and prose with action verbs (navigate, click, enter, verify). They also appear as command code blocks and API descriptions. Create one test for each procedure.
+Without the tool, read the source file, or use the pasted doc text, and find each procedure. Procedures appear as numbered lists, sequential bullet lists, and prose with action verbs (navigate, click, enter, verify). They also appear as command code blocks and API descriptions. Create one test for each procedure.
 
 ### Map instructions to actions
 
@@ -89,7 +89,7 @@ Fix the step each error names, then validate again. Each step needs exactly one 
 
 - **No flags:** Print the JSON spec to stdout.
 - **`--output <path>`:** Write the spec to that path.
-- **`--merge <file>`:** Load the existing spec, and add each new test whose `testId` isn't already there. Validate the merged spec, then output it.
+- **`--merge <file>`:** Load the existing spec, and add each new test whose `testId` isn't already there. When the user asked to update the spec because the docs changed, replace each existing test whose `testId` matches a regenerated one. Validate the merged spec, then output it.
 
 ## Example
 
