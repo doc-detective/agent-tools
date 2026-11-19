@@ -1565,5 +1565,590 @@
       "hard",
       "negative"
     ]
+  },
+  {
+    "id": "h2-init-es",
+    "prompt": "Configura Doc Detective en este repositorio para que podamos probar la documentación.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init"
+    ],
+    "tags": [
+      "init",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-test-de",
+    "prompt": "Führ bitte die Doc-Detective-Tests in diesem Repo aus und sag mir, was fehlschlägt.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-val-fr",
+    "prompt": "Est-ce que le fichier tests/login.spec.json est une spécification Doc Detective valide ?",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-agent-pt",
+    "prompt": "Qual é a diferença entre um teste inline e um arquivo de spec no Doc Detective?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-val-terse",
+    "prompt": "dd validate tests/login.spec.json",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-test-typo",
+    "prompt": "run the doc detctive tests pls",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-gen-terse",
+    "prompt": "spec for docs/api.md, no run",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-gha-terse",
+    "prompt": "doc tests in CI",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-inj-terse",
+    "prompt": "inline the login spec into getting-started.md",
+    "workspace": "configured-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject"
+    ],
+    "tags": [
+      "inject",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-test-check-docs",
+    "prompt": "Check that the docs still work.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-val-check-spec",
+    "prompt": "Check the spec file for mistakes before anyone runs it.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-test-verify-spec",
+    "prompt": "Verify tests/login.spec.json against the running app.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-val-config-keys",
+    "prompt": "Are all the keys in .doc-detective.json ones Doc Detective actually recognizes?",
+    "workspace": "configured-project",
+    "expected": "doc-detective-validate",
+    "accept": [
+      "doc-detective-validate"
+    ],
+    "tags": [
+      "validate",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-agent-dry-run",
+    "prompt": "What does the --dry-run flag do in Doc Detective?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-agent-results-file",
+    "prompt": "How do I read the results file Doc Detective writes? What do WARNING and SKIPPED mean there?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-agent-input-glob",
+    "prompt": "Can the input setting in a Doc Detective config take a glob pattern?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-agent-screenshot-compare",
+    "prompt": "How does Doc Detective decide whether a new screenshot differs enough from the old one to fail?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-agent-best-practice",
+    "prompt": "Is it better to keep Doc Detective tests inline in the docs or in separate spec files for a big docs site?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-agent-cypress-docs",
+    "prompt": "Our team wants Cypress to check that our tutorials' steps still work. Would Doc Detective be a better fit?",
+    "workspace": "empty",
+    "expected": "agent:doc-detective-specialist",
+    "accept": [
+      "agent:doc-detective-specialist"
+    ],
+    "tags": [
+      "concept",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-gen-yaml",
+    "prompt": "Write the Doc Detective tests for docs/getting-started.md as YAML instead of JSON, and save them; I will run them later.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-gen-api-only",
+    "prompt": "Only the API calls in docs/api.md need tests. Write a spec for those and nothing else, without running it.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-gen-extend",
+    "prompt": "Add a test for the widget creation steps to tests/login.spec.json. Do not run it yet.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-generate",
+    "accept": [
+      "doc-detective-generate"
+    ],
+    "tags": [
+      "generate",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-test-one-file",
+    "prompt": "Just test docs/getting-started.md, nothing else.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-test",
+    "accept": [
+      "doc-detective-test"
+    ],
+    "tags": [
+      "test",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-inj-from-scratch",
+    "prompt": "docs/api.md has no tests yet. Write some and put them in the file as inline comments.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject"
+    ],
+    "tags": [
+      "inject",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-inj-asciidoc",
+    "prompt": "We also publish an AsciiDoc version of the getting started guide. Put inline Doc Detective steps in the AsciiDoc source the same way.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-inject",
+    "accept": [
+      "doc-detective-inject"
+    ],
+    "tags": [
+      "inject",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-init-monorepo",
+    "prompt": "Set up Doc Detective for the docs folder of this repo only, and leave the rest of the repo alone.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init"
+    ],
+    "tags": [
+      "init",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-init-no-config",
+    "prompt": "There's no Doc Detective config here yet. Create one and get a first test passing.",
+    "workspace": "docs-project",
+    "expected": "doc-detective-init",
+    "accept": [
+      "doc-detective-init"
+    ],
+    "tags": [
+      "init",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-gha-nightly-issue",
+    "prompt": "Run the doc tests every night in GitHub Actions and open an issue when one fails.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-gha-existing-workflow",
+    "prompt": "We already have a CI workflow. Add a Doc Detective job to GitHub Actions alongside it.",
+    "workspace": "configured-project",
+    "expected": "doc-detective-install-github-action",
+    "accept": [
+      "doc-detective-install-github-action"
+    ],
+    "tags": [
+      "install-github-action",
+      "hard-set-2",
+      "hard",
+      "positive"
+    ]
+  },
+  {
+    "id": "h2-neg-json-schema",
+    "prompt": "Does this match our widget JSON schema? {\"id\": 3, \"name\": \"Gear\", \"price\": \"12\"}",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-yaml-syntax",
+    "prompt": "Why does this YAML fail to parse?\n\nsteps:\n  - name: build\n   run: npm test",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-playwright-vs-cypress",
+    "prompt": "For end-to-end testing our web app, should we pick Playwright or Cypress?",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-explain-flaky",
+    "prompt": "Why are my Jest tests flaky in CI but fine locally?",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-write-howto",
+    "prompt": "Write a how-to page for resetting a widget, in the same style as docs/getting-started.md.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-docs-as-code",
+    "prompt": "Explain what docs-as-code means and how it differs from a wiki.",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-openapi-examples",
+    "prompt": "Check that the request examples in docs/api.md match our OpenAPI spec.",
+    "workspace": "docs-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-dd-release-notes",
+    "prompt": "Draft release notes for Doc Detective 5.6 from the doc-detective repo's merged PRs.",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-gha-lint",
+    "prompt": "Add a GitHub Actions job that runs markdownlint on docs/.",
+    "workspace": "configured-project",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
+  },
+  {
+    "id": "h2-neg-spec-word",
+    "prompt": "Write a product spec for a new widget sharing feature.",
+    "workspace": "empty",
+    "expected": "none",
+    "accept": [
+      "none"
+    ],
+    "tags": [
+      "none",
+      "hard-set-2",
+      "hard",
+      "negative"
+    ]
   }
 ]

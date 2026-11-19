@@ -1,6 +1,6 @@
-# Routing eval cases (102)
+# Routing eval cases (141)
 
-Each case is one request sent to Claude Code with only this plugin loaded. `expected` is the one correct route (the headline score). Routes in `also accepted` count only toward the secondary lenient score. `none` means no skill and no Doc Detective agent should be invoked. Cases tagged `hard-set` target the ways routing went wrong in the first baseline. They include task requests phrased as questions, validity checks, and "why" questions. Others use indirect phrasing or two intents, or look like Doc Detective work but aren't.
+Each case is one request sent to Claude Code with only this plugin loaded. `expected` is the one correct route (the headline score). Routes in `also accepted` count only toward the secondary lenient score. `none` means no skill and no Doc Detective agent should be invoked. Cases tagged `hard-set` target the ways routing went wrong in the first baseline. They include task requests phrased as questions, validity checks, and "why" questions. Others use indirect phrasing or two intents, or look like Doc Detective work but aren't. Cases tagged `hard-set-2` add requests in other languages, terse or misspelled requests, run-versus-validate ambiguity, questions about flags and results, and negatives that press on the wider descriptions.
 
 | id | expected | also accepted | workspace | source | difficulty |
 |---|---|---|---|---|---|
@@ -106,6 +106,45 @@ Each case is one request sent to Claude Code with only this plugin loaded. `expe
 | hard-neg-dd-dev-test | none | - | empty | hard-set | hard |
 | hard-neg-explain-testing | none | - | empty | hard-set | hard |
 | hard-neg-validate-json | none | - | empty | hard-set | hard |
+| h2-init-es | doc-detective-init | - | docs-project | hard-set-2 | hard |
+| h2-test-de | doc-detective-test | - | configured-project | hard-set-2 | hard |
+| h2-val-fr | doc-detective-validate | - | configured-project | hard-set-2 | hard |
+| h2-agent-pt | agent:doc-detective-specialist | - | empty | hard-set-2 | hard |
+| h2-val-terse | doc-detective-validate | - | configured-project | hard-set-2 | hard |
+| h2-test-typo | doc-detective-test | - | configured-project | hard-set-2 | hard |
+| h2-gen-terse | doc-detective-generate | - | docs-project | hard-set-2 | hard |
+| h2-gha-terse | doc-detective-install-github-action | - | configured-project | hard-set-2 | hard |
+| h2-inj-terse | doc-detective-inject | - | configured-project | hard-set-2 | hard |
+| h2-test-check-docs | doc-detective-test | - | configured-project | hard-set-2 | hard |
+| h2-val-check-spec | doc-detective-validate | - | configured-project | hard-set-2 | hard |
+| h2-test-verify-spec | doc-detective-test | - | configured-project | hard-set-2 | hard |
+| h2-val-config-keys | doc-detective-validate | - | configured-project | hard-set-2 | hard |
+| h2-agent-dry-run | agent:doc-detective-specialist | - | empty | hard-set-2 | hard |
+| h2-agent-results-file | agent:doc-detective-specialist | - | empty | hard-set-2 | hard |
+| h2-agent-input-glob | agent:doc-detective-specialist | - | empty | hard-set-2 | hard |
+| h2-agent-screenshot-compare | agent:doc-detective-specialist | - | empty | hard-set-2 | hard |
+| h2-agent-best-practice | agent:doc-detective-specialist | - | empty | hard-set-2 | hard |
+| h2-agent-cypress-docs | agent:doc-detective-specialist | - | empty | hard-set-2 | hard |
+| h2-gen-yaml | doc-detective-generate | - | docs-project | hard-set-2 | hard |
+| h2-gen-api-only | doc-detective-generate | - | docs-project | hard-set-2 | hard |
+| h2-gen-extend | doc-detective-generate | - | configured-project | hard-set-2 | hard |
+| h2-test-one-file | doc-detective-test | - | configured-project | hard-set-2 | hard |
+| h2-inj-from-scratch | doc-detective-inject | - | docs-project | hard-set-2 | hard |
+| h2-inj-asciidoc | doc-detective-inject | - | docs-project | hard-set-2 | hard |
+| h2-init-monorepo | doc-detective-init | - | docs-project | hard-set-2 | hard |
+| h2-init-no-config | doc-detective-init | - | docs-project | hard-set-2 | hard |
+| h2-gha-nightly-issue | doc-detective-install-github-action | - | configured-project | hard-set-2 | hard |
+| h2-gha-existing-workflow | doc-detective-install-github-action | - | configured-project | hard-set-2 | hard |
+| h2-neg-json-schema | none | - | empty | hard-set-2 | hard |
+| h2-neg-yaml-syntax | none | - | empty | hard-set-2 | hard |
+| h2-neg-playwright-vs-cypress | none | - | empty | hard-set-2 | hard |
+| h2-neg-explain-flaky | none | - | empty | hard-set-2 | hard |
+| h2-neg-write-howto | none | - | docs-project | hard-set-2 | hard |
+| h2-neg-docs-as-code | none | - | empty | hard-set-2 | hard |
+| h2-neg-openapi-examples | none | - | docs-project | hard-set-2 | hard |
+| h2-neg-dd-release-notes | none | - | empty | hard-set-2 | hard |
+| h2-neg-gha-lint | none | - | configured-project | hard-set-2 | hard |
+| h2-neg-spec-word | none | - | empty | hard-set-2 | hard |
 
 ## Requests
 
@@ -734,4 +773,242 @@ What is the difference between unit tests and end-to-end tests?
 
 ```text
 Is this valid JSON? {"name": "widget", "tags": ["a", "b",]}
+```
+
+### h2-init-es
+
+```text
+Configura Doc Detective en este repositorio para que podamos probar la documentación.
+```
+
+### h2-test-de
+
+```text
+Führ bitte die Doc-Detective-Tests in diesem Repo aus und sag mir, was fehlschlägt.
+```
+
+### h2-val-fr
+
+```text
+Est-ce que le fichier tests/login.spec.json est une spécification Doc Detective valide ?
+```
+
+### h2-agent-pt
+
+```text
+Qual é a diferença entre um teste inline e um arquivo de spec no Doc Detective?
+```
+
+### h2-val-terse
+
+```text
+dd validate tests/login.spec.json
+```
+
+### h2-test-typo
+
+```text
+run the doc detctive tests pls
+```
+
+### h2-gen-terse
+
+```text
+spec for docs/api.md, no run
+```
+
+### h2-gha-terse
+
+```text
+doc tests in CI
+```
+
+### h2-inj-terse
+
+```text
+inline the login spec into getting-started.md
+```
+
+### h2-test-check-docs
+
+```text
+Check that the docs still work.
+```
+
+### h2-val-check-spec
+
+```text
+Check the spec file for mistakes before anyone runs it.
+```
+
+### h2-test-verify-spec
+
+```text
+Verify tests/login.spec.json against the running app.
+```
+
+### h2-val-config-keys
+
+```text
+Are all the keys in .doc-detective.json ones Doc Detective actually recognizes?
+```
+
+### h2-agent-dry-run
+
+```text
+What does the --dry-run flag do in Doc Detective?
+```
+
+### h2-agent-results-file
+
+```text
+How do I read the results file Doc Detective writes? What do WARNING and SKIPPED mean there?
+```
+
+### h2-agent-input-glob
+
+```text
+Can the input setting in a Doc Detective config take a glob pattern?
+```
+
+### h2-agent-screenshot-compare
+
+```text
+How does Doc Detective decide whether a new screenshot differs enough from the old one to fail?
+```
+
+### h2-agent-best-practice
+
+```text
+Is it better to keep Doc Detective tests inline in the docs or in separate spec files for a big docs site?
+```
+
+### h2-agent-cypress-docs
+
+```text
+Our team wants Cypress to check that our tutorials' steps still work. Would Doc Detective be a better fit?
+```
+
+### h2-gen-yaml
+
+```text
+Write the Doc Detective tests for docs/getting-started.md as YAML instead of JSON, and save them; I will run them later.
+```
+
+### h2-gen-api-only
+
+```text
+Only the API calls in docs/api.md need tests. Write a spec for those and nothing else, without running it.
+```
+
+### h2-gen-extend
+
+```text
+Add a test for the widget creation steps to tests/login.spec.json. Do not run it yet.
+```
+
+### h2-test-one-file
+
+```text
+Just test docs/getting-started.md, nothing else.
+```
+
+### h2-inj-from-scratch
+
+```text
+docs/api.md has no tests yet. Write some and put them in the file as inline comments.
+```
+
+### h2-inj-asciidoc
+
+```text
+We also publish an AsciiDoc version of the getting started guide. Put inline Doc Detective steps in the AsciiDoc source the same way.
+```
+
+### h2-init-monorepo
+
+```text
+Set up Doc Detective for the docs folder of this repo only, and leave the rest of the repo alone.
+```
+
+### h2-init-no-config
+
+```text
+There's no Doc Detective config here yet. Create one and get a first test passing.
+```
+
+### h2-gha-nightly-issue
+
+```text
+Run the doc tests every night in GitHub Actions and open an issue when one fails.
+```
+
+### h2-gha-existing-workflow
+
+```text
+We already have a CI workflow. Add a Doc Detective job to GitHub Actions alongside it.
+```
+
+### h2-neg-json-schema
+
+```text
+Does this match our widget JSON schema? {"id": 3, "name": "Gear", "price": "12"}
+```
+
+### h2-neg-yaml-syntax
+
+```text
+Why does this YAML fail to parse?
+
+steps:
+  - name: build
+   run: npm test
+```
+
+### h2-neg-playwright-vs-cypress
+
+```text
+For end-to-end testing our web app, should we pick Playwright or Cypress?
+```
+
+### h2-neg-explain-flaky
+
+```text
+Why are my Jest tests flaky in CI but fine locally?
+```
+
+### h2-neg-write-howto
+
+```text
+Write a how-to page for resetting a widget, in the same style as docs/getting-started.md.
+```
+
+### h2-neg-docs-as-code
+
+```text
+Explain what docs-as-code means and how it differs from a wiki.
+```
+
+### h2-neg-openapi-examples
+
+```text
+Check that the request examples in docs/api.md match our OpenAPI spec.
+```
+
+### h2-neg-dd-release-notes
+
+```text
+Draft release notes for Doc Detective 5.6 from the doc-detective repo's merged PRs.
+```
+
+### h2-neg-gha-lint
+
+```text
+Add a GitHub Actions job that runs markdownlint on docs/.
+```
+
+### h2-neg-spec-word
+
+```text
+Write a product spec for a new widget sharing feature.
 ```
