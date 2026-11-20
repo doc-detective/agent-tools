@@ -99,7 +99,7 @@ A step proves the page right only when it does what the page does and checks wha
 
 - **Give each command the page shows its own step, as the page writes it.** Keep its arguments and flags. The page may run a command one way and then another, such as with `--dry-run` and then without, or with each `--format`. Each one is a step. Don't swap in a `--dry-run` or your own arguments for the command the page runs. When the command needs files, create them in the spec.
 - **Set `stdio` to output the page shows.** Pick its summary line, or the line that names the problem, once you've seen the command print it. A step with no `stdio` checks only the exit code.
-- **Reproduce the problem the page shows.** When the page shows a command reporting an error, a warning, or a failed check, create the file that has that problem, then assert the line the page shows for it. On clean files, the command reports nothing.
+- **Reproduce the problem the page shows.** The page may show a command reporting an error, a warning, or a failed check. Create the file that has that problem, then assert the line the page shows for it. On clean files, the command reports nothing.
 - **Run an example spec's steps.** When the page shows a spec or test for the reader to run, put its steps in your spec. Don't write the example to a file and only validate it.
 
 ### Validate
