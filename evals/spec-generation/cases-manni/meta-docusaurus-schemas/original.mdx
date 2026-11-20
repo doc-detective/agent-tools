@@ -1,0 +1,325 @@
+---
+title: Built-in Docusaurus schemas
+description: The docusaurus docs, blog, and pages front matter schemas shipped with manni meta, covering every field, the rules they enforce, and the ones they deliberately skip.
+---
+
+import { Aside, Tabs, TabItem } from '@astrojs/starlight/components';
+
+manni meta ships the front matter contract of **Docusaurus 3.10** as three built-in
+schemas, one per content plugin:
+
+| Id | Plugin | Fields | Upstream reference | JSON |
+|---|---|---|---|---|
+| `docusaurus:docs:3.10` | `@docusaurus/plugin-content-docs` | 25 | [Docs front matter](https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-docs#markdown-front-matter) | [`docusaurus-docs/3.10.json`](/manni/schemas/docusaurus-docs/3.10.json) |
+| `docusaurus:blog:3.10` | `@docusaurus/plugin-content-blog` | 20 | [Blog front matter](https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-blog#markdown-front-matter) | [`docusaurus-blog/3.10.json`](/manni/schemas/docusaurus-blog/3.10.json) |
+| `docusaurus:pages:3.10` | `@docusaurus/plugin-content-pages` | 9 | [Pages front matter](https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-pages#markdown-front-matter) | [`docusaurus-pages/3.10.json`](/manni/schemas/docusaurus-pages/3.10.json) |
+
+Each **JSON** link is the schema itself, at a [permanent, version-pinned
+URL](/manni/meta/reference/built-in-schemas/#the-published-urls). A Docusaurus
+site's front matter contract is the thing most likely to be checked by something
+other than manni meta. These are the three worth handing to another tool directly.
+
+| Property | Value |
+|---|---|
+| Dialect | [Draft 2020-12](/manni/meta/reference/schema-resolution/#dialects) |
+| Additional properties | Allowed (`additionalProperties: true`) |
+| Required fields | None, in any of the three |
+| Reference kind | [builtin](/manni/meta/reference/schema-resolution/#reference-kinds) |
+| On by default | No; see [turning one on](#wire-them-up) |
+
+## Format checks, not presence checks
+
+Docusaurus marks **no front matter field as required** in any of the three
+plugins. A page with an empty `---` block builds fine. These schemas mirror
+that: they constrain the shape of every field the plugins document, and demand
+none of them.
+
+That makes them the opposite of the [taxonomy
+schemas](/manni/meta/reference/taxonomy-schemas/), which require their key. Turning
+a Docusaurus schema on cannot fail a page that was already building. It can only
+catch a value your site would have rejected, or silently mishandled, later.
+
+## Why check what Docusaurus already validates
+
+Docusaurus validates its own front matter at build time, so these schemas are
+not a substitute for it. They earn their place three ways:
+
+- **One report instead of one failure.** A Docusaurus build stops at the first
+  bad file. `manni meta validate` reports every offending page in the docs set in
+  one run, with a line number for each.
+- **Before a build, not during one.** Validation needs no site config, no
+  install of Docusaurus, and no build step. It runs in seconds on a pull request
+  that touches ten files.
+- **Alongside your own standard.** These schemas claim neither `type` nor
+  `action`, so they compose with any of the [taxonomy
+  vocabularies](/manni/meta/reference/taxonomy-schemas/). One command holds a page
+  to the generator's contract *and* your docs set's conventions, attributing
+  each failure to the schema that raised it. (Stacking with
+  [`google:okf:0.1`](/manni/meta/reference/okf-schema/) is the one exception. Both
+  define `tags`, and [their definitions
+  disagree](/manni/meta/reference/built-in-schemas/#two-kinds-of-built-in).)
+
+## Fields
+
+<Tabs>
+<TabItem label="docs">
+
+| Field | Type | Constraint |
+|---|---|---|
+| `id` | string | n/a |
+| `title` | string | may be empty |
+| `description` | string | may be empty |
+| `slug` | string | n/a |
+| `sidebar_label` | string | n/a |
+| `sidebar_position` | number | n/a |
+| `sidebar_class_name` | string | n/a |
+| `sidebar_key` | string | n/a |
+| `sidebar_custom_props` | object | n/a |
+| `displayed_sidebar` | string or null | n/a |
+| `pagination_label` | string | n/a |
+| `pagination_next` | string or null | n/a |
+| `pagination_prev` | string or null | n/a |
+| `hide_title` | boolean | n/a |
+| `hide_table_of_contents` | boolean | n/a |
+| `toc_min_heading_level` | number | 2–6 |
+| `toc_max_heading_level` | number | 2–6 |
+| `parse_number_prefixes` | boolean | n/a |
+| `custom_edit_url` | string or null | `uri-reference` |
+| `keywords` | array of string | n/a |
+| `image` | string | `uri-reference` |
+| `tags` | array | string, or object with `label` **and** `permalink` |
+| `draft` | boolean | not both with `unlisted` |
+| `unlisted` | boolean | not both with `draft` |
+| `last_update` | object | `author` and/or `date`, at least one, nothing else |
+
+</TabItem>
+<TabItem label="blog">
+
+| Field | Type | Constraint |
+|---|---|---|
+| `authors` | string, object, or array | an `authors.yml` key, an inline author, or a list of either |
+| `author` | string | deprecated in favor of `authors` |
+| `author_url` | string | `uri-reference`, deprecated |
+| `author_image_url` | string | `uri-reference`, deprecated |
+| `author_title` | string | deprecated |
+| `title` | string | n/a |
+| `title_meta` | string | n/a |
+| `sidebar_label` | string | n/a |
+| `date` | string | n/a |
+| `description` | string | may be empty |
+| `slug` | string | n/a |
+| `keywords` | array of string | n/a |
+| `image` | string | `uri-reference` |
+| `tags` | array | string, or object with `label` **and** `permalink` |
+| `draft` | boolean | not both with `unlisted` |
+| `unlisted` | boolean | not both with `draft` |
+| `hide_table_of_contents` | boolean | n/a |
+| `toc_min_heading_level` | number | 2–6 |
+| `toc_max_heading_level` | number | 2–6 |
+| `last_update` | object | `author` and/or `date`, at least one, nothing else |
+
+</TabItem>
+<TabItem label="pages">
+
+| Field | Type | Constraint |
+|---|---|---|
+| `title` | string | may be empty |
+| `description` | string | may be empty |
+| `keywords` | array of string | n/a |
+| `image` | string | `uri-reference` |
+| `slug` | string | n/a |
+| `wrapperClassName` | string | n/a |
+| `hide_table_of_contents` | boolean | n/a |
+| `draft` | boolean | not both with `unlisted` |
+| `unlisted` | boolean | not both with `draft` |
+
+Standalone pages carry no sidebar, pagination, or tag metadata, which is why
+this set is the smallest of the three.
+
+</TabItem>
+</Tabs>
+
+### The rules worth knowing
+
+**`sidebar_position` is a number.** Quoting it makes it a string, and Docusaurus
+rejects it. This is the most common front matter mistake these schemas catch:
+
+```text
+✗ docs/install.md
+    /sidebar_position  must be number  (line 3)  [docusaurus:docs:3.10]
+```
+
+**`draft` and `unlisted` are mutually exclusive.** Setting both to `true` is the
+one cross-field rule Docusaurus enforces, and the schemas encode it. Either flag
+on its own is fine. Because JSON Schema expresses this as a conditional, it
+reports twice. Once on the field to change, and once on the rule as a whole:
+
+```text
+✗ docs/install.md
+    /unlisted  must be equal to constant     (line 4)  [docusaurus:docs:3.10]
+    (root)     must match "then" schema      (line 1)  [docusaurus:docs:3.10]
+```
+
+Read the first line, then drop `unlisted` (or `draft`) and both clear.
+
+**`last_update` takes `author`, `date`, or both, and nothing else.** It is the
+only place the schemas forbid unknown keys, because a misspelled `autor` there
+is silently dropped rather than reported.
+
+**`image` and `custom_edit_url` are URI *references*.** A site-root path like
+`/img/social/card.png` is legal. These use `uri-reference` rather than `uri`,
+which would wrongly reject every relative path.
+
+**Tag objects need both halves.** A tag is either a plain string or an object
+carrying `label` *and* `permalink`. Half an object fails.
+
+## What these schemas do not check
+
+- **`toc_min_heading_level` ≤ `toc_max_heading_level`.** Docusaurus enforces the
+  relationship between the two; JSON Schema cannot express a comparison between
+  sibling fields without a non-portable extension. Each is range-checked to 2–6
+  on its own, and an inverted pair passes here and fails at build time.
+- **Unknown keys.** Docusaurus calls `.unknown()` on its own validators, so
+  themes and plugins routinely add front matter of their own. Being stricter
+  than Docusaurus would fail working sites, so these schemas allow extra keys.
+- **Whether a reference resolves.** `pagination_next`, `displayed_sidebar`, and
+  `authors` are checked for shape, not for whether the id, sidebar, or
+  `authors.yml` entry they name exists.
+
+<Aside type="tip" title="Catching front matter typos">
+Since unknown keys are allowed, a misspelled `sidebar_positon` passes both
+manni meta and Docusaurus. It is simply ignored, and the page lands wherever the
+default ordering puts it. If your docs set has no plugin-specific front matter,
+stack a strict local schema alongside the built-in to close that gap:
+
+```json title="schemas/docusaurus-strict.schema.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "id": {}, "title": {}, "description": {}, "slug": {},
+    "sidebar_label": {}, "sidebar_position": {}, "sidebar_class_name": {},
+    "sidebar_key": {}, "sidebar_custom_props": {}, "displayed_sidebar": {},
+    "pagination_label": {}, "pagination_next": {}, "pagination_prev": {},
+    "hide_title": {}, "hide_table_of_contents": {},
+    "toc_min_heading_level": {}, "toc_max_heading_level": {},
+    "parse_number_prefixes": {}, "custom_edit_url": {}, "keywords": {},
+    "image": {}, "tags": {}, "draft": {}, "unlisted": {}, "last_update": {}
+  }
+}
+```
+
+The empty `{}` schemas accept any value. Typing is the built-in's job, and this
+file only polices the key names.
+
+Because it closes the door on everything unlisted, it also closes it on the
+*editorial* keys you stack alongside. Adding
+[`diataxis:diataxis:1.0`](/manni/meta/reference/taxonomy-schemas/) to the same run
+makes every page fail with `must NOT have additional property 'type'`, since
+each schema in a set applies in full. Add `type`, `action`, or whatever your
+standard uses to `properties` before turning this on.
+</Aside>
+
+## Wire them up
+
+A Docusaurus site has three content roots with three different contracts. Each
+root is a document set the whole site thinks in, so declare the three as
+[collections](/manni/meta/reference/configuration/#collections) and point one
+[override](/manni/meta/reference/configuration/#overrides) at each:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: guides
+    paths: [docs]
+  - name: blog
+    paths: [blog]
+  - name: pages
+    paths: [src/pages]
+
+meta:
+  overrides:
+    - collection: guides
+      schemas:
+        - docusaurus:docs:3.10
+        - diataxis:diataxis:1.0
+    - collection: blog
+      schemas:
+        - docusaurus:blog:3.10
+    - collection: pages
+      schemas:
+        - docusaurus:pages:3.10
+```
+
+Two things about the names. `docs` is refused, because `manni meta query` builds
+a table of that name and each collection becomes a view beside it. So the
+Docusaurus `docs/` root is `guides` here. That leaves `pages` free for
+`src/pages`, the root Docusaurus itself calls pages and whose schema is named
+for it. And once the roots are named, a run can address one of them:
+`manni meta validate --collection blog`.
+
+The first matching override wins, so order them from most to least specific. For
+a one-off run, pass the id directly:
+
+```bash
+manni meta validate docs/ -s docusaurus:docs:3.10
+```
+
+<Aside type="note" title="Versioned docs and i18n">
+Docusaurus copies docs into `versioned_docs/` and `i18n/`, which carry the same
+front matter contract. Add them to the `pages` collection's `paths` so the same
+override reaches them, or widen its glob to `**/docs/**`.
+</Aside>
+
+<Aside type="danger" title="Always pass `--fields` when you run `fill` against these">
+[`manni meta fill`](/manni/meta/reference/cli/#meta-fill) offers every *absent* property to
+the model, not only the required ones. That suits a descriptive schema, but most
+Docusaurus fields are **structural**. A model reading page content cannot know
+the right `sidebar_position`, `pagination_next`, `displayed_sidebar`, `slug`, or
+`custom_edit_url`. Left unrestricted, `fill` will ask about all 24 of them, and
+any proposal clearing the confidence gate is written to the file. That silently
+reorders your sidebar, rewires next/previous links, or changes a page's URL.
+
+Restrict it to the fields that actually follow from the prose:
+
+```bash
+manni meta fill docs/ -s docusaurus:docs:3.10 --fields description,keywords --dry-run
+```
+
+None of these fields are required, so `fill` exits `0` either way; a bad
+proposal will not be caught by a later `validate` run.
+</Aside>
+
+## Versioning
+
+The version segment is the Docusaurus **minor** release the contract was
+transcribed from, because that is where fields are added. `sidebar_key` is a
+recent arrival. A new minor arrives as a new id rather than a change to
+`docusaurus:docs:3.10`, so upgrading manni meta never retightens a check you
+already passed. Pin the id matching the Docusaurus you run, and move it when you
+upgrade.
+
+<Aside type="caution" title="TOML front matter and dates">
+`date` and `last_update.date` are typed as strings, which is what YAML front
+matter (`--- … ---`) produces. TOML front matter (`+++ … +++`) parses a bare
+date into a native date value instead, which fails the string check. Quote it,
+or use YAML. This applies equally to OKF's `timestamp`.
+</Aside>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"docusaurus-schemas","description":"The three Docusaurus built-ins, demonstrated with the committed fixtures this page describes."} */}
+{/* step {"description":"A docs page carrying every documented field passes.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-valid.md -s docusaurus:docs:3.10","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"A quoted sidebar_position is a string, and fails naming the field.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-bad-sidebar-position.md -s docusaurus:docs:3.10","exitCodes":[1],"stdio":"sidebar_position"}} */}
+{/* step {"description":"A heading level past 6 is out of range.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-bad-toc-level.md -s docusaurus:docs:3.10","exitCodes":[1],"stdio":"toc_max_heading_level"}} */}
+{/* step {"description":"draft and unlisted are mutually exclusive.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-draft-and-unlisted.md -s docusaurus:docs:3.10","exitCodes":[1],"stdio":"docusaurus:docs:3.10"}} */}
+{/* step {"description":"last_update forbids unknown keys, so a misspelled author fails.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-bad-last-update.md -s docusaurus:docs:3.10","exitCodes":[1],"stdio":"last_update"}} */}
+{/* step {"description":"Front matter the plugin does not define is tolerated, as Docusaurus tolerates it.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-unknown-key.md -s docusaurus:docs:3.10","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"The blog schema accepts a post carrying every documented field.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/blog-valid.md -s docusaurus:blog:3.10","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"The blog schema rejects a numeric authors value.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/blog-bad-authors.md -s docusaurus:blog:3.10","exitCodes":[1],"stdio":"authors"}} */}
+{/* step {"description":"The pages schema accepts a page carrying every documented field.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/pages-valid.md -s docusaurus:pages:3.10","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"The pages schema rejects a non-string wrapperClassName.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/pages-bad-wrapper-class.md -s docusaurus:pages:3.10","exitCodes":[1],"stdio":"wrapperClassName"}} */}
+{/* step {"description":"`--fields` narrows fill to the fields that follow from prose, rather than the structural ones a model cannot infer.","runShell":{"command":"npx @hawkeyexl/manni meta fill test/fixtures/docusaurus/docs-unknown-key.md -s docusaurus:docs:3.10 --provider mock --fields description --dry-run -f json","exitCodes":[0],"stdio":"/\"field\": \"/description\"/"}} */}
+{/* test end */}

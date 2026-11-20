@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "testId": "checkout-controls",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/enhanced-elements.html"
+        },
+        {
+          "find": {
+            "selector": "#complex-section button",
+            "elementText": "Submit Order"
+          }
+        },
+        {
+          "find": {
+            "elementText": "Disabled Button",
+            "elementAttribute": {
+              "disabled": true
+            }
+          }
+        },
+        {
+          "find": "Modal Title"
+        },
+        {
+          "find": "Modal content goes here"
+        },
+        {
+          "find": {
+            "selector": "#result-message",
+            "elementText": "Operation successful"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "find-shorthand.html", "note": "Step 1: open the editor toolbar page."},
+    {"stepType": "click", "match_any": ["\"i\"", "shorthand-id-target"], "note": "Step 2: click the I button."},
+    {"stepType": "find", "match": "Id click landed", "note": "Step 2: Id click landed appears."},
+    {"stepType": "click", "match_any": ["\"s\"", "shorthand-selector-target"], "note": "Step 3: click the S button."},
+    {"stepType": "find", "match": "Selector click landed", "note": "Step 3: Selector click landed appears."},
+    {"stepType": "click", "match": "Start late arrival", "note": "Step 4: queue the background job."},
+    {"stepType": "find", "match": "Shorthand late arrival", "note": "Step 4: Shorthand late arrival appears after about 1.5 s."}
+  ],
+  "must_not": []
+}

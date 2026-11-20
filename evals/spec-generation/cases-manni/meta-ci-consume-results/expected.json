@@ -1,0 +1,77 @@
+{
+  "source": "manni/docs/src/content/docs/meta/ci/consume-results.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-ci-consume-results.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "docs/**/*.md"
+      ],
+      "match_any": [
+        "--format json",
+        "-f json"
+      ],
+      "note": "`npx -y @hawkeyexl/manni meta validate \"docs/**/*.md\" --format json`: one object with `summary` and `results`."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta get",
+        "title,tags",
+        "docs/intro.md"
+      ],
+      "note": "`manni meta get title,tags docs/intro.md` reads the named fields."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta get",
+        "title,tags",
+        "docs/**/*.md"
+      ],
+      "match_any": [
+        "--format json",
+        "-f json"
+      ],
+      "note": "For scripting, `get title,tags \"docs/**/*.md\" --format json`: one object per file with `file`, `present`, `values`."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta get",
+        "author.name",
+        "tags.0"
+      ],
+      "note": "Reach into nested metadata with dot-notation: `get author.name,tags.0 docs/intro.md`."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta get",
+        "/author/name"
+      ],
+      "note": "The JSON Pointer form: `get '/author/name' docs/intro.md`."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta get",
+        "type",
+        "docs/**/*.md"
+      ],
+      "match_any": [
+        "--format json",
+        "-f json"
+      ],
+      "note": "Extract one field across a tree: `get type \"docs/**/*.md\" --format json` (the page pipes it into jq)."
+    }
+  ],
+  "must_not": [
+    "Treat the TypeScript `runValidate` sample as a command to run. It is library code, and `@hawkeyexl/manni` is not installed as a dependency in the workspace.",
+    "Depend on `jq`. It is not installed here, so a step that pipes into it fails; check the JSON manni prints instead."
+  ],
+  "scaffolding": [
+    "docs/intro.md carries `title: Introduction`, `tags: [onboarding, guide]` and a nested `author` (`name: Jane`), so the page's get commands print values. docs/bad-timestamp.md fails on `timestamp`, so the json report has a failing result, and docs/no-frontmatter.md has no metadata block (`present: false`). No config. jq is not on PATH, so the jq pipelines are scored by their manni half only. Doc Detective runs runShell through Git Bash here, which rewrites a leading-slash argument to a Windows path even when quoted, so the page's `get '/author/name' docs/intro.md` exits 2; the reference puts the pointer after another field (`author.name,/author/name`)."
+  ]
+}

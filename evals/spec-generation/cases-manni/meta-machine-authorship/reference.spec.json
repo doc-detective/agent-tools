@@ -1,0 +1,143 @@
+{
+  "specId": "manni-meta-machine-authorship",
+  "description": "manni docs meta/set-up/machine-authorship, run in a repo with docs/limits.md and a config that does not yet manage provenance.",
+  "tests": [
+    {
+      "testId": "machine-authorship",
+      "steps": [
+        {
+          "description": "Configure it: manage provenance from git, and name the machines.",
+          "runShell": {
+            "command": "node -e \"require('fs').appendFileSync('manni.config.yaml','  derive:\\n    fields: [provenance]\\n    sources: [git]\\n    machines: [\\'*[bot]\\', \\'noreply@anthropic.com\\']\\n')\""
+          }
+        },
+        {
+          "description": "get reads the record from git before anything is stamped.",
+          "runShell": {
+            "command": "manni meta get provenance docs/limits.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "docs/limits.md: provenance="
+          }
+        },
+        {
+          "description": "The agent rewrites lines 9 to 11 of docs/limits.md.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='docs/limits.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace('The limit is 100 requests a minute.\\nBursts of 20 are allowed.\\nA 429 response carries Retry-After.','The limit is 120 requests a minute.\\nBursts of 30 are allowed.\\nA 429 response carries a Retry-After header.'))\""
+          }
+        },
+        {
+          "description": "derive attributes the uncommitted lines to the machine --generated-by names (the flag form of MANNI_GENERATED_BY).",
+          "runShell": {
+            "command": "manni meta derive --generated-by claude-fable-5",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/provenance  lines 9-11: \\(unset\\) → claude-fable-5  \\(git: uncommitted\\)[\\s\\S]*1 file, 1 changed, 1 range written/"
+          }
+        },
+        {
+          "description": "The stamp counts body lines.",
+          "runShell": {
+            "command": "node -e \"console.log(require('fs').readFileSync('docs/limits.md','utf8'))\"",
+            "stdio": "/generated-by: claude-fable-5\\s+lines: 6-8/"
+          }
+        },
+        {
+          "description": "Commit the edit and its stamp together.",
+          "runShell": {
+            "command": "git -c user.name=eval -c user.email=eval@example.invalid commit -qam \"Rewrite the limits\"",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "get shows the record in file lines, asserted by the stamp.",
+          "runShell": {
+            "command": "manni meta get provenance docs/limits.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "docs/limits.md: provenance=lines 13-15 claude-fable-5 (asserted)"
+          }
+        },
+        {
+          "description": "A range git already attributes to another machine is refused.",
+          "runShell": {
+            "command": "manni meta derive docs/limits.md:13-15 --generated-by claude-sonnet-5",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "/docs\\/limits\\.md:13-15: blame attributes these lines to claude-fable-5 \\([0-9a-f]+\\); --generated-by cannot overrule a recorded machine\\./"
+          }
+        },
+        {
+          "description": "Attribute line 17 by hand.",
+          "runShell": {
+            "command": "manni meta derive docs/limits.md:17 --generated-by claude-sonnet-5",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/provenance  lines 17: \\(unset\\) → claude-sonnet-5  \\(git: blame [0-9a-f]+\\)/"
+          }
+        },
+        {
+          "description": "Commit the stamp.",
+          "runShell": {
+            "command": "git -c user.name=eval -c user.email=eval@example.invalid commit -qam \"Attribute the support line\"",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "A person rewrites one of the agent's three lines and commits.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='docs/limits.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace('Bursts of 30 are allowed.','Short bursts of 30 are allowed.'))\""
+          }
+        },
+        {
+          "description": "Commit the person's edit.",
+          "runShell": {
+            "command": "git -c user.name=eval -c user.email=eval@example.invalid commit -qam \"Copy edit\"",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "validate fails at the first line of the range.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/provenance lines 16-18 changed since claude-fable-5 wrote them — run manni meta derive  \\(line 16\\)  \\[derived:stale\\]/"
+          }
+        },
+        {
+          "description": "derive blames the range again.",
+          "runShell": {
+            "command": "manni meta derive",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "provenance  lines 16-18: claude-fable-5 → re-derived  (git: pin)"
+          }
+        },
+        {
+          "description": "The rewritten line dropped out of the record, and validate passes.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        }
+      ]
+    }
+  ]
+}

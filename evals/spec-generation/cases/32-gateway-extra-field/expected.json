@@ -1,0 +1,9 @@
+{
+  "steps": [
+    {"stepType": "httpRequest", "match": ["8092/api/feedback", "post", "fast setup", "added by server"], "note": "Step 1: POST through the gateway; the response has rating, comment, and extraField: added by server."},
+    {"stepType": "httpRequest", "match": ["8093/api/feedback", "post", "fast setup", "allowAdditionalFields"], "note": "Step 2: 'exactly the two fields ... and nothing else' - only allowAdditionalFields: false makes the step fail on an extra field such as extraField."}
+  ],
+  "must_not": [
+    "Expecting extraField in the response from port 8093."
+  ]
+}

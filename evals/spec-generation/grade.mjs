@@ -155,10 +155,27 @@ export function findSpec(ws, c) {
   return { path: null, text: null, json: null };
 }
 
+/**
+ * The workspace's `.doc-detective.json`, as the session left it, with the eval's
+ * config on top. A session may register an OpenAPI description or set variables
+ * there, as a user would; the eval's keys (headless Chrome, no telemetry) always win.
+ * Relative paths resolve the default way, against the spec file, unless the session's
+ * own config says otherwise. An unreadable workspace config is ignored.
+ */
+export function gradeConfig(ws) {
+  let own = {};
+  try { own = JSON.parse(readFileSync(join(ws, '.doc-detective.json'), 'utf8')); } catch {}
+  if (!own || typeof own !== 'object' || Array.isArray(own)) own = {};
+  return { ...own, ...JSON.parse(readFileSync(join(EVAL_DIR, 'doc-detective.config.json'), 'utf8')) };
+}
+
 export function runDocDetective(c, ws, specPath) {
   const out = join(ws, '.dd-out');
-  // One config for every slice: headless Chrome, relative paths from the workspace root.
-  const args = ['-y', `doc-detective@${DD_VERSION}`, '-i', specPath, '-c', join(EVAL_DIR, 'doc-detective.config.json'),
+  mkdirSync(out, { recursive: true });
+  // Beside the session's own config, so relative paths in it resolve as they would there.
+  const config = join(ws, '.dd-grade-config.json');
+  writeFileSync(config, JSON.stringify(gradeConfig(ws)));
+  const args = ['-y', `doc-detective@${DD_VERSION}`, '-i', specPath, '-c', config,
                 '-o', join(out, 'results.json'), '--output-dir', out,
                 '--no-auto-update', '--no-telemetry', '--no-hints', '--no-input'];
   return new Promise(resolvePromise => {

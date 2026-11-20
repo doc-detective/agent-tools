@@ -1,0 +1,25 @@
+{
+  "source": "manni/docs/src/content/docs/cite/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-landing.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "--id", "added fetch-timeout"],
+      "note": "Pin both ends: `cite add docs/limits.md:9 lib/limits.ts:2 --id fetch-timeout` adds the entry to the frontmatter."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "1 passed, 0 failed, 0 findings"],
+      "note": "Check it: both ends current, `1 file checked, 1 passed, 0 failed, 0 findings`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "changed since"],
+      "note": "After the timeout is raised to 30 seconds and committed, the check fails: `changed since <commit>, 1 commit`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/limits.md has frontmatter (with `type`, so metadata validation passes) and the fetch-timeout sentence on line 9; lib/limits.ts has FETCH_TIMEOUT_MS on line 2; manni.config.yaml declares the docs collection. The page has someone raise the timeout to 30 seconds and commit, so a spec edits lib/limits.ts and commits (the citation commit first, so the count reads 1 commit)."
+  ]
+}

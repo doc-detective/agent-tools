@@ -1,0 +1,26 @@
+{
+  "source": "manni/docs/src/content/docs/meta/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-landing.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "required property 'type'"],
+      "note": "Run it on path/to/your-doc.md: the file is missing `type`, and the result names the field."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "google:okf:0.1"],
+      "may_share": true,
+      "note": "The failing result names the schema that flagged it. It can be the same step as the missing field."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "1 file checked, 1 passed, 0 failed, 0 errors"],
+      "note": "Fix the field and run it again: the file passes with the summary the page quotes."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "path/to/your-doc.md, the page's example document, without `type` (no config, so the built-in OKF schema applies). The page's loop is run, read the result, fix the field, run it again, so a spec adds `type` between the two runs."
+  ]
+}

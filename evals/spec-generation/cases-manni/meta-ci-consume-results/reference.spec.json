@@ -1,0 +1,81 @@
+{
+  "specId": "manni-meta-ci-consume-results",
+  "description": "manni docs meta/ci/consume-results, run in a repo whose docs/ holds a passing page with nested frontmatter, a bad timestamp, and a page with no frontmatter.",
+  "tests": [
+    {
+      "testId": "consume-results",
+      "steps": [
+        {
+          "description": "--format json prints one object with a summary and a results array; a failing file makes it exit 1.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate \"docs/**/*.md\" --format json",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/\"summary\": \\{[\\s\\S]*\"failed\": 2[\\s\\S]*\"results\": \\[[\\s\\S]*\"instancePath\": \"\\/timestamp\"[\\s\\S]*\"keyword\": \"format\"[\\s\\S]*\"subject\": \"date-time\"/"
+          }
+        },
+        {
+          "description": "The get command reads named fields from one file.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta get title,tags docs/intro.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/title=Introduction[\\s\\S]*tags=/"
+          }
+        },
+        {
+          "description": "get --format json: one object per file with file, present and values.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta get title,tags \"docs/**/*.md\" --format json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/\"file\": \"docs\\/intro\\.md\",\\s*\"present\": true,\\s*\"values\": \\{\\s*\"title\": \"Introduction\",\\s*\"tags\": \\[\\s*\"onboarding\",\\s*\"guide\"/"
+          }
+        },
+        {
+          "description": "A file with no frontmatter reports present: false.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta get title,tags \"docs/**/*.md\" --format json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/\"file\": \"docs\\/no-frontmatter\\.md\",\\s*\"present\": false/"
+          }
+        },
+        {
+          "description": "Reach into nested metadata with dot-notation.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta get author.name,tags.0 docs/intro.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/author\\.name=Jane[\\s\\S]*tags\\.0=onboarding/"
+          }
+        },
+        {
+          "description": "The same nested value with a JSON Pointer. A leading-slash argument is rewritten to a path by Git Bash even when quoted, so the pointer follows another field in the list.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta get \"author.name,/author/name\" docs/intro.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/author/name=Jane (asserted)"
+          }
+        },
+        {
+          "description": "Extract one field across the tree as JSON (the page pipes this into jq, which isn't installed here).",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta get type \"docs/**/*.md\" --format json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/\"type\": \"concept\"/"
+          }
+        }
+      ]
+    }
+  ]
+}

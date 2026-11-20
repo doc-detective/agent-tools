@@ -1,0 +1,413 @@
+---
+title: Public docs, private code
+description: Cite a private code repository from a public docs site without publishing its paths, and without publishing a verifier for its lines. The two-repo layout, the encrypted source, the sidecar manifest, the family encryption key, and what still shows.
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Your docs site is public and the code it describes is not. You still want every
+sentence that rests on a line of that code to be checked. A plain citation
+would publish two things you may not want published. One is the path inside
+the private repository. The other is a hash that lets anyone with a guess
+about a short line confirm it. This page is the layout that avoids both, and
+an honest account of what a reader of the public site can still see.
+
+The mechanism has four parts. An **encrypted source** stands in for the path.
+A **keyed pin** replaces the plain hash. A **sidecar manifest** keeps the
+entries off the pages entirely. And **two CI jobs** split the check. The
+public one runs the rules that need only the page, and that now includes every
+claim end. The private one has the key and the code, and runs the rules that
+need the source.
+
+## What an encrypted source is, and is not
+
+{/* cite add-encrypts-when-key */}
+{/* cite add-encrypts-source-path */}
+When a family encryption key is available, `add` encrypts every source it
+writes. The page carries `~` and a ciphertext instead of a path. A key in
+`MANNI_ENCRYPTION_KEY` counts as available, so nothing has to be remembered
+per run:
+
+```yaml
+citations:
+  - id: retries
+    claim:
+      lines: 12
+      integrity: sha256-3049e93e72873542aac2c1c4778fa655e70656f03c08f202444062f404a3315d
+    source:
+      file: ~AQm4…
+      lines: 5
+      integrity: hmac-sha256-a69810da77ae49d08f3c2d2f03424c245d90e3edaa6dc5c1918eeb3f37edcc95
+      commit-sha: 9721b1b1ecd73447b91d7ff10b4c4f8e6639cbc0
+```
+
+{/* cite same-token-format */}
+{/* cite ciphertext-shape */}
+{/* cite keyed-pin-hmac */}
+The real ciphertext is `~` and at least 82 base64url characters, shortened
+here and below. It is the path, encrypted under the key, in the same token
+format a `manni meta` value uses. `source.lines` sits beside it in plain text.
+The pin is keyed too, and says so: `hmac-sha256-` is an HMAC of the cited
+lines under a key derived from the encryption key, rather than `sha256(text)`.
+A reader who hashes a guess at the line by hand learns from the prefix why it
+does not match.
+[Proposal 0045](https://github.com/hawkeyexl/manni/blob/main/docs/proposals/0045-family-encryption-key.md)
+states the construction.
+
+{/* cite key-env-wins */}
+The key belongs to the family, not to cite. It is a top-level `encryptionKey:`
+in `manni.config.yaml`, or `MANNI_ENCRYPTION_KEY`, and the environment wins.
+`manni meta` encrypts metadata values with the same key, and
+[`manni key`](/manni/key/) sets it and rotates it.
+
+{/* cite deterministic-ciphertext */}
+An encrypted source **is** a stable name for one path. The same key and the
+same path always give the same ciphertext, on every page. So `update` can
+recognise one file across pages.
+
+{/* cite decrypt-then-tracked */}
+An encrypted source **is** reversible, by anyone who has the key. A checkout
+with the key decrypts the path, then checks it against the tracked files.
+Without the key, nothing on the page or in the tool turns a ciphertext back
+into a path. There is no manifest to keep in sync or to leak.
+
+Two limits are worth stating plainly:
+
+- **The key is the whole secret.** Anyone who holds it can read every
+  encrypted path and every encrypted metadata value in the family. Keep it
+  where only the private job and the people who mint citations can read it.
+- **Ciphertexts are stable across pages.** A reader of the public site can
+  tell that three pages cite the same private file, and can see when its line
+  numbers move. That is the accepted cost of `update` being able to recognise
+  the file. The path is padded before encryption, so a ciphertext's length
+  reveals a size class, not the path.
+
+## What still shows
+
+Encryption hides the path and keys the pin. It does not touch anything else in
+the entry, and the rest of the entry is plain text:
+
+| Field | Visible on the public page | So |
+| --- | --- | --- |
+| `id` | Yes, in full | An id names the claim, and `fetch-timeout` says what a ciphertext cannot. Choose ids you would put in a public heading. |
+| `claim` | Yes, as lines and a plain hash | The claim's lines and pin are over the page, which is public anyway. |
+| `source.commit-sha` | Yes, in full | A commit hash reveals nothing about the repository's contents, but it does let a reader with access line it up with history. |
+| `source.lines` | Yes | `~AQm4…` with `lines: 5` says line 5. Combined with a stable ciphertext, that is how a reader sees a file move. |
+| `source.file` | No | The ciphertext, and only the ciphertext. |
+| `source.integrity` | Keyed | A reader cannot hash a guess at the line and compare, because the pin is an HMAC under the key. |
+
+{/* cite key-prompt-warns-unignored */}
+{/* cite key-set-warns-unignored */}
+**Keep the key out of public files.** It belongs in a CI secret and in the
+environment of anyone minting citations. A key committed to the public
+repository is readable by anyone who can read the repository, and so is every
+value it encrypts. `manni key set` and the key prompt in `cite add` write the
+key into `manni.config.yaml`. That is right for a private repository and wrong
+for this layout. Both warn when git does not ignore that file:
+
+```
+manni: manni.config.yaml is not ignored by git: once committed, anyone who can read the repository can decrypt every encrypted value. Prefer MANNI_ENCRYPTION_KEY for a shared repository.
+```
+
+{/* cite key-set-refuses-env */}
+Here, generate the value yourself and put it in the secret. `manni key set`
+refuses while `MANNI_ENCRYPTION_KEY` is set, because a key written to config
+would never be read.
+
+{/* cite hand-changed-key-undecryptable */}
+{/* cite rotate-pages-and-manifests */}
+{/* cite rotate-metadata-same-run */}
+{/* cite rotate-rekeys-from-cited-lines */}
+**Rotate it with the tool, never by hand.** A ciphertext or pin made under one
+key does not decrypt under another. A key changed by hand leaves every
+encrypted citation `missing (does not decrypt under the current key)`.
+[`manni key rotate`](/manni/key/reference/cli/#key-rotate) re-encrypts every
+`source.file` and re-keys its pin, in a page's frontmatter and in a citations
+manifest alike. The same run re-encrypts every encrypted metadata value, so
+the whole family moves to the new key together. Run it from the docs checkout
+with the code beside it, because each pin is re-keyed from the cited lines.
+
+{/* cite rotate-env-needs-to */}
+{/* cite rotate-env-config-not-written */}
+Here the key comes from `MANNI_ENCRYPTION_KEY`, so it rotates through the
+environment. `--to` is required, and the config is never written, so the
+secret stays out of the public file. Pass the new value, then update the
+secret to it:
+
+```sh
+MANNI_ENCRYPTION_KEY="$OLD_KEY" manni key rotate --to "$NEW_KEY" --root ../code
+```
+
+```
+Key not written: it comes from MANNI_ENCRYPTION_KEY. Update the secret to the value you passed.
+```
+
+Update the secret and push the re-encrypted pages together. A private run that
+sees one without the other reads every encrypted citation as `missing`.
+
+{/* cite rotate-narrowed-needs-to */}
+A run over part of the family, with paths or `--collection`, also needs `--to`
+and never writes the key. Run each area under the same `--to`, then finish
+with a whole run under that `--to`.
+[A narrowed run](/manni/key/reference/cli/#a-narrowed-run) has the details.
+
+<Aside type="note" title="Findings never print the decrypted path">
+  Every reporter spells a source exactly as the page spelled it: `~AQm4…:5`,
+  never `lib/limits.ts`. The decrypted path exists only in memory. It reaches
+  output only through the pretty reporter, and only under `--reveal`. So the
+  private job's `github`, `json`, `sarif` and `junit` outputs are safe on a
+  public pull request and in code scanning. A test in the repository renders
+  `json`, `github` and `pretty` against a private path and a sentinel key, and
+  asserts neither string appears. Another asserts the same of the findings
+  that `sarif` and `junit` are rendered from.
+</Aside>
+
+## The layout
+
+{/* cite root-any-directory */}
+The pages stay in the docs repository, where they are, so a SARIF upload's
+file URIs resolve against the repository they belong to. The sources are
+reached through `--root`, which may point at any directory, including another
+checkout. In CI that means the two repositories are checked out side by side,
+and the check runs from the docs checkout.
+
+<Steps>
+
+1. **Configure the docs repository.** This file is public, so it carries no
+   key. The pages are a collection, which every manni tool reads. The
+   collection also declares a manifest that owns `citations`, so no page
+   carries a line of citation YAML. The key lives in the environment, and a
+   key in the environment turns encryption on, so nobody has to remember a
+   flag:
+
+   ```yaml title="manni.config.yaml (public docs repo)"
+   collections:
+     - name: site
+       paths: ["src/content/docs/**/*.{md,mdx}"]
+       externalMetadata:
+         - file: docs-citations.yaml
+           keys: [citations]
+   ```
+
+   The manifest is a local file in the docs repository, keyed by page path.
+   `cite add`, `cite update` and `manni key rotate` write it, splicing only
+   the page's `citations` value. A URL manifest is refused for this key, both
+   because cite writes it and because a fetch would put private paths in
+   public CI output. [The sidecar](/manni/cite/reference/citations/#the-sidecar)
+   has the shape and every refusal.
+
+   Generate the key once, 256 random bits, the size `manni key set` makes.
+   Store it as a CI secret named `MANNI_ENCRYPTION_KEY`, and in the shell of
+   anyone who mints citations:
+
+   ```sh
+   openssl rand -hex 32
+   ```
+
+2. **Mint citations from the docs checkout.** With the code checked out
+   beside it, at `../code`, and the key in the environment:
+
+   ```sh
+   MANNI_ENCRYPTION_KEY=… manni cite add src/content/docs/limits.md:14 lib/limits.ts:3 --id configurable --encrypt --root ../code --dry-run
+   ```
+
+   ```diff
+   --- docs-citations.yaml
+   +++ docs-citations.yaml
+   @@ -6,2 +6,10 @@
+          commit-sha: 9721b1b1ecd73447b91d7ff10b4c4f8e6639cbc0
+   +    - id: configurable
+   +      claim:
+   +        lines: 11
+   +        integrity: sha256-2a4c6df0e2b3f5c7a1908d4e6b2c8f0a3d5e7b9c1f2a4d6e8b0c2f4a6d8e0b2c
+   +      source:
+   +        file: ~AQm4…
+   +        lines: 3
+   +        integrity: hmac-sha256-6b68a169c8407883fd7055f62291e2ab5a74c6ef1e116cc35315da2dfa6bed99
+   +        commit-sha: 8cf8727e45dd75e79ab8637356d396b879e7e159
+   ```
+
+   The source is typed as a path, because you know it. The manifest gets the
+   ciphertext, the same one `retries` carries, because it is the same file.
+   The page itself is not touched, and the claim's `lines: 11` counts its
+   body.
+
+   `--encrypt` changes nothing beside a key. Without one, it turns a plain
+   path on a public page into a refusal. Off a terminal, `add` writes nothing
+   and exits `2`:
+
+   ```
+   manni: lib/limits.ts:3 must be encrypted, and no encryption key is available. Run `manni key set`, or set MANNI_ENCRYPTION_KEY.
+   ```
+
+   On a terminal it offers to generate a key and write it to
+   `manni.config.yaml`. In this layout, answer `N` and set the secret instead.
+
+3. **Run the public job with `--no-check-sources`.** It has no key and no
+   code, so it runs the page-side rules only. Every marker names a real
+   entry, and every entry is well-formed and well-anchored. **Every claim end
+   is checked**, because the claim is page-side. Only the source statuses are
+   `skipped`, which is not a finding:
+
+   ```sh
+   manni cite check --no-check-sources
+   ```
+
+   ```
+   ✓ src/content/docs/limits.md
+       ✓ fetch-timeout   :9 current    lib/limits.ts:4 skipped    docs-citations.yaml:3
+       ✓ retries         :12 current   ~AQm4…:5 skipped           docs-citations.yaml:8
+       ✓ configurable    :14 current   ~AQm4…:3 skipped           docs-citations.yaml:14
+
+   1 file checked, 1 passed, 0 failed, 0 findings
+   ```
+
+   A citation whose claim end is current is `✓`, whatever its source end says.
+   Only a bare pin, which has no claim, reads `·` here. That is the gain of
+   pinning the claim rather than copying it. An editor who reworded a cited
+   sentence hears about it on the public job, with no key and no code in the
+   room.
+
+   Keep the flag. Without it, a job with no key reports every encrypted
+   citation `missing`, and that is an error. `checkSources: false` in the
+   config would do the same, but the private job reads that file too, and it
+   needs the sources.
+
+4. **Run the private job with the key and `--root`.** From the docs checkout,
+   with the code beside it and the key from a secret:
+
+   ```sh
+   MANNI_ENCRYPTION_KEY=… manni cite check --root ../code
+   ```
+
+   ```
+   ✓ src/content/docs/limits.md
+       ✓ fetch-timeout   :9 current    lib/limits.ts:4 current    docs-citations.yaml:3
+       ✓ retries         :12 current   ~AQm4…:5 current           docs-citations.yaml:8
+       ✓ configurable    :14 current   ~AQm4…:3 current           docs-citations.yaml:14
+
+   1 file checked, 1 passed, 0 failed, 0 findings
+   ```
+
+   Add `-f sarif` or `-f github` here as you would anywhere; see
+   [Run it in CI](/manni/cite/ci/).
+
+</Steps>
+
+{/* cite reveal-flag */}
+Locally, when you want to see which file an encrypted source is, `--reveal`
+prints the decrypted path beside it, in the pretty reporter only:
+
+```sh
+MANNI_ENCRYPTION_KEY=… manni cite check --root ../code --reveal
+```
+
+```
+✓ src/content/docs/limits.md
+    ✓ fetch-timeout   :9 current    lib/limits.ts:4 current                 docs-citations.yaml:3
+    ✓ retries         :12 current   ~AQm4…:5 (lib/limits.ts) current        docs-citations.yaml:8
+    ✓ configurable    :14 current   ~AQm4…:3 (lib/limits.ts) current        docs-citations.yaml:14
+```
+
+### The two jobs in GitHub Actions
+
+```yaml title=".github/workflows/citations.yml (public docs repo)"
+name: Citations
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  # Page-side rules only. Runs on every PR, needs no key and no code.
+  public:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - run: npx -y @hawkeyexl/manni cite check --no-check-sources -f github
+
+  # Source-side rules. Checks the code out beside the docs and decrypts
+  # each source with the family key. Runs on push only, so a fork's PR
+  # never sees the secret.
+  private:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          path: docs
+      - uses: actions/checkout@v7
+        with:
+          repository: your-org/code
+          token: ${{ secrets.CODE_READ_TOKEN }}
+          path: code
+          fetch-depth: 0   # never-true and diffs need the pin's commit
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - working-directory: docs
+        env:
+          MANNI_ENCRYPTION_KEY: ${{ secrets.MANNI_ENCRYPTION_KEY }}
+        run: npx -y @hawkeyexl/manni cite check --root ../code -f sarif > ../cite.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: cite.sarif
+```
+
+{/* cite shallow-history-unavailable */}
+The private checkout wants `fetch-depth: 0`. A shallow clone cannot show the
+file at the commit a pin was minted at, so `source-never-true` and the diff degrade
+to `changed (history unavailable)`. [Run it in CI](/manni/cite/ci/#full-history)
+explains.
+
+## When an encrypted source does not resolve
+
+{/* cite missing-says-why */}
+Run the private job without the key, with another key, or with the wrong
+`--root`, and every encrypted citation is `missing`. The message says which
+of the three it was:
+
+```
+✗ docs/limits.md
+    ✓ fetch-timeout   :9 current    lib/limits.ts:4 current
+    ✗ retries         :12 current   ~AQm4…:5 missing (no encryption key is available to decrypt it)
+
+1 file checked, 0 passed, 1 failed, 1 finding
+```
+
+| Message | Cause | Fix |
+| --- | --- | --- |
+| `missing (no encryption key is available to decrypt it)` | The job has no key. | Set `MANNI_ENCRYPTION_KEY` from the secret, or run the page-side rules alone with `--no-check-sources`. |
+| `missing (does not decrypt under the current key)` | The key is not the one the source was encrypted under, or the ciphertext was edited by hand. | Use the key the pages were encrypted under. After a rotation, update the secret to the new key. |
+| `missing (no tracked file matches; wrong --root?)` | The path decrypted, and no tracked file under the root has it. | Point `--root` at the code checkout. If the file was renamed, add the citation again. |
+
+{/* cite tracked-files-or-walk */}
+{/* cite realpath-containment */}
+Where git is available, a decrypted path resolves against **tracked files
+only**, through `git ls-files` under the root, with a real-path containment
+check. A file that is not committed, or is reached through a symlink out of
+the root, does not match. That is deliberate, and it is the same rule a plain
+path follows. Without git, the root is walked, and symlinks are not followed.
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Run it in CI"
+    href="/manni/cite/ci/"
+    description="Output formats, exit codes, the baseline ramp, and why the checkout needs full history."
+  />
+  <LinkCard
+    title="manni key"
+    href="/manni/key/"
+    description="Set and rotate the family encryption key, and keep it out of a shared repository."
+  />
+  <LinkCard
+    title="Configuration reference"
+    href="/manni/cite/reference/configuration/"
+    description="Every cite: key, including root and checkSources, and the collection that declares a citations manifest."
+  />
+</CardGrid>

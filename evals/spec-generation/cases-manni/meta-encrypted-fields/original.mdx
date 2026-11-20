@@ -1,0 +1,313 @@
+---
+title: Require a field and keep its value private
+description: "Mark a property x-manni-encrypt and follow the value: what validate does with a plain, a decryptable and an unreadable one, what fill and query write, what a reviewer sees, and what a rotation changes."
+sidebar:
+  label: Encrypted fields
+  order: 4
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Some fields your standard requires are not for publishing. An `owner`, an
+internal ticket, the name of a service. You still want every page to carry one,
+and you still want the value checked against the rules you wrote.
+
+`x-manni-encrypt` is the keyword for that. The page holds a ciphertext, and
+validation checks the real value wherever the key is available. This page
+follows one such value from the schema through every command that touches it.
+
+Everything here assumes a key already exists. [Put the key where every tool
+finds it](/manni/key/set-up/) is where that decision is made.
+
+Every transcript below is real output from the built tool.
+
+## Mark the property
+
+The mark sits on the property, beside the rules it keeps. Nothing else changes:
+
+```json title="schemas/page.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["title", "owner"],
+  "properties": {
+    "title": { "type": "string" },
+    "owner": { "type": "string", "enum": ["platform", "billing"], "x-manni-encrypt": true }
+  }
+}
+```
+
+`owner` is still required, and its `enum` still holds. What the mark adds is
+that a page carrying the word `platform` in the open now fails.
+
+The mark counts wherever the validator evaluates it. That includes a `$ref`, an
+`allOf`, a referenced built-in, and the `anyOf`, `oneOf` and `if`/`then`
+branches the validator takes. A mark behind a failing `if` does not count. A
+value other than `true` or `false` is a schema error at compile time, exit `2`.
+The [schema resolution
+reference](/manni/meta/reference/schema-resolution/#encrypted-values) has the
+rules in full.
+
+## Follow the value
+
+A page carries the ciphertext, `~` and at least 82 base64url characters:
+
+```yaml title="docs/auth.md"
+---
+title: auth
+owner: ~Ab0v7UwUrZNKLufd-hMeF5JHHA2hoNyUq77gIucl-mbytpkQt_C-tPNKZilTy1-khxyd3CcwMt6qVxbEJw
+---
+```
+
+Four pages, four states, one run. The key is available for all of them:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+✓ docs/auth.md
+✗ docs/bad-value.md
+    /owner  must be equal to one of the allowed values  (line 3)  [./schemas/page.json]
+✗ docs/plain.md
+    /owner  /owner holds a plain value; its schema marks it x-manni-encrypt.  (line 3)  [encrypted:plain]
+✗ docs/wrong-key.md
+    /owner  /owner does not decrypt under the current key: encrypted under another key, or edited by hand.  (line 3)  [encrypted:unreadable]
+
+4 files checked, 1 passed, 3 failed, 3 errors
+# exit 1
+```
+
+| Page | What it holds | What validation does |
+|---|---|---|
+| `docs/auth.md` | A ciphertext that decrypts to `platform` | Validates the decrypted value against the property's whole schema, and passes |
+| `docs/bad-value.md` | A ciphertext that decrypts to `finance` | Fails on your `enum`, under your schema's name, without printing either value |
+| `docs/plain.md` | The word `platform` | Fails `encrypted:plain`, whatever the key state |
+| `docs/wrong-key.md` | A ciphertext from another key | Fails `encrypted:unreadable` |
+
+The second row is the one worth dwelling on. `enum`, `pattern`, `format` and
+the rest all apply to the real value, so the standard you wrote is enforced on
+a value the page never shows. No finding ever prints the plaintext or the key.
+
+Validation works on a copy of the metadata with every readable value decrypted.
+The page itself is never rewritten.
+
+<Aside type="note" title="Two findings look alike and are not">
+`encrypted:plain` means somebody typed the value in the open, and the fix is to
+encrypt it. `encrypted:unreadable` means the value is encrypted under a key
+this run does not hold, and the fix is usually a key, not a page. An unfinished
+[rotation](/manni/key/ci/#resume-an-interrupted-rotation) produces the second
+one across many pages at once.
+</Aside>
+
+## With no key, the check goes quiet
+
+Findings at or under an encrypted value are dropped, and one warning on stderr
+counts them. The exit code is not affected by what was dropped:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+manni: 3 encrypted values were not verified: no encryption key is available. Set MANNI_ENCRYPTION_KEY, or run `manni key set`.
+✓ docs/auth.md
+✓ docs/bad-value.md
+✗ docs/plain.md
+    /owner  /owner holds a plain value; its schema marks it x-manni-encrypt.  (line 3)  [encrypted:plain]
+✓ docs/wrong-key.md
+
+4 files checked, 3 passed, 1 failed, 1 error
+# exit 1
+```
+
+Three things follow, and all three matter to whoever owns the schema.
+
+- **`encrypted:plain` still fires.** No key is needed to see that a value is not
+  a ciphertext, so the rule you care about most keeps working everywhere.
+- **A wrong value and a wrong key both go silent.** `docs/bad-value.md` and
+  `docs/wrong-key.md` pass a run that cannot read them.
+- **A [baseline](/manni/meta/reference/cli/#baselines) written without the key
+  records none of the dropped findings.** They return as new on the first run
+  that has it.
+
+## What writes a ciphertext, and what does not
+
+Two commands write a marked value, and both report `(encrypted)` in place of
+it. `manni meta fill` encrypts a valid value the page already holds in plain
+text, with no model call:
+
+```console
+$ manni meta fill docs/plain.md --fields owner --dry-run
+Using manni.config.yaml (.)
+✓ docs/plain.md
+    /owner  (encrypted)  1.00
+```
+
+A `manni meta query` `UPDATE` or `INSERT` writes a marked top-level property
+encrypted, resolving each file's schema set the way `validate` does:
+
+```console
+$ manni meta query "UPDATE docs SET owner = 'platform' WHERE _path = 'docs/auth.md'"
+Using manni.config.yaml (.)
+docs/auth.md: owner: (unset) -> (encrypted)
+✓ 1 change across 1 file — written
+```
+
+Reads do not decrypt. `manni meta get` and a `SELECT` both return what the page
+holds:
+
+```console
+$ manni meta query "SELECT _path, owner FROM docs"
+Using manni.config.yaml (.)
+_path              owner
+docs/auth.md       ~Ab0v7UwUrZNKLufd-hMeF5JHHA2hoNyUq77gIucl-mbytpkQt_C-tPNKZilTy1-khxyd3CcwMt6qVxbEJw
+docs/bad-value.md  ~Add2BdH6xfyELjVSH5kYwBbQ1_qkNGxwxWOulXucCSFbVi4zJJ7p_e_bDr8OJKo6nw27dPTj5ISVQPaSIA
+docs/plain.md      platform
+docs/wrong-key.md  ~AaE3zLy97i-pW5wvuARqsjGu1v4PbTxbyAL_WfkvNy2Mcq4cCeVeBBQwGR_vhn9cdo0sv-79oj3wP0HfDA
+4 rows
+```
+
+So a `WHERE owner = 'platform'` matches only the page that failed the check.
+Equal values do encrypt to equal ciphertexts, so comparing one page's column
+with another's still finds the pages that share an owner. The [query
+reference](/manni/meta/reference/query/#encrypted-values) has the rest.
+
+A nested mark is validated and never written. Only top-level properties are
+written encrypted.
+
+## What a reviewer sees
+
+The findings ride the ordinary reporters, so nothing new has to be parsed. The
+schema name is the rule that fired:
+
+```console
+$ manni meta validate -f github
+Using manni.config.yaml (.)
+::error file=docs/bad-value.md,line=3::[./schemas/page.json] /owner must be equal to one of the allowed values
+::error file=docs/plain.md,line=3::[encrypted:plain] /owner /owner holds a plain value; its schema marks it x-manni-encrypt.
+::error file=docs/wrong-key.md,line=3::[encrypted:unreadable] /owner /owner does not decrypt under the current key: encrypted under another key, or edited by hand.
+```
+
+| Format | What an encrypted finding looks like |
+|---|---|
+| `pretty` | The transcripts above. The field is the pointer, `/owner`, and the bracket holds `encrypted:plain` or `encrypted:unreadable`. |
+| `json` | An entry in `errors[]` with `"keyword": "encrypted"` and `"schema": "encrypted:plain"`. No `severity`, so it is an error. |
+| `github` | `::error file=…,line=3::[encrypted:plain] /owner …`, as above. |
+| `sarif` | `"ruleId": "encrypted:plain/encrypted"` at `"level": "error"`. |
+| `junit` | `<failure type="encrypted:plain/encrypted" message="/owner /owner holds a plain value; its schema marks it x-manni-encrypt. (line 3)"/>` |
+
+Every one of them is an error. The only warnings `manni meta validate` emits
+are the `location:external` and `location:page` findings. [Severity across the
+family](/manni/meta/reference/output-and-exit-codes/#severity-across-the-family)
+says which tools emit the lower two.
+
+No plaintext and no key appears in any of these. That is what makes the SARIF
+log safe to upload from a public job.
+
+## A value the manifest supplies
+
+An [external-metadata
+manifest](/manni/meta/reference/configuration/#external-metadata) is the other
+place a private value lives. A manifest is private by construction, so a
+**plain** value from one is validated as plain text and never flagged.
+
+An **encrypted** value from one follows the page rules exactly. It decrypts, it
+is checked against your schema, and a finding names the manifest and the line
+inside it:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+✓ docs/auth.md
+✗ docs/stale.md
+    /owner  /owner does not decrypt under the current key: encrypted under another key, or edited by hand.  (owners.yaml:9)  [encrypted:unreadable]
+✗ docs/wrong.md
+    /owner  must be equal to one of the allowed values  (owners.yaml:7)  [../encrypted.schema.json]
+
+3 files checked, 1 passed, 2 failed, 2 errors
+# exit 1
+```
+
+The location is `owners.yaml:7`, not a page line, because that is where the
+value is. A reviewer fixes it in the manifest.
+
+## What a rotation means for the schema you own
+
+Nothing, which is the point worth stating. A rotation replaces every ciphertext
+and changes no schema. Your `enum` still lists the same words, and a page that
+passed before passes after:
+
+```console
+$ manni key rotate
+docs/auth.md: /owner  ~Ab0v…  -> ~ATsH…
+1 value re-encrypted in 1 file, 0 skipped
+Encryption key written to manni.config.yaml.
+# exit 0
+```
+
+Rotation finds values by their ciphertext rather than by your marks. A mark
+behind a remote `$ref` the run cannot reach still cannot hide a value from it.
+
+One thing does reach back to you. A value that decrypts under neither key stops
+the whole rotation, and it is named:
+
+```console
+$ manni key rotate
+docs/auth.md: /owner  ~Ab0v…  -> ~AYs_…
+docs/bad-value.md: /owner  ~Add2…  -> ~Ae2_…
+docs/wrong-key.md: /owner  skipped: does not decrypt under the current key
+2 values re-encrypted in 2 files, 1 skipped
+Key not written: 1 value could not be re-encrypted. Fix it and rotate again.
+# exit 1
+```
+
+Nothing was written, not even the two pages that re-encrypted cleanly. Whoever
+runs the rotation will come to the schema's owner with that page, because
+deciding what its `owner` should have been is your call.
+
+## Choose which fields to mark
+
+Equal values encrypt to equal ciphertexts. That is deliberate, and it is what
+lets a manifest join on one and a query group by one. It also leaks on a small
+vocabulary.
+
+An `owner` constrained to two words gives every page one of two ciphertexts. One
+page whose owner is public knowledge then identifies every page that shares it.
+Mark fields whose values are many and uneven, and think twice about marking a
+two-value enum.
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Put the key where every tool finds it"
+    href="/manni/key/set-up/"
+    description="Config or environment, who on the team needs the key, and what each command does without one."
+  />
+  <LinkCard
+    title="Encrypted values reference"
+    href="/manni/meta/reference/schema-resolution/#encrypted-values"
+    description="Where a mark counts, whole values, the finding table, and what a run with no key drops."
+  />
+  <LinkCard
+    title="Rotate the key without breaking CI"
+    href="/manni/key/ci/"
+    description="The runbook whoever holds the key follows, and what it asks of the pages your schema governs."
+  />
+  <LinkCard
+    title="Version & evolve a schema safely"
+    href="/manni/meta/schemas/versioning/"
+    description="Ship a stricter schema, a new mark included, without failing every consuming repo overnight."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"encrypted-fields","description":"The four states of a marked value, the no-key behavior, and the manifest-supplied case, over committed fixtures."} */}
+{/* step {"description":"A plain value in a marked property fails encrypted:plain, whatever the key state.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config test/fixtures/encrypted/plain-owner.md -s test/fixtures/encrypted/encrypted.schema.json","exitCodes":[1],"stdio":"/owner holds a plain value; its schema marks it x-manni-encrypt."}} */}
+{/* step {"description":"The same finding rides the github reporter as an error annotation on the value's line.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config test/fixtures/encrypted/plain-owner.md -s test/fixtures/encrypted/encrypted.schema.json -f github","exitCodes":[1],"stdio":"/::error file=[^:]*plain-owner\\.md,line=3::\\[encrypted:plain\\]/"}} */}
+{/* step {"description":"In SARIF the rule id is the schema name plus the keyword, at level error.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config test/fixtures/encrypted/plain-owner.md -s test/fixtures/encrypted/encrypted.schema.json -f sarif","exitCodes":[1],"stdio":"/\"ruleId\": \"encrypted:plain\\/encrypted\"[\\s\\S]*\"level\": \"error\"/"}} */}
+{/* step {"description":"In JUnit it is a failure whose type is that same rule id.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config test/fixtures/encrypted/plain-owner.md -s test/fixtures/encrypted/encrypted.schema.json -f junit","exitCodes":[1],"stdio":"<failure type=\"encrypted:plain/encrypted\""}} */}
+{/* step {"description":"With no key, one warning on stderr counts the values the run could not verify.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/encrypted/manifest-encrypted/manni.config.yaml","exitCodes":[0],"stdio":"3 encrypted values were not verified: no encryption key is available."}} */}
+{/* step {"description":"Their findings are dropped, so pages that fail under the key pass without it.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/encrypted/manifest-encrypted/manni.config.yaml","exitCodes":[0],"stdio":"3 files checked, 3 passed, 0 failed, 0 errors"}} */}
+{/* step {"description":"A plain value an external-metadata manifest supplies is validated as plain text and never flagged.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/encrypted/manifest/manni.config.yaml","exitCodes":[0],"stdio":"1 file checked, 1 passed, 0 failed, 0 errors"}} */}
+{/* test end */}

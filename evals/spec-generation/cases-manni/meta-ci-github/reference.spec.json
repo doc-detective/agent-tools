@@ -1,0 +1,64 @@
+{
+  "specId": "manni-meta-ci-github",
+  "description": "manni docs meta/ci/index, run locally in a repo whose manni.config.yaml declares collections pages and guides.",
+  "tests": [
+    {
+      "testId": "ci-github",
+      "steps": [
+        {
+          "description": "The standalone workflow's command: validate all Markdown with --format github. A clean run exits 0.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate \"**/*.md\" --format github",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "Let the config file supply the paths: no positional targets reads collections: from manni.config.yaml.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate --format github",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "Gate one part of the docs set by naming its collection.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate --collection guides --format github",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "Verify it works: introduce a Markdown file missing the required type field.",
+          "runShell": {
+            "command": "node -e \"require('fs').writeFileSync('docs/new-page.md','---\\ntitle: New page\\ndescription: A page without a type.\\n---\\n\\n# New page\\n')\""
+          }
+        },
+        {
+          "description": "Locally, --format github prints the raw ::error line for the failing file, and the gate fails.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate \"docs/**/*.md\" --format github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=docs\\/new-page\\.md,line=\\d+::\\[google:okf:0\\.1\\] \\(root\\) must have required property 'type'/"
+          }
+        },
+        {
+          "description": "Drop the flag for the readable pretty report.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate \"docs/**/*.md\"",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/✗ docs\\/new-page\\.md[\\s\\S]*must have required property 'type'/"
+          }
+        }
+      ]
+    }
+  ]
+}

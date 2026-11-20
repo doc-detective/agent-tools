@@ -65,6 +65,18 @@ For example, `Type here:` and `Echo input:`. A spec that finds the label by its 
 | 19-join-workspace-manual-steps | non-automatable, type, find | Ask an admin, check email, and click a link in the email around one automatable typing step. |
 | 20-export-customer-table-manual-steps | non-automatable, find | Role request, SSO sign-in, print to PDF, and upload/email around a table check. |
 | 21-sync-feed-troubleshooting | non-automatable, wait, find | Late-arriving feed entries plus a "restart VPN / reboot / file a ticket" troubleshooting section. |
+| 22-update-user-record | http, methods, headers | `PUT` then `PATCH` on `/api/users/42`, then a nested `GET` with a query param; check the `X-Echo-Path` header. |
+| 23-run-plan-token | http, headers, non-automatable | Fetch with the sandbox `x-runner-token`, then the same request without it needs `statusCodes: [401]`. An "ask the owner / admin console" prerequisite isn't automatable. |
+| 24-troubleshoot-live-dashboard | hard:never-idle, mixed-ui-api, troubleshooting | API check, static page, then a page that polls forever: `goTo` needs lower idle times, and the counter `Request #N completed` needs a pattern. Skip the restart/support section. |
+| 25-checkout-controls-indirect | hard:indirect-expected, find | "Confirm it's switched off" means asserting the disabled state, not clicking; the result line is paraphrased ("the last operation succeeded"). |
+| 26-order-lookup-variable-number | hard:variable-value, find | The order number varies (`Order #` + four digits), so its find needs a regex; the doc's example number doesn't exist. |
+| 27-plan-tier-shared-labels | hard:ambiguous-label, click, find | Three buttons share an accessible name, test ID, and class; only the visible text (`Third`, `Second`) picks the right one. |
+| 28-message-actions-right-click | click-options, find | Right-click, then left-click, the same button; each posts a different message. |
+| 29-capture-get-started-button | screenshot, non-automatable | Screenshot cropped to one button under a fixed header, then "upload to the portal / ask your editor". |
+| 30-account-overview-slow-panels | hard:timeout, find | Panels arrive at 6.5 s and 8 s, past `find`'s default 5000 ms timeout. |
+| 31-compare-records-two-tabs | multi-tab, click, type, find | Open two child tabs (`window.open` and a link), type a note in each, then check the first tab kept its note. |
+| 32-gateway-extra-field | hard:indirect-expected, http | Port 8092 adds `extraField`; "exactly the fields you sent" on port 8093 needs `allowAdditionalFields: false`. |
+| 33-toolbar-icon-buttons | click, wait, find | Single-letter buttons (`I`, `S`) plus a job that reports back after 1.5 s. |
 
 ## Running a spec
 

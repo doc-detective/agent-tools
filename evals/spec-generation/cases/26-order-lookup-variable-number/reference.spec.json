@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "testId": "order-lookup",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/find-text-matching.html"
+        },
+        {
+          "find": "Garden companion API"
+        },
+        {
+          "find": {
+            "elementText": "/Order #[0-9]{4}/"
+          }
+        },
+        {
+          "find": "Submit Order"
+        },
+        {
+          "find": "Save changes"
+        }
+      ]
+    }
+  ]
+}

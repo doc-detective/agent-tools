@@ -72,7 +72,15 @@
     "web-13-api-create-user",
     "web-15-api-request-tracing",
     "web-16-resource-links",
-    "web-18-saved-preferences-prerequisite"
+    "web-18-saved-preferences-prerequisite",
+    "web-30-account-overview-slow-panels",
+    "web-24-troubleshoot-live-dashboard",
+    "web-26-order-lookup-variable-number",
+    "web-28-message-actions-right-click",
+    "manni-meta-field-location",
+    "manni-meta-ci-consume-results",
+    "manni-meta-machine-authorship",
+    "manni-meta-ci-github"
   ],
   "test_ids": [
     "dd-docs-automatic-screenshots",
@@ -97,7 +105,24 @@
     "web-17-verify-installation-ui-api",
     "web-19-join-workspace-manual-steps",
     "web-20-export-customer-table-manual-steps",
-    "web-21-sync-feed-troubleshooting"
+    "web-21-sync-feed-troubleshooting",
+    "web-32-gateway-extra-field",
+    "web-29-capture-get-started-button",
+    "web-22-update-user-record",
+    "web-31-compare-records-two-tabs",
+    "web-33-toolbar-icon-buttons",
+    "web-27-plan-tier-shared-labels",
+    "web-25-checkout-controls-indirect",
+    "web-23-run-plan-token",
+    "manni-meta-fix-faq",
+    "manni-cite-public-private",
+    "manni-meta-built-in-schemas",
+    "manni-meta-configuration",
+    "manni-meta-docusaurus-schemas",
+    "manni-meta-landing",
+    "manni-cite-landing",
+    "manni-meta-encrypted-fields",
+    "dd-docs-generate-tests-from-openapi"
   ],
   "reps": 3,
   "current_round": 3,
@@ -132,5 +157,6 @@
     "round": 1,
     "test_score": 0.739
   },
-  "stopped": "plateau after round 3: rounds 1-3 within noise on held-out test"
+  "stopped": "plateau after round 3: rounds 1-3 within noise on held-out test",
+  "split_note": "Cases added after round 3 (25): two thirds of each slice to test, seeded shuffle (mulberry32, seed 20261119), to narrow the held-out noise floor. The original 48 keep their split."
 }

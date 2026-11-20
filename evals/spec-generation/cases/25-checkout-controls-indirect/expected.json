@@ -1,0 +1,13 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "enhanced-elements.html", "note": "Step 1: open the checkout page."},
+    {"stepType": "find", "match": "Submit Order", "note": "Step 2: the Submit Order button is present."},
+    {"stepType": ["find", "runBrowserScript"], "match_any": ["\"disabled\":true", ":disabled", "[disabled", ".disabled", "'disabled'", "\"disabled\")"], "note": "Step 3: 'confirm that it's switched off' - the check must assert the disabled state (attribute or property), not just that the button's text exists."},
+    {"stepType": "find", "match": "Modal Title", "note": "Step 4: the dialog title Modal Title."},
+    {"stepType": "find", "match": "Modal content goes here", "note": "Step 4: the dialog text Modal content goes here."},
+    {"stepType": "find", "match_any": ["Operation successful", "result-message", "result-display"], "note": "Step 5: 'tells you that the last operation succeeded' - the actual text is Operation successful; the doc paraphrases it."}
+  ],
+  "must_not": [
+    "A click on the Disabled Button (step 3 says not to try)."
+  ]
+}
