@@ -93,7 +93,7 @@ npx doc-detective@5 validate - <<'SPEC'
 SPEC
 ```
 
-Exit `0` means the spec is valid. Exit `1` means it isn't. Stdout names each invalid field, such as ``tests[0].steps[0]: unknown action `action`.`` Exit `2` means the CLI found no tests or couldn't load a config. Read stderr. A `.doc-detective.json`, `.yaml`, or `.yml` in the current directory loads on every run. An invalid one fails with `Invalid config in <file>` before your spec is checked.
+Exit `0` means the spec is valid. Exit `1` means it isn't. Stdout names each invalid field, such as ``tests[0].steps[0]: unknown action `action`.`` Exit `2` means the CLI found no tests or couldn't load a config. Read stderr. A `.doc-detective.json`, `.yaml`, or `.yml` in the current directory loads on every run. An invalid one fails with `Invalid config in <file>` before your spec is checked. That's a config error, not a spec verdict, so validate with the bundled validator below, which reads no config.
 
 When the CLI can't run, stderr holds `npm error` lines and no Doc Detective output. Then run the bundled validator from the doc-detective-test skill's folder. It passes when it prints `Validation PASSED`:
 
