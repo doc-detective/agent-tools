@@ -157,6 +157,7 @@ async function runCase(c, ctx) {
   try {
     // The session gets the grade's tools on PATH, with its own npm prefix (see sessionEnv).
     const run = await runClaude({ prompt: c.prompt, cwd: ws, model: ctx.model, env: sessionEnv(ws) });
+    // And after: a session (or another process) may have replaced the pinned build mid-run.
     if (c.slice === 'manni') checkToolchain();
     const spec = findSpec(ws, c);
     const dd = spec.json ? await runDocDetective(c, ws, spec.path) : null;
