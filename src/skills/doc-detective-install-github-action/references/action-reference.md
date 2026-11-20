@@ -123,6 +123,8 @@ The action caches the WDA build when all of these are true:
 - `cache` is on, and `version` isn't empty.
 - A spec or config in `input`, `config`, or `working_directory` sets `ios` as a `platform` or `platforms` value. The action scans JSON, YAML, and Markdown files, up to six folders below each of those paths, and skips subfolders named `node_modules`, `.git`, and `.github`. A path that points straight into one of those folders, such as an `input` of `.github/ios`, is still scanned.
 
+The scan doesn't find iOS tests in other formats, such as AsciiDoc. When those are your only iOS tests, the action doesn't cache the build. Keep it yourself, as [Earlier Doc Detective versions, or `cache: false`](#earlier-doc-detective-versions-or-cache-false) describes.
+
 The build has its own cache entry, about 70 MB, separate from the runtime and browsers. After the first save, the action saves the entry again only when a run builds WDA, such as after an Xcode or driver update. A failed restore or save logs a warning, and the run continues.
 
 ### Earlier Doc Detective versions, or `cache: false`
