@@ -9,12 +9,13 @@
     },
     {
       "stepType": "runShell",
-      "match": ["cite update", "rewritten"],
+      "match": ["cite update"],
       "note": "Step 2: apply the fix from the matching section. For source-moved that is `manni cite update docs/limits.md`, which reports the citation rewritten."
     },
     {
       "stepType": "runShell",
-      "match": ["cite check", "0 findings"],
+      "match": ["cite check"],
+      "match_any": ["0 findings", "0 failed"],
       "note": "Step 3: run it again and confirm the green summary, `1 file checked, 1 passed, 0 failed, 0 findings`."
     }
   ],

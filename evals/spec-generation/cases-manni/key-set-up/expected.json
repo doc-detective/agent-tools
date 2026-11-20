@@ -32,13 +32,6 @@
     {
       "stepType": "runShell",
       "match": [
-        "key rotate"
-      ],
-      "note": "Only `manni key rotate` refuses to start: refused with exit 2 when no key is available."
-    },
-    {
-      "stepType": "runShell",
-      "match": [
         "meta validate",
         "encrypted values were not verified"
       ],

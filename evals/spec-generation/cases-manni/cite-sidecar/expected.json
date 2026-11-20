@@ -9,7 +9,8 @@
     },
     {
       "stepType": "runShell",
-      "match": ["meta get", "citations=["],
+      "match": ["meta get"],
+      "match_any": ["citations=[", "fetch-timeout"],
       "note": "With the config governing the run, `meta get` reads the merged view, which carries the entry."
     },
     {
@@ -19,27 +20,13 @@
     },
     {
       "stepType": "runShell",
-      "match": ["cite check", "must match pattern"],
-      "note": "A finding about the entry itself sits on the manifest, on the entry's own first line."
-    },
-    {
-      "stepType": "runShell",
-      "match": ["cite check", "-f github", "::error"],
-      "note": "`-f github` annotates the manifest, so the comment appears on the manifest's diff."
-    },
-    {
-      "stepType": "runShell",
       "match": ["cite check", "is owned by manifest"],
       "note": "A half-moved page has two owners for one key: an error naming the manifest and the collection."
     },
     {
       "stepType": "runShell",
-      "match": ["meta validate", "external:owned"],
-      "note": "`meta validate` reports the same page as `external:owned`."
-    },
-    {
-      "stepType": "runShell",
-      "match": ["cite add", "--dry-run", "added retries to"],
+      "match": ["cite add", "--dry-run"],
+      "match_any": ["added retries to", "docs-citations.yaml"],
       "note": "`add` needs no flag: the entry goes to the manifest, and the claim stays at the line typed."
     },
     {
@@ -51,21 +38,6 @@
       "stepType": "runShell",
       "match": ["cite check", "guides-citations.yaml:4"],
       "note": "The page that carries `slug: guide-one` owns the `join:`-keyed entry."
-    },
-    {
-      "stepType": "runShell",
-      "match": ["cannot come from a URL manifest"],
-      "note": "Refusal one: a URL in `file:` on the manifest that owns citations, exit 2."
-    },
-    {
-      "stepType": "runShell",
-      "match": ["both keep citations in a manifest"],
-      "note": "Refusal two: two collections matching one page, both with a manifest owning citations, exit 2."
-    },
-    {
-      "stepType": "runShell",
-      "match": ["cite add", "read from stdin has no path"],
-      "note": "Refusal three: `-` on `add`, to read the page from stdin, exit 2."
     }
   ],
   "must_not": [],

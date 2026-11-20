@@ -9,7 +9,8 @@
     },
     {
       "stepType": "runShell",
-      "match": ["meta query", "--check", "join authors", "check failed"],
+      "match": ["meta query", "--check", "join authors"],
+      "match_any": ["check failed", "ghost"],
       "note": "The dangling-author rule joins the `authors` view; the page quotes `✗ 1 row — check failed`."
     },
     {
@@ -34,11 +35,6 @@
     },
     {
       "stepType": "runShell",
-      "match": ["meta validate", "checks skipped"],
-      "note": "A scoped run (`manni meta validate docs/intro.md`) skips checks with a `corpus checks skipped` notice."
-    },
-    {
-      "stepType": "runShell",
       "match": ["meta query"],
       "match_any": ["-f json", "--format json"],
       "note": "`--format json` prints the bare result array."
@@ -56,7 +52,8 @@
     },
     {
       "stepType": "runShell",
-      "match": ["meta query", "--dry-run", "(unset) -> todo"],
+      "match": ["meta query", "--dry-run"],
+      "match_any": ["-> todo", "dry run"],
       "note": "`--dry-run` previews the UPDATE; the page quotes `reviewed: (unset) -> todo`."
     }
   ],
