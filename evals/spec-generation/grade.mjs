@@ -21,11 +21,12 @@
 //   DD_REPO        doc-detective checkout with `npm ci` done; its test servers are
 //                  started here when :8092 isn't already up (web and dd-docs slices)
 //   MANNI_PREFIX   npm prefix the manni CLI is linked into (`npm link` with npm_config_prefix);
-//                  its bin dir goes first on PATH and npx resolves `@hawkeyexl/manni` from it
+//                  its bin dir goes first on PATH; the session's own prefix links the same
+//                  package, so npx `@hawkeyexl/manni` resolves to it there too
 //   DD_NODE_DIR    optional: a Node >= 22.22.2 / 24.15 directory put first on PATH
 //                  for Doc Detective (its Appium refuses older Node)
 
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFileSync } from 'node:child_process';
@@ -40,16 +41,31 @@ const SEP = WIN ? ';' : ':';
 const SLICES = [['web', 'cases'], ['manni', 'cases-manni'], ['dd-docs', 'cases-dd-docs']];
 export const usesServers = c => c.slice !== 'manni';
 
-/** PATH and npm prefix that put DD_NODE_DIR and the linked manni CLI first. The session gets it too. */
 /**
- * The model session's environment: the same tools on PATH, but its own empty npm
- * prefix in the workspace. A page that tells the reader to `npm install -g` then
- * installs into the workspace, not into the pinned prefix the grade runs against.
+ * The model session's environment: the same tools on PATH, but its own npm prefix in
+ * the workspace. A page that tells the reader to `npm install -g` then installs into
+ * the workspace, not into the pinned prefix the grade runs against.
+ *
+ * `npx` looks for a package in the global prefix, not on PATH, so the session's
+ * prefix links the pinned manni package and copies its bin shims. The session's
+ * `npx @hawkeyexl/manni` then runs the build the grade checks, not the registry's latest.
  */
 export function sessionEnv(ws, base = process.env) {
   const env = toolEnv(base);
   const prefix = join(ws, '.npm-global');
   mkdirSync(prefix, { recursive: true });
+  const pinned = base.MANNI_PREFIX;
+  if (pinned) {
+    const mods = WIN ? 'node_modules' : join('lib', 'node_modules');
+    const bin = WIN ? '' : 'bin';
+    const pkg = join(pinned, mods, '@hawkeyexl', 'manni');
+    mkdirSync(join(prefix, mods, '@hawkeyexl'), { recursive: true });
+    mkdirSync(join(prefix, bin), { recursive: true });
+    symlinkSync(realpathSync(pkg), join(prefix, mods, '@hawkeyexl', 'manni'), 'junction');
+    for (const f of readdirSync(join(pinned, bin))) {
+      if (/^(manni|docmeta)(\.cmd|\.ps1)?$/.test(f)) cpSync(join(pinned, bin, f), join(prefix, bin, f), { verbatimSymlinks: true });
+    }
+  }
   return { ...env, npm_config_prefix: prefix };
 }
 
@@ -61,10 +77,12 @@ export function checkToolchain() {
   try {
     got = execFileSync(WIN ? 'manni.cmd' : 'manni', ['--version'], { env: toolEnv(), shell: WIN, encoding: 'utf8' }).trim();
   } catch (e) { got = `unavailable (${String(e.message).split(/\r?\n/)[0]})`; }
-  if (!got.includes(want))
+  // Exact match on the version token, so 2.6.0-rc.1 doesn't pass for 2.6.0.
+  if (!got.split(/\s+/).map(t => t.replace(/^v/, '')).includes(want))
     throw Object.assign(new Error(`pinned manni is ${got}, expected ${want}: something changed MANNI_PREFIX`), { failure_class: 'harness' });
 }
 
+/** PATH and npm prefix that put DD_NODE_DIR and the linked manni CLI first, for the grade's own runs. */
 export function toolEnv(base = process.env) {
   const prefix = base.MANNI_PREFIX;
   const extra = [prefix && (WIN ? prefix : join(prefix, 'bin')), base.DD_NODE_DIR];
@@ -201,13 +219,14 @@ export function stepsOf(spec) {
 function stepText(s) {
   const p = s?.[actionOf(s)];
   const json = JSON.stringify([p ?? null, s?.variables ?? null]).replace(/\\(.)/g, (_, c) => 'nrt'.includes(c) ? ' ' : c === '\\' ? '' : c).toLowerCase();
-  const line = Array.isArray(p?.args) ? norm([p.command, ...p.args].join(' ')) : '';
+  const line = Array.isArray(p?.args) ? norm([p.command ?? '', ...p.args].join(' ')) : '';
   return `${json}\n${line}`;
 }
 
 // A token starting with `-` is a flag: it matches only as a whole token, so `-s` misses `-spec-tmp`.
 const WORD = /[a-z0-9_-]/;
 function has(text, m) {
+  // Plain terms match as substrings (a URL, a quoted output line); flags match as whole tokens.
   if (!m.startsWith('-')) return text.includes(m);
   const closed = WORD.test(m.at(-1));
   for (let i = text.indexOf(m); i >= 0; i = text.indexOf(m, i + 1)) {
