@@ -2,7 +2,7 @@
 name: doc-detective-validate
 description: 'Validate Doc Detective test specifications or configuration files'
 metadata:
-  version: '2.1.2'
+  version: '2.1.3'
   organization: Doc Detective
   date: November 2026
   abstract: Validate Doc Detective test specifications or configuration files to ensure they are correctly structured.

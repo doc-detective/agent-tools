@@ -4,7 +4,7 @@ description: "Use this agent for Doc Detective work: configuring Doc Detective, 
 model: inherit
 metadata:
   organization: Doc Detective
-  version: '2.1.2'
+  version: '2.1.3'
   date: November 2026
 ---
 

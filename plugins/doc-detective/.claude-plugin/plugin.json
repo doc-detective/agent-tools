@@ -1,7 +1,7 @@
 {
   "name": "doc-detective",
   "description": "Documentation testing and validation using Doc Detective. Test documentation procedures, convert docs to executable test specs, and validate that documented workflows match actual application behavior.",
-  "version": "2.1.2",
+  "version": "2.1.3",
   "author": {
     "name": "Doc Detective Agency"
   },

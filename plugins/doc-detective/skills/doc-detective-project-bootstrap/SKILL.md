@@ -2,7 +2,7 @@
 name: doc-detective-project-bootstrap
 description: 'Detailed workflow behind doc-detective-init: detect docs, write a minimal config, generate tests, and run and fix them. For a direct user request to set up Doc Detective, doc-detective-init is the entry point.'
 metadata:
-  version: '2.1.2'
+  version: '2.1.3'
   organization: Doc Detective
   date: November 2026
   abstract: Initialize Doc Detective in a repository by detecting documentation, generating minimal configuration, creating tests for identified procedures, and iteratively running and fixing tests with confidence-based suggestions. Supports interactive and CI modes.
