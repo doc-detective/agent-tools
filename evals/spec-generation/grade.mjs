@@ -213,11 +213,23 @@ export function runDocDetective(c, ws, specPath) {
     });
     child.on('close', code => {
       clearTimeout(timer);
-      let summary = null;
-      try { summary = JSON.parse(readFileSync(join(out, 'results.json'), 'utf8')).summary; } catch {}
-      resolvePromise({ code, summary, log: log.slice(-4000) });
+      let results = null;
+      try { results = JSON.parse(readFileSync(join(out, 'results.json'), 'utf8')); } catch {}
+      resolvePromise({ code, summary: results?.summary ?? null, failures: failedSteps(results), log: log.slice(-4000) });
     });
   });
+}
+
+/** The first five failing steps in a results file, as `<testId> <stepId> <action>: <resultDescription>`. */
+export function failedSteps(results) {
+  const out = [];
+  const list = x => (Array.isArray(x) ? x : []);
+  for (const spec of list(results?.specs)) for (const t of list(spec?.tests)) for (const ctx of list(t?.contexts)) {
+    for (const st of list(ctx?.steps)) {
+      if (st?.result === 'FAIL') out.push(`${t.testId} ${st.stepId} ${actionOf(st)}: ${String(st.resultDescription).replace(/\s+/g, ' ')}`.slice(0, 300));
+    }
+  }
+  return out.slice(0, 5);
 }
 
 // --- grade ------------------------------------------------------------------
@@ -304,7 +316,7 @@ export function gradeRun(c, run) {
       complete: passes ? (cov.score === 1 ? 'passes with every expected step' : 'passes but misses expected steps') : 'does not pass',
       passes: !run.spec.path ? 'no spec file written'
         : !run.spec.json ? 'spec file is not valid JSON'
-        : `doc-detective exit ${run.dd.code}; steps ${JSON.stringify(s ?? null)}`,
+        : `doc-detective exit ${run.dd.code}; steps ${JSON.stringify(s ?? null)}${run.dd.failures?.length ? `; failed: ${run.dd.failures.join(' | ')}` : ''}`,
       coverage: cov.misses.length ? `missing: ${cov.misses.join('; ')}` : 'all expected steps present',
       spec_written: run.spec.path ? `${run.spec.at_requested_path ? 'at' : 'NOT at'} requested path` : 'none',
     },

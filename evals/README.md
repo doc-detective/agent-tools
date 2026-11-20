@@ -79,4 +79,4 @@ Build the report from the flow directory with the eval report builder that ships
 node <claude-api skill>/shared/evals/report/build-report-lite.mjs .claude/hillclimb/routing/
 ```
 
-It writes `report.html`, a per-case table with links to each transcript. Transcripts, reports, and frozen references stay out of git.
+It writes `report.html`, a per-case table with links to each transcript. For a spec-generation run whose spec fails, the row's `explanation.passes` names up to five failing steps, each with Doc Detective's result description. Transcripts, reports, and frozen references stay out of git.
