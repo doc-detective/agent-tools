@@ -61,7 +61,10 @@ export function sessionEnv(ws, base = process.env) {
     const pkg = join(pinned, mods, '@hawkeyexl', 'manni');
     mkdirSync(join(prefix, mods, '@hawkeyexl'), { recursive: true });
     mkdirSync(join(prefix, bin), { recursive: true });
-    symlinkSync(realpathSync(pkg), join(prefix, mods, '@hawkeyexl', 'manni'), 'junction');
+    let target;
+    try { target = realpathSync(pkg); }
+    catch { throw Object.assign(new Error(`no manni package at ${pkg}: run \`npm link\` with npm_config_prefix set to MANNI_PREFIX`), { failure_class: 'harness' }); }
+    symlinkSync(target, join(prefix, mods, '@hawkeyexl', 'manni'), 'junction');
     for (const f of readdirSync(join(pinned, bin))) {
       if (/^(manni|docmeta)(\.cmd|\.ps1)?$/.test(f)) cpSync(join(pinned, bin, f), join(prefix, bin, f), { verbatimSymlinks: true });
     }
