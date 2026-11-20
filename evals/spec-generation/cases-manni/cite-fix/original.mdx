@@ -1,0 +1,580 @@
+---
+title: Fix a failing check
+description: Read a manni cite finding, map the rule to what happened to the source or the page, apply the fix, and confirm green locally. Every rule in one place.
+---
+
+import { Steps, Aside, LinkCard } from '@astrojs/starlight/components';
+
+Your PR's citation check is red, or it carries a warning you'd like gone. This
+page decodes the finding and tells you, rule by rule, what happened and which
+command clears it. You don't need to know how the citations were set up, only
+what the output is telling you.
+
+<Aside type="tip" title="The fastest path">
+  Find the rule in the [table](#every-rule-at-a-glance), do the one thing in
+  its row, then [run the check locally](#reproduce-and-confirm-locally) to
+  confirm it's green. Done.
+</Aside>
+
+## Decode the finding
+
+In the default `pretty` output, a page with a problem looks like this:
+
+```
+✗ docs/limits.md
+    ✗ fetch-timeout   :13 current   lib/limits.ts:2 changed since 9265563, 1 commit
+```
+
+The first line is the page. Each indented line below it is one citation, and
+it carries **both ends**:
+
+```
+<mark> <id>   <claim end>   <source end>   <manifest>
+```
+
+| Part | What it tells you |
+| --- | --- |
+| `<mark>` | `✓` fine, `↕` a warning, `ℹ` a notice, `✗` an error, `·` skipped or baselined. |
+| `<id>` | The citation's `id`. An entry without one leaves the column empty, and the two ends identify it. |
+| `<claim end>` | The page lines the sentence occupies, and their status: `:13 current`, `:13 moved -> :15`, `:13 changed`. A marker-anchored claim reads `marker :13`, and `marker :13 -> :11` when the marker is misplaced. Empty for a bare pin. |
+| `<source end>` | The source as the entry spells it (`lib/limits.ts:2`, `lib/limits.ts:1-3`, a bare path for a whole file, or a ciphertext such as `~AQm4…:5`), then its status. |
+| `<manifest>` | The sidecar that owns the entry, and the entry's line in it. Empty when the entry lives in the page's frontmatter. |
+
+{/* cite annotation-site */}
+In a pull request the same finding is an annotation, titled
+`manni:cite/source-changed`. A claim or marker finding is annotated on the
+page line a reviewer reads. A finding about the entry itself is annotated on
+the entry's own line, in the manifest when a sidecar owns it.
+
+## Every rule at a glance
+
+| Rule | Severity | It means | Do this |
+| --- | --- | --- | --- |
+| [`source-moved`](#source-moved) | warning | The cited lines are intact, at a different line number. | `manni cite update` |
+| [`source-moved-ambiguous`](#source-moved-ambiguous) | error | The cited lines now occur in more than one place. | Widen the range, then `update --accept --only <id>` |
+| [`source-changed`](#source-changed) | error | The cited lines are not what they were. | Read `--show-diff`, fix the sentence, then `update --accept --only <id>` |
+| [`source-never-true`](#source-never-true) | error | The pin does not match even at the commit it records. | Check the sentence, then `update --accept --only <id>` |
+| [`source-missing`](#source-missing) | error | No tracked file at that path, or an encrypted source that cannot be decrypted. | Re-add against the new path; or fix `--root` or the key |
+| [`claim-moved`](#claim-moved) | notice | The pinned page text sits at a different line. | `manni cite update` |
+| [`claim-moved-ambiguous`](#claim-moved-ambiguous) | warning | The pinned page text now occurs in more than one place. | Re-add over a range that occurs once |
+| [`claim-changed`](#claim-changed) | warning | The sentence was edited since it was pinned. | Read it, then `update --accept --only <id>` |
+| [`marker-orphan`](#marker-orphan) | error | A marker names an id no entry has. | Fix the id, or add the entry |
+| [`marker-invalid`](#marker-invalid) | error | A marker the tool cannot read, including one carrying JSON. | Write an id, and keep the entry out of the body |
+| [`marker-repeated`](#marker-repeated) | warning | Two markers name one id. | Delete one, or give the second entry its own id |
+| [`marker-misplaced`](#marker-misplaced) | warning | A marker line sits inside a paragraph and splits it. | `manni cite update` |
+| [`anchor-invalid`](#anchor-invalid) | error | The entry's anchor cannot work. | Keep one anchor |
+| [`entry-invalid`](#entry-invalid) | error | An entry is malformed, or an id is repeated. | Fix the entry, or let `add` write it |
+| [`quote-drift`](#quote-drift) | error | The fenced block does not reproduce the cited lines. | Paste the lines again |
+
+{/* cite update-reports-skipped */}
+{/* cite update-skipped-exit-one */}
+The first five are about the **source** end, the next three about the
+**claim** end, and the rest about the entry and its anchor. `update` handles
+the mechanical ones and refuses the rest, printing each as `skipped`. It exits
+`1` when a skipped finding is an error, so you know work is left. Skipped
+warnings and notices leave the exit code at `0`.
+
+{/* cite current-skipped-not-findings */}
+{/* cite severity-rejects-non-rules */}
+Two words in the output are not rules. `current` says an end matches its pin,
+and `skipped` says it was not read, which is what `--no-check-sources` does to
+every source end. Neither is a finding, and neither can be named in
+`severity:`.
+
+## Source-end rules
+
+### source-moved
+
+```
+⚠ docs/limits.md
+    ↕ fetch-timeout   :13 current   lib/limits.ts:2 moved -> lib/limits.ts:4
+```
+
+{/* cite source-moved-found-elsewhere */}
+{/* cite source-moved-warning */}
+The lines the citation pins are still in the file, byte for byte, but they
+are at a different line number. Something was added or removed above them.
+The page still says something true, so this is a **warning** and the exit
+code stays `0`.
+
+{/* cite update-rewrites-source-lines */}
+**Fix.** `update` rewrites `source.lines` in place and changes nothing else:
+
+```sh
+manni cite update docs/limits.md
+```
+
+```
+docs/limits.md: fetch-timeout source lib/limits.ts:2 -> lib/limits.ts:4 (moved)
+1 citation rewritten in 1 file, 0 skipped
+```
+
+### source-moved-ambiguous
+
+```
+✗ docs/limits.md
+    ✗ retries   :22 current   lib/dup.ts:2 moved, 2 candidates (lib/dup.ts:3, lib/dup.ts:5); widen the range
+```
+
+{/* cite source-moved-ambiguous-candidates */}
+{/* cite update-skips-ambiguous-source */}
+The pinned lines left their line number and now occur at two or more places
+in the file. Picking one would be a guess, so `update` skips it. This is common
+for a one-line pin over a line a file repeats, such as `export const RETRIES = 3;`.
+
+**Fix.** Edit the entry's `source.lines` to a range wide enough to occur once,
+say `"2-3"`, then re-mint the pin over it:
+
+```sh
+manni cite update --accept --only retries docs/limits.md
+```
+
+### source-changed
+
+```
+✗ docs/limits.md
+    ✗ fetch-timeout   :13 current   lib/limits.ts:2 changed since 9265563, 1 commit
+```
+
+{/* cite source-changed-classify */}
+{/* cite show-diff-subjects-diff */}
+The bytes at the cited range are not the bytes the pin was minted over, and
+they are nowhere else in the file. The sentence on line 13 may no longer be
+true. The status names the commit the pin was minted at and how many commits
+have touched the file since; `--show-diff` prints their subjects and the diff.
+
+{/* cite source-changed-variants */}
+{/* cite no-git-warns-once */}
+Three variants carry the same meaning with less history. An entry with no
+`commit-sha` is a bare `changed`. On a shallow clone it is
+`changed (history unavailable: commit 9265563 not found; fetch-depth: 0)`.
+Where git is not available at all, it is a bare `changed` too, and the run
+warns once on stderr:
+
+```
+manni: git is not available here, so citations are checked without history: no never-true, no reanchored claims, no diffs, no commit subjects.
+```
+
+[Run it in CI](/manni/cite/ci/#full-history) explains the last two.
+
+**Fix.** Read the diff, then decide what the sentence should say:
+
+```sh
+manni cite check --show-diff docs/limits.md
+```
+
+Fix the sentence. Then record that the source is now what the page says:
+
+```sh
+manni cite update --accept --only fetch-timeout docs/limits.md
+```
+
+```
+docs/limits.md: fetch-timeout source lib/limits.ts:2 re-pinned at 9b1e04c (changed; sha256-78af1d33… -> sha256-7cb6e7f1…)
+docs/limits.md: fetch-timeout claim at line 13 re-pinned (changed; now "The fetch timeout is 30 seconds.")
+2 citations rewritten in 1 file, 0 skipped
+```
+
+{/* cite accept-settles-both-ends */}
+One `--accept` settles both ends, because editing the sentence made the claim
+end `claim-changed` at the same time. If the sentence was still right and only
+the code's shape changed, the same command re-pins the source alone.
+
+### source-never-true
+
+```
+✗ docs/limits.md
+    ✗ fetch-timeout   :13 current   lib/limits.ts:4 never true: the pin does not match at 835098c
+```
+
+{/* cite never-true-searches-file */}
+{/* cite never-true-not-move */}
+The tool went back to the commit the entry records and searched the whole
+file there. No range of the cited length hashed to the pin. So the pin was
+never a record of that file at that commit. The usual cause is an entry
+edited by hand: a `source.file`, `source.integrity` or `source.commit-sha`
+that does not belong with the others. A move is not a cause. After `update`
+rewrites a moved range, a later edit to the line reads `source-changed`,
+because the pinned bytes were in the file at that commit.
+
+{/* cite never-true-remint-head */}
+{/* cite never-true-both-pins */}
+**Fix.** Treat it as `source-changed`: check the sentence against the source,
+then re-mint at HEAD with `update --accept --only <id>`. Both pins are
+printed.
+
+### source-missing
+
+```
+✗ docs/limits.md
+    ✗ fetch-timeout   :11 current   src/gone.ts:2 missing
+```
+
+{/* cite source-missing-not-in-index */}
+{/* cite source-missing-git-ls-files */}
+No tracked file exists at that path under the root. A renamed file is
+`missing`, deliberately: a pin names a path, and following renames through
+history would be a guess. Where git is available, sources resolve through
+`git ls-files`, so a file that exists but is not committed is `missing` too.
+
+**Fix.** Remove the entry and add it again against the new path:
+
+```sh
+manni cite remove docs/limits.md --only fetch-timeout
+manni cite add docs/limits.md:11 lib/config/limits.ts:2 --id fetch-timeout
+```
+
+{/* cite encrypted-missing-never-names-path */}
+An encrypted source says why it is missing, and never names the path:
+
+```
+    ✗ retries   :22 current   ~AQm4…:5 missing (no encryption key is available to decrypt it)
+```
+
+{/* cite ciphertext-82-chars */}
+The real ciphertext is 82 characters or more, shortened here. The part in
+parentheses names the cause:
+
+- **`no encryption key is available to decrypt it`.** The job has no family
+  encryption key. Set `MANNI_ENCRYPTION_KEY` from the secret. A public CI job
+  that has no key and no code runs with `--no-check-sources` instead; see
+  [Public docs, private code](/manni/cite/set-up/public-docs-private-code/).
+- **`does not decrypt under the current key`.** The key is not the one the
+  source was encrypted under. After a key rotation, the secret may still hold
+  the old key.
+- **`no tracked file matches; wrong --root?`.** The path decrypted, and no
+  tracked file under the root has it. Point `--root` at the code checkout, or
+  add the citation again against the new path.
+
+## Claim-end rules
+
+### claim-moved
+
+```
+ℹ docs/limits.md
+    ℹ fetch-timeout   :13 moved -> :15   lib/limits.ts:2 current
+```
+
+{/* cite claim-moved-found-verbatim */}
+{/* cite claim-moved-notice */}
+The pinned page text is found verbatim at another line. Someone inserted a
+paragraph above it, and nothing drifted. This is a **notice**, the quietest
+level there is, and the exit code stays `0`.
+
+{/* cite update-rewrites-claim-lines */}
+**Fix.** `update` rewrites `claim.lines`:
+
+```sh
+manni cite update docs/limits.md
+```
+
+```
+docs/limits.md: fetch-timeout claim line 13 -> 15 (moved)
+1 citation rewritten in 1 file, 0 skipped
+```
+
+{/* cite marker-claim-never-moves */}
+A marker-anchored claim reaches this rule only when the marker no longer
+anchors the span the pin holds. The marker travels with its text otherwise.
+`update` re-pins it over the span the marker anchors now, with no flag.
+
+### claim-moved-ambiguous
+
+```
+⚠ docs/limits.md
+    ↕ retries   :15 moved, 2 candidates (:17, :21)   src/limits.ts:3 current
+```
+
+{/* cite update-skips-ambiguous-claim */}
+The pinned text is now at two or more places on the page, and `update` will
+not guess which one the citation supports. A one-line claim over a sentence
+the page repeats is the usual cause.
+
+{/* cite marker-cannot-be-ambiguous */}
+**Fix.** Pin a range that occurs once, or anchor with a marker, which cannot
+be ambiguous:
+
+```sh
+manni cite add docs/limits.md:21 src/limits.ts:3 --id retries --marker
+```
+
+### claim-changed
+
+```
+⚠ docs/limits.md
+    ↕ fetch-timeout   :13 changed   lib/limits.ts:2 current
+```
+
+{/* cite claim-changed-warning */}
+{/* cite claim-changed-marker-scope */}
+The pinned page text is gone, so the sentence was edited. This is a **warning**,
+not an error, because it fires on any edit to the pinned text, a typo fix included. Under
+claim lines that is an edit on those lines. Under a marker it is an edit
+anywhere in the paragraph or block the marker anchors.
+
+**Fix.** Read the text as it is now, then re-pin it:
+
+```sh
+manni cite check --show-diff docs/limits.md
+manni cite update --accept --only fetch-timeout docs/limits.md
+```
+
+```
+docs/limits.md: fetch-timeout claim at line 13 re-pinned (changed; now "The fetch timeout is 30 seconds.")
+1 citation rewritten in 1 file, 0 skipped
+```
+
+{/* cite accept-repins-unit-at-first-line */}
+`--accept` re-pins over the paragraph or fenced block now at the claim's first
+line, and prints it. So the log says exactly what was accepted. It skips the
+claim when that line is blank, or inside a different kind of block. A sentence
+that was reworded **and** moved has left that line. `--accept` then re-pins
+whatever paragraph now starts there, so read the printed text. If it is not
+the sentence, `cite add` the sentence again.
+
+{/* cite claim-changed-configurable */}
+A team that wants every edit to a cited sentence reviewed sets
+`claim-changed: error` under
+[`severity:`](/manni/cite/reference/configuration/#severity).
+
+## Anchor and entry rules
+
+### marker-orphan
+
+```
+✗ docs/limits.md
+    ✗ nope   no entry has id "nope"   (line 12)
+```
+
+A marker, `<!-- cite nope -->`, names an id and no entry has it. A typo in the
+marker, or an entry that was deleted.
+
+{/* cite cite-true-names-id-true */}
+**Fix.** Correct the id in the marker, or add the entry it refers to. Note
+that `cite true` names the id `true`. To delete the stray marker instead:
+
+```sh
+manni cite remove docs/limits.md --only nope
+```
+
+### marker-invalid
+
+```
+✗ docs/page.md
+    ✗ page   A marker names an entry by id. Write the entry in frontmatter or the sidecar.   (line 12)
+```
+
+{/* cite marker-invalid-json-payload */}
+{/* cite marker-invalid-over-500 */}
+A marker's payload is not an id. The commonest case is JSON. Earlier drafts
+let a marker carry a whole entry, and that is removed. An entry lives in
+frontmatter or a sidecar manifest, so a source is never written into the body.
+A page with more than 500 markers reports this rule once as well.
+
+{/* cite add-marker-writes-both */}
+**Fix.** Move the entry into the frontmatter or the manifest, and leave an id
+in the body. `cite add --marker --id <id>` writes both halves.
+
+### marker-repeated
+
+```
+⚠ docs/limits.md
+    ↕ retries   retries is named by markers at lines 8 and 20; the first anchors it.   (line 20)
+```
+
+{/* cite marker-repeated-warning */}
+Two markers name one entry. The first one anchors it, and the second does
+nothing, so this is a **warning**.
+
+**Fix.** Delete the second marker, or give the paragraph its own entry and
+its own id.
+
+### marker-misplaced
+
+```
+⚠ docs/limits.md
+    ↕ host-scope   marker :44 -> :41 moved   lib/scope.ts:9 current
+```
+
+The marker sits inside a paragraph, between two lines of text. MDX and
+CommonMark both end a paragraph at a comment line, so the page renders two
+paragraphs split mid-sentence. The tool reads it the same way, which leaves
+the lines above the marker anchored by nothing. Its place is above the first
+line of the paragraph, where `cite add --marker` writes one.
+
+The claim beside it often reads `claim-moved`, a notice. The pinned text is
+still on the page, at a span the marker no longer anchors.
+
+**Fix.** `manni cite update`. The marker moves, and the claim is re-pinned
+over the whole paragraph. Every entry the move pushed along has its lines
+rewritten in the same write. No flag is needed.
+
+A marker whose claim holds nowhere stays put, and says so:
+
+```
+docs/limits.md: robots  ↕ skipped: robots: the marker at line 70 stays, because its claim changed since it was pinned. update --accept moves it and re-pins.
+```
+
+Read the sentence first with `cite check --show-diff`, then
+`update --accept --only <id>` moves it and re-pins it.
+
+### anchor-invalid
+
+```
+✗ docs/limits.md
+    ✗ fetch-timeout   fetch-timeout has claim lines and a marker. Keep one.   (line 15)
+```
+
+{/* cite anchor-invalid-claim-not-judged */}
+The entry's anchor cannot work, so neither end is judged. Three cases reach
+this rule:
+
+| Message | Cause | Fix |
+| --- | --- | --- |
+| `fetch-timeout has claim lines and a marker. Keep one.` | The entry stores `claim.lines` and a marker names it too. | Delete the marker, or delete `claim.lines`. |
+| `fetch-timeout: quote needs a claim or a marker.` | `quote: true` with nothing anchoring the block. | Add `claim.lines` over the block, or a marker above it. |
+| `fetch-timeout: the quote's claim lines 14-18 are no longer a fenced block.` | The lines a quote pins are not fenced any more. | Restore the fences, or re-add the citation over the block. |
+
+{/* cite add-refuses-frontmatter */}
+Claim lines inside the frontmatter cannot happen. `claim.lines` counts the
+body, so it never points there. `add` refuses such a line outright:
+
+```
+manni: docs/limits.md:2 is in the frontmatter. A claim is body text.
+```
+
+### entry-invalid
+
+```
+✗ docs/limits.md
+    ✗ fetch-timeout   /source must have required property 'integrity'   (line 4)
+    ✗ fetch-timeout   duplicate id "fetch-timeout"   (line 13)
+```
+
+{/* cite entry-invalid-shape */}
+{/* cite entry-invalid-too-wide */}
+An entry does not fit the citation shape. A required field is missing,
+`source.file` does not match the grammar, or two entries share an `id`. A
+range that runs backwards or spans more than 5,000 lines is one too. The line is the entry's own line, in the manifest when
+a sidecar owns it.
+
+{/* cite entry-invalid-pin-prefix-prose */}
+Two more cases land here. A pin whose prefix does not match its source is one:
+
+```
+fetch-timeout: an encrypted source is pinned with hmac-sha256-, not sha256-.
+fetch-timeout: a plain source is pinned with sha256-, not hmac-sha256-.
+```
+
+{/* cite entry-invalid-manifest-owns */}
+And a page that still carries its own `citations:` while a manifest owns the
+key is the other. Move those entries into the manifest.
+
+**Fix.** Correct the entry, or remove it and let `add` write a well-formed
+one. `remove` reads the entries as they are written. A broken one is still
+reachable by its id, or by its pointer when it has none:
+
+```sh
+manni cite remove docs/limits.md --only /citations/3
+```
+
+The [citations reference](/manni/cite/reference/citations/) has the full shape
+and the file grammar.
+
+### quote-drift
+
+```
+✗ docs/limits.md
+    ✗ limits-block   :19-23 current   lib/limits.ts:3-5 current
+    ✗ limits-block   quote: true, but the fenced block does not reproduce the cited lines   (line 19)
+```
+
+{/* cite quote-drift-faithful */}
+The citation has `quote: true`, both pins hold, and the fenced block on the
+page is not a copy of the cited lines. This often follows an
+`update --accept` on a quoted range. The pin now matches the new source, and
+the block on the page still shows the old one.
+
+**Fix.** Paste the cited lines into the block again.
+
+## Reproduce and confirm locally
+
+Don't guess and re-push. Run the exact check on your machine.
+
+<Steps>
+
+1. **Run the check on just your page.** No install needed:
+
+   ```sh
+   npx @hawkeyexl/manni cite check docs/limits.md
+   ```
+
+   You'll see the same line CI showed you. Add `--show-diff` for a changed
+   end, on either side.
+
+2. **Apply the fix** from the matching section above.
+
+3. **Run it again** and confirm the green summary:
+
+   ```
+   ✓ docs/limits.md
+       ✓ fetch-timeout   :13 current   lib/limits.ts:4 current
+
+   1 file checked, 1 passed, 0 failed, 0 findings
+   ```
+
+4. **Re-push.** Commit the page (and, after `update`, its rewritten entry or
+   manifest) and the check goes green.
+
+</Steps>
+
+<Aside type="tip" title="Check the same pages CI does">
+  With the pages declared as a collection under `collections:` in
+  `manni.config.yaml`, a bare `npx @hawkeyexl/manni cite check` from the repo
+  root checks the same pages CI does. If the sources live in another checkout, CI passes `--root`; do
+  the same. Keep the config in the run: without it, a page whose citations
+  live in a sidecar looks as though it had none.
+</Aside>
+
+## What the exit code means
+
+| Code | Meaning |
+| --- | --- |
+| `0` | No findings, or only warnings and notices. The check is green. |
+| `1` | At least one error-severity finding that is not in the baseline. This is the red check you came here to fix. For `update`, that a citation was skipped. |
+| `2` | An operational error. The check could not run. No inputs and no config, an unknown format, `update` under `--no-check-sources`, or a URL manifest that owns `citations`. The message is on stderr, prefixed `manni:`. |
+
+A `1` means fix the page or the pin. A `2` means fix the setup, or escalate
+to whoever configured the check.
+
+## Still stuck?
+
+The [CLI reference](/manni/cite/reference/cli/) documents every flag. The
+[citations reference](/manni/cite/reference/citations/) documents the entry
+shape, the file grammar and the hashing rule. The hashing rule is what decides
+whether two ranges are "the same bytes".
+
+<LinkCard
+  title="Get started"
+  href="/manni/cite/get-started/"
+  description="See each rule happen, from a fresh pin through a move and a change on both ends, with the command that clears it."
+/>
+
+{/* Doc Detective inline tests: verify this page's documented manni cite behavior
+    against the local build, exposed as `manni cite` / `npx @hawkeyexl/manni cite` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"cite-fix-a-failing-check","description":"The rule catalog, mapped to fixtures."} */}
+{/* step {"description":"source-moved: a warning naming the new range, exit 0.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/moved.md","exitCodes":[0],"stdio":"/moved -> src\\/moved\\.ts:4/"}} */}
+{/* step {"description":"source-changed: an error on the source end, with the claim end still current, exit 1.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/source-changed.md","exitCodes":[1],"stdio":"/:15 current\\s+src\\/changed\\.ts:2 changed/"}} */}
+{/* step {"description":"source-missing: no tracked file at the path, exit 1.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/missing.md","exitCodes":[1],"stdio":"/src\\/gone\\.ts:2 missing/"}} */}
+{/* step {"description":"claim-moved: an inserted paragraph is a notice that names both lines, exit 0.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-moved.md","exitCodes":[0],"stdio":"/fetch-timeout\s+:15 moved -> :17/"}} */}
+{/* step {"description":"claim-moved-ambiguous: the pinned text at two places is a warning that names both, exit 0.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-moved-ambiguous.md","exitCodes":[0],"stdio":"/retries\s+:15 moved, 2 candidates \(:17, :21\)/"}} */}
+{/* step {"description":"claim-changed: an edited sentence is a warning on the claim's line, exit 0.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-changed.md","exitCodes":[0],"stdio":"/fetch-timeout\s+:15 changed/"}} */}
+{/* step {"description":"marker-orphan: a marker naming an id no entry has, exit 1.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/marker-orphan.md","exitCodes":[1],"stdio":"no entry has id \"nope\""}} */}
+{/* step {"description":"marker-invalid: a JSON payload hears where the entry belongs, exit 1.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/marker-json.md","exitCodes":[1],"stdio":"A marker names an entry by id. Write the entry in frontmatter or the sidecar."}} */}
+{/* step {"description":"anchor-invalid: claim lines and a marker together, exit 1.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/anchor-both.md","exitCodes":[1],"stdio":"has claim lines and a marker. Keep one."}} */}
+{/* step {"description":"entry-invalid: a duplicate id and a missing integrity are named on the entry's line.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/entry-invalid.md","exitCodes":[1],"stdio":"duplicate id \"fetch-timeout\""}} */}
+{/* step {"description":"entry-invalid: an encrypted source pinned with sha256- names the prefix it needs.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/hmac-mismatch.md","exitCodes":[1],"stdio":"an encrypted source is pinned with hmac-sha256-, not sha256-."}} */}
+{/* step {"description":"Reproduce and confirm locally: a fixed page passes with a green summary.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/current.md","exitCodes":[0],"stdio":"1 file checked, 1 passed, 0 failed, 0 findings"}} */}
+{/* test end */}

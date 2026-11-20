@@ -1,0 +1,37 @@
+{
+  "specId": "dd-docs-load-variables",
+  "description": "Doc Detective docs: the loadVariables action reference, run in a workspace that holds the page's secrets.env.",
+  "tests": [
+    {
+      "testId": "loadvariables-env-file",
+      "steps": [
+        {
+          "stepId": "loadvariables-load",
+          "description": "Load environment variables from secrets.env.",
+          "loadVariables": "./secrets.env"
+        },
+        {
+          "stepId": "loadvariables-use",
+          "description": "Use DATA_URL and API_KEY in a request. POST, so the echoed body proves the $API_KEY substitution; reaching the server proves $DATA_URL.",
+          "httpRequest": {
+            "url": "$DATA_URL",
+            "method": "POST",
+            "request": {
+              "headers": {
+                "Authorization": "Bearer $API_KEY"
+              },
+              "body": {
+                "key": "$API_KEY"
+              }
+            },
+            "response": {
+              "body": {
+                "key": "docs-test-secret-456"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

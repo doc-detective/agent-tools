@@ -1,0 +1,269 @@
+---
+title: Put the key where every tool finds it
+description: "Choose between the config key and MANNI_ENCRYPTION_KEY, keep a key out of a shared repository, decide who on the team needs it, and learn what each command does without one."
+sidebar:
+  order: 1
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+One key covers the whole family. `manni meta` encrypts a frontmatter value
+whose schema marks it `x-manni-encrypt`. `manni cite` encrypts the path of a
+private source. Both read the same key, and neither has a key of its own.
+
+This page settles where that key lives before anyone marks a field or mints a
+citation. Two people need it. Sara owns the schema that marks a property, and
+Devin owns the job that has to keep passing once it does.
+
+Every transcript below is real output from the built tool.
+
+## The two places a key can live
+
+| Where | How it is written | Read by |
+|---|---|---|
+| `manni.config.yaml` | `encryptionKey:` at the top level, beside `collections:` | Every tool, on every machine that has the file |
+| The environment | `MANNI_ENCRYPTION_KEY` | Every tool, only where the variable is exported |
+
+{/* cite env-wins-empty-unset */}
+The environment wins. When `MANNI_ENCRYPTION_KEY` holds a value, the config's
+key is not read at all. An empty variable counts as unset, which is what a
+missing CI secret expands to. The
+[configuration reference](/manni/meta/reference/configuration/#encryption-key)
+has the full contract.
+
+{/* cite same-shape-config */}
+{/* cite same-shape-env */}
+{/* cite set-generates-256-bits */}
+{/* cite key-used-as-typed */}
+Both places take the same value, at least 32 hex or base64url characters.
+`manni key set` generates 64 hex characters, which is 256 bits. A value you
+pick by hand is used as key material exactly as you typed it. It is only as
+strong as it is random.
+
+## Write the key to the config
+
+{/* cite set-creates-or-edits */}
+{/* cite set-never-prints-key */}
+This is the short path, and it suits a private repository. `manni key set`
+creates `manni.config.yaml` when there is none, and edits it in place when
+there is. It never prints the key.
+
+<Steps>
+
+1. **See what it would write.** `--dry-run` writes nothing:
+
+   ```console
+   $ manni key set --dry-run
+   manni: manni.config.yaml is not ignored by git: once committed, anyone who can read the repository can decrypt every encrypted value. Prefer MANNI_ENCRYPTION_KEY for a shared repository.
+   Would write encryptionKey to manni.config.yaml.
+   # exit 0
+   ```
+
+2. **Read the warning before you drop the flag.** It fires when the file about
+   to be written is not covered by `.gitignore`. It is a warning rather than a
+   refusal, because a private repository may legitimately keep its key beside
+   its pages.
+
+3. **Write it.**
+
+   ```console
+   $ manni key set
+   manni: manni.config.yaml is not ignored by git: once committed, anyone who can read the repository can decrypt every encrypted value. Prefer MANNI_ENCRYPTION_KEY for a shared repository.
+   Encryption key written to manni.config.yaml.
+   # exit 0
+   ```
+
+</Steps>
+
+{/* cite key-lands-top-level */}
+The key lands at the top level, outside every tool's section, because every
+tool reads it:
+
+```yaml title="manni.config.yaml"
+encryptionKey: <64 hex characters manni key set generated>
+collections:
+  - name: site
+    paths: ["docs/**/*.md"]
+```
+
+<Aside type="caution" title="A committed key decrypts every value">
+Encryption protects a value from everyone who does not hold the key. A key
+committed beside the pages is readable by everyone who can read the
+repository, and so is every value it encrypts. The warning above is the only
+notice you get.
+</Aside>
+
+## Or keep it in the environment
+
+A repository other people can read wants the key somewhere they cannot. The
+environment is that place, and it is what a CI secret expands into.
+
+<Steps>
+
+1. **Generate 256 random bits**, the same size `manni key set` makes:
+
+   ```sh
+   openssl rand -hex 32
+   ```
+
+2. **Store the value as a secret named `MANNI_ENCRYPTION_KEY`**, and export it
+   in your own shell. The docs never show a key, so neither should a log.
+
+3. **Leave `encryptionKey:` out of the config.** `manni key set` refuses while
+   the variable is set, because a key written to config would never be read:
+
+   ```console
+   $ manni key set
+   manni: MANNI_ENCRYPTION_KEY is set, so a key written to config would never be read. Unset it, or keep the key in the secret.
+   # exit 2
+   ```
+
+</Steps>
+
+{/* cite config-key-replaced-for-you */}
+{/* cite env-key-replaced-by-you */}
+Rotation follows the same split. A key in the config is replaced for you. A key
+in the environment is replaced by you, and
+[Rotate the key without breaking CI](/manni/key/ci/) is the runbook for both.
+
+## Who on the team needs it
+
+The key is not a credential every contributor carries. Hand it out by what
+someone has to do, not by seniority.
+
+| Person | Needs the key | Why |
+|---|---|---|
+| Sara, authoring the schema | No | A mark is a schema change. She reads the rules, not the values. |
+| Maya, running the check locally | Only to verify an encrypted value | Without it, findings on encrypted values are dropped and nothing fails. |
+| A contributor fixing one page | No | The values they must not read are the ones the key protects. |
+| Devin, wiring the CI job | Yes, as a secret | The gate that verifies encrypted values is the one that needs to decrypt them. |
+| Whoever runs a rotation | Yes | `manni key rotate` decrypts every value and writes it back. |
+
+A job without the secret still runs, and the section below says what it does
+instead. That is what lets a public pull request job stay useful while the key
+stays in the private one.
+
+## What each tool does with no key
+
+{/* cite only-rotate-refuses-to-start */}
+Only `manni key rotate` refuses to start. Reads degrade, and writes stop.
+
+| Command | With no key available |
+|---|---|
+| `manni meta validate` | Findings at or under an encrypted value are dropped. One warning on stderr says how many went unverified. The exit code is unaffected. |
+| `manni meta get`, and a `SELECT` in `manni meta query` | The ciphertext is returned, which is what they return with a key too. |
+| `manni meta fill`, a `manni meta query` write, `manni cite add --encrypt` | On a terminal, each offers to generate a key and carries on. Off one, each refuses with exit `2`. |
+| `manni cite check` | An encrypted source is `source-missing`, and the run fails. `--no-check-sources` reports it `skipped` instead, and passes. |
+| `manni key rotate` | Refused with exit `2`. There is nothing to re-encrypt from. |
+
+### Validation goes quiet, not green by accident
+
+{/* cite warning-counts-values */}
+The warning is the part to read. It counts the values nobody checked:
+
+```console
+$ manni meta validate
+manni: 3 encrypted values were not verified: no encryption key is available. Set MANNI_ENCRYPTION_KEY, or run `manni key set`.
+✓ docs/auth.md
+✓ docs/stale.md
+✓ docs/wrong.md
+
+3 files checked, 3 passed, 0 failed, 0 errors
+# exit 0
+```
+
+The same three pages under the key report what was wrong all along:
+
+```console
+$ manni meta validate
+✓ docs/auth.md
+✗ docs/stale.md
+    /owner  /owner does not decrypt under the current key: encrypted under another key, or edited by hand.  (owners.yaml:9)  [encrypted:unreadable]
+✗ docs/wrong.md
+    /owner  must be equal to one of the allowed values  (owners.yaml:7)  [../encrypted.schema.json]
+
+3 files checked, 1 passed, 2 failed, 2 errors
+# exit 1
+```
+
+A [baseline](/manni/meta/reference/cli/#baselines) written without the key does
+not record the dropped findings. They come back as new on the first run that
+has it.
+
+### A citation without the key is a failure, unless you say otherwise
+
+An encrypted source path cannot be resolved without the key, so the check
+cannot tell a moved line from a deleted file:
+
+```console
+$ manni cite check docs/limits.md
+✗ docs/limits.md
+    ✗ fetch-timeout   :15 current   ~AR0x…:2 missing (no encryption key is available to decrypt it)
+
+1 file checked, 0 passed, 1 failed, 1 finding
+# exit 1
+```
+
+`--no-check-sources` is the flag for a job that was never meant to read the
+sources. It judges the page end alone:
+
+```console
+$ manni cite check --no-check-sources docs/limits.md
+✓ docs/limits.md
+    ✓ fetch-timeout   :15 current   ~AR0x…:2 skipped
+
+1 file checked, 1 passed, 0 failed, 0 findings
+# exit 0
+```
+
+Run that in the public job, and the private job with the key. The two-repository
+layout is on [Public docs, private
+code](/manni/cite/set-up/public-docs-private-code/).
+
+### A write asks once, on a terminal
+
+{/* cite write-offers-on-terminal */}
+{/* cite write-refuses-off-terminal */}
+`manni meta fill`, a `manni meta query` write, and `manni cite add --encrypt`
+all create encrypted values. Each offers to generate a key when it is run on a
+terminal, then carries on. Off a terminal, which is every CI job, each refuses:
+
+```console
+$ manni meta query "UPDATE docs SET owner = 'billing' WHERE _path = 'docs/auth.md'"
+manni: /owner must be encrypted, and no encryption key is available. Run `manni key set`, or set MANNI_ENCRYPTION_KEY.
+# exit 2
+
+$ manni cite add docs/auth.md:5 src/limits.ts:1 --id max-files --encrypt --dry-run
+manni: src/limits.ts:1 must be encrypted, and no encryption key is available. Run `manni key set`, or set MANNI_ENCRYPTION_KEY.
+# exit 2
+```
+
+{/* cite rotate-never-asks */}
+`manni meta validate`, `manni cite check`, `manni cite update` and
+`manni key rotate` never ask. A read that prompted would be a read that blocked
+a pipeline.
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Mark a field encrypted"
+    href="/manni/meta/schemas/encrypted-fields/"
+    description="The x-manni-encrypt keyword end to end: what validate, fill and query do with a marked property, and what a reviewer sees."
+  />
+  <LinkCard
+    title="Rotate the key without breaking CI"
+    href="/manni/key/ci/"
+    description="The runbook: generate, rotate the whole family, update the secret, re-record the citation baseline, and resume an interrupted run."
+  />
+  <LinkCard
+    title="key CLI reference"
+    href="/manni/key/reference/cli/"
+    description="Every argument and flag of set and rotate, the exit codes, and every refusal."
+  />
+  <LinkCard
+    title="Encryption key configuration"
+    href="/manni/meta/reference/configuration/#encryption-key"
+    description="The top-level encryptionKey: key, the variable that wins over it, and what the key changes about config discovery."
+  />
+</CardGrid>

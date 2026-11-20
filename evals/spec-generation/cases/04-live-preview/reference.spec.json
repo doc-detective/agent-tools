@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "testId": "live-preview",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/type-echo.html"
+        },
+        {
+          "click": "#type-input"
+        },
+        {
+          "type": {
+            "keys": "Hello, Doc Detective",
+            "selector": "#type-input"
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo",
+            "elementText": "Hello, Doc Detective"
+          }
+        }
+      ]
+    }
+  ]
+}

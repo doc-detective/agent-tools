@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "localhost:8092", "note": "Before you begin: open the home page."},
+    {"stepType": "click", "match": "Lists", "note": "Step 1: click Lists in the navigation menu."},
+    {"stepType": "find", "match_any": ["Unordered List", "Ordered List", "Definition List"], "note": "Step 1: the Lists section shows its three list kinds."},
+    {"stepType": "find", "match": "Third item", "note": "Step 2: the ordered list's last entry is Third item."},
+    {"stepType": "click", "match": "Tables", "note": "Step 3: click Tables in the navigation menu."},
+    {"stepType": "find", "match_any": ["Bob Johnson", "Simple Data Table"], "note": "Step 3: the Simple Data Table shows Bob Johnson."}
+  ],
+  "must_not": []
+}

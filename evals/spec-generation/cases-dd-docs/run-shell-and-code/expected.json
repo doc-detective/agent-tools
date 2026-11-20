@@ -1,0 +1,40 @@
+{
+  "source": "doc-detective/docs/fern/pages/docs/test-code/run-shell-and-code.mdx@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/run-shell-and-code.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": "node --version",
+      "note": "Step 1: run the documented command, node --version, and pass on exit 0."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["node --version", "stdio"],
+      "may_share": true,
+      "note": "Step 2: assert the output is a version string with stdio. It can be the same step as Step 1."
+    },
+    {
+      "stepType": "runCode",
+      "match": "hello from the docs",
+      "match_any": ["python", "\"py\""],
+      "note": "Step 3: run the Python snippet print('hello from the docs') with runCode and check its output."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["git rev-parse --short HEAD", "$$stdio.stdout"],
+      "note": "Step 4: capture the commit SHA from git rev-parse --short HEAD into a variable."
+    },
+    {
+      "stepType": "runShell",
+      "match": "Testing against $COMMIT",
+      "note": "Step 4: use the captured SHA in echo Testing against $COMMIT."
+    }
+  ],
+  "must_not": [
+    "A runShell that runs `npx doc-detective --input commands.spec.json` or the Docker command from Step 5; the generated spec is the spec that step runs.",
+    "Treating the troubleshooting advice (install Git for Windows, `doc-detective install bash`, set `shell` to cmd or powershell) or the long-running-process pointer as steps."
+  ],
+  "scaffolding": [
+    "Nothing beyond the page. The workspace is a one-commit git repo, so `git rev-parse --short HEAD` resolves; node, python, and bash are on PATH."
+  ]
+}

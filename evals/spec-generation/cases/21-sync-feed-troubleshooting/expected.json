@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "waitUntil-test-dom-mutations.html", "note": "Step 1: open the sync feed."},
+    {"stepType": "find", "match": "DOM Mutations Test", "note": "Step 1: heading DOM Mutations Test."},
+    {"stepType": "find", "match": "Dynamic content #5", "note": "Step 2: the feed reaches entry #5 (checking #1 as well is fine)."},
+    {"stepType": "find", "match": "All mutations complete", "note": "Step 3: the feed shows All mutations complete."}
+  ],
+  "must_not": [
+    "Steps for the 'If the sync stalls' section: VPN reconnect, restarting the computer, or opening an IT ticket.",
+    "A one-minute (or longer) wait taken from the troubleshooting advice."
+  ]
+}

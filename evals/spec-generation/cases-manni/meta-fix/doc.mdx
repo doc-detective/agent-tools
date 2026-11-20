@@ -1,0 +1,375 @@
+---
+title: Fix a failing check
+description: Read a manni meta validation error, map it to the offending field and line, fix it, and confirm green locally.
+---
+
+import { Steps, Aside, LinkCard } from '@astrojs/starlight/components';
+
+Your PR's manni meta check is red and you'd like it green again. You're in the
+right place. This page decodes the error, and points you at the exact field and
+line to change. It also shows you how to confirm the fix locally before you
+re-push. You don't need to know how manni meta was set up, only what its output is
+telling you.
+
+<Aside type="tip" title="The fastest path">
+  Find your error message in the [common failures](#common-failures) below, apply
+  the matching fix, then [run manni meta locally](#reproduce-and-confirm-locally) to
+  confirm it's green. Done.
+</Aside>
+
+## Decode the error line
+
+A failing file in `pretty` output (the default) looks like this:
+
+```
+✗ docs/guide.md
+    (root)  must have required property 'type'  [google:okf:0.1]
+```
+
+The first line is the file that failed. Each indented line below it is one
+problem, in this shape:
+
+```
+<field>  <message>  (line N)  [schema-id]
+```
+
+| Part | What it tells you |
+| --- | --- |
+| `<field>` | Which field is wrong. It's a [JSON Pointer](https://datatracker.ietf.org/doc/html/rfc6901) such as `/timestamp`, or a bare key name. `(root)` means the document as a whole, most often a *required field is missing entirely*. |
+| `<message>` | What's wrong, e.g. `must have required property 'type'` or `must match format "date-time"`. |
+| `(line N)` | The source line of the offending field, when manni meta can locate it. A missing required field has no line, so this part is absent. |
+| `[schema-id]` | The schema that flagged it, e.g. `google:okf:0.1`. Useful when more than one schema applies. |
+
+<Aside type="note" title="Machine-readable output">
+  Need machine-readable output instead? `--format json` gives you the same
+  information as structured data, `--format github` emits inline PR annotations,
+  and `--format sarif` / `--format junit` feed code scanning and the CI "Tests"
+  tab. See the [output reference](/manni/meta/reference/) for the exact shapes.
+</Aside>
+
+## Common failures
+
+These cover the overwhelming majority of red checks. The first five are problems
+in your document; the last, [Schema not found](#schema-not-found), is a setup
+problem rather than something in your file. Each shows the error, the cause, and
+a fix.
+
+### Missing a required field
+
+```
+✗ docs/guide.md
+    (root)  must have required property 'type'  [google:okf:0.1]
+```
+
+The schema requires a field your frontmatter doesn't have. The field name is in
+the message: here, `type`. The location is `(root)` because the field is absent,
+so there's no line to point at.
+
+**Fix.** Add the field to your frontmatter.
+
+```diff lang="md" title="docs/guide.md"
+  ---
+  title: My Guide
+  description: A short summary of this guide.
++ type: concept
+  ---
+```
+
+<Aside type="tip" title="Picking a value for type">
+  Not sure what value `type` should be? The built-in OKF schema accepts any
+  non-empty string. Pick the kind of doc this is, such as `concept`, `guide`,
+  or `reference`. If your repo uses a custom schema, it may restrict `type` to a
+  specific list; the error message will say so (for example, `must be equal to
+  one of the allowed values`).
+</Aside>
+
+### A value in the wrong format
+
+```
+✗ docs/guide.md
+    /timestamp  must match format "date-time"  (line 4)  [google:okf:0.1]
+```
+
+The field is present, but its value doesn't match the format the schema expects.
+Here `timestamp` must be an ISO 8601 `date-time`, and the file has something
+like `last Tuesday`:
+
+```md title="docs/guide.md" {4}
+---
+type: concept
+title: My Guide
+timestamp: last Tuesday
+---
+```
+
+The `/timestamp` pointer and `(line 4)` take you straight to the offending line.
+
+**Fix.** Replace the value with a properly formatted one. An ISO 8601
+`date-time` looks like this:
+
+```diff lang="md" title="docs/guide.md"
+  ---
+  type: concept
+  title: My Guide
+- timestamp: last Tuesday
++ timestamp: 2026-06-25T10:00:00Z
+  ---
+```
+
+The same pattern applies to other formats. A `uri` field needs a full URL
+(`https://example.com/...`), and an enum field needs one of its allowed values.
+The message names the format or constraint that failed.
+
+### No frontmatter at all
+
+```
+✗ docs/guide.md
+    (root)  must have required property 'type'  [google:okf:0.1]
+```
+
+A file with no frontmatter block reads as empty metadata, so it fails the same
+way a file missing a required field does. If you expected this file to have
+metadata, it's probably missing its opening `---` fence. Or the block isn't at
+the very top of the file.
+
+**Fix.** Add a frontmatter block at the top of the file, between `---` fences
+(or `+++`/`;;;` for
+[TOML/JSON](/manni/meta/reference/formats/#frontmatter-flavors)):
+
+```diff lang="md" title="docs/guide.md"
++ ---
++ type: concept
++ title: My Guide
++ ---
++
+  # My Guide
+
+  Body content goes here.
+```
+
+<Aside type="caution" title="Frontmatter comes first">
+  The frontmatter block must be the **first** thing in the file. A blank line or
+  any text above the opening `---` means manni meta won't recognize it as
+  frontmatter.
+</Aside>
+
+### A frontmatter parse error
+
+```
+✗ docs/guide.md
+    (root)  Invalid YAML frontmatter: <parser detail>  [(parse)]
+```
+
+The frontmatter block exists but isn't valid, so manni meta can't read it. The
+message names the flavor: `Invalid YAML frontmatter`,
+`Invalid TOML frontmatter`, or `Invalid JSON frontmatter`. The schema in
+brackets is `[(parse)]` rather than a real schema id, so this is a syntax
+problem rather than a rule violation.
+
+**Fix.** Correct the block's syntax for its flavor. In YAML a frequent culprit
+is a value with a colon that needs quoting:
+
+```diff lang="md" title="docs/guide.md"
+  ---
+  type: concept
+- title: Versioning: a primer
++ title: "Versioning: a primer"
+  ---
+```
+
+In JSON, the usual culprits are a trailing comma or an unquoted key; in TOML, an
+unquoted string or a malformed `[table]` header. See
+[frontmatter flavors](/manni/meta/reference/formats/#frontmatter-flavors) for each
+flavor's fences and syntax.
+
+<Aside type="tip" title="Read the parser detail">
+  The parser detail after the colon (truncated as `<parser detail>` above)
+  usually points at the line and character where parsing broke. Read it closely
+  It's the fastest clue.
+</Aside>
+
+### A stale provenance stamp
+
+```
+✗ docs/limits.md
+    /provenance  provenance lines 16-18 changed since claude-fable-5 wrote them — run manni meta derive  (line 16)  [derived:stale]
+```
+
+The repository records which lines of each page a machine wrote, in a
+[`provenance`](/manni/meta/set-up/machine-authorship/) list. Each entry pins a
+range with a hash of its text. Your change edited lines an agent was credited
+with, so the pin no longer matches. `(line 16)` is where the range starts. Two
+more messages come from the same record:
+
+```
+    /provenance  provenance lines 29 say claude-sonnet-5; blame says Claude Opus 5 (6683e73) — run manni meta derive  (line 29)  [derived:stale]
+    /provenance  provenance is unset for lines 26; blame says Claude Opus 5 (ecb9b0a) — run manni meta derive  (line 26)  [derived:stale]
+```
+
+The first says git names a different machine for the range than the record
+does. The second says a commit credited a machine for lines the record does
+not cover yet.
+
+**Fix.** Do what the message says, then commit the result:
+
+```sh
+npx @hawkeyexl/manni meta derive docs/limits.md
+```
+
+```
+docs/limits.md
+    provenance  lines 16-18: claude-fable-5 → re-derived  (git: pin)
+
+1 file, 1 changed, 1 range written
+```
+
+`derive` reads git blame again. Lines the agent's commit still owns keep the
+agent's name, and the lines you rewrote drop out of the record. Do not edit
+the `provenance` entries by hand. The hash has to match the text, and `derive`
+is the tool that computes it. Text that only moved, because a paragraph was
+added above it, is never a finding.
+
+### Schema not found
+
+Sometimes manni meta stops before validating any file and prints a single line to
+**stderr**, prefixed with `manni:`:
+
+```
+manni: Unknown built-in schema "google:okf:0.2". Available: google:okf:0.1.
+```
+
+or:
+
+```
+manni: Schema file not found: "./schemas/my.schema.json".
+```
+
+Your document is not the problem here. The configuration is. manni meta couldn't
+load the schema it was told to use, so it can't validate anything. This exits
+with code `2` (an operational error), not `1`.
+
+**Fix.** This usually isn't yours to fix in a content PR. Check that the schema
+reference (in `manni.config.yaml`, a `$schema` field in your file, or a
+`--schema` flag) points at a schema that exists. A misspelled built-in id, a
+wrong file path, or an unreachable URL all produce this. If you didn't change
+the schema setup, flag it to whoever maintains the repo's manni meta config.
+
+## Reproduce and confirm locally
+
+Don't guess and re-push. Run the exact check on your machine so you see green
+before CI does.
+
+<Steps>
+
+1. **Run manni meta on just your file.** No install needed:
+
+   ```sh
+   npx @hawkeyexl/manni meta validate docs/guide.md
+   ```
+
+   You'll see the same `✗` and error lines CI showed you.
+
+2. **Apply the fix** from the matching section above.
+
+3. **Run it again** and confirm the green check:
+
+   ```
+   ✓ docs/guide.md
+
+   1 file checked, 1 passed, 0 failed, 0 errors
+   ```
+
+4. **Re-push.** With a passing local run, your CI check should now be green too.
+
+</Steps>
+
+<Aside type="tip" title="Run what CI runs">
+  If your repo has a `manni.config.yaml`, running `npx @hawkeyexl/manni meta validate` with
+  no path validates the same fileset CI does, using the same schema. To match CI
+  exactly, run it from the repo root.
+</Aside>
+
+## Let manni meta draft the fix
+
+Sometimes the failure is a *missing* field rather than a malformed one, and
+several pages fail the same way. Then
+[`manni meta fill`](/manni/meta/reference/cli/#meta-fill) can propose the values for you.
+It reads the page, resolves the same schema the check used, and writes back the
+values it is confident about.
+
+Preview first:
+
+```sh
+manni meta fill docs/intro.md --dry-run
+```
+
+```
+✓ docs/intro.md
+    /description  A tour of the CLI and its four commands.  0.91
+    meta-provenance  claude-sonnet-4-5: /description
+    below 0.7: /resource 0.38
+
+anthropic/claude-sonnet-4-5 · Threshold 0.7 · 1 file · 1 field would be written · 1 skipped
+```
+
+Then apply it and check your work with the command that flagged the problem:
+
+```sh
+manni meta fill docs/intro.md && manni meta validate docs/intro.md
+```
+
+<Aside type="caution" title="fill writes in place">
+`fill` edits the file in place. `--dry-run` is the preview. Review the diff
+before you commit; treat a proposed `description` as a first draft.
+</Aside>
+
+`fill` picks an LLM provider by detecting one, so it runs with whatever
+credentials you have. With none at all, it falls back to a local model it
+downloads on first use. The report's first line names what it used. On a machine
+with no API key, pass `--provider`, or see the [`fill`
+reference](/manni/meta/reference/cli/#meta-fill) before the first run. Then the download
+is a choice rather than a surprise.
+
+You are usually fixing someone else's repo. So it is worth knowing that `fill`
+is the one manni meta command that sends the page off your machine. [Run `fill`
+under a data-egress policy](/manni/meta/set-up/fill-providers/) spells out what
+each call transmits, and what the cache keeps. `--local` is the flag that keeps
+inference on your own hardware.
+
+Anything below the confidence threshold is skipped and named, so you still get a
+short list of what needs you. The `meta-provenance` line records which fields
+the model wrote, in the page itself. A reviewer deletes that entry once the
+values are checked. `fill` leaves any field that is already present and
+valid exactly as it is, and its confidence scores stay in the report.
+
+`fill` won't help with a **malformed** value it can't improve on, or with a
+[schema not found](#schema-not-found) error. Those are the setup problems in the
+next section.
+
+## What the exit code means
+
+manni meta's exit code is the contract CI gates on. If you're scripting the check
+or reading raw CI logs, here's what each code means:
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Every file passed. The check is green. |
+| `1` | One or more files **failed validation**, from a missing or malformed field. This is the red check you came here to fix. |
+| `2` | An **operational error**, where manni meta couldn't run the check at all. That covers a missing or unreadable schema, an unsupported file type, or no files to validate. The message goes to stderr, prefixed `manni:`. |
+
+A code `1` means fix your document. A code `2` means fix the setup. See
+[Schema not found](#schema-not-found) above, or escalate to whoever configured
+manni meta.
+
+## Still stuck?
+
+If the error doesn't match anything here, the [Reference](/manni/meta/reference/) section
+documents every output format, exit code, and schema-resolution rule. To
+understand which schema applied to your file and why, see
+[how schema resolution works](/manni/meta/schemas/).
+
+<LinkCard
+  title="Output formats & exit codes"
+  href="/manni/meta/reference/"
+  description="The full pretty, JSON, and GitHub output shapes, and the 0/1/2 exit-code contract."
+/>

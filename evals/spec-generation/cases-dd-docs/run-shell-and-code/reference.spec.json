@@ -1,0 +1,67 @@
+{
+  "specId": "dd-docs-run-shell-and-code",
+  "description": "Doc Detective docs: Run shell and code steps. The page's inline tests, run from the workspace root (a git repo).",
+  "tests": [
+    {
+      "testId": "runcode-guide-basic-command",
+      "steps": [
+        {
+          "stepId": "runcode-guide-node-version",
+          "description": "Step 1: check the installed Node.js version.",
+          "runShell": "node --version"
+        }
+      ]
+    },
+    {
+      "testId": "runcode-guide-stdio-assert",
+      "steps": [
+        {
+          "stepId": "runcode-guide-stdio",
+          "description": "Step 2: confirm the CLI reports a version string.",
+          "runShell": {
+            "command": "node --version",
+            "stdio": "/^v\\d+\\./"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "runcode-guide-python-snippet",
+      "steps": [
+        {
+          "stepId": "runcode-guide-python",
+          "description": "Step 3: run the documented Python snippet and check its output.",
+          "runCode": {
+            "language": "python",
+            "code": "print('hello from the docs')",
+            "stdio": "hello from the docs"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "runcode-guide-carry-value",
+      "steps": [
+        {
+          "stepId": "runcode-guide-capture-sha",
+          "description": "Step 4: capture the current commit SHA.",
+          "runShell": {
+            "command": "git rev-parse --short HEAD",
+            "stdio": "/.+/"
+          },
+          "variables": {
+            "COMMIT": "$$stdio.stdout"
+          }
+        },
+        {
+          "stepId": "runcode-guide-use-sha",
+          "description": "Use the captured SHA; a literal, unsubstituted $COMMIT wouldn't match the hex pattern.",
+          "runShell": {
+            "command": "echo Testing against $COMMIT",
+            "stdio": "/Testing against [0-9a-f]+/"
+          }
+        }
+      ]
+    }
+  ]
+}

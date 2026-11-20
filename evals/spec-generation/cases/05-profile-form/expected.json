@@ -1,0 +1,51 @@
+{
+  "steps": [
+    {
+      "stepType": "goTo",
+      "match": "localhost:8092",
+      "note": "Step 1: go to the home page."
+    },
+    {
+      "stepType": "type",
+      "match": "Ada Lovelace",
+      "note": "Step 2.1: enter the name in Text Input:."
+    },
+    {
+      "stepType": "type",
+      "match": "ada@example.com",
+      "note": "Step 2.2: enter the email in Email Input:."
+    },
+    {
+      "stepType": "type",
+      "match": "Analytical engine enthusiast.",
+      "note": "Step 2.3: enter the bio in Textarea:."
+    },
+    {
+      "stepType": "click",
+      "match_any": [
+        "checkbox1",
+        "Option 1"
+      ],
+      "note": "Step 3: check the Option 1 checkbox."
+    },
+    {
+      "stepType": "click",
+      "match_any": [
+        "checkbox3",
+        "Option 3"
+      ],
+      "note": "Step 3: check the Option 3 checkbox."
+    },
+    {
+      "stepType": [
+        "click",
+        "type",
+        "runBrowserScript"
+      ],
+      "note": "Step 4: choose Option 2 in Dropdown Select:."
+    }
+  ],
+  "must_not": [
+    "Choosing the dropdown's Option 2 by clicking the visible text 'Option 2' alone: the first element with that label is the Option 2 checkbox, which the doc says stays unchecked."
+  ]
+}

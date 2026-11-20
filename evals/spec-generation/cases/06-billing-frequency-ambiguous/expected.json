@@ -1,0 +1,45 @@
+{
+  "steps": [
+    {
+      "stepType": "goTo",
+      "match": "localhost:8092",
+      "note": "Step 1: go to the home page."
+    },
+    {
+      "stepType": "click",
+      "match_any": [
+        "radio2",
+        "radio-group"
+      ],
+      "note": "Step 2: select the Option 2 RADIO button, not the checkbox or dropdown entry with the same label."
+    },
+    {
+      "stepType": "click",
+      "match_any": [
+        "radio3",
+        "radio-group"
+      ],
+      "note": "Step 3: select the Option 3 RADIO button."
+    },
+    {
+      "stepType": [
+        "find",
+        "runBrowserScript"
+      ],
+      "match_any": [
+        "radio3",
+        "radio-group",
+        "checked"
+      ],
+      "note": "Step 3: Option 3 is selected and Option 2 is cleared.",
+      "match": [
+        "radio3",
+        "checked"
+      ]
+    }
+  ],
+  "must_not": [
+    "Clicking 'Option 2' or 'Option 3' by visible text alone: the first match on the page is the checkbox label, which the note says to leave alone.",
+    "Any step that clicks a checkbox (#checkbox1 to #checkbox3)."
+  ]
+}

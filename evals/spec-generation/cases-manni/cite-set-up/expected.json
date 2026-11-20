@@ -1,0 +1,36 @@
+{
+  "source": "manni/docs/src/content/docs/cite/set-up/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-set-up.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "limits.ts:2 missing"],
+      "note": "When the root is wrong, the source end reads `missing` rather than resolving to the wrong file."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "--dry-run"],
+      "note": "Mint the first citation: `--dry-run` prints the diff and writes nothing."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "added fetch-timeout to frontmatter"],
+      "note": "Drop `--dry-run` to write it. The report names both pins and the line each end sits on."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "1 passed"],
+      "note": "Run the first check: with the collection declared, no arguments are needed, and the summary is green."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "--no-config", "No files to check"],
+      "note": "A run with no positional paths and no config is an operational error, exit 2."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "manni.config.yaml declares the page's `docs-pages` collection (docs/**/*.md, excluding docs/drafts/**).",
+    "docs/limits.md is the page's example page with no citations yet (the claim sentence is on line 6); lib/limits.ts holds FETCH_TIMEOUT_MS on line 2. A spec runs `cite add` to mint the citation before checking it."
+  ]
+}

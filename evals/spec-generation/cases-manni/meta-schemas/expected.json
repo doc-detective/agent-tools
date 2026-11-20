@@ -1,0 +1,30 @@
+{
+  "source": "manni/docs/src/content/docs/meta/schemas/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-schemas.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta schemas"],
+      "note": "Run `manni meta schemas` for the full built-in list."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "-s"],
+      "note": "Reference your own schema by path: `manni meta validate docs/ -s ./schemas/metadata.schema.json`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "diataxis:diataxis:1.0", "google:okf:0.1"],
+      "note": "Stack a type vocabulary with OKF: `manni meta validate docs/ -s diataxis:diataxis:1.0 -s google:okf:0.1`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Point a document at its schema, step 3: validate path/to/document.md after adding `$schema:`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/ with three pages typed as Diataxis forms (tutorial, how-to, reference), schemas/metadata.schema.json (the page's required-vs-recommended example), and path/to/document.md, the page's example document without `$schema:`. The page has the reader add `$schema: ./schemas/metadata.schema.json`, so a spec edits the file before the last validate."
+  ]
+}

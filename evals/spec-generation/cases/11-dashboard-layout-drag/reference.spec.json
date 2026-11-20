@@ -1,0 +1,57 @@
+{
+  "tests": [
+    {
+      "testId": "dashboard-layout-drag",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/drag-drop-test.html"
+        },
+        {
+          "find": "Page loaded - drag and drop ready"
+        },
+        {
+          "dragAndDrop": {
+            "source": {
+              "selector": ".draggable",
+              "elementText": "Table"
+            },
+            "target": ".drop-zone[data-drop='zone1']"
+          }
+        },
+        {
+          "find": {
+            "selector": ".drop-zone[data-drop='zone1'] .dropped-item",
+            "elementText": "Table (dropped)"
+          }
+        },
+        {
+          "find": {
+            "selector": "#status",
+            "elementText": "Dropped Table into canvas"
+          }
+        },
+        {
+          "dragAndDrop": {
+            "source": {
+              "selector": ".draggable",
+              "elementText": "Chart"
+            },
+            "target": ".drop-zone[data-drop='zone2']"
+          }
+        },
+        {
+          "find": {
+            "selector": ".drop-zone[data-drop='zone2'] .dropped-item",
+            "elementText": "Chart (dropped)"
+          }
+        },
+        {
+          "find": {
+            "selector": "#status",
+            "elementText": "Dropped Chart into canvas"
+          }
+        }
+      ]
+    }
+  ]
+}

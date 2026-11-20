@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "localhost:8092", "note": "Step 1: go to http://localhost:8092."},
+    {"stepType": "find", "match": "Common HTML Elements", "note": "Step 1: you should see the page title Common HTML Elements."},
+    {"stepType": "find", "match": "Simple Data Table", "note": "Step 3: a table captioned Simple Data Table."},
+    {"stepType": "find", "match": "Jane Smith", "note": "Step 3: one row belongs to Jane Smith."}
+  ],
+  "must_not": [
+    "Steps for the 'Next steps' pointers (profile form, API reference); they are not part of this procedure."
+  ]
+}

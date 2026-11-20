@@ -1,0 +1,57 @@
+{
+  "specId": "manni-meta-set-up",
+  "description": "manni docs meta/set-up, run in a docs repo with two pages under docs/ (one missing `type`) and no manni.config.yaml yet.",
+  "tests": [
+    {
+      "testId": "meta-set-up",
+      "steps": [
+        {
+          "description": "Step 1: validate the folder with no setup. One page lacks `type`, so the run fails.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate docs/",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/must have required property 'type'[\\s\\S]*2 files checked, 1 passed, 1 failed, 1 error/"
+          }
+        },
+        {
+          "description": "Caution: a bare validate with no config and no paths is an operational error, exit 2, and says to pass paths or declare a collection.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "declare a collection"
+          }
+        },
+        {
+          "description": "Step 2: add manni.config.yaml at the repo root.",
+          "runShell": {
+            "command": "node -e \"require('fs').writeFileSync('manni.config.yaml','collections:\\n  - name: pages\\n    paths:\\n      - docs/**/*.md\\nmeta:\\n  schemas:\\n    - google:okf:0.1\\n')\""
+          }
+        },
+        {
+          "description": "Step 3: the bare command reads the stored config and checks the collection.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/Using manni.config.yaml[\\s\\S]*2 files checked, 1 passed, 1 failed/"
+          }
+        },
+        {
+          "description": "Step 4: the CI command turns the failure into an inline annotation and still exits 1.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate --format github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "::error file=docs/billing.md"
+          }
+        }
+      ]
+    }
+  ]
+}

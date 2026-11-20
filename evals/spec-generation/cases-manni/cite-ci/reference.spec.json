@@ -1,0 +1,125 @@
+{
+  "specId": "manni-cite-ci",
+  "description": "manni docs cite/ci, run in a repo whose docs/limits.md has two citations, one of them already drifted (a moved source and a moved claim).",
+  "tests": [
+    {
+      "testId": "cite-ci",
+      "steps": [
+        {
+          "description": "The workflow's command, run locally: -f github prints one workflow command per finding; warnings and notices don't fail it.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni cite check \"docs/**/*.md\" -f github",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/::notice file=docs\\/limits\\.md,line=\\d+,title=manni%3Acite\\/claim-moved::[\\s\\S]*::warning file=docs\\/limits\\.md,line=\\d+,title=manni%3Acite\\/source-moved::/"
+          }
+        },
+        {
+          "description": "Record the backlog once: --write-baseline exits 0 and writes .manni-cite-baseline.json.",
+          "runShell": {
+            "command": "manni cite check --write-baseline",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/1 file checked, 1 passed, 0 failed, 2 findings \\(2 baselined\\)\\s+Baseline written to \\.manni-cite-baseline\\.json/"
+          }
+        },
+        {
+          "description": "The baseline file lists the page's two fingerprints.",
+          "runShell": {
+            "command": "node -e \"const b=JSON.parse(require('fs').readFileSync('.manni-cite-baseline.json','utf8'));console.log(b.version, b.entries['docs/limits.md'].length)\"",
+            "stdio": "1 2"
+          }
+        },
+        {
+          "description": "The PR job is report-only: --baseline counts the backlog as baselined.",
+          "runShell": {
+            "command": "manni cite check --baseline",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 2 findings (2 baselined)"
+          }
+        },
+        {
+          "description": "Verify: change a cited line in a source file.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='lib/limits.ts';f.writeFileSync(p,f.readFileSync(p,'utf8').replace('FETCH_TIMEOUT_MS = 10_000','FETCH_TIMEOUT_MS = 30_000'))\""
+          }
+        },
+        {
+          "description": "The job is red, with a source-changed annotation on the sentence.",
+          "runShell": {
+            "command": "manni cite check -f github --baseline",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=docs\\/limits\\.md,line=\\d+,title=manni%3Acite\\/source-changed::fetch-timeout/"
+          }
+        },
+        {
+          "description": "Undo the change for the next scenario.",
+          "runShell": {
+            "command": "git checkout -- lib/limits.ts",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "Add lines above a cited one.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='lib/limits.ts';f.writeFileSync(p,'// Limits enforced by the fetcher.\\n// Change with care.\\n'+f.readFileSync(p,'utf8'))\""
+          }
+        },
+        {
+          "description": "Green, with a source-moved warning.",
+          "runShell": {
+            "command": "manni cite check -f github --baseline",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/::warning file=docs\\/limits\\.md,line=\\d+,title=manni%3Acite\\/source-moved::fetch-timeout/"
+          }
+        },
+        {
+          "description": "Add a paragraph above a cited sentence.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='docs/limits.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace('The fetch timeout','Limits apply per run.\\n\\nThe fetch timeout'))\""
+          }
+        },
+        {
+          "description": "Green, with a claim-moved notice.",
+          "runShell": {
+            "command": "manni cite check -f github --baseline",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/::notice file=docs\\/limits\\.md,line=\\d+,title=manni%3Acite\\/claim-moved::fetch-timeout/"
+          }
+        },
+        {
+          "description": "manni cite update clears both.",
+          "runShell": {
+            "command": "manni cite update",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout claim line \\d+ -> \\d+ \\(moved\\)[\\s\\S]*fetch-timeout source lib\\/limits\\.ts:2 -> lib\\/limits\\.ts:4 \\(moved\\)/"
+          }
+        },
+        {
+          "description": "The next check has no findings.",
+          "runShell": {
+            "command": "manni cite check",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 findings"
+          }
+        }
+      ]
+    }
+  ]
+}

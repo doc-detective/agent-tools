@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/reference-page.schema.json",
+  "title": "A reference page must carry at least one citation",
+  "type": "object",
+  "required": ["title", "citations"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}

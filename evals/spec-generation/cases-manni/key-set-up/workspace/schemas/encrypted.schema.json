@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["title", "owner"],
+  "properties": {
+    "title": { "type": "string" },
+    "owner": {
+      "type": "string",
+      "enum": ["platform", "billing"],
+      "x-manni-encrypt": true
+    },
+    "internal-ticket": {
+      "type": "string",
+      "pattern": "^PROJ-[0-9]+$",
+      "x-manni-encrypt": true
+    }
+  }
+}

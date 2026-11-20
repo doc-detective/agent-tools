@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "testId": "saved-preferences",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/cookies/set/theme/dark"
+        },
+        {
+          "find": "Cookie set."
+        },
+        {
+          "goTo": "http://localhost:8092/cookies"
+        },
+        {
+          "find": "theme=dark"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,67 @@
+{
+  "source": "manni/docs/src/content/docs/meta/ci/query-gates.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-ci-query-gates.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "json_each"],
+      "note": "A tag census over a corpus."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "--check", "join authors", "check failed"],
+      "note": "The dangling-author rule joins the `authors` view; the page quotes `✗ 1 row — check failed`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "--check", "join docs a"],
+      "note": "With no config, the same rule as a path self-join over bare inputs."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "--check", "having"],
+      "note": "Duplicate slugs, same shape."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "--check", "--param"],
+      "note": "`--param author=ghost` binds a runtime value into the gate."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Name the gate in config: a bare `meta validate` runs the checks after the per-file schemas."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "checks skipped"],
+      "note": "A scoped run (`manni meta validate docs/intro.md`) skips checks with a `corpus checks skipped` notice."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query"],
+      "match_any": ["-f json", "--format json"],
+      "note": "`--format json` prints the bare result array."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query"],
+      "match_any": ["-f csv", "--format csv"],
+      "note": "`--format csv` prints the same rows as CSV."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "--db"],
+      "note": "`--db <path>` writes the built table to a SQLite file."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "--dry-run", "(unset) -> todo"],
+      "note": "`--dry-run` previews the UPDATE; the page quotes `reviewed: (unset) -> todo`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/ (five pages with slug, author, tags, draft, and review fields: one cites the missing author `ghost`, two share a slug), authors/ (two author pages), schemas/author.json, and the page's manni.config.yaml declaring the `pages` and `authors` collections. The page has the reader move the duplicate-slug rule into `checks:`, so a spec rewrites the config before the bare validate."
+  ]
+}

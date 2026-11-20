@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "testId": "background-action",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/wait-delay.html"
+        },
+        {
+          "wait": 2500
+        },
+        {
+          "find": "Loaded after 2 seconds"
+        },
+        {
+          "click": "Trigger delayed action"
+        },
+        {
+          "find": {
+            "elementText": "Action complete!",
+            "timeout": 5000
+          }
+        }
+      ]
+    }
+  ]
+}

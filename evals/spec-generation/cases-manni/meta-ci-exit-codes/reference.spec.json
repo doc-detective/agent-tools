@@ -1,0 +1,102 @@
+{
+  "specId": "manni-meta-ci-exit-codes",
+  "description": "manni docs meta/ci/exit-codes-and-annotations, run in a repo that holds the page's example files.",
+  "tests": [
+    {
+      "testId": "exit-codes-and-formats",
+      "steps": [
+        {
+          "description": "A mistyped flag exits 2, not 1.",
+          "runShell": {
+            "command": "manni meta validate --nope docs/",
+            "exitCodes": [
+              2
+            ]
+          }
+        },
+        {
+          "description": "pretty: the cross, the error line, and the summary.",
+          "runShell": {
+            "command": "manni meta validate bad-timestamp.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/✗ bad-timestamp.md\\s+/timestamp  must match format \"date-time\"  \\(line 4\\)  \\[google:okf:0\\.1\\][\\s\\S]*1 file checked, 0 passed, 1 failed, 1 error/"
+          }
+        },
+        {
+          "description": "json: summary and per-error fields.",
+          "runShell": {
+            "command": "manni meta validate bad-timestamp.md --format json",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/\"failed\": 1[\\s\\S]*\"instancePath\": \"/timestamp\"[\\s\\S]*\"keyword\": \"format\"[\\s\\S]*\"line\": 4/"
+          }
+        },
+        {
+          "description": "github: one workflow command with file= and line=.",
+          "runShell": {
+            "command": "manni meta validate bad-timestamp.md --format github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "::error file=bad-timestamp.md,line=4::[google:okf:0.1] /timestamp must match format \"date-time\""
+          }
+        },
+        {
+          "description": "github on HTML also carries a column.",
+          "runShell": {
+            "command": "manni meta validate bad-timestamp.html --format github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "::error file=bad-timestamp.html,line=6,col=28::"
+          }
+        },
+        {
+          "description": "sarif: a SARIF 2.1.0 log redirected to a file; findings exit 1.",
+          "runShell": {
+            "command": "manni meta validate \"docs/**/*.md\" --format sarif > manni.sarif",
+            "exitCodes": [
+              1
+            ]
+          }
+        },
+        {
+          "description": "The redirected file is a SARIF 2.1.0 envelope.",
+          "runShell": {
+            "command": "node -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('manni.sarif','utf8')).version)\"",
+            "stdio": "2.1.0"
+          }
+        },
+        {
+          "description": "junit: one testcase per file, one failure per violation.",
+          "runShell": {
+            "command": "manni meta validate \"docs/**/*.md\" --format junit > manni-junit.xml",
+            "exitCodes": [
+              1
+            ]
+          }
+        },
+        {
+          "description": "The JUnit file reads 2 tests, 1 failed.",
+          "runShell": {
+            "command": "node -e \"process.stdout.write(require('fs').readFileSync('manni-junit.xml','utf8'))\"",
+            "stdio": "tests=\"2\" failures=\"1\""
+          }
+        },
+        {
+          "description": "--no-color is a top-level option, placed before the subcommand.",
+          "runShell": {
+            "command": "manni meta --no-color validate docs/",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "2 files checked, 1 passed, 1 failed, 1 error"
+          }
+        }
+      ]
+    }
+  ]
+}

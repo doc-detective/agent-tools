@@ -1,0 +1,37 @@
+{
+  "source": "doc-detective/docs/fern/pages/docs/test-docs/find-elements-by-image.mdx@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/find-elements-by-image.mdx",
+  "steps": [
+    {
+      "stepType": "goTo",
+      "match": "localhost:8092/find-image.html",
+      "note": "Step 1 and Step 2 examples open http://localhost:8092/find-image.html."
+    },
+    {
+      "stepType": "screenshot",
+      "match": ["chart.png", "#sample-chart"],
+      "note": "Step 1: crop a reference image, chart.png, from #sample-chart."
+    },
+    {
+      "stepType": "find",
+      "match": ["elementImage", "icons/save.svg"],
+      "note": "Step 2: find the save icon by its file, icons/save.svg."
+    },
+    {
+      "stepType": "click",
+      "match": ["elementImage", "icons/save.svg"],
+      "note": "Step 2: click the icon by its file."
+    },
+    {
+      "stepType": "find",
+      "match": ["elementImage", "chart.png"],
+      "note": "Step 2: find the chart by the cropped reference, chart.png."
+    }
+  ],
+  "must_not": [
+    "Steps for the illustrative fragments after Step 2 (the `color`, `threshold`, `base64`, and `#toolbar` combinations); they show field shapes, not a procedure for this page."
+  ],
+  "scaffolding": [
+    "icons/save.svg holds the save icon the Step 2 example names. chart.png doesn't exist until the Step 1 screenshot writes it."
+  ]
+}

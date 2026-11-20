@@ -1,0 +1,33 @@
+{
+  "source": "doc-detective/test/core-artifacts/doc-content.md@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/doc-content.md",
+  "steps": [
+    {
+      "stepType": "checkLink",
+      "match": "localhost:8092",
+      "note": "The Doc Detective documentation link (http://localhost:8092) resolves."
+    },
+    {
+      "stepType": "checkLink",
+      "match": "localhost:8092",
+      "may_share": true,
+      "note": "The Get started link points at the same URL, so one checkLink can cover both."
+    },
+    {
+      "stepType": "goTo",
+      "match": "localhost:8092",
+      "note": "Open the demo page, http://localhost:8092."
+    },
+    {
+      "stepType": "find",
+      "match": "Text Elements",
+      "note": "The demo page has the Text Elements heading."
+    }
+  ],
+  "must_not": [
+    "Steps that check the landing-page description in the first bullet; it's prose about the sections, not something to verify."
+  ],
+  "scaffolding": [
+    "Nothing beyond the page. Every link points at the local test server on :8092. The page's reference.png image isn't in the workspace."
+  ]
+}

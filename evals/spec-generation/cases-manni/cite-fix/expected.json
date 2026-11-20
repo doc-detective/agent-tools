@@ -1,0 +1,26 @@
+{
+  "source": "manni/docs/src/content/docs/cite/fix/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-fix.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["cite check"],
+      "note": "Reproduce and confirm locally, step 1: run the check on just your page."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite update", "rewritten"],
+      "note": "Step 2: apply the fix from the matching section. For source-moved that is `manni cite update docs/limits.md`, which reports the citation rewritten."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "0 findings"],
+      "note": "Step 3: run it again and confirm the green summary, `1 file checked, 1 passed, 0 failed, 0 findings`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/limits.md carries a fetch-timeout citation pinned to lib/limits.ts:2; two comment lines were since added at the top of lib/limits.ts, so the cited line sits at 4 and the check reports source-moved. manni.config.yaml declares the docs-pages collection over docs/**/*.md.",
+    "The entry's commit-sha names a commit outside the one-commit workspace history; source-moved needs no history, so the page's fix and green re-check still hold."
+  ]
+}

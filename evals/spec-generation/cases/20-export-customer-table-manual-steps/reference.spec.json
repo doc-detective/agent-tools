@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "testId": "export-customer-table",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "find": "Tables"
+        },
+        {
+          "find": "Simple Data Table"
+        },
+        {
+          "find": "John Doe"
+        },
+        {
+          "find": "Jane Smith"
+        },
+        {
+          "find": "Bob Johnson"
+        }
+      ]
+    }
+  ]
+}

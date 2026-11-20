@@ -1,0 +1,153 @@
+{
+  "specId": "manni-cite-sidecar",
+  "description": "manni docs cite/set-up/citations-in-a-sidecar, run in the page's example repository: manni.config.yaml with the site and guides collections, docs-citations.yaml, guides-citations.yaml, docs/, guides/guide.md and lib/.",
+  "tests": [
+    {
+      "testId": "cite-sidecar",
+      "steps": [
+        {
+          "description": "Read alone, the page's own bytes carry no citations.",
+          "runShell": {
+            "command": "manni meta get docs/limits.md --no-config --fields title,citations",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/limits\\.md: title=Limits \\(asserted\\)[\\s\\S]*docs\\/limits\\.md: citations=\\(unset\\)/"
+          }
+        },
+        {
+          "description": "With the config governing the run, the merged view carries the manifest's entry.",
+          "runShell": {
+            "command": "manni meta get docs/limits.md --fields title,citations",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/limits\\.md: citations=\\[\\{\"id\":\"fetch-timeout\",\"claim\":\\{\"lines\":3,/"
+          }
+        },
+        {
+          "description": "Check exactly as before: a fourth column names the manifest and the entry's first line.",
+          "runShell": {
+            "command": "manni cite check docs/limits.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:6 current\\s+lib\\/limits\\.ts:2 current\\s+docs-citations\\.yaml:5[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+          }
+        },
+        {
+          "description": "A finding about the entry itself sits on the manifest, on the entry's own first line.",
+          "runShell": {
+            "command": "manni cite check docs/entry-invalid.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/bad-pin\\s+\\/source\\/integrity must match pattern[\\s\\S]*\\(docs-citations\\.yaml:42\\)[\\s\\S]*1 file checked, 0 passed, 1 failed, 1 finding/"
+          }
+        },
+        {
+          "description": "-f github annotates the manifest at that line.",
+          "runShell": {
+            "command": "manni cite check docs/entry-invalid.md -f github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "::error file=docs-citations.yaml,line=42,title=manni%3Acite/entry-invalid::bad-pin (lib/limits.ts): /source/integrity must match pattern"
+          }
+        },
+        {
+          "description": "A half-moved page has two owners for one key: an error naming the manifest and the collection.",
+          "runShell": {
+            "command": "manni cite check docs/own.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "\"citations\" is owned by manifest docs-citations.yaml (collection site); remove it from the document"
+          }
+        },
+        {
+          "description": "meta validate reports the same page as external:owned.",
+          "runShell": {
+            "command": "manni meta validate docs/own.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/is owned by manifest docs-citations\\.yaml[\\s\\S]*\\[external:owned\\]/"
+          }
+        },
+        {
+          "description": "add needs no flag: the entry goes to the manifest, and the claim stays on the line that was typed.",
+          "runShell": {
+            "command": "manni cite add docs/retries.md:6 lib/limits.ts:3 --id retries --dry-run",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/retries\\.md: added retries to docs-citations\\.yaml:59 \\(claim at line 6, sha256-d33051d7…; source lib\\/limits\\.ts:3/"
+          }
+        },
+        {
+          "description": "update repairs two entries in one manifest and writes it once.",
+          "runShell": {
+            "command": "manni cite update --dry-run docs/moved.md docs/moved-two.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/moved\\.md: fetch-timeout source lib\\/moved\\.ts:2 -> lib\\/moved\\.ts:4 \\(moved\\)[\\s\\S]*2 citations rewritten in 2 files, 0 skipped/"
+          }
+        },
+        {
+          "description": "A manifest keyed by slug: the page carrying slug: guide-one owns the entry.",
+          "runShell": {
+            "command": "manni cite check guides/guide.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:7 current\\s+lib\\/limits\\.ts:2 current\\s+guides-citations\\.yaml:4[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+          }
+        },
+        {
+          "description": "Write a config whose site manifest is a URL.",
+          "runShell": {
+            "command": "node -e \"require('fs').writeFileSync('url.config.yaml','collections:\\n  - name: site\\n    paths: [docs/**/*.md]\\n    externalMetadata:\\n      - file: https://example.com/citations.yaml\\n        keys: [citations]\\n')\""
+          }
+        },
+        {
+          "description": "Refusal one: a URL manifest cannot own citations, exit 2.",
+          "runShell": {
+            "command": "manni cite check -c url.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "collection site: citations cannot come from a URL manifest, because cite writes them."
+          }
+        },
+        {
+          "description": "Write a config where two collections, each with a manifest owning citations, match one page.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs');f.writeFileSync('api-citations.yaml','{}\\n');f.writeFileSync('conflict.config.yaml','collections:\\n  - name: site\\n    paths: [docs/**/*.md]\\n    externalMetadata:\\n      - file: ./docs-citations.yaml\\n        keys: [citations]\\n  - name: api\\n    paths: [docs/limits.md]\\n    externalMetadata:\\n      - file: ./api-citations.yaml\\n        keys: [citations]\\n')\""
+          }
+        },
+        {
+          "description": "Refusal two: a page in two collections that both keep citations in a manifest, exit 2.",
+          "runShell": {
+            "command": "manni cite check -c conflict.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "docs/limits.md is in collections site and api, and both keep citations in a manifest."
+          }
+        },
+        {
+          "description": "Refusal three: add reading the page from stdin has no path to key the manifest entry by, exit 2.",
+          "runShell": {
+            "command": "node -e \"process.stdout.write('---\\ntitle: T\\n---\\n# T\\n\\nThe fetch timeout is 10 seconds.\\n')\" | manni cite add -:6 lib/limits.ts:2 --as markdown --id t",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "A page read from stdin has no path, and its citations live in docs-citations.yaml, which is keyed by path."
+          }
+        }
+      ]
+    }
+  ]
+}
