@@ -2,7 +2,7 @@
 name: doc-detective-generate
 description: 'Turn the procedures in a documentation file into a Doc Detective test spec (JSON) without running it. Use when the user wants a spec written or added to, not executed. To run tests or check that docs still work, use doc-detective-test. To put tests inside the doc source as comments, use doc-detective-inject.'
 metadata:
-  version: '2.1.2'
+  version: '2.1.3'
   organization: Doc Detective
   date: November 2026
   abstract: Interpret documentation procedures into Doc Detective test specifications without executing the tests. Parses docs, maps language to actions, validates the spec, and outputs the result.

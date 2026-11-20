@@ -1,3 +1,10 @@
+## [2.1.3](https://github.com/doc-detective/agent-tools/compare/v2.1.2...v2.1.3) (2026-11-20)
+
+
+### Bug Fixes
+
+* **skills:** tighten three cache claims in the action reference ([#102](https://github.com/doc-detective/agent-tools/issues/102)) ([b38a2fe](https://github.com/doc-detective/agent-tools/commit/b38a2fe1f7c336eeee5743f114e4f42bf3105379))
+
 ## [2.1.2](https://github.com/doc-detective/agent-tools/compare/v2.1.1...v2.1.2) (2026-11-20)
 
 
