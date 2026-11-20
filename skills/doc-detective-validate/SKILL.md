@@ -107,7 +107,7 @@ It loads the config and checks it against the schema first. A config that fails 
 - `Error: Invalid config in <config-file>:`, followed by one `field: reason` line per error. Report those lines, then `Validation FAILED`.
 - `Could not read config file` or `Could not parse config file`: the file is missing or isn't JSON or YAML. Report that.
 
-Without one of those errors, and with Doc Detective's own output on the console, the config is valid. `npm error` lines and no Doc Detective output mean npm failed before the check, so the config is unchecked: use the fallback below. Once the config passes, the rest of the output is about the tests its `input` points to. Exit `2` with `Couldn't find tests` only means that `input` holds no tests. Don't pass the config as a positional input, because `validate` reads it as a test file.
+The config is valid only when the output goes on to the tests its `input` points to. That's a `Checked <N> files: ...` line, or exit `2` with `Couldn't find tests in ...`, which only means that `input` holds no tests. Any other output leaves the config unchecked. That includes `Error reading config file at ...` and `npm error` lines from an npm that failed before Doc Detective started. Say so, and use the fallback below. Don't pass the config as a positional input, because `validate` reads it as a test file.
 
 When the CLI can't run, call `validate_spec` with `"config_v3"` when it's registered. Otherwise, check the JSON against the `doc-detective-common` config schema yourself, say that no validator confirmed it, and report each field that fails as `[FIELD]: [ERROR REASON]`.
 
