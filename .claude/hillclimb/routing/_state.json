@@ -33,7 +33,7 @@
       "out": 10
     }
   },
-  "harness_sha": "d6adfebab6aa6d4db22729f46cddad98678b567aec07bd7ac57d87e95a2126dc",
+  "harness_sha": "bb29f98feb7e3eb29472ef9f56d181b85769626ef068b331deb2e3b6aae65ef3",
   "train_ids": [
     "concept-file-scanning",
     "concept-spec-vs-inline",

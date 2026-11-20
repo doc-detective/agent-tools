@@ -1,6 +1,6 @@
 # Doc Detective MCP server — usage guide for skills
 
-This is shared reference material for skills that can take advantage of the Doc Detective MCP server (`https://agency.doc-detective.com/mcp`). It's not a user-invocable skill — it's prompt material that other skills link to.
+This is shared reference material for hosts that register the Doc Detective MCP server (`https://agency.doc-detective.com/mcp`). Other skills link to it as prompt material. The tools are optional: every skill works without them.
 
 ## Tools available on the MCP server
 
@@ -22,13 +22,19 @@ The same MCP tool can surface under different names depending on the host:
 
 When a skill says "if `validate_spec` is available," check for either the bare name or the `mcp__doc-detective__` namespaced form.
 
-## Detection branch — when to prefer MCP
+## Order of preference: CLI first
 
-Skills that validate or detect tests prefer the MCP tool when it's registered, because it tracks the live schema. Pseudo-prompt:
+Many hosts don't register this server, so skills use Doc Detective's own CLI first, and treat these tools as an option:
 
-> If a tool named `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered in this session, call it with `{object: <spec-or-config>, schemaKey: "spec_v3" | "config_v3", addDefaults: true}`. Use the local Node script (`node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin`) only as a fallback when no MCP tool is available.
+| Task | First choice | When the CLI can't run |
+|------|--------------|----------------------------|
+| Validate a spec | `npx doc-detective@5 validate <spec-file>` (`-` reads stdin) | `validate_spec` with `schemaKey: "spec_v3"` when registered, or `node <doc-detective-test skill folder>/scripts/doc-detective-validate-test.js --stdin` |
+| Validate a config | `npx doc-detective@5 validate --config <config-file>` | `validate_spec` with `schemaKey: "config_v3"` when registered |
+| Detect tests in a doc file | `npx doc-detective@5 --dry-run --input <doc-file>` | `detect_tests` when registered, or read the doc |
 
-The same pattern applies to `detect_tests` — call the MCP tool with `{content: <doc>, filePath?: <path>, fileType?: <type>}` before falling back to in-prompt interpretation.
+Call `validate_spec` with `{object: <spec-or-config>, schemaKey: "spec_v3" | "config_v3", addDefaults: true}`. Call `detect_tests` with `{content: <doc>, filePath?: <path>, fileType?: <type>}`. It returns `{tests[], detectedFileType, warnings[]}`, and the spec is `{ "tests": <tests> }`. It takes content as a string, so it also works on pasted doc text, which the CLI can't detect from.
+
+The CLI can't run when there's no `npx`, or when npm fails before Doc Detective starts, for example offline with no cached copy. Then stderr holds `npm error` lines and no Doc Detective output, and the exit code says nothing about the spec. Use the fallback. The bundled validator is `scripts/doc-detective-validate-test.js` in the doc-detective-test skill's folder, next to its `SKILL.md`. Run it from that path, not from a path relative to the project.
 
 ## `log_observation` — how and when to use it
 

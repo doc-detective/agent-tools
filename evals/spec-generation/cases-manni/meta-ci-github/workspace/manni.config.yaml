@@ -1,0 +1,5 @@
+collections:
+  - name: pages
+    paths: ["docs/*.md"]
+  - name: guides
+    paths: ["docs/guides/**/*.md"]

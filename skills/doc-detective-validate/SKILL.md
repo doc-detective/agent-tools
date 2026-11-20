@@ -58,37 +58,34 @@ Validate a configuration file:
 
 ## Choose a validator
 
-Validators differ in how closely they track the installed Doc Detective engine. Use the first one that's available.
-
-**MCP `validate_spec`.** When a tool named `validate_spec` (or `mcp__doc-detective__validate_spec`) is registered, call it. It tracks the live schema:
-
-```javascript
-validate_spec({
-  object: <spec-or-config>,
-  schemaKey: "spec_v3",   // or "config_v3" for config files
-  addDefaults: true,
-  format: "auto"
-})
-```
-
-The tool returns `{valid, errors[], normalizedObject, schemaKey, schemaVersion}`. Report each entry of `errors[]` as `[instancePath]: [message]`. `valid: true` means `Validation PASSED`.
-
-**Command-line validators.** Without the MCP tool, use these in order. When none is available, tell the user.
+**Doc Detective CLI, first.** It checks test files the way a run reads them, and runs nothing:
 
 ```bash
-# Option 1
-echo '<spec-json>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin
-# Option 2: checks specs and inline tests without running them. Exit 0: all valid. Exit 1: some invalid; stdout names
-# each file and field. Exit 2: usage error, bad config, or no tests found. Add --json for {valid, files[{path, valid, errors}]}.
 npx doc-detective@5 validate <spec-file>
-# Option 3, only if Option 2 fails with an unknown-command error (older Doc Detective): the spec is valid only when
-# the printed plan lists it; exit 0 with no plan means it wasn't checked. If config sets `exitOnFail: false`, invalid
-# inline steps are skipped and the file can still be listed, so treat the result as inconclusive. Exit 2 means the
-# spec is invalid only when stderr names the spec file. Doesn't name the field.
-npx doc-detective@5 --dry-run --input <spec-file>
+# Several files or a folder also work. For inline JSON, pass it on stdin:
+npx doc-detective@5 validate - <<'SPEC'
+<spec-json>
+SPEC
 ```
 
-See `_shared/MCP-USAGE.md` for tool names on each host, and for `log_observation` guidance when validation problems can't be resolved.
+- Exit `0`: every file is valid. Report `Validation PASSED`.
+- Exit `1`: stdout names each invalid file, then one line per error, such as ``tests[0].steps[0]: unknown action `action`.`` Report each error line.
+- Exit `2`: usage error, a config that didn't load, or no tests found. Report stderr. A `.doc-detective.json`, `.yaml`, or `.yml` in the current directory loads on every run, so an invalid one fails with `Invalid config in <file>` before the spec is checked. That's a config error, not a spec verdict.
+- `npm error` lines on stderr and no Doc Detective output: npm failed before Doc Detective started, so nothing was checked. Use the fallback.
+
+Add `--json` for `{valid, files[{path, valid, errors}]}` on stdout.
+
+**Fallback, when the CLI can't run.** That's when there's no `npx`, or npm fails before Doc Detective starts. Run the bundled validator from the doc-detective-test skill's folder, next to its `SKILL.md`. It prints `Validation PASSED` or the errors:
+
+```bash
+node <doc-detective-test skill folder>/scripts/doc-detective-validate-test.js --stdin <<'SPEC'
+<spec-json>
+SPEC
+```
+
+When a `validate_spec` tool is registered, you can call it instead: `validate_spec({object: <spec-or-config>, schemaKey: "spec_v3", addDefaults: true})`, with `"config_v3"` for a config. Report each `errors[]` entry as `[instancePath]: [message]`. `valid: true` means `Validation PASSED`. See `_shared/MCP-USAGE.md` for its names on each host.
+
+When no validator runs, tell the user.
 
 ## What makes a test spec valid
 
@@ -99,7 +96,20 @@ See `_shared/MCP-USAGE.md` for tool names on each host, and for `log_observation
 
 ## What makes a configuration file valid
 
-For a config file, call `validate_spec({object: <config>, schemaKey: "config_v3", addDefaults: true})` when the tool is registered, and report each `errors[]` entry as `[instancePath]: [message]`. Without the tool, check the JSON against the `doc-detective-common` config schema, and report each field that fails as `[FIELD]: [ERROR REASON]`.
+For a config file, run:
+
+```bash
+npx doc-detective@5 validate --config <config-file>
+```
+
+It loads the config and checks it against the schema first. A config that fails exits `2`, and stderr names why:
+
+- `Error: Invalid config in <config-file>:`, followed by one `field: reason` line per error. Report those lines, then `Validation FAILED`.
+- `Could not read config file` or `Could not parse config file`: the file is missing or isn't JSON or YAML. Report that.
+
+The config is valid only when the output goes on to the tests its `input` points to. That's a `Checked <N> files: ...` line, or exit `2` with `Couldn't find tests in ...`, which only means that `input` holds no tests. Any other output leaves the config unchecked. That includes `Error reading config file at ...` and `npm error` lines from an npm that failed before Doc Detective started. Say so, and use the fallback below. Don't pass the config as a positional input, because `validate` reads it as a test file.
+
+When the CLI can't run, call `validate_spec` with `"config_v3"` when it's registered. Otherwise, check the JSON against the `doc-detective-common` config schema yourself, say that no validator confirmed it, and report each field that fails as `[FIELD]: [ERROR REASON]`.
 
 - `input`: A string or string array of valid glob patterns or file paths.
 - `recursive`: A boolean.

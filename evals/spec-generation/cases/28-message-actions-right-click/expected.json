@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "click-shorthand.html", "note": "Step 1: open the actions page."},
+    {"stepType": "click", "match": "right", "match_any": ["reveal by selector", "reveal-by-selector"], "note": "Step 2: right-click Reveal by selector (click with button: right)."},
+    {"stepType": "find", "match": "Right-click landed", "note": "Step 2: the panel shows Right-click landed."},
+    {"stepType": "click", "match_any": ["reveal by selector", "reveal-by-selector"], "note": "Step 3: a normal (left) click on Reveal by selector."},
+    {"stepType": "find", "match": "Selector click landed", "note": "Step 3: Selector click landed appears."},
+    {"stepType": "click", "match": "reveal via regex match", "note": "Step 4: click Reveal via regex match."},
+    {"stepType": "find", "match": "Regex click landed", "note": "Step 4: Regex click landed appears."}
+  ],
+  "must_not": [
+    "A left click for step 2: only a right-click shows Right-click landed."
+  ]
+}

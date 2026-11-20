@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "multiple-matches.html", "note": "Step 1: open the tier page."},
+    {"stepType": "click", "match": "third", "note": "Step 2: click the Third button by its visible text."},
+    {"stepType": "find", "match": "Third clicked", "note": "Step 2: the page confirms Third clicked."},
+    {"stepType": "click", "match": "second", "note": "Step 3: click the Second button by its visible text."},
+    {"stepType": "find", "match": "Second clicked", "note": "Step 3: the page adds Second clicked."}
+  ],
+  "must_not": [
+    "Clicking by the shared accessible name `Multi button`, the shared `data-testid` `multi`, or the shared class `.multi` alone: all three buttons have them, so the click lands on First."
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"stepType": "httpRequest", "match": ["api/resolved-tests", "x-runner-token", "test-token-123", "api-resolved-tests-id"], "note": "Step 1: GET with the sandbox token; resolvedTestsId is api-resolved-tests-id."},
+    {"stepType": "httpRequest", "match": ["api/resolved-tests", "statusCodes", "401"], "note": "Step 2: the same request without the header must accept 401 via statusCodes (the default accepts only success codes)."}
+  ],
+  "must_not": [
+    "Steps for the 'Before you begin' hand-off: asking the workspace owner, opening an admin console, or saving the token in a password manager.",
+    "Sending the x-runner-token header on the step 2 request (it must be anonymous to get the 401).",
+    "A placeholder token such as $RUNNER_TOKEN in place of the sandbox token the doc gives."
+  ]
+}

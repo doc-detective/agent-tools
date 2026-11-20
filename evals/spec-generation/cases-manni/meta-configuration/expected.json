@@ -1,0 +1,61 @@
+{
+  "source": "manni/docs/src/content/docs/meta/reference/configuration.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-configuration.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "is no longer a meta key"
+      ],
+      "note": "Migrating a 0.x config: the 0.3.0 config is refused with the quoted message, exit 2."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate"
+      ],
+      "note": "After the migration, a bare `manni meta validate` reads the collections and passes."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "--collection guides"
+      ],
+      "note": "Selecting collections: `manni meta validate --collection guides`."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "--collection",
+        "no collection named"
+      ],
+      "note": "Usage error 1: an unknown name, `--collection gides`."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "--collection",
+        "cannot be combined with paths"
+      ],
+      "note": "Usage error 2: `--collection guides docs/x.md`."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "--collection",
+        "--no-config",
+        "needs a config file"
+      ],
+      "note": "Usage error 3: `--collection guides --no-config`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "manni.config.yaml is the page's 0.3.0 config (meta.paths, meta.exclude, meta.sidecars, overrides[].name), with the files it names: docs/auth.md and docs/ops.md, docs/guides/setup.md, docs/drafts/wip.md (no `type`, excluded), docs-meta.yaml owning `source` and `jira`, and schemas/guide.json. The CLI refuses only the first legacy key it meets (`paths`), so one refused run is expected. A spec rewrites the config to the 1.0.0 form before the passing runs. The migrated config declares `pages` and `guides`, not the `blog` the selection examples name, so the two-collection run and the `Configured:` list are not scored. The scoped-run corpus-checks notice needs `checks:`, which neither config has."
+  ]
+}

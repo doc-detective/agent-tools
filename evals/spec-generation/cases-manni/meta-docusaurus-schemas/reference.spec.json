@@ -1,0 +1,57 @@
+{
+  "specId": "manni-meta-docusaurus-schemas",
+  "description": "manni docs meta/reference/docusaurus-schemas, run in a Docusaurus site with docs/, blog/ and src/pages/ and no manni config.",
+  "tests": [
+    {
+      "testId": "wire-them-up",
+      "steps": [
+        {
+          "description": "Declare the three content roots as collections and point one override at each.",
+          "runShell": {
+            "command": "node -e \"require('fs').writeFileSync('manni.config.yaml','collections:\\n  - name: guides\\n    paths: [docs]\\n  - name: blog\\n    paths: [blog]\\n  - name: pages\\n    paths: [src/pages]\\n\\nmeta:\\n  overrides:\\n    - collection: guides\\n      schemas:\\n        - docusaurus:docs:3.10\\n        - diataxis:diataxis:1.0\\n    - collection: blog\\n      schemas:\\n        - docusaurus:blog:3.10\\n    - collection: pages\\n      schemas:\\n        - docusaurus:pages:3.10\\n')\""
+          }
+        },
+        {
+          "description": "A run can address one root by its collection name.",
+          "runShell": {
+            "command": "manni meta validate --collection blog",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "The blog collection gets the blog contract.",
+          "runShell": {
+            "command": "manni meta validate --collection blog -f json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "\"docusaurus:blog:3.10\""
+          }
+        },
+        {
+          "description": "A bare run reads all three roots, each under its own override.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "4 files checked, 4 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "For a one-off run, pass the id directly.",
+          "runShell": {
+            "command": "manni meta validate docs/ -s docusaurus:docs:3.10",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed, 0 failed, 0 errors"
+          }
+        }
+      ]
+    }
+  ]
+}

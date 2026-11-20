@@ -1,0 +1,4 @@
+{"prompt_id":"dd-docs-automatic-recording","rep":2,"failure_class":"timeout","error":"dd-docs-automatic-recording rep2: exceeded 1800s wall-clock ceiling","retries":0,"judge_retries":0,"latency_s":1800.011}
+{"prompt_id":"web-20-export-customer-table-manual-steps","rep":3,"failure_class":"timeout","error":"web-20-export-customer-table-manual-steps rep3: exceeded 1800s wall-clock ceiling","retries":0,"judge_retries":0,"latency_s":1800.005}
+{"prompt_id":"web-20-export-customer-table-manual-steps","rep":4,"failure_class":"timeout","error":"web-20-export-customer-table-manual-steps rep4: exceeded 1800s wall-clock ceiling","retries":0,"judge_retries":0,"latency_s":1800.013}
+{"prompt_id":"web-20-export-customer-table-manual-steps","rep":5,"failure_class":"timeout","error":"web-20-export-customer-table-manual-steps rep5: exceeded 1800s wall-clock ceiling","retries":0,"judge_retries":0,"latency_s":1800.011}

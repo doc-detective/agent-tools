@@ -1,0 +1,103 @@
+{
+  "specId": "manni-meta-encrypted-fields",
+  "description": "manni docs meta/schemas/encrypted-fields, run in a repo whose schema marks owner x-manni-encrypt, with the key in manni.config.yaml and the page's four pages.",
+  "tests": [
+    {
+      "testId": "follow-the-value",
+      "steps": [
+        {
+          "description": "Four pages, four states, one run, with the key available.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/must be equal to one of the allowed values  \\(line 3\\)  \\[\\.\\/schemas\\/page\\.json\\][\\s\\S]*\\[encrypted:plain\\][\\s\\S]*\\[encrypted:unreadable\\][\\s\\S]*4 files checked, 1 passed, 3 failed, 3 errors/"
+          }
+        },
+        {
+          "description": "Make a copy of the config without the key.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs');f.writeFileSync('nokey.yaml',f.readFileSync('manni.config.yaml','utf8').replace(/^encryptionKey:.*\\n/m,''))\""
+          }
+        },
+        {
+          "description": "With no key, the check goes quiet: one warning counts the dropped values, and encrypted:plain still fires.",
+          "runShell": {
+            "command": "manni meta validate -c nokey.yaml",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "3 encrypted values were not verified: no encryption key is available."
+          }
+        },
+        {
+          "description": "The dropped findings pass; encrypted:plain still fails.",
+          "runShell": {
+            "command": "manni meta validate -c nokey.yaml",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "4 files checked, 3 passed, 1 failed, 1 error"
+          }
+        },
+        {
+          "description": "Remove the keyless copy.",
+          "runShell": {
+            "command": "node -e \"require('fs').rmSync('nokey.yaml')\""
+          }
+        },
+        {
+          "description": "fill encrypts the plain value the page already holds, with no model call.",
+          "runShell": {
+            "command": "manni meta fill docs/plain.md --fields owner --dry-run --provider mock",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/\\/owner  \\(encrypted\\)  1\\.00/"
+          }
+        },
+        {
+          "description": "A query UPDATE writes the marked property encrypted.",
+          "runShell": {
+            "command": "manni meta query \"UPDATE docs SET owner = 'platform' WHERE _path = 'docs/auth.md'\"",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/auth\\.md: owner: [\\s\\S]*-> \\(encrypted\\)[\\s\\S]*1 change across 1 file/"
+          }
+        },
+        {
+          "description": "Reads do not decrypt: a SELECT returns what the page holds.",
+          "runShell": {
+            "command": "manni meta query \"SELECT _path, owner FROM docs\"",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/plain\\.md\\s+platform[\\s\\S]*4 rows/"
+          }
+        },
+        {
+          "description": "What a reviewer sees: the findings ride the github reporter.",
+          "runShell": {
+            "command": "manni meta validate -f github",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/::error file=docs\\/plain\\.md,line=3::\\[encrypted:plain\\] \\/owner/"
+          }
+        },
+        {
+          "description": "A value that decrypts under neither key stops the rotation, and nothing is written.",
+          "runShell": {
+            "command": "manni key rotate",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/docs\\/wrong-key\\.md: \\/owner  skipped: does not decrypt under the current key[\\s\\S]*Key not written: 1 value could not be re-encrypted\\./"
+          }
+        }
+      ]
+    }
+  ]
+}

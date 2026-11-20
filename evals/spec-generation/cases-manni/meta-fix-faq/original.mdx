@@ -1,0 +1,190 @@
+---
+title: FAQ
+description: Short answers to the questions that come up most when a manni meta check fails, covering no frontmatter, which schema fired, validating one field, stdin, exit codes, and more.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+Quick answers to the questions contributors ask most when a manni meta check goes
+red. Each one links to the page that covers it in full. If you're staring at a
+failing check right now, start with [Fix a failing check](/manni/meta/fix/). This
+page is for the "wait, but what about…" follow-ups.
+
+## What if a file has no frontmatter at all?
+
+It still fails, as long as the schema requires any field. A file with no
+frontmatter block reads as empty metadata. So a schema that requires `type`, as
+the built-in default does, reports the same "must have required property 'type'"
+error. It is the same error you would get for a file that simply left `type`
+out.
+
+So an empty or frontmatter-less file earns no free pass. It's the maximally
+failing case. If you expected the file to have metadata, the usual cause is a
+missing opening `---` fence, or content sitting above the block. See [No
+frontmatter at all](/manni/meta/fix/#no-frontmatter-at-all) for the fix.
+
+## Which schema validated my file, and why did *this* rule fire?
+
+Every error line ends with the schema that produced it, in brackets. For example
+`[google:okf:0.1]`. That's the schema whose rule you tripped. If you're
+surprised by *which* schema applied, manni meta picks it through a fixed precedence
+chain. A `--schema` flag wins over a `$schema` key in your file. That wins over
+config `overrides`, then config `schemas`, then the built-in default.
+
+The first source that yields a schema wins, and lower sources are ignored for
+that file. Say your repo's config assigns a strict schema to `/api/**`, and your
+file is under `/api`. That's the rule that fired, even if you never set anything
+in the file itself.
+
+<LinkCard
+  title="How schema resolution works"
+  href="/manni/meta/reference/schema-resolution/"
+  description="The full precedence chain, the three reference kinds, and how each error is tagged with its schema."
+/>
+
+## Can I validate just one field?
+
+No. `validate` checks a file against whole schemas, not individual fields. There
+is no "validate only `type`" mode. What you *can* do is narrow which schema
+applies (via `$schema`, config `overrides`, or `--schema`) so that only the rules
+you care about run.
+
+If your goal is just to *read* a field's value rather than validate it, that's a
+different command. `get` extracts named field values without validating
+anything.
+
+```sh
+manni meta get type docs/guide.md
+```
+
+See the [`validate`](/manni/meta/reference/cli/#meta-validate) and [`get`](/manni/meta/reference/cli/#meta-get)
+references for each command's full surface.
+
+## How do I validate content coming from stdin?
+
+Pass `-` as the path and tell manni meta which format to use with `--as`, since
+there's no filename extension to detect from:
+
+```sh
+cat page.md | manni meta validate - --as markdown
+```
+
+`--as` takes an extractor name (`markdown`, `mdx`, `asciidoc`, and so on). The
+same pattern works for `get`. Without `--as`, stdin is an error.
+
+<LinkCard
+  title="CLI reference: shared input model"
+  href="/manni/meta/reference/cli/#shared-input-model"
+  description="How paths, stdin, and --as work the same way across validate and get."
+/>
+
+## How do I check only Markdown and skip my other formats?
+
+Use `--ext` to restrict which extensions directory and glob walks pick up:
+
+```sh
+manni meta validate docs/ --ext md
+```
+
+This walks `docs/` but considers only `.md` files, leaving `.mdx`, `.adoc`, and
+the rest untouched. Pass a comma-separated list for more than one, as in `--ext md,mdx`.
+
+<Aside type="note">
+  `--ext` filters directory and glob expansion. An explicit file path you pass
+  directly is always validated, regardless of its extension.
+</Aside>
+
+## What exit code does CI see?
+
+One of three:
+
+| Code | Meaning |
+| --- | --- |
+| `0` | Every file passed. The check is green. |
+| `1` | One or more files **failed validation**, from a missing or malformed field. The red check you're here to fix. |
+| `2` | An **operational error**, where manni meta couldn't run the check at all. That covers a missing or unreadable schema, an unsupported file type, or no files to validate. The message goes to stderr, prefixed `manni:`. |
+
+A `1` means fix your document. A `2` means fix the setup, not the content. CI
+gates on this code, so the distinction matters when you read a raw log.
+
+<LinkCard
+  title="Output formats & exit codes"
+  href="/manni/meta/reference/output-and-exit-codes/"
+  description="The exact 0/1/2 contract, plus the pretty, JSON, GitHub, SARIF, and JUnit output shapes."
+/>
+
+## Does manni meta check my prose or page content?
+
+No. manni meta validates the **presence and format of metadata**, the fields in
+your frontmatter, and nothing about the body of the document. It won't flag
+spelling, broken links, tone, or anything in the prose. A red check always points
+at a frontmatter field, never at your writing.
+
+## How do I exclude drafts from validation?
+
+Exclude them by glob, in one of two places, and the difference matters.
+
+On the command line, `--exclude` filters whatever this run walks:
+
+```sh
+manni meta validate docs/ --exclude "**/drafts/**"
+```
+
+It is repeatable and merges with the default ignores (`node_modules`, `.git`).
+
+In config, `exclude:` belongs to a collection and decides what that collection
+*contains*:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths: ["docs/**/*.md"]
+    exclude: ["**/drafts/**"]
+```
+
+A bare `manni meta validate` reads the collections, so the drafts are skipped
+every run, locally and in CI.
+
+<Aside type="caution" title="A collection's exclude does not filter a path you type">
+  The two are not interchangeable. `exclude:` shapes the collection, so it
+  applies when a run reads the collections. It does **not** filter a path given
+  on the command line: `manni meta validate docs/` walks exactly `docs/`, drafts
+  included, because you named that directory. Use `--exclude` when you are
+  naming paths yourself.
+
+  Before 1.0.0 the config key filtered every run, typed paths included. It moved
+  onto the collection with [proposal
+  0041](https://github.com/hawkeyexl/manni/blob/main/docs/proposals/0041-collections.md).
+  Once a repository declares several document sets, there is no principled way
+  to choose whose exclusions apply to a directory you typed.
+</Aside>
+
+<LinkCard
+  title="Configuration reference"
+  href="/manni/meta/reference/configuration/#collections"
+  description="Collections, their paths and exclude keys, schemas, and overrides, with how config merges with CLI flags."
+/>
+
+## Still stuck?
+
+Your error may not match anything here or on the fix-it page. The
+[Reference](/manni/meta/reference/) shelf documents every flag, output format, exit
+code, and resolution rule in full.
+
+<LinkCard
+  title="Read & fix a validation failure"
+  href="/manni/meta/fix/"
+  description="Decode the error line, map it to a field and line, fix it, and confirm green locally."
+/>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"fix-faq","description":"The how-do-I answers that map to runnable commands."} */}
+{/* step {"description":"Read a field's value (not validate it) with get.","runShell":{"command":"manni meta get type test/fixtures/valid.md","exitCodes":[0],"stdio":"type=concept"}} */}
+{/* step {"description":"Validate content from stdin: pass - and tell manni meta the format with --as.","runShell":{"command":"manni meta validate - --as markdown < test/fixtures/valid.md","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"Stdin without --as is an operational error (exit 2).","runShell":{"command":"manni meta validate - < test/fixtures/valid.md","exitCodes":[2],"stdio":"requires --as"}} */}
+{/* step {"description":"Restrict a directory walk to one extension with --ext. Mirrors the page's documented --ext form, so the walk is intentionally unfiltered: it includes the dd/ mixed-content fixtures (the next step shows excluding them). The assertion checks only 'files checked' + exit 1, so it does not depend on the file count.","runShell":{"command":"manni meta validate test/fixtures --ext md","exitCodes":[1],"stdio":"files checked"}} */}
+{/* step {"description":"Exclude a glob from a walk; --exclude is repeatable and merges with config and defaults.","runShell":{"command":"manni meta validate test/fixtures --ext md --exclude \"test/fixtures/dd/**\"","exitCodes":[1],"stdio":"files checked"}} */}
+{/* test end */}

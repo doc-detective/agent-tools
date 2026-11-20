@@ -1,0 +1,241 @@
+---
+title: Add manni meta to CI (GitHub Actions)
+description: Add a document-metadata gate to GitHub Actions, with inline pull request annotations from the github output format.
+---
+
+import { Steps, Tabs, TabItem, Aside, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+This page wires manni meta into GitHub Actions. Every push and pull request then
+validates your document metadata, and fails the job when a file is
+non-conformant. Each failure is reported as an inline annotation on the pull
+request diff.
+
+You do not need to install manni meta into your repository. The recipes here run it
+with `npx`, which fetches the published `manni meta` package on demand. The only
+requirement on the runner is Node.js 24 or newer.
+
+<Aside type="tip" title="Just want the gate?">
+On GitHub Actions, use the packaged action. It sets up Node, pins the CLI, and
+defaults to inline PR annotations:
+
+```yaml
+- uses: actions/checkout@v7
+- uses: hawkeyexl/manni@v2
+  with:
+    paths: "docs/**/*.md"
+```
+
+`paths`, `schema` and `args` each accept one item per line as well as a single
+space-separated line. Use lines whenever a value contains a space. Shell quoting
+is not interpreted, so `args: --exclude "*.draft.md"` would hand manni meta a
+pattern with the quote marks still in it:
+
+```yaml
+- uses: hawkeyexl/manni@v2
+  with:
+    paths: |
+      docs/**/*.md
+      guides/my notes/*.mdx
+    args: |
+      --exclude
+      *.draft.md
+```
+
+Everything below explains what that runs, and applies to any CI platform.
+[`examples/manni.yml`](https://github.com/hawkeyexl/manni/blob/main/examples/manni.yml)
+is the same thing written out by hand, for when you want to own the steps.
+</Aside>
+
+## How the gate works
+
+manni meta is built to behave well in CI. Two properties carry the whole
+integration:
+
+- **Exit codes drive the gate.** manni meta exits `0` when every file is valid, and
+  `1` when one or more files fail validation. It exits `2` on an operational or
+  usage error, such as no inputs and no config. GitHub Actions treats any
+  non-zero exit from a step as a failed step, so the metadata gate is enforced
+  for free. There is no separate "if failures, then fail" wiring to maintain.
+- **`--format github` produces inline annotations.** Instead of pretty console
+  output, the `github` format emits one GitHub Actions workflow command per
+  error (`::error file=...,line=...,col=...::...`). GitHub turns each line into
+  an annotation, pinned to the offending file and line in the pull request.
+  Reviewers then see exactly what failed without opening the job log.
+
+For the full contract, see
+[Exit codes & PR annotations](/manni/meta/ci/exit-codes-and-annotations/).
+
+## Standalone workflow
+
+Use this when metadata validation is its own job. This is the canonical recipe
+from [`examples/manni.yml`](https://github.com/hawkeyexl/manni/blob/main/examples/manni.yml).
+
+<Steps>
+
+1. **Create the workflow file.** Add `.github/workflows/manni.yml`:
+
+   ```yaml title=".github/workflows/manni.yml"
+   # Validate document metadata on every push and pull request.
+   name: Validate metadata
+
+   on:
+     push:
+     pull_request:
+
+   jobs:
+     manni:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v7
+         - uses: actions/setup-node@v6
+           with:
+             node-version: 24
+
+         # Validate all Markdown. `--format github` turns failures into inline
+         # PR annotations; the nonzero exit code fails the job.
+         - name: Validate frontmatter
+           run: npx -y @hawkeyexl/manni meta validate "**/*.md" --format github
+   ```
+
+2. **Adapt the targets.** Replace `"**/*.md"` with the paths, directories, or
+   globs you want to check, for example `"docs/**/*.md"`. Quote globs so the
+   shell passes them to manni meta intact rather than expanding them itself.
+
+3. **Commit and push.** On the next push or pull request, the `manni meta` job runs.
+   A clean run passes; any validation failure fails the job and annotates the
+   diff.
+
+</Steps>
+
+<Aside type="note" title="Pin the version for reproducible runs">
+`npx -y @hawkeyexl/manni meta` resolves the latest published version each run. To keep CI
+reproducible, pin the major, as in `npx -y @hawkeyexl/manni@2 meta validate ...`, and bump it
+deliberately.
+</Aside>
+
+### Let the config file supply the paths
+
+If your repository has a `manni.config.yaml` at its root, its top-level
+`collections:` list already names the document sets. A run with no positional
+targets reads those. That lets the workflow step drop the glob entirely:
+
+```yaml title=".github/workflows/manni.yml" {3}
+- name: Validate frontmatter
+  # Targets come from collections: in manni.config.yaml at the repo root.
+  run: npx -y @hawkeyexl/manni meta validate --format github
+```
+
+Keeping the target list in `manni.config.yaml` means the same command works
+locally and in CI, and you change what gets validated in one place. Because a
+collection is declared once for every manni tool rather than per tool, the
+a11y gate beside this one reads the same list. See
+[Create your manni.config.yaml](/manni/meta/set-up/config/) for both halves of
+the file.
+
+To gate one part of a docs set rather than all of it, name its collection.
+`--collection <name>` is repeatable, one name per occurrence:
+
+```yaml title=".github/workflows/manni.yml"
+- name: Validate the published guides
+  run: npx -y @hawkeyexl/manni meta validate --collection guides --format github
+```
+
+A scoped run does skip corpus
+[`checks:`](/manni/meta/reference/configuration/#checks), with a notice on
+stderr, because a rule that spans the corpus cannot be answered by part of it.
+Keep one unscoped job if you gate on those.
+
+## Add a step to an existing workflow
+
+You do not need a dedicated workflow. If you already run a docs or lint job, add
+manni meta as one more step. It needs a checkout and a Node.js 24+ toolchain. If
+the job already has those, the validation step is a single line.
+
+<Tabs>
+<TabItem label="New job in an existing workflow">
+
+```yaml title=".github/workflows/docs.yml"
+jobs:
+  # ... your existing jobs ...
+
+  metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+      - name: Validate frontmatter
+        run: npx -y @hawkeyexl/manni meta validate "docs/**/*.md" --format github
+```
+
+</TabItem>
+<TabItem label="Step in an existing job">
+
+```yaml title=".github/workflows/docs.yml" {12-13}
+jobs:
+  docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      # ... your existing build/lint steps ...
+
+      - name: Validate frontmatter
+        run: npx -y @hawkeyexl/manni meta validate "docs/**/*.md" --format github
+```
+
+</TabItem>
+</Tabs>
+
+<Aside type="caution" title="Step ordering and fail-fast">
+By default a failed step stops the job, so place the validation step where you
+want it to gate. If it runs after a step that already failed, it will not run at
+all. To always run validation and still surface a build failure, add
+`if: always()` to the validation step.
+</Aside>
+
+## Verify it works
+
+To confirm the gate fires, open a pull request that introduces a metadata error.
+A Markdown file missing a required `type` field will do. Then check that:
+
+- The `manni meta` job is red.
+- The failing file shows an inline annotation on the changed line.
+- A passing change leaves the job green.
+
+If you want to see the same output locally before pushing, run the command from
+your shell. Locally, `--format github` prints the raw `::error` lines; drop the
+flag to get the readable pretty report:
+
+```sh
+npx -y @hawkeyexl/manni meta validate "docs/**/*.md"
+```
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Exit codes & PR annotations"
+    href="/manni/meta/ci/exit-codes-and-annotations/"
+    description="The exact 0/1/2 contract and the github, json, sarif, junit, and pretty output shapes."
+  />
+  <LinkCard
+    title="CI recipes for other platforms"
+    href="/manni/meta/ci/recipes/"
+    description="Copy-paste jobs for GitLab CI, Jenkins, and pre-commit."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"ci-github","description":"The two properties the GitHub integration rests on, run against the local CLI build."} */}
+{/* step {"description":"Clean run exits 0 so the job stays green.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/valid.md --format github","exitCodes":[0]}} */}
+{/* step {"description":"A failure exits 1 (fails the job) and emits a ::error workflow command pinned to file and line.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md --format github","exitCodes":[1],"stdio":"/::error file=.*line=/"}} */}
+{/* step {"description":"An operational error (no inputs, no config) exits 2, distinct from a validation failure.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config","exitCodes":[2],"stdio":"No files to validate"}} */}
+{/* test end */}

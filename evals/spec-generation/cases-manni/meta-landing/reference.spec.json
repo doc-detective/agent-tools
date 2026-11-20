@@ -1,0 +1,37 @@
+{
+  "specId": "manni-meta-landing",
+  "description": "manni docs meta/index, the 30-second proof, run on a document that is missing the required type.",
+  "tests": [
+    {
+      "testId": "landing-proof",
+      "steps": [
+        {
+          "description": "Run it: the file is missing a required field, and the result names the field and the schema.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate path/to/your-doc.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/✗ path\\/to\\/your-doc\\.md[\\s\\S]*\\(root\\)  must have required property 'type'[\\s\\S]*\\[google:okf:0\\.1\\][\\s\\S]*1 file checked, 0 passed, 1 failed, 1 error/"
+          }
+        },
+        {
+          "description": "Fix the field: add type to the frontmatter.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='path/to/your-doc.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace(/^---\\n/,'---\\ntype: concept\\n'))\""
+          }
+        },
+        {
+          "description": "Run it again: a file with complete, well-formed metadata passes.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate path/to/your-doc.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/✓ path\\/to\\/your-doc\\.md[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 errors/"
+          }
+        }
+      ]
+    }
+  ]
+}

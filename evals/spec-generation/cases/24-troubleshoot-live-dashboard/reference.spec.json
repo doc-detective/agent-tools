@@ -1,0 +1,40 @@
+{
+  "tests": [
+    {
+      "testId": "troubleshoot-live-dashboard",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/status/200",
+            "method": "get",
+            "statusCodes": [
+              200
+            ]
+          }
+        },
+        {
+          "goTo": "http://localhost:8092/waitUntil-test-static.html"
+        },
+        {
+          "find": "Content is available immediately."
+        },
+        {
+          "goTo": {
+            "url": "http://localhost:8092/waitUntil-test-network-forever.html",
+            "waitUntil": {
+              "networkIdleTime": 0,
+              "domIdleTime": 0
+            }
+          }
+        },
+        {
+          "find": {
+            "selector": "#content",
+            "elementText": "/Request #[0-9]+ completed/",
+            "timeout": 5000
+          }
+        }
+      ]
+    }
+  ]
+}

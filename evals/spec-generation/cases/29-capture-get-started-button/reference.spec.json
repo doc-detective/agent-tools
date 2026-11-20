@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "testId": "capture-get-started",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/crop-sticky-header.html"
+        },
+        {
+          "find": "Site banner"
+        },
+        {
+          "find": {
+            "selector": "#get-started",
+            "elementText": "Get started"
+          }
+        },
+        {
+          "screenshot": {
+            "path": "get-started.png",
+            "crop": "#get-started"
+          }
+        },
+        {
+          "find": {
+            "selector": "#learn-more",
+            "elementText": "Learn more"
+          }
+        }
+      ]
+    }
+  ]
+}

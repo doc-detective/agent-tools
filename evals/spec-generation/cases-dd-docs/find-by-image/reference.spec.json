@@ -30,14 +30,14 @@
           "stepId": "find-by-image-guide-find-icon",
           "description": "Step 2: find the icon by its file.",
           "find": {
-            "elementImage": "icons/save.svg"
+            "elementImage": "../icons/save.svg"
           }
         },
         {
           "stepId": "find-by-image-guide-click",
           "description": "Click the icon by its file.",
           "click": {
-            "elementImage": "icons/save.svg"
+            "elementImage": "../icons/save.svg"
           }
         },
         {

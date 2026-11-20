@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "annotate-late-element.html", "note": "Step 1: open the account overview."},
+    {"stepType": "find", "match": "Ready immediately", "note": "Step 1: the status line Ready immediately."},
+    {"stepType": "find", "match": "Dashboard", "note": "Step 2: the Dashboard panel appears after about 6.5 s, past find's default 5000 ms timeout, so the step needs a longer timeout or a wait before it, or the spec FAILs."},
+    {"stepType": "find", "match": "API key", "note": "Step 3: the API key rows are listed (checking all three is fine)."},
+    {"stepType": "find", "match": "Billing", "note": "Step 4: the Billing panel loads last (about 8 s after the page opens)."}
+  ],
+  "must_not": [
+    "A find for Dashboard (or a later panel) with the default timeout and no wait before it: the panel arrives after 5000 ms."
+  ]
+}

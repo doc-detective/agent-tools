@@ -8,7 +8,7 @@
         {
           "stepId": "loadvariables-load",
           "description": "Load environment variables from secrets.env.",
-          "loadVariables": "./secrets.env"
+          "loadVariables": "../secrets.env"
         },
         {
           "stepId": "loadvariables-use",

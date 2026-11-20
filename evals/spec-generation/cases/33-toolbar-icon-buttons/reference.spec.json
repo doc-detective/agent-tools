@@ -1,0 +1,39 @@
+{
+  "tests": [
+    {
+      "testId": "toolbar-icon-buttons",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/find-shorthand.html"
+        },
+        {
+          "click": {
+            "selector": "button",
+            "elementText": "I"
+          }
+        },
+        {
+          "find": "Id click landed"
+        },
+        {
+          "click": {
+            "selector": "button",
+            "elementText": "S"
+          }
+        },
+        {
+          "find": "Selector click landed"
+        },
+        {
+          "click": "Start late arrival"
+        },
+        {
+          "find": {
+            "elementText": "Shorthand late arrival",
+            "timeout": 5000
+          }
+        }
+      ]
+    }
+  ]
+}

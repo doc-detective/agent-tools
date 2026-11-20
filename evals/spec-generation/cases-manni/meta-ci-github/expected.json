@@ -1,0 +1,37 @@
+{
+  "source": "manni/docs/src/content/docs/meta/ci/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-ci-github.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "**/*.md", "--format github"],
+      "note": "The standalone workflow's step: `npx -y @hawkeyexl/manni meta validate \"**/*.md\" --format github`, run locally."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--format github"],
+      "note": "Let the config file supply the paths: `manni meta validate --format github` with no targets reads `collections:`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--collection guides", "--format github"],
+      "note": "Gate one part of the docs set: `--collection guides --format github`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--format github", "::error"],
+      "note": "Verify it works: with a file missing `type`, `--format github` locally prints the raw `::error` lines and the gate fails."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "docs/**/*.md"],
+      "note": "Drop the flag to get the readable pretty report: `npx -y @hawkeyexl/manni meta validate \"docs/**/*.md\"`."
+    }
+  ],
+  "must_not": [
+    "Treat creating .github/workflows/manni.yml, committing, pushing, or opening a pull request as runnable steps. The job and its PR annotations exist only on GitHub."
+  ],
+  "scaffolding": [
+    "docs/intro.md and docs/guides/setup.md both pass the built-in OKF schema. manni.config.yaml declares collections `pages` (docs/*.md) and `guides` (docs/guides/**/*.md), so the bare and `--collection guides` runs have targets. No file is missing `type` at the start: the page has the reader introduce one to see the gate fire, so a spec writes it before the `::error` and pretty runs."
+  ]
+}

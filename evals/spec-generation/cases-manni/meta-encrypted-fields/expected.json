@@ -1,0 +1,46 @@
+{
+  "source": "manni/docs/src/content/docs/meta/schemas/encrypted-fields.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-encrypted-fields.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "4 files checked, 1 passed, 3 failed, 3 errors"],
+      "note": "Follow the value: four pages, four states, one run with the key."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "3 encrypted values were not verified"],
+      "note": "With no key, the check goes quiet: the stderr warning counts the dropped values. A spec runs it without the config's key."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta fill", "--fields owner", "--dry-run"],
+      "note": "`manni meta fill docs/plain.md --fields owner --dry-run` encrypts the plain value, no model call."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "UPDATE docs SET owner"],
+      "note": "A query UPDATE writes the marked property encrypted."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta query", "SELECT _path, owner FROM docs"],
+      "note": "Reads do not decrypt: the SELECT shows what each page holds."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "::error"],
+      "match_any": ["-f github", "--format github"],
+      "note": "What a reviewer sees: `manni meta validate -f github`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["key rotate", "Key not written"],
+      "note": "A value that decrypts under neither key stops the rotation, and it is named."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "schemas/page.json is the page's schema (owner required, enum platform/billing, x-manni-encrypt). manni.config.yaml has collection `site`, that schema, and `encryptionKey:` set to manni's fixed test key, the key the page's ciphertexts were made under. docs/auth.md (platform), docs/bad-value.md (finance), docs/plain.md (plain `platform`) and docs/wrong-key.md (another key) carry the page's exact ciphertexts, from test/fixtures/encrypted. The no-key run needs the key out of the run: a spec drops it from the config or points `-c` at a copy without it. The manifest section (owners.yaml, stale.md, wrong.md) and the successful rotation are other setups the page doesn't give, so they are not expected."
+  ]
+}
