@@ -2,7 +2,7 @@
 name: doc-detective-test
 description: 'Convert documentation procedures into Doc Detective test specifications, run them, and optionally fix failures'
 metadata:
-  version: '2.1.1'
+  version: '2.1.2'
   organization: Doc Detective
   date: November 2026
   abstract: Convert documentation procedures into executable Doc Detective test specifications, run them, fix failures, and verify the documentation matches actual behavior.

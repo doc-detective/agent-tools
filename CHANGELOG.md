@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/doc-detective/agent-tools/compare/v2.1.1...v2.1.2) (2026-11-20)
+
+
+### Bug Fixes
+
+* **skills:** describe the GitHub Action's built-in cache ([#95](https://github.com/doc-detective/agent-tools/issues/95)) ([637d56b](https://github.com/doc-detective/agent-tools/commit/637d56b1f8f0712bceaff4be68a4651f8531ad60))
+
 ## [2.1.1](https://github.com/doc-detective/agent-tools/compare/v2.1.0...v2.1.1) (2026-11-19)
 
 
