@@ -962,11 +962,8 @@ function buildSkillScripts() {
   log("\nBuilding skill scripts...");
 
   const skills = [
-    { name: "doc-testing", dir: "src/skills/doc-detective-doc-testing/scripts/src" },
-    {
-      name: "inline-test-injection",
-      dir: "src/skills/doc-detective-inline-test-injection/scripts/src",
-    },
+    { name: "test", dir: "src/skills/doc-detective-test/scripts/src" },
+    { name: "inject", dir: "src/skills/doc-detective-inject/scripts/src" },
   ];
 
   for (const skill of skills) {

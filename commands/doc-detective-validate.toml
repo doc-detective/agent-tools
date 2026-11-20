@@ -69,7 +69,7 @@ The tool returns `{valid, errors[], normalizedObject, schemaKey, schemaVersion}`
 
 ```bash
 # Option 1
-echo '<spec-json>' | node skills/doc-detective-doc-testing/scripts/doc-detective-validate-test.js --stdin
+echo '<spec-json>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin
 # Option 2: checks specs and inline tests without running them. Exit 0: all valid. Exit 1: some invalid; stdout names
 # each file and field. Exit 2: usage error, bad config, or no tests found. Add --json for {valid, files[{path, valid, errors}]}.
 npx doc-detective@5 validate <spec-file>
@@ -114,7 +114,7 @@ For a config file, call `validate_spec({object: <config>, schemaKey: "config_v3"
 
 Errors: `logLevel` isn't one of the allowed values, and `recursive` must be a boolean.
 
-See [doc-detective-common](https://github.com/doc-detective/doc-detective-common) for the full configuration schema.
+See the [`config_v3` schema](https://github.com/doc-detective/doc-detective/blob/main/src/common/src/schemas/src_schemas/config_v3.schema.json) for the full configuration schema.
 
 ## Done when
 
@@ -122,4 +122,4 @@ See [doc-detective-common](https://github.com/doc-detective/doc-detective-common
 - Each error appears as `[FIELD]: [ERROR REASON]`.
 - The result ends with `Validation PASSED` or `Validation FAILED`, or it tells the user that no validator could confirm the input, and why.
 """
-description="""Validate Doc Detective test specifications or configuration files"""
+description="""Check whether an existing Doc Detective test spec or config file (such as .doc-detective.json) is valid, and name each invalid field, without running any tests. To run tests, use doc-detective-test. To write a new spec, use doc-detective-generate."""
