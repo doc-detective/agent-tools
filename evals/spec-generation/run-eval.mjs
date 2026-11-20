@@ -158,7 +158,10 @@ async function runCase(c, ctx) {
     // The session gets the grade's tools on PATH, with its own npm prefix (see sessionEnv).
     const run = await runClaude({ prompt: c.prompt, cwd: ws, model: ctx.model, env: sessionEnv(ws) });
     // And after: a session (or another process) may have replaced the pinned build mid-run.
-    if (c.slice === 'manni') checkToolchain();
+    // The session is already billed, so its model and usage ride on the error row.
+    if (c.slice === 'manni') {
+      try { checkToolchain(); } catch (e) { throw Object.assign(e, { model: run.model, usage: run.usage }); }
+    }
     const spec = findSpec(ws, c);
     const dd = spec.json ? await runDocDetective(c, ws, spec.path) : null;
     return {
@@ -570,7 +573,7 @@ async function main() {
           // Billed-but-failed spend stays countable: when the app call completed
           // before the failure (e.g. a served-model mismatch, a judge-stage
           // ceiling), carry its identity and usage on the error row.
-          model: lastRun?.model, usage: lastRun?.usage,
+          model: e?.model ?? lastRun?.model, usage: e?.usage ?? lastRun?.usage,
           judge_model: e?.judge_model ?? lastRun?.judge_model,
           judge_usage: e?.judge_usage ?? lastRun?.judge_usage,
           latency_s: (Date.now() - t0) / 1000,
