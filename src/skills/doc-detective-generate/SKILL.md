@@ -85,12 +85,22 @@ Full action catalog, with every field: [references/actions.md](references/action
 
 The spec runs later, from the repository root, against the files that are there then. Each step must pass on those files, not on the doc's example.
 
-- **Field paths resolve against the spec file's folder.** That covers `loadVariables`, `elementImage`, `workingDirectory`, and `path` and `directory` fields. For a spec in `tests/` that loads `secrets.env` from the repository root, write `"loadVariables": "../secrets.env"`. Paths inside a `runShell` `command` resolve against the folder Doc Detective runs from, usually the repository root.
+- **Field paths resolve against the spec file's folder.** That covers `loadVariables`, `elementImage`, `workingDirectory`, and `path` and `directory` fields. For a spec in `tests/` that loads `secrets.env` from the repository root, write `"loadVariables": "../secrets.env"`.
+- **Paths inside a `runShell` `command` resolve against the folder Doc Detective runs from,** usually the repository root. Write `docs/limits.md` there, not `../docs/limits.md`.
 - **Learn what a command does on these files before you set its `exitCodes` and `stdio`.** `exitCodes` defaults to `[0]`, and a command that reports a problem exits nonzero. Read `<command> --help` for its arguments. You can run a command that changes nothing, such as a check or a `--dry-run`, to see its exit code and output. Match `stdio` on text the command prints, not on the doc's prose around it.
 - **Create in the spec every file a step needs.** Add a `runShell` step that writes the file before the step that uses it. Don't point a step at a file or folder you made while writing the spec. It's gone by the time the spec runs.
 - **Put the whole command line in `command`.** `runShell` joins `command` and `args` with spaces and adds no quotes, so an argument with spaces or quotes breaks.
 - **Use only tools the doc has the reader install.** A command that isn't installed exits `127`. For JSON, use `node`, not `jq`.
 - **Don't `find` a transient state,** such as a loading message. It's often gone before the step runs.
+
+### Test what the page shows
+
+A step proves the page right only when it does what the page does and checks what the page says happens.
+
+- **Give each command the page shows its own step, as the page writes it.** Keep its arguments and flags. The page may run a command one way and then another, such as with `--dry-run` and then without, or with each `--format`. Each one is a step. Don't swap in a `--dry-run` or your own arguments for the command the page runs. When the command needs files, create them in the spec.
+- **Set `stdio` to output the page shows.** Pick its summary line, or the line that names the problem, once you've seen the command print it. A step with no `stdio` checks only the exit code.
+- **Reproduce the problem the page shows.** When the page shows a command reporting an error, a warning, or a failed check, create the file that has that problem, then assert the line the page shows for it. On clean files, the command reports nothing.
+- **Run an example spec's steps.** When the page shows a spec or test for the reader to run, put its steps in your spec. Don't write the example to a file and only validate it.
 
 ### Validate
 
