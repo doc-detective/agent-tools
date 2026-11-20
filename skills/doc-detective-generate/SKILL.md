@@ -55,10 +55,10 @@ npx doc-detective@5 --dry-run --input <doc-file>
 
 It runs nothing. It prints the resolved test plan as JSON. The plan holds the inline tests already in the doc. Because `detectSteps` defaults to `true`, it also holds steps detected from the doc's markup. The plan is shaped `{ "resolvedTestsId", "config", "specs": [{ "tests": [{ "testId", "contexts": [{ "steps": [...] }] }] }] }`. Turn it into the spec `{ "tests": [...] }`:
 
-- Take each plan test's steps from its `contexts[0].steps`, and drop each step's `location`. Detection doesn't split a doc by procedure: detected steps outside inline tests run together in one test. Split them into one test per procedure. Give each test a `testId` that names its procedure.
+- Take each plan test's steps from its `contexts[0].steps`, and drop each step's `location`. Every context holds the same steps for a different browser or platform, so the first is enough. Keep the test's `runOn`, if it has one. A value shown as `***NAME***` is a masked environment variable: write `$NAME`, not the mask. Detection doesn't split a doc by procedure: detected steps outside inline tests run together in one test. Split them into one test per procedure. Give each test a `testId` that names its procedure.
 - Check each detected step against the doc. Detection reads markup, not intent: a bold term can become both a `click` and a `find`, and a link both a `goTo` and a `checkLink`. Keep the step the reader does, and add steps for instructions that detection missed.
 
-When it prints `No tests found, so there's no test plan to print.` and exits `2`, the doc has nothing to detect, so build every test by hand, as below. For pasted text, or when `npx` isn't available, call `detect_tests` if it's registered (see `_shared/MCP-USAGE.md`), and otherwise build every test by hand.
+When it prints `No tests found, so there's no test plan to print.` and exits `2`, the doc has nothing to detect, so build every test by hand, as below. Exit `2` with `Invalid config in <file>` means a config in the current directory failed to load: report it, and build the tests by hand. For pasted text, or when the CLI can't run, call `detect_tests` if it's registered, and otherwise build every test by hand. The CLI can't run when there's no `npx`, or when npm fails before Doc Detective starts (see `_shared/MCP-USAGE.md`).
 
 To build tests by hand, read the source file, or use the pasted doc text, and find each procedure. Procedures appear as numbered lists, sequential bullet lists, and prose with action verbs (navigate, click, enter, verify). They also appear as command code blocks and API descriptions. Create one test for each procedure.
 
@@ -88,15 +88,19 @@ Validate with Doc Detective's own CLI. It checks the spec without running it:
 ```bash
 npx doc-detective@5 validate <spec-file>
 # Or, for a spec that isn't in a file yet:
-echo '<generated-spec>' | npx doc-detective@5 validate -
+npx doc-detective@5 validate - <<'SPEC'
+<generated-spec>
+SPEC
 ```
 
 Exit `0` means the spec is valid. Exit `1` means it isn't. Stdout names each invalid field, such as ``tests[0].steps[0]: unknown action `action`.`` Exit `2` means the CLI found no tests or couldn't load a config. Read stderr. A `.doc-detective.json`, `.yaml`, or `.yml` in the current directory loads on every run. An invalid one fails with `Invalid config in <file>` before your spec is checked.
 
-When `npx` isn't available, run the bundled validator. It passes when it prints `Validation PASSED`:
+When the CLI can't run, stderr holds `npm error` lines and no Doc Detective output. Then run the bundled validator from the doc-detective-test skill's folder. It passes when it prints `Validation PASSED`:
 
 ```bash
-echo '<generated-spec>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin
+node <doc-detective-test skill folder>/scripts/doc-detective-validate-test.js --stdin <<'SPEC'
+<generated-spec>
+SPEC
 ```
 
 When a `validate_spec` tool is registered, you can call it instead of the bundled validator. See `_shared/MCP-USAGE.md`.

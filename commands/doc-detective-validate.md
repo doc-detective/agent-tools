@@ -55,20 +55,25 @@ Validate a configuration file:
 
 ```bash
 npx doc-detective@5 validate <spec-file>
-# Several files or a folder also work. For inline JSON, pipe it to stdin:
-echo '<spec-json>' | npx doc-detective@5 validate -
+# Several files or a folder also work. For inline JSON, pass it on stdin:
+npx doc-detective@5 validate - <<'SPEC'
+<spec-json>
+SPEC
 ```
 
 - Exit `0`: every file is valid. Report `Validation PASSED`.
 - Exit `1`: stdout names each invalid file, then one line per error, such as ``tests[0].steps[0]: unknown action `action`.`` Report each error line.
 - Exit `2`: usage error, a config that didn't load, or no tests found. Report stderr. A `.doc-detective.json`, `.yaml`, or `.yml` in the current directory loads on every run, so an invalid one fails with `Invalid config in <file>` before the spec is checked. That's a config error, not a spec verdict.
+- `npm error` lines on stderr and no Doc Detective output: npm failed before Doc Detective started, so nothing was checked. Use the fallback.
 
 Add `--json` for `{valid, files[{path, valid, errors}]}` on stdout.
 
-**Fallback, when `npx` isn't available.** Run the bundled validator. It prints `Validation PASSED` or the errors:
+**Fallback, when the CLI can't run.** That's when there's no `npx`, or npm fails before Doc Detective starts. Run the bundled validator from the doc-detective-test skill's folder, next to its `SKILL.md`. It prints `Validation PASSED` or the errors:
 
 ```bash
-echo '<spec-json>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin
+node <doc-detective-test skill folder>/scripts/doc-detective-validate-test.js --stdin <<'SPEC'
+<spec-json>
+SPEC
 ```
 
 When a `validate_spec` tool is registered, you can call it instead: `validate_spec({object: <spec-or-config>, schemaKey: "spec_v3", addDefaults: true})`, with `"config_v3"` for a config. Report each `errors[]` entry as `[instancePath]: [message]`. `valid: true` means `Validation PASSED`. See `_shared/MCP-USAGE.md` for its names on each host.
@@ -95,9 +100,9 @@ It loads the config and checks it against the schema first. A config that fails 
 - `Error: Invalid config in <config-file>:`, followed by one `field: reason` line per error. Report those lines, then `Validation FAILED`.
 - `Could not read config file` or `Could not parse config file`: the file is missing or isn't JSON or YAML. Report that.
 
-Without one of those errors, the config is valid, and the rest of the output is about the tests its `input` points to. Exit `2` with `Couldn't find tests` only means that `input` holds no tests. Don't pass the config as a positional input, because `validate` reads it as a test file.
+Without one of those errors, and with Doc Detective's own output on the console, the config is valid. `npm error` lines and no Doc Detective output mean npm failed before the check, so the config is unchecked: use the fallback below. Once the config passes, the rest of the output is about the tests its `input` points to. Exit `2` with `Couldn't find tests` only means that `input` holds no tests. Don't pass the config as a positional input, because `validate` reads it as a test file.
 
-Without `npx`, call `validate_spec` with `"config_v3"` when it's registered. Otherwise, check the JSON against the `doc-detective-common` config schema yourself, say that no validator confirmed it, and report each field that fails as `[FIELD]: [ERROR REASON]`.
+When the CLI can't run, call `validate_spec` with `"config_v3"` when it's registered. Otherwise, check the JSON against the `doc-detective-common` config schema yourself, say that no validator confirmed it, and report each field that fails as `[FIELD]: [ERROR REASON]`.
 
 - `input`: A string or string array of valid glob patterns or file paths.
 - `recursive`: A boolean.
