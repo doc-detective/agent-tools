@@ -46,7 +46,7 @@
       "out": 10
     }
   },
-  "harness_sha": "ed350acf5b87e2a8527b57dfabac1a09e7a0c58e8349b3fb3fb4498ac687186b",
+  "harness_sha": "4f6a0f8e7192b576b39db1318f36587384cd4deecc4d474f3c587d6e2f38854b",
   "train_ids": [
     "dd-docs-automatic-recording",
     "dd-docs-find-by-image",
@@ -125,7 +125,7 @@
     "dd-docs-generate-tests-from-openapi"
   ],
   "reps": 3,
-  "current_round": 4,
+  "current_round": 5,
   "goal": {
     "target": "verified_coverage",
     "direction": "higher",
@@ -154,9 +154,9 @@
     "max_rounds": 6
   },
   "best": {
-    "round": 4,
-    "test_score": 0.653,
-    "note": "re-baseline on the grown set under the corrected harness; earlier rounds are not comparable"
+    "round": 5,
+    "test_score": 0.765,
+    "note": "generate: make each step pass where the spec runs; +0.112 +-0.103 over round 4 on test"
   },
   "split_note": "Cases added after round 3 (25): two thirds of each slice to test, seeded shuffle (mulberry32, seed 20261119), to narrow the held-out noise floor. The original 48 keep their split."
 }

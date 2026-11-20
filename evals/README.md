@@ -63,6 +63,10 @@ EVAL_ONLY=init-plain,neg-playwright node evals/routing/run-eval.mjs --flow .clau
 
 Spec-generation case ids carry their slice: `web-01-home-page-tour`, `manni-cite-ci`, `dd-docs-runshell`.
 
+## Stop a run
+
+A rerun resumes, skipping each case and rep already in `results.jsonl`. When you stop a spec-generation run mid-grade, check `~/.cache/appium/locks/` once no Appium process is running. Appium holds a lock there while it starts, and a killed start leaves the lock behind. Appium never expires it, so every later browser grade waits 120 seconds and fails with `Appium server on port <N> failed to start`. Delete the stale `.lock` file, then drop the rows that failed that way before you resume.
+
 ## Approve changed eval code
 
 The runner refuses to start when the runner, `evals/lib/claude-run.mjs`, the files in `_state.json`'s `harness_paths`, or `package-lock.json` changed since someone last approved them. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.

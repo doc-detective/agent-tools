@@ -73,6 +73,17 @@ Match elements by their visible text, as a reader does: write `{ "click": "Submi
 
 Full action catalog, with every field: [references/actions.md](references/actions.md). Other skills and the specialist agent use it too.
 
+### Make each step pass where the spec runs
+
+The spec runs later, from the repository root, against the files that are there then. Each step must pass on those files, not on the doc's example.
+
+- **Field paths resolve against the spec file's folder.** That covers `loadVariables`, `elementImage`, `workingDirectory`, and `path` and `directory` fields. For a spec in `tests/` that loads `secrets.env` from the repository root, write `"loadVariables": "../secrets.env"`. Paths inside a `runShell` `command` resolve against the folder Doc Detective runs from, usually the repository root.
+- **Learn what a command does on these files before you set its `exitCodes` and `stdio`.** `exitCodes` defaults to `[0]`, and a command that reports a problem exits nonzero. Read `<command> --help` for its arguments. You can run a command that changes nothing, such as a check or a `--dry-run`, to see its exit code and output. Match `stdio` on text the command prints, not on the doc's prose around it.
+- **Create in the spec every file a step needs.** Add a `runShell` step that writes the file before the step that uses it. Don't point a step at a file or folder you made while writing the spec. It's gone by the time the spec runs.
+- **Put the whole command line in `command`.** `runShell` joins `command` and `args` with spaces and adds no quotes, so an argument with spaces or quotes breaks.
+- **Use only tools the doc has the reader install.** A command that isn't installed exits `127`. For JSON, use `node`, not `jq`.
+- **Don't `find` a transient state,** such as a loading message. It's often gone before the step runs.
+
 ### Validate
 
 Validate with Doc Detective's own CLI. It checks the spec without running it:
