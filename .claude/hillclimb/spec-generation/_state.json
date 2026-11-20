@@ -125,7 +125,7 @@
     "dd-docs-generate-tests-from-openapi"
   ],
   "reps": 3,
-  "current_round": 5,
+  "current_round": 6,
   "goal": {
     "target": "verified_coverage",
     "direction": "higher",
