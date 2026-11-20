@@ -4,6 +4,7 @@
 | 1 | Use the Doc Detective CLI (`validate`, `--dry-run`) before the hosted MCP tools | 0.717 | 0.623 | 0.697 | 0.783 | 40 | $15.31 | $28.92 |
 | 2 (reverted) | Test command-line pages the way a reader walks them | 0.702 | 0.667 | 0.778 | 0.739 | 67 | $17.56 | $46.48 |
 | 3 (reverted) | Round 2 scoped to CLI pages, starting from the workspace | 0.752 | 0.681 | 0.877 | 0.770 | 52 | $25.69 | $97.38 |
+| 4 (re-baseline) | Round 1 skills on 73 cases under the corrected harness | 0.653 | 0.533 | 0.561 | 0.725 | 51 | $25.08 | $130.25 |
 
 Round 1 is the change the maintainer asked for. The hosted MCP tools aren't loaded in the eval or in many users' setups, so generate and validate now use the CLI's `validate` subcommand and `--dry-run` first. Quality didn't move beyond noise (test verified coverage +0.023, paired 95% CI +-0.082; train -0.041 +-0.066), and sessions got 27 percent faster because they no longer reach for tools that aren't there. Manni CLI docs remain the main gap (verified coverage 0.40).
 
@@ -12,3 +13,7 @@ Round 2 taught generate to test command-line pages in page order, scripting ever
 Round 3 scoped round 2's guidance to pages where the reader runs a CLI on their own files, and kept Doc Detective action pages as written. Train rose sharply (+0.180, CI +-0.107; manni 0.404 to 0.636 across all cases, with web and dd-docs up too), but with test cases rerun to 6 reps the held-out gain over round 1 was +0.013 (CI +-0.108). It was reverted. Test scores for rounds 1 and 3 use 6 reps per test case; spend includes those extra reps.
 
 The climb stops here: three rounds in a row left the held-out score within noise, which meets the plateau rule. The noise floor on 23 test cases (about +-0.10) is larger than the gains a single skill change has produced on held-out cases, so the eval needs more test cases before another round could show a win. Round 1 is the result: the CLI-first change the maintainer asked for, neutral on quality and 27 percent faster.
+
+Round 4 re-baselines the climb, so earlier rows aren't comparable with it. The grade now leaves `relativePathBase` at its default, so spec paths resolve against the spec file. A session's `npx @hawkeyexl/manni` runs the pinned 2.6.0, where it had fetched 4.28.0 since the isolation fix. 25 cases were added (12 web, 12 manni, 1 dd-docs), and the split is now 33 train and 40 test. The paired noise floor on test is about +-0.055 at 3 reps, down from about +-0.10, so a round can now show a win of that size.
+
+By slice: web 0.930, dd-docs 0.574, manni 0.280. dd-docs fell because sessions write paths such as `./secrets.env` as if they resolved from the repo root. Manni fell on the shared cases. Round 1's original skills, run on those 19 cases under this harness for $7.79, scored passes 0.509 against 0.439 for the shipped skills (difference within noise), so most of that drop isn't from the skill review fixes. Manni failures are spec quality: shell quoting in `node -e` steps, scratch fixtures removed before the grade runs, and outputs copied from the page where the CLI prints something else. Spend includes the $7.79 check.
