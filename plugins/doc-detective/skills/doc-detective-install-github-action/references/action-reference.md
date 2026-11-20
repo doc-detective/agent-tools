@@ -8,7 +8,7 @@ Complete reference for `doc-detective/github-action@v2`. Use this to configure w
 |---|---|---|
 | `version` | The Doc Detective version, range, or npm tag to install. `""` runs the `doc-detective` already resolvable in the working directory. | `5` |
 | `working_directory` | Directory to run Doc Detective and its `git` commands in, relative to the repo root. `config` and `input` resolve against it. | `.` (repo root) |
-| `cache` | Cache the `doc-detective` package, and the runtime and browsers it installs on first use, so later runs restore them instead of downloading them. On macOS runs that test iOS, also cache the WebDriverAgent build. Follows `DOC_DETECTIVE_CACHE_DIR` and a `cacheDir` in `DOC_DETECTIVE_CONFIG` or the project config. It doesn't read a `cacheDir` from the user-level config or a remote config. Set to `false` to skip the action's cache restore and save. The action skips caching when `version` is `""`. A failed restore or save logs a warning, and the run continues. | `true` |
+| `cache` | Cache the `doc-detective` package, and the runtime and browsers it installs on first use, so later runs restore them instead of downloading them. On macOS runs that test iOS, also cache the WebDriverAgent build. Follows `DOC_DETECTIVE_CACHE_DIR` and a `cacheDir` in `DOC_DETECTIVE_CONFIG` or the project config. It doesn't read a `cacheDir` from the user-level config or a remote config. Set to `false` to skip the action's cache restore and save. The action skips caching when `version` is `""`. A failed restore or save logs a warning, and the run continues. A cache saved by a `pull_request` run is visible only to that pull request. See [Workflow Templates](#workflow-templates). | `true` |
 | `android` | Set up KVM for the Android emulator on Linux runners: `auto` (only when a spec has an `android` platform), `true`, or `false` | `auto` |
 | `config` | Path to Doc Detective config file, relative to `working_directory` | (auto-detected: `.doc-detective.json`, `.yaml`, or `.yml`) |
 | `input` | Input file or directory to test, relative to `working_directory` | (from config) |
@@ -170,6 +170,8 @@ Supported identifiers:
 - `cursor` — Cursor AI editor
 
 ## Workflow Templates
+
+GitHub makes a cache that a `pull_request` run saves visible only to that pull request. In a workflow that triggers only on `pull_request`, the first run of each new pull request finds no cache and installs everything again. A run on the default branch saves an entry that every pull request can restore. To seed it, add a `push` trigger for the default branch, as the [iOS templates](#ios-tests-on-macos) do.
 
 ### Minimal — test on PRs
 

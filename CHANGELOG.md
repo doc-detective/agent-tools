@@ -1,3 +1,9 @@
+## [2.1.4](https://github.com/doc-detective/agent-tools/compare/v2.1.3...v2.1.4) (2026-11-20)
+
+### Bug Fixes
+
+* **skills:** note pull request cache scope in the action skill ([#103](https://github.com/doc-detective/agent-tools/issues/103)) ([702574a](https://github.com/doc-detective/agent-tools/commit/702574a859405b152a619af1ddc21cea38a6a9e8))
+
 ## [2.1.3](https://github.com/doc-detective/agent-tools/compare/v2.1.2...v2.1.3) (2026-11-20)
 
 

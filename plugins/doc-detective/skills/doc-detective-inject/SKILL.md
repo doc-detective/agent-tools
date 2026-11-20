@@ -2,7 +2,7 @@
 name: doc-detective-inject
 description: 'Put Doc Detective tests into documentation source files as inline comments, either from an existing spec or by writing the tests for that doc first. Previews by default and writes only with --apply. To get a standalone spec file instead, use doc-detective-generate. To run the tests, use doc-detective-test.'
 metadata:
-  version: '2.1.3'
+  version: '2.1.4'
   organization: Doc Detective
   date: November 2026
   abstract: Inject Doc Detective test specifications into documentation source files as inline comments, next to the content each step tests. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA.
