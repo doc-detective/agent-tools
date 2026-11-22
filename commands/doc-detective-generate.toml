@@ -34,6 +34,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright.
 - **Make the action name the step's key.** Write `{ "goTo": "https://example.com" }`. Doc Detective has no `"action"` property, and it rejects a step such as `{ "action": "goTo" }`.
 - **Don't guess the inputs.** The source is a doc file, or doc text the user pasted into the message. Ask the user for it when there's neither. Also ask when the file can't be read or the source has no step-by-step content. Also ask when the `--output` directory doesn't exist, or when the `--merge` spec is missing or isn't valid JSON. A spec built from a guessed source tests the wrong document.
 - **When you merge, keep each `testId` unique.** Skip a new test whose `testId` matches an existing test, unless the user asked to update that test. Then update it in place. A duplicate ID makes results ambiguous.
+- **Write the spec file with your file-writing tool, not through the shell.** A heredoc or `echo` can drop backslashes on the way to the file. A `\\n` in a `node -e` command then lands as a line break, and the step fails, though the spec still validates.
 
 ## Build the spec
 
