@@ -46,7 +46,7 @@
       "out": 10
     }
   },
-  "harness_sha": "4f6a0f8e7192b576b39db1318f36587384cd4deecc4d474f3c587d6e2f38854b",
+  "harness_sha": "3f525d7247e6a994bd478e3da21e3452b70f42cdd39009e8f93889846405f83f",
   "train_ids": [
     "dd-docs-automatic-recording",
     "dd-docs-find-by-image",
@@ -125,7 +125,7 @@
     "dd-docs-generate-tests-from-openapi"
   ],
   "reps": 3,
-  "current_round": 6,
+  "current_round": 7,
   "goal": {
     "target": "verified_coverage",
     "direction": "higher",
@@ -155,9 +155,9 @@
     "note": "Raised from 6 to 7 by the maintainer on 2026-11-22 for the heredoc fix."
   },
   "best": {
-    "round": 5,
-    "test_score": 0.765,
-    "note": "generate: make each step pass where the spec runs; +0.112 +-0.103 over round 4 on test"
+    "round": 7,
+    "test_score": 0.838,
+    "note": "generate: write the spec with the file-writing tool; +0.073 +-0.074 verified and +0.100 +-0.075 passes over round 5 on test"
   },
   "split_note": "Cases added after round 3 (25): two thirds of each slice to test, seeded shuffle (mulberry32, seed 20261119), to narrow the held-out noise floor. The original 48 keep their split."
 }
