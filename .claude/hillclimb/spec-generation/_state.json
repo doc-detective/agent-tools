@@ -151,7 +151,8 @@
   },
   "stop": {
     "plateau_rounds": 3,
-    "max_rounds": 6
+    "max_rounds": 7,
+    "note": "Raised from 6 to 7 by the maintainer on 2026-11-22 for the heredoc fix."
   },
   "best": {
     "round": 5,
