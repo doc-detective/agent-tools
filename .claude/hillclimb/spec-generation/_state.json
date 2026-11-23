@@ -46,7 +46,7 @@
       "out": 10
     }
   },
-  "harness_sha": "3f525d7247e6a994bd478e3da21e3452b70f42cdd39009e8f93889846405f83f",
+  "harness_sha": "d7065a8f9d9c837ad7e0d960160b41d20e4a1e9db9cbb1011a623ff89f203a3e",
   "train_ids": [
     "dd-docs-automatic-recording",
     "dd-docs-find-by-image",
