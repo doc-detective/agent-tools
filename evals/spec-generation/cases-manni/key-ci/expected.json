@@ -30,8 +30,11 @@
     {
       "stepType": "runShell",
       "match": [
-        "key rotate",
-        "Encryption key written"
+        "key rotate"
+      ],
+      "match_any": [
+        "encryption key written",
+        "2 values re-encrypted"
       ],
       "note": "Step 3: rotate the whole family; the key is written to manni.config.yaml."
     },

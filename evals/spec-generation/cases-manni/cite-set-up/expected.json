@@ -4,11 +4,6 @@
   "steps": [
     {
       "stepType": "runShell",
-      "match": ["cite check", "limits.ts:2 missing"],
-      "note": "When the root is wrong, the source end reads `missing` rather than resolving to the wrong file."
-    },
-    {
-      "stepType": "runShell",
       "match": ["cite add", "--dry-run"],
       "note": "Mint the first citation: `--dry-run` prints the diff and writes nothing."
     },

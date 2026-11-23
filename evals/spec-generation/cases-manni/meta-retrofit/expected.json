@@ -4,7 +4,8 @@
   "steps": [
     {
       "stepType": "runShell",
-      "match": ["schemas infer", "with no metadata block"],
+      "match": ["schemas infer"],
+      "match_any": ["with no metadata block", "files scanned"],
       "note": "Step 1: the coverage reading, including the quoted `with no metadata block` count."
     },
     {

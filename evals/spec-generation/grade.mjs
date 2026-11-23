@@ -21,11 +21,12 @@
 //   DD_REPO        doc-detective checkout with `npm ci` done; its test servers are
 //                  started here when :8092 isn't already up (web and dd-docs slices)
 //   MANNI_PREFIX   npm prefix the manni CLI is linked into (`npm link` with npm_config_prefix);
-//                  its bin dir goes first on PATH and npx resolves `@hawkeyexl/manni` from it
+//                  its bin dir goes first on PATH; the session's own prefix links the same
+//                  package, so npx `@hawkeyexl/manni` resolves to it there too
 //   DD_NODE_DIR    optional: a Node >= 22.22.2 / 24.15 directory put first on PATH
 //                  for Doc Detective (its Appium refuses older Node)
 
-import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, realpathSync, renameSync, statSync, symlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFileSync } from 'node:child_process';
@@ -40,7 +41,51 @@ const SEP = WIN ? ';' : ':';
 const SLICES = [['web', 'cases'], ['manni', 'cases-manni'], ['dd-docs', 'cases-dd-docs']];
 export const usesServers = c => c.slice !== 'manni';
 
-/** PATH and npm prefix that put DD_NODE_DIR and the linked manni CLI first. The session gets it too. */
+/**
+ * The model session's environment: the same tools on PATH, but its own npm prefix in
+ * the workspace. A page that tells the reader to `npm install -g` then installs into
+ * the workspace, not into the pinned prefix the grade runs against.
+ *
+ * `npx` looks for a package in the global prefix, not on PATH, so the session's
+ * prefix links the pinned manni package and copies its bin shims. The session's
+ * `npx @hawkeyexl/manni` then runs the build the grade checks, not the registry's latest.
+ */
+export function sessionEnv(ws, base = process.env) {
+  const env = toolEnv(base);
+  const prefix = join(ws, '.npm-global');
+  mkdirSync(prefix, { recursive: true });
+  const pinned = base.MANNI_PREFIX;
+  if (pinned) {
+    const mods = WIN ? 'node_modules' : join('lib', 'node_modules');
+    const bin = WIN ? '' : 'bin';
+    const pkg = join(pinned, mods, '@hawkeyexl', 'manni');
+    mkdirSync(join(prefix, mods, '@hawkeyexl'), { recursive: true });
+    mkdirSync(join(prefix, bin), { recursive: true });
+    let target;
+    try { target = realpathSync(pkg); }
+    catch { throw Object.assign(new Error(`no manni package at ${pkg}: run \`npm link\` with npm_config_prefix set to MANNI_PREFIX`), { failure_class: 'harness' }); }
+    symlinkSync(target, join(prefix, mods, '@hawkeyexl', 'manni'), 'junction');
+    for (const f of readdirSync(join(pinned, bin))) {
+      if (/^(manni|docmeta)(\.cmd|\.ps1)?$/.test(f)) cpSync(join(pinned, bin, f), join(prefix, bin, f), { verbatimSymlinks: true });
+    }
+  }
+  return { ...env, npm_config_prefix: prefix };
+}
+
+/** Fail the case as a harness error if the pinned manni CLI is no longer the expected version. */
+export function checkToolchain() {
+  const want = process.env.MANNI_VERSION;
+  if (!want) return;
+  let got = '';
+  try {
+    got = execFileSync(WIN ? 'manni.cmd' : 'manni', ['--version'], { env: toolEnv(), shell: WIN, encoding: 'utf8' }).trim();
+  } catch (e) { got = `unavailable (${String(e.message).split(/\r?\n/)[0]})`; }
+  // Exact match on the version token, so 2.6.0-rc.1 doesn't pass for 2.6.0.
+  if (!got.split(/\s+/).map(t => t.replace(/^v/, '')).includes(want))
+    throw Object.assign(new Error(`pinned manni is ${got}, expected ${want}: something changed MANNI_PREFIX`), { failure_class: 'harness' });
+}
+
+/** PATH and npm prefix that put DD_NODE_DIR and the linked manni CLI first, for the grade's own runs. */
 export function toolEnv(base = process.env) {
   const prefix = base.MANNI_PREFIX;
   const extra = [prefix && (WIN ? prefix : join(prefix, 'bin')), base.DD_NODE_DIR];
@@ -169,24 +214,56 @@ export function stepsOf(spec) {
   return tests.flatMap(t => Array.isArray(t?.steps) ? t.steps : []);
 }
 
-/** One-to-one, in document order: each expected step claims the first unused generated step that matches. */
+/**
+ * The text a step is matched against: its action's payload and the `variables` it
+ * captures, so a step's `description` can't satisfy a match. JSON escapes for line
+ * breaks become spaces. With `args`, the command line `command arg1 arg2` is added too.
+ */
+function stepText(s) {
+  const p = s?.[actionOf(s)];
+  const json = JSON.stringify([p ?? null, s?.variables ?? null]).replace(/\\(.)/g, (_, c) => 'nrt'.includes(c) ? ' ' : c === '\\' ? '' : c).toLowerCase();
+  const line = Array.isArray(p?.args) ? norm([p.command ?? '', ...p.args].join(' ')) : '';
+  return `${json}\n${line}`;
+}
+
+// A token starting with `-` is a flag: it matches only as a whole token, so `-s` misses `-spec-tmp`.
+const WORD = /[a-z0-9_-]/;
+function has(text, m) {
+  // Plain terms match as substrings (a URL, a quoted output line); flags match as whole tokens.
+  if (!m.startsWith('-')) return text.includes(m);
+  const closed = WORD.test(m.at(-1));
+  for (let i = text.indexOf(m); i >= 0; i = text.indexOf(m, i + 1)) {
+    if (!WORD.test(text[i - 1] ?? ' ') && (!closed || !WORD.test(text[i + m.length] ?? ' '))) return true;
+  }
+  return false;
+}
+
+/**
+ * Maximum one-to-one matching between expected entries and generated steps.
+ * An entry with `may_share` can live in a step another entry already claims,
+ * so it only needs some step that matches.
+ */
 export function coverage(expected, steps) {
-  const used = new Set();
-  const misses = [];
-  for (const e of expected) {
+  const texts = steps.map(stepText);
+  const hits = expected.map(e => {
     const types = [].concat(e.stepType ?? e.action);
     const all = [].concat(e.match ?? []).map(norm);
     const any = [].concat(e.match_any ?? []).map(norm);
-    const hit = s => {
-      if (!types.includes(actionOf(s))) return false;
-      const text = norm(JSON.stringify(s));
-      return all.every(m => text.includes(m)) && (!any.length || any.some(m => text.includes(m)));
-    };
-    let i = steps.findIndex((s, k) => !used.has(k) && hit(s));
-    // may_share: an assertion that can live in the same step as an earlier one.
-    if (i < 0 && e.may_share) i = steps.findIndex(hit);
-    if (i >= 0) used.add(i); else misses.push(`${types.join('|')} ${JSON.stringify(e.match ?? e.match_any)}`);
-  }
+    return steps.flatMap((s, k) => types.includes(actionOf(s)) && all.every(m => has(texts[k], m)) && (!any.length || any.some(m => has(texts[k], m))) ? [k] : []);
+  });
+  // Kuhn's augmenting paths, in document order, so earlier entries keep their claim.
+  const owner = new Map();
+  const augment = (j, seen) => hits[j].some(k => {
+    if (seen.has(k)) return false;
+    seen.add(k);
+    if (!owner.has(k) || augment(owner.get(k), seen)) { owner.set(k, j); return true; }
+    return false;
+  });
+  const misses = [];
+  expected.forEach((e, j) => {
+    const ok = e.may_share ? hits[j].length > 0 : augment(j, new Set());
+    if (!ok) misses.push(`${[].concat(e.stepType ?? e.action).join('|')} ${JSON.stringify(e.match ?? e.match_any)}`);
+  });
   return { score: expected.length ? (expected.length - misses.length) / expected.length : 1, misses };
 }
 

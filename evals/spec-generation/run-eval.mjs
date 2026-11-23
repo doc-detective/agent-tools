@@ -138,7 +138,7 @@ const REF_EXTS = ['', '.html', '.txt', '.json'];
 // Spec-generation eval: see grade.mjs for the case slices, workspaces, and grading.
 
 import { runClaude, buildPlugin, removeWorkspace } from '../lib/claude-run.mjs';
-import { loadCases as loadSpecCases, makeWorkspace, ensureServers, usesServers, toolEnv, findSpec, runDocDetective, gradeRun, stepsOf } from './grade.mjs';
+import { loadCases as loadSpecCases, makeWorkspace, ensureServers, usesServers, sessionEnv, checkToolchain, findSpec, runDocDetective, gradeRun, stepsOf } from './grade.mjs';
 
 // --- run (hooks) --------------------------------------------------------------------
 
@@ -146,16 +146,22 @@ import { loadCases as loadSpecCases, makeWorkspace, ensureServers, usesServers, 
 // a build per worker would race on the output folders.
 async function loadCases() {
   buildPlugin();
-  // The session inherits this env, so its own manni and Doc Detective runs use what the grade uses.
-  Object.assign(process.env, toolEnv());
   return loadSpecCases();
 }
 
 async function runCase(c, ctx) {
   if (usesServers(c)) await ensureServers();
+  // Check before the session too, so a drifted toolchain fails fast instead of after a paid session.
+  if (c.slice === 'manni') checkToolchain();
   const ws = makeWorkspace(c);
   try {
-    const run = await runClaude({ prompt: c.prompt, cwd: ws, model: ctx.model });
+    // The session gets the grade's tools on PATH, with its own npm prefix (see sessionEnv).
+    const run = await runClaude({ prompt: c.prompt, cwd: ws, model: ctx.model, env: sessionEnv(ws) });
+    // And after: a session (or another process) may have replaced the pinned build mid-run.
+    // The session is already billed, so its model and usage ride on the error row.
+    if (c.slice === 'manni') {
+      try { checkToolchain(); } catch (e) { throw Object.assign(e, { model: run.model, usage: run.usage }); }
+    }
     const spec = findSpec(ws, c);
     const dd = spec.json ? await runDocDetective(c, ws, spec.path) : null;
     return {
@@ -567,7 +573,7 @@ async function main() {
           // Billed-but-failed spend stays countable: when the app call completed
           // before the failure (e.g. a served-model mismatch, a judge-stage
           // ceiling), carry its identity and usage on the error row.
-          model: lastRun?.model, usage: lastRun?.usage,
+          model: e?.model ?? lastRun?.model, usage: e?.usage ?? lastRun?.usage,
           judge_model: e?.judge_model ?? lastRun?.judge_model,
           judge_usage: e?.judge_usage ?? lastRun?.judge_usage,
           latency_s: (Date.now() - t0) / 1000,

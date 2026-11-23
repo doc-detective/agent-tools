@@ -46,5 +46,86 @@
       "out": 10
     }
   },
-  "harness_sha": "7c8178ea35f8f9c0dd8e054a24dcead8b6e7242ab62730346e97b8342d72847e"
+  "harness_sha": "8c9157d114fec2b3f0dbe63f9dc276f4182a5904609cbc4f92e225e765441b7b",
+  "train_ids": [
+    "dd-docs-automatic-recording",
+    "dd-docs-find-by-image",
+    "dd-docs-load-variables",
+    "dd-docs-runcode",
+    "manni-cite-get-started",
+    "manni-cite-require-citations",
+    "manni-cite-sidecar",
+    "manni-key-set-up",
+    "manni-meta-fix",
+    "manni-meta-get-started",
+    "manni-meta-per-folder-schemas",
+    "manni-meta-schemas",
+    "manni-meta-set-up",
+    "manni-meta-set-up-config",
+    "web-04-live-preview",
+    "web-05-profile-form",
+    "web-06-billing-frequency-ambiguous",
+    "web-07-background-action",
+    "web-09-loading-content",
+    "web-10-open-record-new-tab",
+    "web-12-api-list-users",
+    "web-13-api-create-user",
+    "web-15-api-request-tracing",
+    "web-16-resource-links",
+    "web-18-saved-preferences-prerequisite"
+  ],
+  "test_ids": [
+    "dd-docs-automatic-screenshots",
+    "dd-docs-doc-content",
+    "dd-docs-run-shell-and-code",
+    "dd-docs-runshell",
+    "manni-cite-ci",
+    "manni-cite-fix",
+    "manni-cite-set-up",
+    "manni-key-ci",
+    "manni-meta-ci-exit-codes",
+    "manni-meta-ci-query-gates",
+    "manni-meta-external-metadata",
+    "manni-meta-new-required-field",
+    "manni-meta-retrofit",
+    "web-01-home-page-tour",
+    "web-02-jump-to-section",
+    "web-03-preview-notifications",
+    "web-08-system-health-indirect",
+    "web-11-dashboard-layout-drag",
+    "web-14-api-error-responses",
+    "web-17-verify-installation-ui-api",
+    "web-19-join-workspace-manual-steps",
+    "web-20-export-customer-table-manual-steps",
+    "web-21-sync-feed-troubleshooting"
+  ],
+  "reps": 3,
+  "current_round": 0,
+  "goal": {
+    "target": "verified_coverage",
+    "direction": "higher",
+    "hold": [
+      "passes",
+      "spec_written"
+    ]
+  },
+  "approve_each_round": false,
+  "scope": {
+    "will_change": [
+      "SKILL.md bodies of generate, test, validate, init",
+      "their references/",
+      "src/skills/_shared/"
+    ],
+    "off_limits": [
+      "frontmatter descriptions",
+      "scripts",
+      "hooks",
+      "build.js",
+      "evals/"
+    ]
+  },
+  "stop": {
+    "plateau_rounds": 3,
+    "max_rounds": 6
+  }
 }

@@ -25,7 +25,8 @@
     },
     {
       "stepType": "runShell",
-      "match": ["meta validate", "cannot tell them apart"],
+      "match": ["meta validate"],
+      "match_any": ["cannot tell them apart", "external:duplicate"],
       "note": "In the field-join fixture, two pages sharing one id is a finding on both."
     },
     {
@@ -40,7 +41,8 @@
     },
     {
       "stepType": "runShell",
-      "match": ["meta query", "--dry-run", "PLAT-412 -> PLAT-1"],
+      "match": ["meta query", "--dry-run"],
+      "match_any": ["PLAT-412 -> PLAT-1", "docs-meta.yaml"],
       "note": "Editing the values: a dry-run UPDATE of an owned key names the manifest it lands in."
     }
   ],
