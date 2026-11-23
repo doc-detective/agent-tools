@@ -1,5 +1,5 @@
 #!/bin/bash
-# Test script for the doc-detective-inject skill's injection script
+# Test script for the doc-detective-inline skill's injection script
 # Run from skill directory: ./scripts/test-skill.sh
 #
 # Options:

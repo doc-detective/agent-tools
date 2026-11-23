@@ -16,7 +16,7 @@
     "test:codex-plugin": "mocha tests/hooks/codex-plugin.test.js --timeout 30000",
     "test:cursor-plugin": "mocha tests/hooks/cursor-plugin.test.js --timeout 30000",
     "test:doc-testing": "cd skills/doc-detective-test && ./scripts/test-skill.sh",
-    "test:inline": "cd skills/doc-detective-inject && ./scripts/test-skill.sh",
+    "test:inline": "cd skills/doc-detective-inline && ./scripts/test-skill.sh",
     "prepare": "husky",
     "validate:skills": "./scripts/doc-detective-validate-skills.sh",
     "test:lsp-plugin": "mocha tests/hooks/lsp-plugin.test.js --timeout 30000",

@@ -3,14 +3,15 @@
     "id": "real-inline-page",
     "prompt": "choose a docs page and write doc detecrive inline tests for it.",
     "workspace": "docs-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject",
       "doc-detective-inline-test-injection",
       "doc-detective-doc-testing"
     ],
     "tags": [
-      "inject",
+      "inline",
       "real",
       "easy",
       "positive"
@@ -20,14 +21,15 @@
     "id": "real-inline-api",
     "prompt": "write Doc Detective tests for docs/api.md. Every API call should have a valid, inline Doc Detective test.",
     "workspace": "docs-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject",
       "doc-detective-inline-test-injection",
       "doc-detective-doc-testing"
     ],
     "tags": [
-      "inject",
+      "inline",
       "real",
       "easy",
       "positive"
@@ -118,6 +120,7 @@
     "accept": [
       "agent:doc-detective-specialist",
       "doc-detective-inline-test-injection",
+      "doc-detective-inline",
       "doc-detective-inject",
       "doc-detective-doc-testing",
       "none"
@@ -525,13 +528,14 @@
     "id": "inj-from-spec",
     "prompt": "Put the tests from tests/login.spec.json into docs/getting-started.md as inline comments.",
     "workspace": "configured-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject",
       "doc-detective-inline-test-injection"
     ],
     "tags": [
-      "inject",
+      "inline",
       "variant",
       "easy",
       "positive"
@@ -541,13 +545,14 @@
     "id": "inj-api",
     "prompt": "Inject inline Doc Detective tests into docs/api.md.",
     "workspace": "docs-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject",
       "doc-detective-inline-test-injection"
     ],
     "tags": [
-      "inject",
+      "inline",
       "variant",
       "easy",
       "positive"
@@ -557,13 +562,14 @@
     "id": "inj-move-into-md",
     "prompt": "Instead of a separate spec file, I want the tests to live inside the markdown. Move them in.",
     "workspace": "configured-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject",
       "doc-detective-inline-test-injection"
     ],
     "tags": [
-      "inject",
+      "inline",
       "variant",
       "hard",
       "positive"
@@ -573,13 +579,14 @@
     "id": "inj-self-testing",
     "prompt": "Add test comments next to each step in the getting started guide so the doc tests itself.",
     "workspace": "docs-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject",
       "doc-detective-inline-test-injection"
     ],
     "tags": [
-      "inject",
+      "inline",
       "variant",
       "hard",
       "positive"
@@ -1135,12 +1142,13 @@
     "id": "hard-inj-keep-together",
     "prompt": "I want the login test to live right next to the steps it checks, in the markdown, so writers see it when they edit.",
     "workspace": "configured-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject"
     ],
     "tags": [
-      "inject",
+      "inline",
       "hard-set",
       "hard",
       "positive"
@@ -1150,12 +1158,13 @@
     "id": "hard-inj-mdx",
     "prompt": "Our docs are moving to MDX. Put Doc Detective steps into docs/getting-started.md as comments that will survive the move.",
     "workspace": "docs-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject"
     ],
     "tags": [
-      "inject",
+      "inline",
       "hard-set",
       "hard",
       "positive"
@@ -1165,12 +1174,13 @@
     "id": "hard-inj-annotate",
     "prompt": "Annotate docs/api.md with test steps.",
     "workspace": "docs-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject"
     ],
     "tags": [
-      "inject",
+      "inline",
       "hard-set",
       "hard",
       "positive"
@@ -1690,12 +1700,13 @@
     "id": "h2-inj-terse",
     "prompt": "inline the login spec into getting-started.md",
     "workspace": "configured-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject"
     ],
     "tags": [
-      "inject",
+      "inline",
       "hard-set-2",
       "hard",
       "positive"
@@ -1915,12 +1926,13 @@
     "id": "h2-inj-from-scratch",
     "prompt": "docs/api.md has no tests yet. Write some and put them in the file as inline comments.",
     "workspace": "docs-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject"
     ],
     "tags": [
-      "inject",
+      "inline",
       "hard-set-2",
       "hard",
       "positive"
@@ -1930,12 +1942,13 @@
     "id": "h2-inj-asciidoc",
     "prompt": "We also publish an AsciiDoc version of the getting started guide. Put inline Doc Detective steps in the AsciiDoc source the same way.",
     "workspace": "docs-project",
-    "expected": "doc-detective-inject",
+    "expected": "doc-detective-inline",
     "accept": [
+      "doc-detective-inline",
       "doc-detective-inject"
     ],
     "tags": [
-      "inject",
+      "inline",
       "hard-set-2",
       "hard",
       "positive"

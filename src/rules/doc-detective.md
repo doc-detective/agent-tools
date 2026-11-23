@@ -20,7 +20,7 @@ test specification, verify the change rather than assuming it works.
 ## What to do
 
 - Prefer the project's Doc Detective skills/commands: `/doc-detective-generate`,
-  `/doc-detective-test`, `/doc-detective-validate`, `/doc-detective-inject`,
+  `/doc-detective-test`, `/doc-detective-validate`, `/doc-detective-inline`,
   `/doc-detective-init`, `/doc-detective-install-github-action`.
 - After changing a documented procedure, generate or update its test spec and run it;
   fix drift between the docs and the actual application behavior.
