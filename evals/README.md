@@ -1,11 +1,12 @@
 # Evals
 
-Two evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
+Three evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
 
 | Eval | Question it answers | Headline metric |
 |---|---|---|
 | [routing](routing/) | Does a request reach the one skill or agent that owns it? | `correct`: the case's preferred route fired |
 | [spec-generation](spec-generation/) | Does `/doc-detective-generate` turn a doc into a spec that runs and covers the doc? | `complete`: the spec passes and has every expected step |
+| [inline](inline/) | Does `/doc-detective-inline` put tests into a doc as comments that Doc Detective reads back, without touching the prose? | `complete`: only comments added, and every expected step detected |
 
 Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (`baseline`, `v1`, `v2`, and so on). `_state.json` in each eval's directory declares its metrics and the files whose hash the runner checks before it spends anything.
 
@@ -53,6 +54,24 @@ There are three slices:
 
 [spec-generation/cases.md](spec-generation/cases.md), [spec-generation/cases-manni.md](spec-generation/cases-manni.md), and [spec-generation/cases-dd-docs.md](spec-generation/cases-dd-docs.md) describe every case. Each case's `reference.spec.json` passes and covers every expected step, so it scores `complete`. When the reference has more than one step, its first step alone scores 0. Check that with `node evals/spec-generation/check-references.mjs`, which takes the same environment and `EVAL_ONLY` as the eval.
 
+## Run the inline eval
+
+```bash
+DD_NODE_DIR=<node dir> node evals/inline/run-eval.mjs --flow .claude/hillclimb/inline --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case runs `/doc-detective:doc-detective-inline [tests/<name>.spec.json] docs/<name>.<ext> --apply` in a fresh workspace. A `spec` case hands the session a spec to inject; a `gen` case hands it only the doc, so it writes the tests first. [inline/cases.md](inline/cases.md) lists the 38 cases: Markdown, MDX, HTML, AsciiDoc, reStructuredText, and DITA.
+
+The grade runs no browser and no model. It reads the doc as the session left it:
+
+- `comment_only`: a line diff against the original adds only comments in the file's syntax and blank lines, none inside a code block. Any deleted or reworded line fails it.
+- `coverage`: `doc-detective@5.6.0 --dry-run` on the doc, alone in a scratch folder with the case's own `.doc-detective.json` (if any) and `detectSteps: false`, so only inline statements count. For a `spec` case, the share of the spec's steps found in order, by action and values, in the detected test with the same `testId`. For a `gen` case, spec-generation's matcher against `expected.json`, over the steps inside `test` markers. An invalid step makes the dry run exit `2` and detect nothing, as it would stop a real run.
+- `complete`: `comment_only` and `coverage` of 1.
+- `placement`: of the added step comments whose text (a string value, or `keys`, `url`, or `elementText`) is in the doc, the share that sit in or just after the paragraph holding it. It isn't part of `complete`.
+- `detected`: the dry run found at least one step.
+
+`node evals/inline/check-references.mjs` checks the grader for free: each `reference.<ext>` scores `complete` with full `placement`, the unchanged doc and the doc with one bogus step score 0, the reference with one prose line edited fails `comment_only`, and the reference's comments moved to the top of the file lose `placement`. It takes `DD_NODE_DIR` and `EVAL_ONLY`.
+
 ## Run a subset
 
 `EVAL_ONLY` takes a comma-separated list of case ids, for a pilot or a trimmed slice:
@@ -61,7 +80,7 @@ There are three slices:
 EVAL_ONLY=init-plain,neg-playwright node evals/routing/run-eval.mjs --flow .claude/hillclimb/routing --variant baseline --model claude-sonnet-5-5
 ```
 
-Spec-generation case ids carry their slice: `web-01-home-page-tour`, `manni-cite-ci`, `dd-docs-runshell`.
+Spec-generation case ids carry their slice: `web-01-home-page-tour`, `manni-cite-ci`, `dd-docs-runshell`. Inline case ids carry the format and kind: `md-spec-sample`, `rst-gen-cli`.
 
 ## Stop a run
 
