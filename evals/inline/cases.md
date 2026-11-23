@@ -11,15 +11,14 @@ writes the tests first.
 | `spec.json` or `spec.yaml` | `spec` cases: the spec to inject, at `tests/<name>.spec.<ext>`. |
 | `expected.json` | `gen` cases: the steps the doc needs, in the [spec-generation format](../spec-generation/cases.md#expectedjson-format). |
 | `reference.<ext>` | The doc with the tests injected by hand. It scores `complete` and full `placement`. |
-| `workspace/` | Optional: files the session starts with, such as `.doc-detective.json`. The grade's dry run uses this config too. |
+| `workspace/` | Files the session starts with, such as `.doc-detective.json`, when the case needs any. The grade's dry run uses this config too. |
 
 The prompt is `/doc-detective:doc-detective-inline [tests/<name>.spec.<ext>] docs/<name>.<ext> --apply`.
 
-Sources: the skill's own fixtures (`src/skills/doc-detective-inline/scripts/fixtures/`),
-the [spec-generation](../spec-generation/cases.md) web and [dd-docs](../spec-generation/cases-dd-docs.md)
-slices (doc, `reference.spec.json` as the given spec, `expected.json` for `gen`; a dd-docs
-page's original with its inline tests is the reference), and short new docs where a
-format was thin.
+The cases come from three places. Some use the skill's own fixtures (`src/skills/doc-detective-inline/scripts/fixtures/`).
+Others reuse the [spec-generation](../spec-generation/cases.md) web and [dd-docs](../spec-generation/cases-dd-docs.md)
+slices, with `reference.spec.json` as the given spec and `expected.json` for `gen`. A dd-docs
+page's original, with its inline tests, is its reference. Short new docs fill formats that had few cases.
 
 ## Cases
 

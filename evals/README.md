@@ -60,6 +60,8 @@ There are three slices:
 DD_NODE_DIR=<node dir> node evals/inline/run-eval.mjs --flow .claude/hillclimb/inline --variant baseline --model claude-sonnet-5-5 --reps 3
 ```
 
+No one has approved this eval's code yet, so the first run needs `--approve-harness` after you review the eval code. See [Approve changed eval code](#approve-changed-eval-code).
+
 Each case runs `/doc-detective:doc-detective-inline [tests/<name>.spec.json] docs/<name>.<ext> --apply` in a fresh workspace. A `spec` case hands the session a spec to inject; a `gen` case hands it only the doc, so it writes the tests first. [inline/cases.md](inline/cases.md) lists the 38 cases: Markdown, MDX, HTML, AsciiDoc, reStructuredText, and DITA.
 
 The grade runs no browser and no model. It reads the doc as the session left it:
@@ -67,10 +69,15 @@ The grade runs no browser and no model. It reads the doc as the session left it:
 - `comment_only`: a line diff against the original adds only comments in the file's syntax and blank lines, none inside a code block. Any deleted or reworded line fails it.
 - `coverage`: `doc-detective@5.6.0 --dry-run` on the doc, alone in a scratch folder with the case's own `.doc-detective.json` (if any) and `detectSteps: false`, so only inline statements count. For a `spec` case, the share of the spec's steps found in order, by action and values, in the detected test with the same `testId`. For a `gen` case, spec-generation's matcher against `expected.json`, over the steps inside `test` markers. An invalid step makes the dry run exit `2` and detect nothing, as it would stop a real run.
 - `complete`: `comment_only` and `coverage` of 1.
-- `placement`: of the added step comments whose text (a string value, or `keys`, `url`, or `elementText`) is in the doc, the share that sit in or just after the paragraph holding it. It isn't part of `complete`.
+- `placement`: the share of added step comments that sit in or just after the paragraph holding their text. A step's text is a string value, or its `keys`, `url`, or `elementText`, and only steps whose text is in the doc count. It isn't part of `complete`.
 - `detected`: the dry run found at least one step.
 
-`node evals/inline/check-references.mjs` checks the grader for free: each `reference.<ext>` scores `complete` with full `placement`, the unchanged doc and the doc with one bogus step score 0, the reference with one prose line edited fails `comment_only`, and the reference's comments moved to the top of the file lose `placement`. It takes `DD_NODE_DIR` and `EVAL_ONLY`.
+`node evals/inline/check-references.mjs` checks the grader for free, with no model calls. It takes `DD_NODE_DIR` and `EVAL_ONLY`, and checks four things per case:
+
+- Each `reference.<ext>` scores `complete` with full `placement`.
+- The unchanged doc, and the doc with one bogus step, score 0.
+- The reference with one prose line edited fails `comment_only`.
+- The reference with its comments moved to the top of the file loses `placement`.
 
 ## Run a subset
 

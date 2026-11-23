@@ -10,7 +10,12 @@ import { join } from 'node:path';
 import { loadCases, dryRun, gradeRun, commentOnly } from './grade.mjs';
 
 const BOGUS = '{"find":"Text no case expects"}';
-const bogusLine = { '.mdx': `{/* step ${BOGUS} */}`, '.adoc': `// (step ${BOGUS})`, '.rst': `.. step ${BOGUS}\n` };
+const bogusLine = {
+  '.mdx': `{/* step ${BOGUS} */}`,
+  '.adoc': `// (step ${BOGUS})`,
+  '.rst': `.. step ${BOGUS}\n`,
+  '.dita': `<?doc-detective step ${BOGUS} ?>`,
+};
 
 async function grade(c, text) { return gradeRun(c, { text, dry: await dryRun(c, text) }); }
 

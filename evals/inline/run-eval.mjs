@@ -1,8 +1,6 @@
 #!/usr/bin/env node
-// Runner scaffold for the build-eval / hillclimb loop. Copy this into the
-// user's repo and fill in loadCases / runCase / gradeCase below - the I/O
-// shape, file naming, resume, and CLI surface are already hillclimb-ready
-// so adding v2, v3, ... is `--variant v3`, not a refactor.
+// Inline eval runner: each case runs /doc-detective-inline in a fresh workspace,
+// and grade.mjs scores the doc the session left.
 //
 //   node evals/inline/run-eval.mjs --flow .claude/hillclimb/inline --variant baseline --model claude-sonnet-5-5 --reps 3
 //
