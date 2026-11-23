@@ -152,8 +152,21 @@ Point the config `input` at the docs directory, and Doc Detective finds the inje
 
 Injected `test` and `step` comments always run, whatever `detectSteps` says. `detectSteps` (default `true`) only controls the steps Doc Detective infers from prose, such as links, bold text, and code blocks. For a suite of explicit inline tests, set `detectSteps: false` so the page's own code fences and bold text don't become extra steps. MDX needs no extra config: the built-in `markdown` file type covers `.mdx` and reads `{/* … */}` markers.
 
+## Check the injected file
+
+After you write the file, run Doc Detective's dry run on it. It runs nothing, and it prints the tests it found in the file:
+
+```bash
+npx doc-detective@5 --dry-run --input <source-file>
+```
+
+- **Exit `2` with `Invalid test specifications`** means Doc Detective rejected a step, and stderr names the field, such as ``httpRequest.response: unknown key `statusCode`.`` One rejected step stops every test in the file. Fix that field in the step's comment, and run the dry run again.
+- **Exit `0`** prints the plan. Check that it holds every test and step you injected. A missing step means its comment isn't where Doc Detective reads it, or its syntax is wrong for the file type.
+- **In preview mode,** don't write the source file. Write the injected result to a scratch folder outside the repository, with the same file name, and run the dry run there.
+
 ## Done when
 
+- The dry run on the injected file exits `0`, and its plan holds every injected test and step.
 - Each step has a comment, and each comment the placement rules didn't match has the TODO comment after it. A test kept out of an MDX file for the `*/` rule is the exception. It stays whole in a standalone spec, and the file has no partial copy.
 - `test` and `test end` comments wrap each test.
 - Each step comment uses the syntax for its file type, or the `--syntax` override.
