@@ -1,0 +1,54 @@
+{
+  "specId": "manni-meta-get-started",
+  "description": "manni docs meta/get-started, run in a repo that holds the page's path/to/your-doc.md.",
+  "tests": [
+    {
+      "testId": "get-started",
+      "steps": [
+        {
+          "description": "Node.js prerequisite: node --version prints a version.",
+          "runShell": {
+            "command": "node --version",
+            "stdio": "/v\\d+\\./"
+          }
+        },
+        {
+          "description": "Validate the passing file: exit 0 and the summary line the page shows.",
+          "runShell": {
+            "command": "manni meta validate path/to/your-doc.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "Remove the type field, as the page says.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='path/to/your-doc.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace(/^type:.*\\n/m,''))\""
+          }
+        },
+        {
+          "description": "The failing result names the missing property.",
+          "runShell": {
+            "command": "manni meta validate path/to/your-doc.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "must have required property 'type'"
+          }
+        },
+        {
+          "description": "It cites the flagging schema in brackets, and the summary counts one failure.",
+          "runShell": {
+            "command": "manni meta validate path/to/your-doc.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/\\[google:okf:0\\.1\\][\\s\\S]*1 file checked, 0 passed, 1 failed, 1 error/"
+          }
+        }
+      ]
+    }
+  ]
+}

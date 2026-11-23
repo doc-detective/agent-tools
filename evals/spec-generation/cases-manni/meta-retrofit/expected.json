@@ -1,0 +1,35 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/retrofit.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-retrofit.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["schemas infer", "with no metadata block"],
+      "note": "Step 1: the coverage reading, including the quoted `with no metadata block` count."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["schemas infer", "--out"],
+      "note": "Step 2: `--out` turns the reading into a permissive schema."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Run a full pass to confirm the repo is green as it stands."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--format github"],
+      "note": "Step 3: the CI gate command."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--write-baseline", "baseline written"],
+      "note": "Step 6: record the existing violations; the page quotes `Baseline written to .manni-baseline.json`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/ holds seven Markdown pages with partial frontmatter, one with none. There is no manni.config.yaml or schemas/ yet: the page has the reader generate schemas/permissive.json and write the config it shows. Steps 4-5 only edit config; step 7 (`fill`) needs an LLM provider, so it is not expected."
+  ]
+}

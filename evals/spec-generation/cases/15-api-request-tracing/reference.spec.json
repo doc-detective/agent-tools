@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "testId": "api-request-tracing",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/orders",
+            "method": "get",
+            "request": {
+              "headers": {
+                "X-Test": "trace-123"
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "headers": {
+                "x-echo-test": "trace-123",
+                "x-server": "doc-detective-echo-server"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

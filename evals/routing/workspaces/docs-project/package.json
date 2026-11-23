@@ -1,0 +1,5 @@
+{
+  "name": "acme-widgets-docs",
+  "private": true,
+  "scripts": { "docs:dev": "vitepress dev docs" }
+}

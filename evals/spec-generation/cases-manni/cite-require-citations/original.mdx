@@ -1,0 +1,313 @@
+---
+title: Require citations in the standard
+description: "Make citations part of the metadata standard you own. Put the vocabulary in the repository, require the citations key on a class of pages, choose a severity per rule, and settle frontmatter against a sidecar as policy."
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+You own the schema that says what a page must declare. A class of pages in
+your repository makes claims about code, and you want those claims pinned
+rather than trusted. This page makes that a rule of the standard. A reference
+page without a citation then fails the metadata gate, and a citation that
+stopped holding fails the citation gate.
+
+Two tools do two halves of the work, and neither can do the other's.
+`manni meta validate` decides whether an entry is **well formed** and whether
+a page has one at all. `manni cite check` decides whether the entry **still
+holds**. The schema is where the first half is written down.
+
+Every transcript below is real output from the built tool.
+
+## Put the vocabulary in the repository
+
+{/* cite vocabulary-id */}
+The entry shape is already specified, as `manni:citations:1.0.0-proposal.4`.
+Do not restate it in your own schema. Two definitions of one key is the drift
+this composition avoids.
+
+{/* cite vocabulary-not-built-in */}
+{/* cite vendor-takes-http-url */}
+The vocabulary is not one of the [built-in
+schemas](/manni/meta/reference/built-in-schemas/), and no published URL serves
+it. The draft is [open for review](/manni/meta/proposals/citations/). So
+`manni meta schemas vendor`, which downloads an http(s) URL, has nothing to
+download. Copy
+[`1.0.0-proposal.4.json`](https://github.com/hawkeyexl/manni/blob/main/docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json)
+into your repository beside your own schemas, and commit it:
+
+```
+schema/citations-1.0.0-proposal.4.json
+schema/reference-page.schema.json
+```
+
+<Aside type="caution" title="A house schema cannot reach it through $ref">
+  `$ref` resolves against the bundled built-ins and nothing else. No schema is
+  fetched to satisfy a reference, and no relative file path is read for one.
+  So `{ "$ref": "manni:citations:1.0.0-proposal.4" }` inside your schema is a
+  compile failure, exit `2`, when the first page it governs is validated:
+
+  ```
+  manni: Schema "schema/reference-page.schema.json" failed to compile: can't resolve reference manni:citations:1.0.0-proposal.4 from id https://example.com/reference-page.schema.json
+  ```
+
+  Compose it as a **set** instead, which is the next step. A set needs no
+  `$ref`, so it works with the file you committed.
+</Aside>
+
+## Require the key
+
+Your schema carries the house rule and nothing the vocabulary already says:
+
+```json title="schema/reference-page.schema.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/reference-page.schema.json",
+  "title": "A reference page must carry at least one citation",
+  "type": "object",
+  "required": ["title", "citations"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 }
+  },
+  "additionalProperties": true
+}
+```
+
+{/* cite vocabulary-non-empty-list */}
+{/* cite vocabulary-source-required */}
+{/* cite vocabulary-claim-hash-format */}
+{/* cite vocabulary-source-hash-format */}
+{/* cite vocabulary-rejects-citation-prefix */}
+`citations` is required, and nothing else about it is said here. The
+vocabulary already requires a non-empty list, requires `source` on every
+entry, pins the hash formats, and rejects a stray `citation-*` key at the page
+root. [The two ends](/manni/cite/reference/citations/#the-two-ends) lists every
+field it constrains.
+
+## Wire both schemas to the class of pages
+
+{/* cite schema-set-applies-each-member */}
+A schema **set** applies each member whole, and reports the union of what they
+find, each finding tagged with the schema that produced it. A page passes only
+when it satisfies every member. That is how the two halves compose:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: reference
+    paths: ["docs/reference/**/*.md"]
+
+meta:
+  overrides:
+    - collection: reference
+      schemas:
+        - ./schema/reference-page.schema.json
+        - ./schema/citations-1.0.0-proposal.4.json
+```
+
+{/* cite override-one-of-collection-files */}
+{/* cite config-schema-paths-config-relative */}
+An override entry carries exactly one of `collection:` and `files:`. Use
+`files: "docs/reference/**"` where the class of pages is not a collection you
+already declared. Paths in config are relative to the config file. The
+[precedence chain](/manni/meta/schemas/resolution/#the-precedence-chain) says
+which level wins, and [validating against more than one
+schema](/manni/meta/schemas/resolution/#validating-against-more-than-one-schema)
+says what a set does.
+
+Three pages, three outcomes, one run:
+
+```sh
+manni meta validate docs/reference/
+```
+
+```
+✗ docs/reference/entry-invalid.md
+    /citations/0/source  must have required property 'integrity'  (line 5)  [./schema/citations-1.0.0-proposal.4.json]
+    /citations  warning "citations" is stored in the page; schema/citations-1.0.0-proposal.4.json prefers external metadata. Run manni meta relocate.  (line 3)  [location:external]
+⚠ docs/reference/limits.md
+    /citations  warning "citations" is stored in the page; schema/citations-1.0.0-proposal.4.json prefers external metadata. Run manni meta relocate.  (line 3)  [location:external]
+✗ docs/reference/retries.md
+    (root)  must have required property 'citations'  (line 1)  [./schema/reference-page.schema.json]
+
+3 files checked, 1 passed, 2 failed, 2 errors, 2 warnings
+```
+
+{/* cite finding-names-schema */}
+{/* cite location-finding-is-warning */}
+{/* cite vocabulary-prefers-external */}
+The page with no citation fails under your schema. The page with a malformed
+one fails under the vocabulary. Each finding names the file to open and the
+schema that objected, so a contributor knows which rule they met. The two
+warnings do not fail the run. They say the vocabulary prefers `citations` in
+the collection's manifest rather than the page, a choice
+[settled below](#settle-frontmatter-against-a-sidecar).
+
+<Aside type="note" title="The channel does not change the rule">
+  `required: ["citations"]` is satisfied by the merged view of a page's
+  metadata. So a page whose entries live in a
+  [sidecar manifest](/manni/cite/set-up/citations-in-a-sidecar/) passes it with
+  no citation YAML in its frontmatter. A malformed entry in a manifest is
+  reported on the manifest and its line. One schema covers both channels.
+</Aside>
+
+## Choose a severity per rule
+
+The schema says a page must carry a citation. It cannot say what should happen
+when a citation stops holding, because that is a comparison against the files
+as they are now. `manni cite check` decides it, and `severity:` is where your
+policy goes:
+
+```yaml title="manni.config.yaml"
+cite:
+  severity:
+    claim-changed: error      # every edit to a cited sentence gets reviewed
+    source-moved: error       # a moved pin blocks until update runs
+    marker-repeated: off      # not reported at all
+```
+
+{/* cite claim-changed-any-edit */}
+{/* cite claim-changed-default-warning */}
+{/* cite warning-exits-0 */}
+{/* cite claim-changed-claim-lines */}
+The one worth deciding deliberately is `claim-changed`. It fires on **any**
+edit to the pinned text, a typo fix included. That is the claim lines, or the
+whole paragraph a marker anchors. At its default it is a warning, reported and green:
+
+```sh
+manni cite check docs/reference/limits.md
+```
+
+```
+⚠ docs/reference/limits.md
+    ↕ fetch-timeout   :15 changed   lib/limits.ts:2 current
+
+1 file checked, 1 passed, 0 failed, 1 finding (1 warning)
+```
+
+{/* cite severity-override-applies */}
+{/* cite error-exits-1 */}
+With `claim-changed: error` the same run blocks the branch, and the person who
+reworded the sentence has to confirm it still rests on the same line:
+
+```
+✗ docs/reference/limits.md
+    ✗ fetch-timeout   :15 changed   lib/limits.ts:2 current
+
+1 file checked, 0 passed, 1 failed, 1 finding
+```
+
+{/* cite baseline-only-new-fail */}
+Choose `error` where a cited sentence is a contract, as in a reference page a
+support team quotes. Choose the default where the same repository carries
+prose that gets copy-edited weekly. A red build on a typo fix teaches
+contributors to stop citing. A team that wants the ratchet without the noise
+sets `error` and turns on a [baseline](/manni/cite/reference/cli/#baselines),
+so only new findings fail.
+
+| Level | Reported | Fails the run |
+| --- | --- | --- |
+| `error` | yes | yes, exit `1`, unless a baseline records it |
+| `warning` | yes | no |
+| `notice` | yes | no |
+| `off` | no | no |
+
+{/* cite fourteen-rules */}
+{/* cite rule-defaults */}
+{/* cite unknown-level-refused */}
+{/* cite unknown-rule-refused */}
+All sixteen rules, their defaults and the reasoning behind each default are in
+the [configuration
+reference](/manni/cite/reference/configuration/#severity). A level the tool
+does not know, or a rule name it does not have, is an operational error naming
+the supported set.
+
+## Settle frontmatter against a sidecar
+
+This is a policy decision, made once per collection, and it is yours rather
+than each author's. The key, the schema and every rule are the same either
+way.
+
+| What differs | Frontmatter | Sidecar manifest |
+| --- | --- | --- |
+| Where the YAML sits | In each page, above the prose | In one file per collection |
+| What an author opens | A page whose header is mostly hashes | A page with a title |
+| A `git mv` | Moves the entries with the page | Orphans the entry, unless the manifest uses `join:` |
+| Merge conflicts | In the page's frontmatter, between people adding citations to that page | On one file, between everyone adding citations |
+| Review | The pin sits beside the sentence it pins | The pin is a second file in the diff |
+| A public page citing private code | Publishes an entry, even when the path is encrypted | Publishes nothing on the page |
+
+Pick the sidecar when the pages are written by people who should not have to
+read a hash, and when the sources are private. Pick frontmatter when a page
+carries one or two citations and reviewers want the pin in the same diff as
+the sentence.
+
+Declare it on the collection, and say so in the standard, so the answer is not
+re-litigated per page:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: reference
+    paths: ["docs/reference/**/*.md"]
+    externalMetadata:
+      - file: ./reference-citations.yaml
+        keys: [citations]
+```
+
+## What the schema still cannot say
+
+Three rules live in the tool rather than in JSON Schema, because a pattern
+cannot express them. Write them into the prose of your standard, so an author
+meets them before CI does.
+
+- **Ids are unique within a page.** The vocabulary says so in its description
+  and cannot enforce it over a list whose members may omit the id. A duplicate
+  is `entry-invalid` at check time, on the second entry's line:
+
+  ```
+  ✗ fetch-timeout      lib/limits.ts:2 current
+    ✗ duplicate id "fetch-timeout"   (line 13)
+  ```
+- **A range must not end before it starts.** `lines: "9-3"` passes the pattern
+  and is refused by `add` and by `check`.
+- **A pin has to hold.** No schema can compare a hash with a file. That is the
+  whole of what `manni cite check` adds, and it is why the citation gate runs
+  beside the metadata gate rather than inside it.
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Set up citations in one repository"
+    href="/manni/cite/set-up/"
+    description="The collection, the root, the first add and the first check, for the repository your standard governs."
+  />
+  <LinkCard
+    title="Keep citations out of the page"
+    href="/manni/cite/set-up/citations-in-a-sidecar/"
+    description="Declare the manifest, move the entries, and keep checking the same way."
+  />
+  <LinkCard
+    title="Citations reference"
+    href="/manni/cite/reference/citations/"
+    description="Every field of an entry, the hashing rule, markers, and every status with its default severity."
+  />
+  <LinkCard
+    title="Version and evolve a schema"
+    href="/manni/meta/schemas/versioning/"
+    description="Ship a stricter required field without failing every existing page overnight."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta and manni cite
+    behavior against the local build, exposed as `manni` / `npx @hawkeyexl/manni` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"cite-require-citations","description":"Composing the citations vocabulary with a house schema that requires the key, and moving a rule's severity."} */}
+{/* step {"description":"A house schema cannot reach the vocabulary through $ref: only the bundled built-ins are registered, so the schema fails to compile and the run exits 2.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/citations-ref.schema.json test/fixtures/cite/pages/current.md","exitCodes":[2],"stdio":"failed to compile: can't resolve reference manni:citations:1.0.0-proposal.4"}} */}
+{/* step {"description":"Composed as a set, a page that carries a well-formed citation satisfies both members.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/current.md","exitCodes":[0],"stdio":"1 file checked, 1 passed, 0 failed, 0 errors"}} */}
+{/* step {"description":"A page with no citations fails under the house schema, and the finding names that schema.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/no-citations.md","exitCodes":[1],"stdio":"/\\(root\\)\\s+must have required property 'citations'[\\s\\S]*requires-citations\\.schema\\.json\\]/"}} */}
+{/* step {"description":"A malformed entry fails under the vocabulary instead, and the finding names the vocabulary.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite/pages/entry-invalid.md","exitCodes":[1],"stdio":"/citations\\/1\\.0\\.0-proposal\\.4\\.json\\]/"}} */}
+{/* step {"description":"The required key is satisfied by the merged view, so a page whose entries live in a sidecar manifest passes with no citation YAML of its own, while a page with none still fails.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/cite-sidecar/manni.config.yaml -s test/fixtures/cite/requires-citations.schema.json -s docs/proposals/0044/schemas/citations/1.0.0-proposal.4.json test/fixtures/cite-sidecar/pages/limits.md test/fixtures/cite-sidecar/pages/retries.md","exitCodes":[1],"stdio":"/✓ \\S*pages\\/limits\\.md[\\s\\S]*must have required property 'citations'/"}} */}
+{/* step {"description":"claim-changed at its default is a warning: reported, and the run exits 0.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/claim-changed.md","exitCodes":[0],"stdio":"/↕ fetch-timeout\\s+:15 changed[\\s\\S]*1 finding \\(1 warning\\)/"}} */}
+{/* step {"description":"Moved to error under severity:, the same page fails the run and exits 1.","runShell":{"command":"npx @hawkeyexl/manni cite check -c test/fixtures/cite/strict/manni.config.yaml test/fixtures/cite/pages/claim-changed.md","exitCodes":[1],"stdio":"/✗ fetch-timeout\\s+:15 changed[\\s\\S]*0 passed, 1 failed, 1 finding/"}} */}
+{/* step {"description":"A duplicate id is not something the schema can refuse, so cite check refuses it, on the second entry's line.","runShell":{"command":"npx @hawkeyexl/manni cite check --no-config --root test/fixtures/cite test/fixtures/cite/pages/entry-invalid.md","exitCodes":[1],"stdio":"/duplicate id \"fetch-timeout\"\\s+\\(line 13\\)/"}} */}
+{/* test end */}

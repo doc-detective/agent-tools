@@ -1,0 +1,42 @@
+{
+  "tests": [
+    {
+      "testId": "jump-to-section",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "click": {
+            "selector": "nav a",
+            "elementText": "Lists"
+          }
+        },
+        {
+          "find": "Unordered List"
+        },
+        {
+          "find": "Ordered List"
+        },
+        {
+          "find": "Definition List"
+        },
+        {
+          "find": "Third item"
+        },
+        {
+          "click": {
+            "selector": "nav a",
+            "elementText": "Tables"
+          }
+        },
+        {
+          "find": "Simple Data Table"
+        },
+        {
+          "find": "Bob Johnson"
+        }
+      ]
+    }
+  ]
+}

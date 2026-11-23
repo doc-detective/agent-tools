@@ -1,0 +1,67 @@
+{
+  "specId": "manni-meta-schemas",
+  "description": "manni docs meta/schemas, run in a docs repo with a schema at schemas/metadata.schema.json and the page's example document.",
+  "tests": [
+    {
+      "testId": "author-a-schema",
+      "steps": [
+        {
+          "description": "manni meta schemas lists the built-ins, including the vocabularies the page names.",
+          "runShell": {
+            "command": "manni meta schemas",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/google:okf:0\\.1[\\s\\S]*diataxis:diataxis:1\\.0[\\s\\S]*passo-uno:seven-action:1\\.0[\\s\\S]*tgdp:templates:1\\.0/"
+          }
+        },
+        {
+          "description": "Reference your own schema file by path.",
+          "runShell": {
+            "command": "manni meta validate docs/ -s ./schemas/metadata.schema.json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "0 failed"
+          }
+        },
+        {
+          "description": "Stack a type vocabulary with OKF; both apply in full.",
+          "runShell": {
+            "command": "manni meta validate docs/ -s diataxis:diataxis:1.0 -s google:okf:0.1",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "0 failed"
+          }
+        },
+        {
+          "description": "Add $schema: to the document's frontmatter, pointing at the schema file.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='path/to/document.md';f.writeFileSync(p,f.readFileSync(p,'utf8').replace(/^---\\n/,'---\\n\\x24schema: ./schemas/metadata.schema.json\\n'))\""
+          }
+        },
+        {
+          "description": "Validate it.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate path/to/document.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "The document was validated against the schema it names.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate path/to/document.md -f json",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "\"./schemas/metadata.schema.json\""
+          }
+        }
+      ]
+    }
+  ]
+}

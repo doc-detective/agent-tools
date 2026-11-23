@@ -1,0 +1,50 @@
+{
+  "flow": "spec-generation",
+  "model": "claude-sonnet-5-5",
+  "metrics": [
+    {
+      "id": "complete",
+      "label": "Complete",
+      "kind": "binary"
+    },
+    {
+      "id": "verified_coverage",
+      "label": "Verified cov.",
+      "kind": "continuous"
+    },
+    {
+      "id": "passes",
+      "label": "Spec passes",
+      "kind": "binary"
+    },
+    {
+      "id": "coverage",
+      "label": "Step coverage",
+      "kind": "continuous"
+    },
+    {
+      "id": "spec_written",
+      "label": "Spec written",
+      "kind": "binary"
+    }
+  ],
+  "perf_fields": [
+    "latency_s",
+    "tool_calls",
+    "turns",
+    "spec_steps",
+    "usage"
+  ],
+  "harness_paths": [
+    "evals/lib/claude-run.mjs",
+    "evals/spec-generation/grade.mjs",
+    "evals/spec-generation/doc-detective.config.json"
+  ],
+  "prices": {
+    "claude-sonnet-5-5": {
+      "in": 2,
+      "out": 10
+    }
+  },
+  "harness_sha": "7c8178ea35f8f9c0dd8e054a24dcead8b6e7242ab62730346e97b8342d72847e"
+}

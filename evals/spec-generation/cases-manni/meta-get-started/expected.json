@@ -1,0 +1,26 @@
+{
+  "source": "manni/docs/src/content/docs/meta/get-started/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-get-started.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "1 passed"],
+      "note": "Validate a passing file: exit 0 and the summary the page quotes."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "required property 'type'"],
+      "note": "With type removed, the file fails and names the missing property."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "google:okf:0.1"],
+      "may_share": true,
+      "note": "The failing result cites the flagging schema. It can be the same step as the missing property."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "path/to/your-doc.md holds the page's example document. The page asks the reader to remove `type`, so a spec edits the file or writes a copy without it."
+  ]
+}

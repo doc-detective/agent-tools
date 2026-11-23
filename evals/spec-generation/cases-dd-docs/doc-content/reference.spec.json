@@ -1,0 +1,31 @@
+{
+  "specId": "dd-docs-doc-content",
+  "description": "Doc Detective test artifact doc-content.md: its inline YAML test, run from the workspace root.",
+  "tests": [
+    {
+      "testId": "doc-detective-docs",
+      "steps": [
+        {
+          "description": "The Doc Detective documentation link resolves.",
+          "checkLink": "http://localhost:8092"
+        },
+        {
+          "description": "The Get started link resolves.",
+          "checkLink": "http://localhost:8092"
+        },
+        {
+          "description": "Open the demo page.",
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "description": "It has the Text Elements heading.",
+          "find": "Text Elements"
+        },
+        {
+          "description": "Capture the image the page shows.",
+          "screenshot": "reference.png"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "tests": [
+    {
+      "testId": "billing-frequency",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "click": "#radio2"
+        },
+        {
+          "find": "#radio2:checked"
+        },
+        {
+          "click": "#radio3"
+        },
+        {
+          "find": "#radio3:checked"
+        },
+        {
+          "runBrowserScript": {
+            "script": "return [document.getElementById('radio2').checked, document.querySelectorAll('input[type=checkbox]:checked').length].join('|');",
+            "output": "false|0"
+          }
+        }
+      ]
+    }
+  ]
+}

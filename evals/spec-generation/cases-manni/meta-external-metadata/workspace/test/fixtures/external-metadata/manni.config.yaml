@@ -1,0 +1,13 @@
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+    externalMetadata:
+      - file: ./docs-meta.yaml
+        keys: [source, jira]
+
+meta:
+  overrides:
+    - collection: pages
+      schemas:
+        - ./private.schema.json

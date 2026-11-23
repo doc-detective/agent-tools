@@ -1,0 +1,71 @@
+{
+  "specId": "manni-cite-set-up",
+  "description": "manni docs cite/set-up, run in a repo that holds the page's manni.config.yaml (collection docs-pages), docs/limits.md and lib/limits.ts.",
+  "tests": [
+    {
+      "testId": "cite-set-up",
+      "steps": [
+        {
+          "description": "Mint the first citation, previewed: --dry-run prints the frontmatter diff.",
+          "runShell": {
+            "command": "manni cite add docs/limits.md:6 lib/limits.ts:2 --id fetch-timeout --dry-run",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/\\+citations:[\\s\\S]*\\+      lines: 3/"
+          }
+        },
+        {
+          "description": "Drop --dry-run to write it: the report names both pins and the claim's new file line.",
+          "runShell": {
+            "command": "manni cite add docs/limits.md:6 lib/limits.ts:2 --id fetch-timeout",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/added fetch-timeout to frontmatter \\(claim at line 16, sha256-921b21cc…; source lib\\/limits\\.ts:2 \"export const FETCH_TIMEOUT_MS = 10_000;\"/"
+          }
+        },
+        {
+          "description": "The first check, with no arguments: the collection covers the page and both ends are current.",
+          "runShell": {
+            "command": "manni cite check",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:16 current\\s+lib\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+          }
+        },
+        {
+          "description": "From docs/, the root is still the git root, so the same sources resolve.",
+          "runShell": {
+            "command": "cd docs && manni cite check",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 findings"
+          }
+        },
+        {
+          "description": "A wrong root reads the source end as missing rather than resolving the wrong file.",
+          "runShell": {
+            "command": "manni cite check --root docs",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/lib\\/limits\\.ts:2 missing[\\s\\S]*1 file checked, 0 passed, 1 failed, 1 finding/"
+          }
+        },
+        {
+          "description": "No positional paths and no config is an operational error, exit 2.",
+          "runShell": {
+            "command": "manni cite check --no-config",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "No files to check. Pass paths/globs, or declare a collection under `collections:` in manni.config.yaml."
+          }
+        }
+      ]
+    }
+  ]
+}

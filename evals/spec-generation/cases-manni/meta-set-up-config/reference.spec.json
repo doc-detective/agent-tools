@@ -1,0 +1,87 @@
+{
+  "specId": "manni-meta-set-up-config",
+  "description": "manni docs meta/set-up/config, run in a repo whose manni.config.yaml declares pages, articles (drafts excluded, plus an article schema) and authors.",
+  "tests": [
+    {
+      "testId": "set-up-config",
+      "steps": [
+        {
+          "description": "Explicit -c to a missing file errors out (exit 2) rather than falling back to discovery.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c does-not-exist.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "Config file not found"
+          }
+        },
+        {
+          "description": "Explicit paths take priority over the collections: only README.md is validated.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate README.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/README\\.md[\\s\\S]*1 file checked/"
+          }
+        },
+        {
+          "description": "Write a config that still has meta.paths, the pre-collections shape.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs');f.mkdirSync('legacy',{recursive:true});f.writeFileSync('legacy/manni.config.yaml','meta:\\n  paths:\\n    - docs/**/*.md\\n')\""
+          }
+        },
+        {
+          "description": "meta.paths is refused with exit 2, and the message names its new home.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate -c legacy/manni.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "\"paths\" is no longer a meta key. Document sets are declared once for every tool, under a top-level collections: list."
+          }
+        },
+        {
+          "description": "--collection authors runs over that collection only.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --collection authors",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/authors/sara\\.md[\\s\\S]*1 file checked, 1 passed/"
+          }
+        },
+        {
+          "description": "--collection is repeatable, one name per occurrence.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --collection authors --collection pages",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed"
+          }
+        },
+        {
+          "description": "--collection cannot be combined with positional paths.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate --collection authors README.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "--collection selects a configured collection; it cannot be combined with paths."
+          }
+        },
+        {
+          "description": "The complete example, run from the repo root: every collection, drafts excluded.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/Using manni.config.yaml[\\s\\S]*3 files checked, 3 passed, 0 failed, 0 errors/"
+          }
+        }
+      ]
+    }
+  ]
+}

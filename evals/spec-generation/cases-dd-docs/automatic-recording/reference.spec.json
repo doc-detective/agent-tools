@@ -1,0 +1,21 @@
+{
+  "specId": "dd-docs-automatic-recording",
+  "description": "Doc Detective docs: Record video automatically. The page's login.spec.json example; the eval config turns automatic recording off, so the steps are what's checked.",
+  "tests": [
+    {
+      "testId": "record-guide-autorecord",
+      "steps": [
+        {
+          "stepId": "record-guide-autorecord-goto",
+          "description": "Open the local test server in headless Chrome.",
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "stepId": "record-guide-autorecord-step",
+          "description": "Take another step in the same context.",
+          "goTo": "http://localhost:8092/enhanced-elements.html"
+        }
+      ]
+    }
+  ]
+}

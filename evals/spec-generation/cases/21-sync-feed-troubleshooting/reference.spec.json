@@ -1,0 +1,34 @@
+{
+  "tests": [
+    {
+      "testId": "sync-feed",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/waitUntil-test-dom-mutations.html"
+        },
+        {
+          "find": "DOM Mutations Test"
+        },
+        {
+          "find": {
+            "elementText": "Dynamic content #1",
+            "timeout": 5000
+          }
+        },
+        {
+          "find": {
+            "elementText": "Dynamic content #5",
+            "timeout": 5000
+          }
+        },
+        {
+          "find": {
+            "selector": ".mutations-complete",
+            "elementText": "All mutations complete",
+            "timeout": 5000
+          }
+        }
+      ]
+    }
+  ]
+}

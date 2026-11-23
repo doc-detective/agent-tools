@@ -1,0 +1,48 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/config.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-set-up-config.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "match_any": ["-c ", "--config"],
+      "note": "Explicit path: if the `-c` file does not exist, manni meta exits with an error rather than falling back to discovery."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Explicit paths take priority: `manni meta validate README.md` validates only README.md."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "is no longer a meta key"],
+      "note": "A config with meta.paths is refused with the quoted message, exit 2."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--collection authors"],
+      "note": "`--collection authors` narrows the run to one collection."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--collection pages"],
+      "note": "`--collection authors --collection pages`: repeatable, one name per occurrence."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--collection", "cannot be combined with paths"],
+      "note": "`--collection` refuses positional paths with the quoted message."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "A complete example: run a bare validate from the repo root."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "manni.config.yaml is the page's complete example plus the `authors` collection from its collections example: pages (docs/**/*.md), articles (articles/**/*.md, excluding **/drafts/**, with ./schemas/article.json layered on), authors (authors/**).",
+    "docs/index.md, articles/launch.md, authors/sara.md pass; articles/drafts/roadmap.md lacks `type` but is excluded; README.md has no frontmatter. A bare run checks 3 files and passes.",
+    "The meta.paths refusal needs a config in the old shape, so a spec writes one and points `-c` at it."
+  ]
+}

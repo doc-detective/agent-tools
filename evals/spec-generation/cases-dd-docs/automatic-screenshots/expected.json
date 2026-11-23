@@ -1,0 +1,24 @@
+{
+  "source": "doc-detective/docs/fern/pages/docs/test-docs/automatic-screenshots.mdx@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/automatic-screenshots.mdx",
+  "steps": [
+    {
+      "stepType": "goTo",
+      "match": "localhost:8092",
+      "note": "The login.spec.json example's first step: go to http://localhost:8092."
+    },
+    {
+      "stepType": "goTo",
+      "match": "localhost:8092/enhanced-elements.html",
+      "note": "Its second step: go to http://localhost:8092/enhanced-elements.html."
+    }
+  ],
+  "must_not": [
+    "A goTo to https://www.example.com from the keep-one-test override example; it's an illustration of the setting, not a procedure.",
+    "A runShell for `doc-detective --no-auto-screenshot` or `doc-detective install runtime ...`; they illustrate a flag and a troubleshooting fix.",
+    "A step-level `autoScreenshot` key; the page says it fails validation."
+  ],
+  "scaffolding": [
+    "Nothing beyond the page. The local test server is on :8092."
+  ]
+}

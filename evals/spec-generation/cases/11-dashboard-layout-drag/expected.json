@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "drag-drop-test.html", "note": "Step 1: open the layout editor."},
+    {"stepType": "find", "match": "drag and drop ready", "note": "Step 1: status bar reads Page loaded - drag and drop ready."},
+    {"stepType": "dragAndDrop", "match": "Table", "match_any": ["zone1", "Drop Zone 1"], "note": "Step 2: drag Table onto Drop Zone 1."},
+    {"stepType": "find", "match_any": ["Dropped Table into canvas", "Table (dropped)"], "note": "Step 2: Table (dropped) appears and the status bar confirms the drop."},
+    {"stepType": "dragAndDrop", "match": "Chart", "match_any": ["zone2", "Drop Zone 2"], "note": "Step 3: drag Chart onto Drop Zone 2."},
+    {"stepType": "find", "match_any": ["Dropped Chart into canvas", "Chart (dropped)"], "note": "Step 3: Chart (dropped) appears and the status bar confirms the drop."}
+  ],
+  "must_not": []
+}

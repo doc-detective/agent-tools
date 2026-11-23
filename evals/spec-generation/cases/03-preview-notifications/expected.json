@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "click-shorthand.html", "note": "Step 1: go to the message preview page."},
+    {"stepType": "click", "match": "Reveal by text", "note": "Step 2: click Reveal by text."},
+    {"stepType": "find", "match": "Text click landed", "note": "Step 2: the message Text click landed appears."},
+    {"stepType": "click", "match": "Reveal by object", "note": "Step 3: click Reveal by object."},
+    {"stepType": "find", "match": "Object click landed", "note": "Step 3: Object click landed appears."}
+  ],
+  "must_not": [
+    "A reload step for the tip; it is optional advice, and reloading would clear the messages the procedure just checked."
+  ]
+}

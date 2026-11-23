@@ -1,0 +1,10 @@
+collections:
+  - name: reference
+    paths: ["docs/reference/**/*.md"]
+
+meta:
+  overrides:
+    - collection: reference
+      schemas:
+        - ./schema/reference-page.schema.json
+        - ./schema/citations-1.0.0-proposal.4.json

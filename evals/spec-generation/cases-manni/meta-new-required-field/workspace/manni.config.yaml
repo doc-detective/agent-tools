@@ -1,0 +1,8 @@
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+
+meta:
+  schemas:
+    - ./schemas/doc.json

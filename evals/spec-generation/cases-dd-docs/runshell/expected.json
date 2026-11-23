@@ -1,0 +1,38 @@
+{
+  "source": "doc-detective/docs/fern/pages/docs/actions/runShell.mdx@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/reference/runshell.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": "echo hello world",
+      "note": "Run a basic command (string shorthand): echo hello world, which prints \"hello world\"."
+    },
+    {
+      "stepType": "runShell",
+      "match": "\"args\":[\"hello\",\"world\"]",
+      "note": "Run a command with arguments (object format): command echo, args hello and world."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["exit 1", "\"exitCodes\":[1]"],
+      "note": "Test a failure condition: exit 1 passes because exitCodes lists 1."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["echo setup", "$$stdio.stdout"],
+      "note": "Set a variable: echo setup and capture stdout into TEST."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["echo $TEST", "setup"],
+      "note": "Echo $TEST and validate that the output is setup."
+    }
+  ],
+  "must_not": [
+    "Steps for the illustration-only examples the page says the docs tests don't run: `docker run hello-world`, the git log output-regression example (needs ./repo), the nginx and Postgres background containers, and the `my-tui` PTY example.",
+    "Ungated `shell: \"cmd\"` or `shell: \"powershell\"` steps from Shell selection; the page says they fail on macOS and Linux."
+  ],
+  "scaffolding": [
+    "Nothing beyond the page. Commands run in bash (Git Bash on Windows) from the workspace root."
+  ]
+}

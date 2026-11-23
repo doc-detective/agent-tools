@@ -1,0 +1,181 @@
+---
+title: Roll out a new required field without breaking the build
+description: Make a metadata field required today, record the existing backlog as a baseline so the build stays green, and let the debt shrink from there.
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Your metadata standard needs to grow. Maybe you want every doc to carry an `owner`, or you decided `description` should be mandatory rather than recommended. The risk is obvious. Flip a field to required in one commit, and the next CI run fails on every existing doc that predates the rule. On a large repo that is hundreds of red checks at once, and no contributor can merge until the backlog is cleared.
+
+A **baseline** removes that trade-off. You record today's violations once, and from then on manni meta fails only on findings that are *new*. The rule is live immediately for everything anyone writes from now on, and the backlog stays visible instead of blocking the build.
+
+<Aside type="note" title="Why this works">
+A baseline is a file of violation fingerprints, keyed by document path. On each run manni meta fingerprints the findings it sees and subtracts the ones already recorded. A recorded violation is forgiven; anything else fails the run. Nothing about the schema is relaxed, so a new doc that omits the field fails on the pull request that adds it.
+</Aside>
+
+This guide assumes you already have a working `manni.config.yaml` and a schema you control. If you are still using the built-in OKF schema, [author your own schema first](/manni/meta/schemas/) so you have a file to edit. You cannot add fields to a built-in.
+
+## Step 1: Add the field as required
+
+Add the new field to your schema's `properties` **and** to `required`. No staging, no second lenient copy of the schema to keep in sync.
+
+```json title="schemas/doc.json" {4,10-13}
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["type", "owner"],
+  "properties": {
+    "type": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}
+```
+
+Run a pass to see the size of the backlog you are about to record:
+
+```bash
+npx @hawkeyexl/manni meta validate
+```
+
+That run exits `1` and lists every doc missing `owner`. This is the wall of red the baseline exists to absorb. Read it once, so you know what you are agreeing to forgive.
+
+## Step 2: Record the backlog
+
+```bash
+npx @hawkeyexl/manni meta validate --write-baseline
+```
+
+```
+Baseline written to .manni-baseline.json
+  412 findings recorded (+412 new, -0 no longer occur)
+```
+
+Commit `.manni-baseline.json` alongside the schema change. It is a source file, and reviewers should see it grow or shrink in the diff. A pull request that adds entries is a pull request that added violations.
+
+<Aside type="caution" title="Read the two numbers, every time">
+`--write-baseline` replaces the file with what *this run* saw. A narrowed glob or a mistyped `--exclude` can mean the run saw fewer files than you intended. The entries it did not see are then silently forgiven, and `-N no longer occur` is the only thing that says so. A re-record that reports large `-N` you cannot explain should not be committed.
+</Aside>
+
+## Step 3: Turn the baseline on
+
+Point your config at the file so every run, yours and CI's, compares against it:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+
+meta:
+  schemas:
+    - ./schemas/doc.json
+
+  baseline: .manni-baseline.json
+```
+
+```bash
+npx @hawkeyexl/manni meta validate
+```
+
+```
+✓ docs/api/legacy.md  (2 baselined)
+✓ docs/guides/intro.md
+
+2 files checked, 2 passed, 0 failed, 0 errors
+412 baselined findings
+```
+
+Green build, live rule. Ship it.
+
+<Aside type="tip" title="The path is relative to the config file">
+`baseline:` resolves against the directory holding `manni.config.yaml`, not against wherever you happened to run the command. Running `manni meta validate` from a subdirectory finds the same baseline CI does.
+</Aside>
+
+## Step 4: Watch the debt shrink
+
+<Steps>
+
+1. **New violations fail immediately.** A doc that lands without `owner` produces a fingerprint that is not in the baseline, so the run exits `1` and names only that file. The rule you shipped in step 1 is doing its job from day one.
+
+2. **Fixed violations are reported, not forgotten.** When someone adds the missing field, its fingerprint stops occurring and the summary says so:
+
+   ```
+   412 baselined findings, 37 no longer occur — run --write-baseline to prune
+   ```
+
+3. **Prune when the number gets noisy.** Re-record to drop the entries that no longer apply:
+
+   ```bash
+   npx @hawkeyexl/manni meta validate --write-baseline
+   ```
+
+   ```
+   Baseline written to .manni-baseline.json
+     375 findings recorded (+0 new, -37 no longer occur)
+   ```
+
+   The count in the summary is the debt, on every run. When it reaches zero, delete the file and drop the `baseline:` key. The ratchet is finished.
+
+</Steps>
+
+<Aside type="tip" title="Closing the backlog faster">
+The baseline makes the backlog safe to carry, not smaller. To actually work it down, [`manni meta fill`](/manni/meta/reference/cli/#meta-fill) infers the missing values from each page's content. It writes back the ones it is confident about. Because the schema drives the prompt, the fields it proposes are exactly the ones you just made required.
+</Aside>
+
+## Two things a baseline does not forgive
+
+- **A renamed file.** Entries are keyed by path. Moving a document takes its findings to a key with no entry, and every one of them reads as new. The fix is one `--write-baseline`; the stale-entry line in the summary is the hint that a rename, not a regression, is what happened.
+- **A re-pointed schema.** The schema reference is part of a violation's identity, so switching `./schemas/doc.json` to a URL serving identical bytes changes every fingerprint. Re-record when you move a schema.
+
+<Aside type="caution" title="A file with no frontmatter still gets checked">
+A required-field rule flags **every** non-compliant file, including files with no frontmatter block at all. A blank doc has no `owner` any more than a doc that simply omits it. These are recorded in the baseline like anything else, so they will not surprise the build. Just do not read a green run as evidence that they have frontmatter.
+</Aside>
+
+## The one-statement ratchet, for when a backfill is honest
+
+A baseline exists because most required fields have **per-document values nobody can invent in bulk**. Every page's `owner` is a fact you have to go find. But some rollouts start from a uniform value that is simply true: `reviewed: pending`, `visibility: internal`, `language: en`. For those, carrying a backlog is the long way around. One `ALTER` statement adds the field to your schema as required **and** backfills every file, in the same write:
+
+```bash
+npx @hawkeyexl/manni meta query "ALTER TABLE docs
+  ADD COLUMN reviewed TEXT NOT NULL DEFAULT 'pending'" docs/
+```
+
+The preview (run it with `--dry-run` first) names every file it will touch and the schema file it will edit. Afterwards `validate` is green with no baseline entry, because no document is missing the field. As a rule of thumb, **ratchet when a starting value is honest, and baseline when the value is a fact per document.** The two compose, so you ratchet the uniform fields and baseline the rest.
+
+`ALTER` edits the schema the corpus resolves, either your file in place or a local fork if the corpus runs on a built-in. [Gate on rules that span files](/manni/meta/ci/query-gates/) introduces the query surface this rides on, and [the `query` reference](/manni/meta/reference/query/#ddl-edits-the-schema) has the full DDL rules.
+
+## What you have now
+
+You now have three things:
+
+- A required field that went live the day you wrote it.
+- A build that stayed green.
+- A single file that says exactly how much legacy debt is left, visible on every run and shrinking as contributors touch their pages.
+
+No parallel lenient schema, no hand-maintained list of which folders are clean, nothing to keep in sync.
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Retrofit manni meta into an existing repo"
+    href="/manni/meta/set-up/retrofit/"
+    description="Adopting manni meta from scratch on a repo that has never had metadata validation, baseline included."
+  />
+  <LinkCard
+    title="Apply different schemas to different folders"
+    href="/manni/meta/set-up/different-schemas-per-folder/"
+    description="Collection and glob overrides, and their precedence, for when different areas need genuinely different rules rather than a staged rollout."
+  />
+  <LinkCard
+    title="CLI reference"
+    href="/manni/meta/reference/cli/#meta-validate"
+    description="Every flag, including --baseline, --write-baseline, and --no-baseline."
+  />
+</CardGrid>

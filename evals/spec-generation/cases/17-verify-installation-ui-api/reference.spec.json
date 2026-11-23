@@ -1,0 +1,63 @@
+{
+  "tests": [
+    {
+      "testId": "verify-installation",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/status/200",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "status": 200
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/sessions",
+            "method": "post",
+            "request": {
+              "body": {
+                "user": "install-check"
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "user": "install-check"
+              }
+            }
+          }
+        },
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "find": "Common HTML Elements"
+        },
+        {
+          "goTo": "http://localhost:8092/type-echo.html"
+        },
+        {
+          "type": {
+            "keys": "install-check",
+            "selector": "#type-input"
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo",
+            "elementText": "install-check"
+          }
+        }
+      ]
+    }
+  ]
+}

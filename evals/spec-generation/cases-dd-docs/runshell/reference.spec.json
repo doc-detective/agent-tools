@@ -1,0 +1,75 @@
+{
+  "specId": "dd-docs-runshell",
+  "description": "Doc Detective docs: the runShell action reference. The page's inline tests run its basic command, arguments, exit-code, and variable examples.",
+  "tests": [
+    {
+      "testId": "runshell-string-shorthand",
+      "steps": [
+        {
+          "stepId": "runshell-echo-string",
+          "description": "Run a basic command; it prints hello world.",
+          "runShell": {
+            "command": "echo hello world",
+            "stdio": "hello world"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "runshell-object-args",
+      "steps": [
+        {
+          "stepId": "runshell-echo-args",
+          "description": "Run echo with arguments.",
+          "runShell": {
+            "command": "echo",
+            "args": [
+              "hello",
+              "world"
+            ],
+            "stdio": "hello world"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "runshell-exitcode",
+      "steps": [
+        {
+          "stepId": "runshell-exit",
+          "description": "Run a command that exits 1 and expect exit code 1.",
+          "runShell": {
+            "command": "exit 1",
+            "exitCodes": [
+              1
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "testId": "runshell-variable-capture",
+      "steps": [
+        {
+          "stepId": "runshell-set-var",
+          "description": "Set a variable based on command output.",
+          "runShell": {
+            "command": "echo setup",
+            "stdio": "/.+/"
+          },
+          "variables": {
+            "TEST": "$$stdio.stdout"
+          }
+        },
+        {
+          "stepId": "runshell-use-var",
+          "description": "Echo and validate the variable.",
+          "runShell": {
+            "command": "echo $TEST",
+            "stdio": "setup"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,311 @@
+---
+title: Gate on rules that span files
+description: Use manni meta query to run SQL over your corpus's metadata, turn cross-file rules like dangling references and duplicate slugs into CI gates with --check, and feed the same table to dashboards and scripts.
+---
+
+import { Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Schema validation judges one file at a time, and some of your rules don't live
+in one file. A page that credits an author nobody has. Two pages claiming the
+same slug. A tag that appears exactly once. Each document involved is
+individually valid, so `validate` waves them all through. Catching them takes a
+**join**, and that is what `manni meta query` is for. Every file's metadata becomes
+one row in a SQL table, and any query that returns rows can fail the build.
+
+Nothing new is installed for this. The engine is `node:sqlite`, which ships in
+the Node.js your runner already has.
+
+## One file, one row
+
+`query` builds an in-memory table named `docs` from the files you point it at.
+There is one row per file, one column per top-level metadata key, and four
+system columns. Those are `_path` (the file), `_format`, `_present` (did the
+file carry metadata at all), and `_data`. `_data` holds the whole block as JSON,
+for reaching into nested values with `->>` and `json_each`. The [CLI
+reference](/manni/meta/reference/query/#the-docs-table) has the full contract.
+
+Retrieval is plain SQL. A tag census over a corpus:
+
+```bash
+npx @hawkeyexl/manni meta query "SELECT t.value tag, count(*) n
+  FROM docs, json_each(docs.tags) t
+  GROUP BY tag ORDER BY n DESC, tag" docs/
+```
+
+```
+tag    n
+guide  2
+api    1
+intro  1
+3 rows
+```
+
+## Turn a join into a gate
+
+`--check` makes rows mean findings: any result row exits `1`, an empty result
+exits `0`. That is the whole contract. The query itself is the rule, so anything
+you can phrase as "SELECT the violations" is now a CI gate.
+
+The dangling-reference classic. Docs credit authors by slug, and one cited
+author has no page. Every
+[collection](/manni/meta/reference/configuration/#collections) your config
+declares is also a **view** of that name, so the rule can join the author pages
+directly:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths: ["docs/**/*.md"]
+  - name: authors
+    paths: ["authors/**"]
+
+meta:
+  overrides:
+    - collection: authors
+      schemas: [./schemas/author.json]
+```
+
+```bash
+npx @hawkeyexl/manni meta query --check "SELECT d._path, d.author
+  FROM docs d
+  LEFT JOIN authors a ON a.slug = d.author
+  WHERE d.author IS NOT NULL AND a._path IS NULL"
+```
+
+```
+_path          author
+docs/guide.md  ghost
+✗ 1 row — check failed
+```
+
+`FROM authors` means "the files the `authors` collection selects", which is what
+the config says it means. Membership comes from the collection, not from
+re-spelling the glob in SQL. Moving the directory means updating one config
+line, and the rule follows. The override is not what makes the view; the
+collection is. Two collections may overlap, and a file in both appears in both
+views. The [query reference](/manni/meta/reference/query/#collections-as-views) has the view contract
+in full.
+
+With **no config** to name the set, the same rule spells the author set inline as
+a path self-join over bare inputs:
+
+```bash
+npx @hawkeyexl/manni meta query --check "SELECT d._path, d.author
+  FROM docs d
+  LEFT JOIN docs a ON a.slug = d.author AND a._path LIKE '%authors%'
+  WHERE d._path LIKE '%docs%' AND d.author IS NOT NULL
+    AND a._path IS NULL" docs/ authors/
+```
+
+Duplicate slugs, same shape:
+
+```bash
+npx @hawkeyexl/manni meta query --check "SELECT slug, count(*) n
+  FROM docs GROUP BY slug HAVING n > 1" docs/
+```
+
+In CI it is one more step beside the `validate` gate. The exit codes mean the
+same things they mean everywhere in manni meta. That is `0` clean, `1` findings,
+and `2` operational error ([the
+contract](/manni/meta/reference/output-and-exit-codes/)):
+
+```yaml title=".github/workflows/docs.yml"
+- name: Cross-file metadata rules
+  run: |
+    npx -y @hawkeyexl/manni meta query --check \
+      "SELECT slug, count(*) n FROM docs GROUP BY slug HAVING n > 1" \
+      "docs/**/*.md"
+```
+
+A gate that takes a runtime value should **bind** it rather than splice it into
+the SQL string. One apostrophe in the value would otherwise break the statement.
+Think of this release's version, or the team being audited. `--param name=value`
+binds a named parameter the statement refers to as `:name`, or `$name`/`@name`.
+`:` is the shell-friendliest spelling:
+
+```bash
+npx @hawkeyexl/manni meta query --check --param author=ghost \
+  "SELECT _path FROM docs WHERE author = :author" docs/
+```
+
+Values bind as strings, which is what metadata mostly is; `name:=value` parses
+the value as JSON when you deliberately mean a number or boolean. A parameter
+the SQL references but nothing binds is refused (exit 2) rather than silently
+matching nothing. An unbound parameter would otherwise read as a passing gate.
+The [bound parameters reference](/manni/meta/reference/query/#bound-parameters) has
+the full contract, shell-quoting pitfalls included.
+
+<Aside type="tip" title="Where do the queries live?">
+A gate is a rule your team agreed on, so keep the SQL where rules live. That
+means `manni.config.yaml`, as a named entry in
+[`checks:`](/manni/meta/reference/configuration/#checks). The next section migrates
+this exact workflow step there. A one-off question or a rule you are still
+drafting is fine inline in the workflow.
+</Aside>
+
+## Name the gate in config
+
+A workflow-file gate works, but the rule lives in the wrong place. Every other
+rule this repo enforces is named in `manni.config.yaml`. A raw `query` step
+reports a result table. There is no line, no `::error` annotation on the PR, and
+no ramp for existing violations. Moving the SQL into a named
+[`checks:`](/manni/meta/reference/configuration/#checks) entry fixes all three at
+once. The workflow step above becomes config:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+
+meta:
+  checks:
+    - name: unique-slugs
+      query: >-
+        SELECT _path AS path, 'slug' AS key,
+               'duplicate slug "' || slug || '"' AS message,
+               lineFor(_path, 'slug') AS line
+        FROM docs WHERE slug IN
+          (SELECT slug FROM docs GROUP BY slug HAVING count(*) > 1)
+```
+
+and the CI step becomes the one you already have. A bare `npx @hawkeyexl/manni meta validate`
+runs the checks after the per-file schemas. One command and one exit code cover
+both. Each row a check returns is now an ordinary finding. `path` names the
+file, `key` the field, and `lineFor(path, key)` the source line. So `-f github`
+annotates the offending line of the offending file. SARIF and JUnit consumers
+see it like any schema violation. The [column
+convention](/manni/meta/reference/configuration/#the-column-convention) is the
+whole contract.
+
+Two behaviors to know about, both there to keep the answers honest:
+
+- **A scoped run skips checks.** `manni meta validate docs/intro.md` computes over
+  less than the corpus. So does any run reshaped by positional paths, stdin,
+  `--as`, `--ext`, `--exclude`, or `--no-gitignore`. A duplicate-slug rule over
+  half a corpus answers wrongly. So checks run only on the config-resolved
+  corpus, with a stderr notice when skipped. `--no-checks` opts out explicitly.
+
+  `--collection <name>` is scoped too, and this is the one place it surprises
+  people. Narrowing to one collection leaves every other collection's view
+  empty, so a `FROM blog` check would pass by having nothing to fail on. manni
+  prints `corpus checks skipped: run is scoped to collections guides` rather
+  than answering a corpus question with part of the corpus. If you gate on
+  checks, keep one unscoped job; use `--collection` for the per-file schema gate
+  over one area.
+- **Findings baseline.** Because check findings ride the same pipeline, the
+  [baseline ratchet](/manni/meta/reference/cli/#baselines) covers them. Turn a new
+  check on, `--write-baseline` the existing debt, and the gate goes red only on
+  *new* violations. That is the same adoption ramp a stricter schema gets. It
+  lets a corpus rule turn on before the backlog is fixed.
+
+The ad-hoc spelling stays available. `query --check` now takes `-f github|sarif|junit` too ([rows as findings](/manni/meta/reference/query/#rows-as-findings)). That suits a rule you are still drafting, or a one-off audit, with the same column convention and findings named `check:query`.
+
+## Feed the same table to your tooling
+
+`--format json` prints the bare result array, with rows for a read and change
+objects for an edit. It suits the same subprocess-and-parse pipelines that
+consume [validation results](/manni/meta/ci/consume-results/):
+
+```bash
+npx @hawkeyexl/manni meta query "SELECT _path, title FROM docs WHERE draft = 1" docs/ -f json
+```
+
+`--format csv` prints the same rows as CSV for the spreadsheet hop. "Which pages
+are stale, by team" goes straight into Sheets or `pandas.read_csv`, with no `jq`
+in between. The header row is always there. A zero-row result (the header alone)
+stays distinguishable from a step that failed and printed nothing. The dialect
+details, including the deliberate LF-not-CRLF line endings, are in [the
+reference](/manni/meta/reference/query/#the-csv-dialect):
+
+```bash
+npx @hawkeyexl/manni meta query -f csv "SELECT _path, title, last_reviewed
+  FROM docs WHERE _present = 1 ORDER BY _path" docs/ > stale.csv
+```
+
+`-f csv --check` combines the two: the exit code carries the verdict while
+the rows land in an artifact a reviewer can open.
+
+`--db <path>` also writes the built table to a SQLite file, so anything that
+speaks SQLite can browse it: `sqlite3`, Datasette, DuckDB.
+
+```bash
+npx @hawkeyexl/manni meta query --db docs.db docs/    # export only; SQL is optional
+```
+
+The export is a regenerated artifact of your corpus: rebuild it whenever you
+like, and don't edit it expecting the files to notice. If you work from a
+checkout of the manni meta repo itself, `node scripts/query-ui.mjs` serves that
+export into Datasette Lite in your browser, write panel included. It is repo
+tooling, not part of the published package.
+
+## Writes exist, and `--dry-run` previews them
+
+The same table accepts standard DML. `UPDATE` sets keys, and `SET k = NULL`
+removes them. `INSERT` creates files, `DELETE` strips a metadata block, and
+`ALTER TABLE` evolves the governing schema itself. A mutating statement applies
+by default, the same convention `fill` uses. `--dry-run` shows the exact diff
+without touching a file. `--check` **implies** the dry run while counting
+pending changes as findings, which turns any backfill into a read-only drift
+gate:
+
+```bash
+npx @hawkeyexl/manni meta query --dry-run "UPDATE docs SET reviewed = 'todo'
+  WHERE reviewed IS NULL AND _present = 1" docs/
+```
+
+```
+docs/alpha.md: reviewed: (unset) -> todo
+docs/beta.md:  reviewed: (unset) -> todo
+docs/gamma.md: reviewed: (unset) -> todo
+3 changes across 3 files — dry run; run again without --dry-run to apply
+```
+
+Statements that could write outside the corpus refuse by name: `ATTACH`,
+`VACUUM`, `DROP TABLE`, and multi-statement input. The refusal says what to run
+instead. The [vocabulary table](/manni/meta/reference/query/#the-sql-vocabulary) is
+the complete list of what each statement means in file terms. The schema-editing
+half of it (`ALTER`) is the one-statement ratchet covered in the journeys below.
+
+<CardGrid>
+  <LinkCard
+    title="query command reference"
+    description="The docs table contract, the vocabulary, the DDL rules, findings, and every output format."
+    href="/manni/meta/reference/query/"
+  />
+  <LinkCard
+    title="Roll out a new required field"
+    description="The ALTER ratchet backfills and requires in one statement; the baseline covers what a backfill can't."
+    href="/manni/meta/set-up/new-required-field/"
+  />
+  <LinkCard
+    title="Version & evolve a schema safely"
+    description="What ALTER edits when it edits 'the schema': your file in place, a fork of a built-in, a refreshed pin."
+    href="/manni/meta/schemas/versioning/"
+  />
+  <LinkCard
+    title="Consume results programmatically"
+    description="The json output contract, get for field extraction, and the TypeScript API, runQuery included."
+    href="/manni/meta/ci/consume-results/"
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"query-gates","description":"SQL over the metadata corpus: retrieval, --check gates, --dry-run previews, and the refusal posture."} */}
+{/* step {"description":"A tag census: json_each reaches into array values, plain SQL aggregates.","runShell":{"command":"npx @hawkeyexl/manni meta query \"SELECT t.value tag, count(*) n FROM docs, json_each(docs.tags) t GROUP BY tag ORDER BY n DESC, tag\" test/fixtures/query/docs","exitCodes":[0],"stdio":"/guide  2[\\s\\S]*3 rows/"}} */}
+{/* step {"description":"Every declared collection is a view, so the dangling-author rule joins FROM authors and --check turns the row into exit 1.","runShell":{"command":"npx @hawkeyexl/manni meta query -c test/fixtures/collections/manni.config.yaml --check \"SELECT d._path, d.author FROM docs d LEFT JOIN authors a ON a.slug = d.author WHERE d.author IS NOT NULL AND a._path IS NULL\"","exitCodes":[1],"stdio":"/ghost[\\s\\S]*check failed/"}} */}
+{/* step {"description":"The no-config fallback: the same rule as a path self-join over bare inputs.","runShell":{"command":"npx @hawkeyexl/manni meta query --check \"SELECT d._path, d.author FROM docs d LEFT JOIN docs a ON a.slug = d.author AND a._path LIKE '%authors%' WHERE d._path LIKE '%query/docs%' AND d.author IS NOT NULL AND a._path IS NULL\" test/fixtures/query/docs test/fixtures/query/authors","exitCodes":[1],"stdio":"/ghost[\\s\\S]*check failed/"}} */}
+{/* step {"description":"Duplicate slugs, the GROUP BY ... HAVING shape of the same gate.","runShell":{"command":"npx @hawkeyexl/manni meta query --check \"SELECT slug, count(*) n FROM docs GROUP BY slug HAVING n > 1\" test/fixtures/query/docs","exitCodes":[1],"stdio":"/alpha  2[\\s\\S]*check failed/"}} */}
+{/* step {"description":"--dry-run previews a mutating statement: the exact diff, files untouched, exit 0.","runShell":{"command":"npx @hawkeyexl/manni meta query --dry-run \"UPDATE docs SET reviewed = 'todo' WHERE reviewed IS NULL AND _present = 1\" test/fixtures/query/docs","exitCodes":[0],"stdio":"/reviewed: \\(unset\\) -> todo[\\s\\S]*dry run; run again without --dry-run to apply/"}} */}
+{/* step {"description":"DROP TABLE refuses by name and points at the statements that do the real jobs (exit 2).","runShell":{"command":"npx @hawkeyexl/manni meta query \"DROP TABLE docs\" test/fixtures/query/docs","exitCodes":[2],"stdio":"DROP TABLE is refused"}} */}
+{/* step {"description":"A named check in config: a bare validate over the declared collection runs it, and -f github annotates the offending line of the offending file.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/checks/manni.config.yaml -f github","exitCodes":[1],"stdio":"/::error file=docs\\/a\\.md,line=3::.*check:unique-slugs/"}} */}
+{/* step {"description":"A check may read a collection as a view: FROM guides finds the guide with no owner and leaves the blog post alone.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml -f github","exitCodes":[1],"stdio":"/::error file=guides\\/orphan\\.md::.*check:guide-needs-owner/"}} */}
+{/* step {"description":"A run scoped by positional paths skips checks with one stderr notice, so a half-corpus never answers a corpus question.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/checks/manni.config.yaml test/fixtures/checks/docs","exitCodes":[0],"stdio":"corpus checks skipped: run is scoped"}} */}
+{/* step {"description":"--collection is scoped too: the notice names the collections the run was narrowed to, and the guides check does not run.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection guides","exitCodes":[0],"stdio":"corpus checks skipped: run is scoped to collections guides"}} */}
+{/* step {"description":"query --check -f github: the ad-hoc spelling of the same findings pipeline.","runShell":{"command":"npx @hawkeyexl/manni meta query --check \"SELECT _path AS path, 'duplicate slug ' || slug AS message FROM docs WHERE slug IN (SELECT slug FROM docs GROUP BY slug HAVING count(*) > 1)\" test/fixtures/query/docs -f github","exitCodes":[1],"stdio":"/::error file=test\\/fixtures\\/query\\/docs\\/alpha\\.md::/"}} */}
+{/* step {"description":"--param binds a runtime value into the gate; the row comes back and --check exits 1.","runShell":{"command":"npx @hawkeyexl/manni meta query --check --param author=ghost \"SELECT _path FROM docs WHERE author = :author\" test/fixtures/query/docs","exitCodes":[1],"stdio":"/gamma\\.md[\\s\\S]*check failed/"}} */}
+{/* step {"description":"-f csv prints result rows as CSV, header row first.","runShell":{"command":"npx @hawkeyexl/manni meta query -f csv \"SELECT _path, title FROM docs WHERE _present = 1 ORDER BY _path\" test/fixtures/query/docs","exitCodes":[0],"stdio":"/_path,title\\n[\\s\\S]*alpha\\.md,Alpha/"}} */}
+{/* test end */}
