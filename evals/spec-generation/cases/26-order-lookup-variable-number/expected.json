@@ -1,0 +1,13 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "find-text-matching.html", "note": "Step 1: open the order summary."},
+    {"stepType": "find", "match": "Garden companion API", "note": "Step 2: product name Garden companion API."},
+    {"stepType": "find", "match": "order #", "match_any": ["d{4}", "dddd", "d+", "[0-9]"], "note": "Step 3: the number varies, so the find needs a pattern such as /Order #[0-9]{4}/, not a literal number."},
+    {"stepType": "find", "match": "Submit Order", "note": "Step 4: the Submit Order action."},
+    {"stepType": "find", "match": "Save changes", "note": "Step 4: the Save changes action."}
+  ],
+  "must_not": [
+    "A find for the example number `Order #1234` (it doesn't exist on the page).",
+    "A find for the literal number on today's page (`Order #4821`): the doc says every order has its own number."
+  ]
+}

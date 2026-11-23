@@ -1,0 +1,80 @@
+{
+  "specId": "dd-docs-generate-tests-from-openapi",
+  "description": "Doc Detective docs: Generate requests from OpenAPI. The page's inline test registers reqres.openapi.json with mocked responses, then runs each Step 2 to Step 5 example.",
+  "tests": [
+    {
+      "testId": "generate-tests-from-openapi",
+      "openApi": [
+        {
+          "name": "reqres",
+          "descriptionPath": "../reqres.openapi.json",
+          "server": "http://localhost:8092/api",
+          "mockResponse": true
+        }
+      ],
+      "steps": [
+        {
+          "stepId": "openapi-shorthand",
+          "description": "Get a user by ID with the operationId shorthand.",
+          "httpRequest": {
+            "openApi": "getUserById",
+            "request": { "parameters": { "id": 2 } },
+            "response": {}
+          }
+        },
+        {
+          "stepId": "openapi-name-operationid",
+          "description": "Get a user by ID from the reqres description.",
+          "httpRequest": {
+            "openApi": { "name": "reqres", "operationId": "getUserById" },
+            "request": { "parameters": { "id": 2 } },
+            "response": {}
+          }
+        },
+        {
+          "stepId": "openapi-descriptionpath",
+          "description": "Get a user by ID from a local description file.",
+          "httpRequest": {
+            "openApi": { "descriptionPath": "../reqres.openapi.json", "operationId": "getUserById", "mockResponse": true },
+            "request": { "parameters": { "id": 3 } },
+            "response": {}
+          }
+        },
+        {
+          "stepId": "openapi-headers-auth",
+          "description": "Get a user, authenticated for the whole description.",
+          "httpRequest": {
+            "openApi": { "name": "reqres", "operationId": "getUserById", "headers": { "Authorization": "Bearer $TOKEN" } },
+            "request": { "parameters": { "id": 2 } },
+            "response": {}
+          }
+        },
+        {
+          "stepId": "openapi-request-header-override",
+          "description": "Override the Authorization header for this request only.",
+          "httpRequest": {
+            "openApi": { "name": "reqres", "operationId": "getUserById" },
+            "request": { "headers": { "Authorization": "Bearer $ADMIN_TOKEN" }, "parameters": { "id": 2 } },
+            "response": {}
+          }
+        },
+        {
+          "stepId": "openapi-useexample",
+          "description": "Create a user from the operation's example request.",
+          "httpRequest": {
+            "openApi": { "name": "reqres", "operationId": "createUser", "useExample": "request" },
+            "response": {}
+          }
+        },
+        {
+          "stepId": "openapi-mockresponse",
+          "description": "Mock the createUser response from the description.",
+          "httpRequest": {
+            "openApi": { "name": "reqres", "operationId": "createUser", "mockResponse": true, "statusCode": 201, "useExample": "request" },
+            "response": {}
+          }
+        }
+      ]
+    }
+  ]
+}

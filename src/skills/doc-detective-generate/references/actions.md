@@ -650,7 +650,7 @@ With output matching (`stdio` matches against **stdout OR stderr** — there is 
 **Options** (the object form is strict: `additionalProperties: false`, so an unknown key, such as `stdout`, makes the whole spec invalid. By default, Doc Detective then runs nothing and exits `2`):
 - `command`: Shell command to execute (required)
 - `shell`: Shell to run the command in: `bash` (default), `cmd`, or `powershell`. `cmd` and `powershell` are Windows-only; gate those steps to Windows with a `runOn` context (for example, `"runOn": [{ "platforms": ["windows"] }]`) if the spec also runs elsewhere. If unset, falls back to the config-level `shell`, which also defaults to `bash`.
-- `args`: Array of string arguments for the command (default: `[]`)
+- `args`: Array of string arguments for the command (default: `[]`). They join the command line with spaces and no quotes, so an argument with spaces or quotes breaks. Put such a command in `command` whole.
 - `exitCodes`: Expected exit codes (default: `[0]`). The step fails if the actual exit code is not in this list.
 - `stdio`: Expected content in the command's **stdout or stderr** (partial match). Plain string, or a `/regex/` delimited by forward slashes.
 - `workingDirectory`: Directory to run the command in. Omit it to run where you ran Doc Detective. A relative path resolves against the spec file's directory, so `"."` is the spec's folder.

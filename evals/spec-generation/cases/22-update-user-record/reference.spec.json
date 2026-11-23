@@ -1,0 +1,42 @@
+{
+  "tests": [
+    {
+      "testId": "update-user-record",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users/42",
+            "method": "put",
+            "request": {"body": {"name": "Grace Hopper", "job": "admiral"}},
+            "statusCodes": [200],
+            "response": {
+              "headers": {"x-echo-path": "/api/users/42"},
+              "body": {"name": "Grace Hopper", "job": "admiral"}
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users/42",
+            "method": "patch",
+            "request": {"body": {"job": "rear admiral"}},
+            "statusCodes": [200],
+            "response": {"body": {"job": "rear admiral"}}
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users/42/orders",
+            "method": "get",
+            "request": {"parameters": {"status": "shipped"}},
+            "statusCodes": [200],
+            "response": {
+              "headers": {"x-echo-path": "/api/users/42/orders"},
+              "body": {"status": "shipped"}
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

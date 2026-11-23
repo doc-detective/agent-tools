@@ -1,0 +1,8 @@
+collections:
+  - name: site
+    paths: ["docs/**/*.md"]
+
+meta:
+  schemas:
+    - ./schemas/page.json
+encryptionKey: 0123456789abcdef0123456789abcdef

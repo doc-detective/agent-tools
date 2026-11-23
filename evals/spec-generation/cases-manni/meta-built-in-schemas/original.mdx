@@ -1,0 +1,387 @@
+---
+title: Built-in schemas
+description: Every schema shipped with manni meta in one table, showing what each constrains, which fields it requires, which are on by default, and how to turn one on.
+---
+
+import { Aside, Tabs, TabItem, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+manni meta bundles twenty-three schemas. You reference any of them by id, with no file
+to write, no URL to host, and no network call at validation time. This page is
+the registry: what each one constrains, whether it requires anything, and which
+are applied when you pass no flags at all.
+
+Run `manni meta schemas` to print the same list from the version you have
+installed.
+
+## The registry
+
+| Id | Constrains | Requires | On by default | JSON | Details |
+|---|---|---|---|---|---|
+| `google:okf:0.1` | `type`, `title`, `description`, `resource`, `tags`, `timestamp` | `type` | **Yes** | [`okf/0.1.json`](/manni/schemas/okf/0.1.json) | [OKF schema](/manni/meta/reference/okf-schema/) |
+| `passo-uno:seven-action:1.0` | `action` | nothing | **Yes** | [`seven-action/1.0.json`](/manni/schemas/seven-action/1.0.json) | [Taxonomy schemas](/manni/meta/reference/taxonomy-schemas/) |
+| `diataxis:diataxis:1.0` | `type` | `type` | No | [`diataxis/1.0.json`](/manni/schemas/diataxis/1.0.json) | [Taxonomy schemas](/manni/meta/reference/taxonomy-schemas/) |
+| `tgdp:templates:1.0` | `type` | `type` | No | [`tgdp/1.0.json`](/manni/schemas/tgdp/1.0.json) | [Taxonomy schemas](/manni/meta/reference/taxonomy-schemas/) |
+| `docusaurus:docs:3.10` | 25 Docusaurus docs fields | nothing | No | [`docusaurus-docs/3.10.json`](/manni/schemas/docusaurus-docs/3.10.json) | [Docusaurus schemas](/manni/meta/reference/docusaurus-schemas/) |
+| `docusaurus:blog:3.10` | 20 Docusaurus blog fields | nothing | No | [`docusaurus-blog/3.10.json`](/manni/schemas/docusaurus-blog/3.10.json) | [Docusaurus schemas](/manni/meta/reference/docusaurus-schemas/) |
+| `docusaurus:pages:3.10` | 9 Docusaurus pages fields | nothing | No | [`docusaurus-pages/3.10.json`](/manni/schemas/docusaurus-pages/3.10.json) | [Docusaurus schemas](/manni/meta/reference/docusaurus-schemas/) |
+| `astro:starlight:0.41` | 15 Starlight front matter fields | `title` | No | [`starlight/0.41.json`](/manni/schemas/starlight/0.41.json) | [Platform schemas](/manni/meta/reference/platform-schemas/) |
+| `antora:page:3.1` | 10 Antora page header attributes | `title` | No | [`antora/3.1.json`](/manni/schemas/antora/3.1.json) | [Platform schemas](/manni/meta/reference/platform-schemas/) |
+| `sphinx:docinfo:9.1` | 5 Sphinx file-wide docinfo fields | nothing | No | [`sphinx/9.1.json`](/manni/schemas/sphinx/9.1.json) | [Platform schemas](/manni/meta/reference/platform-schemas/) |
+| `myst:frontmatter:1.10` | 41 MyST page frontmatter fields | nothing | No | [`myst/1.10.json`](/manni/schemas/myst/1.10.json) | [Platform schemas](/manni/meta/reference/platform-schemas/) |
+| `ogp:article:1.0` | 17 Open Graph and `article:*` properties | `og:title`, `og:type`, `og:url`, `og:image` | No | [`ogp/1.0.json`](/manni/schemas/ogp/1.0.json) | [Metadata vocabularies](/manni/meta/reference/metadata-vocabularies/) |
+| `dcmi:elements:1.1` | the 15 Dublin Core elements | nothing | No | [`dcmi/1.1.json`](/manni/schemas/dcmi/1.1.json) | [Metadata vocabularies](/manni/meta/reference/metadata-vocabularies/) |
+| `microsoft:learn:1.0` | 16 Microsoft Learn attributes | `title`, `description`, `author`, `ms.author`, `ms.date` | No | [`microsoft-learn/1.0.json`](/manni/schemas/microsoft-learn/1.0.json) | [Metadata vocabularies](/manni/meta/reference/metadata-vocabularies/) |
+| `oasis:dita-metadata:1.3` | 17 DITA prolog and topicmeta keys | nothing | No | [`dita/1.3.json`](/manni/schemas/dita/1.3.json) | [DITA schema](/manni/meta/reference/dita-schema/) |
+| `hugo:page:0.165` | 28 Hugo front matter fields | nothing | No | [`hugo/0.165.json`](/manni/schemas/hugo/0.165.json) | [Platform schemas](/manni/meta/reference/platform-schemas/) |
+| `jekyll:page:4.4` | 7 Jekyll front matter variables | nothing | No | [`jekyll/4.4.json`](/manni/schemas/jekyll/4.4.json) | [Platform schemas](/manni/meta/reference/platform-schemas/) |
+| `vitepress:page:1.6` | 16 VitePress front matter options | nothing | No | [`vitepress/1.6.json`](/manni/schemas/vitepress/1.6.json) | [Platform schemas](/manni/meta/reference/platform-schemas/) |
+| `x:cards:1.0` | 23 `twitter:*` card tags | `twitter:card` | No | [`x-cards/1.0.json`](/manni/schemas/x-cards/1.0.json) | [Metadata vocabularies](/manni/meta/reference/metadata-vocabularies/) |
+| `agentskills:skill:1.0` | the 6 Agent Skills `SKILL.md` fields | `name`, `description` | No | [`agent-skills/1.0.json`](/manni/schemas/agent-skills/1.0.json) | [Agent Skills schemas](/manni/meta/reference/agent-skills-schemas/) |
+| `anthropic:claude-skill:2.1` | 20 Claude Code `SKILL.md` fields | nothing | No | [`claude-skill/2.1.json`](/manni/schemas/claude-skill/2.1.json) | [Agent Skills schemas](/manni/meta/reference/agent-skills-schemas/) |
+| `mkdocs:material:9.7` | 19 MkDocs and Material front matter keys | nothing | No | [`mkdocs-material/9.7.json`](/manni/schemas/mkdocs-material/9.7.json) | [Platform schemas](/manni/meta/reference/platform-schemas/) |
+| `anthropic:claude-subagent:2.1` | 18 Claude Code agent definition fields | `name`, `description` | No | [`claude-subagent/2.1.json`](/manni/schemas/claude-subagent/2.1.json) | [Claude Code subagent schema](/manni/meta/reference/claude-subagent-schema/) |
+
+All twenty-three use [Draft
+2020-12](/manni/meta/reference/schema-resolution/#dialects) and are [built-in
+references](/manni/meta/reference/schema-resolution/#reference-kinds). A typo in an
+id is reported as an unknown built-in rather than a missing file.
+
+Twenty-two of them allow additional properties. `agentskills:skill:1.0` is the
+one exception, and not out of strictness. The tooling that packages a skill for
+distribution *hard-errors* on a key outside the standard's six rather than
+ignoring it. A schema that tolerated unknown keys would pass exactly the file
+that cannot ship. See [Agent Skills
+schemas](/manni/meta/reference/agent-skills-schemas/).
+
+## The published URLs
+
+Every built-in is also served as plain JSON, at a version-pinned path under
+`https://hawkeyexl.github.io/manni/schemas/`. The same bytes stay served under
+the pre-rename base, `https://hawkeyexl.github.io/docmeta/schemas/`, and manni
+resolves both spellings to the bundled copy, so a `$schema` line or a `$ref`
+written before the rename keeps working offline. New references should use the
+current base:
+
+```text
+https://hawkeyexl.github.io/manni/schemas/okf/0.1.json
+https://hawkeyexl.github.io/manni/schemas/seven-action/1.0.json
+https://hawkeyexl.github.io/manni/schemas/diataxis/1.0.json
+https://hawkeyexl.github.io/manni/schemas/tgdp/1.0.json
+https://hawkeyexl.github.io/manni/schemas/docusaurus-docs/3.10.json
+https://hawkeyexl.github.io/manni/schemas/docusaurus-blog/3.10.json
+https://hawkeyexl.github.io/manni/schemas/docusaurus-pages/3.10.json
+https://hawkeyexl.github.io/manni/schemas/starlight/0.41.json
+https://hawkeyexl.github.io/manni/schemas/antora/3.1.json
+https://hawkeyexl.github.io/manni/schemas/sphinx/9.1.json
+https://hawkeyexl.github.io/manni/schemas/myst/1.10.json
+https://hawkeyexl.github.io/manni/schemas/ogp/1.0.json
+https://hawkeyexl.github.io/manni/schemas/dcmi/1.1.json
+https://hawkeyexl.github.io/manni/schemas/microsoft-learn/1.0.json
+https://hawkeyexl.github.io/manni/schemas/dita/1.3.json
+https://hawkeyexl.github.io/manni/schemas/hugo/0.165.json
+https://hawkeyexl.github.io/manni/schemas/jekyll/4.4.json
+https://hawkeyexl.github.io/manni/schemas/vitepress/1.6.json
+https://hawkeyexl.github.io/manni/schemas/x-cards/1.0.json
+https://hawkeyexl.github.io/manni/schemas/agent-skills/1.0.json
+https://hawkeyexl.github.io/manni/schemas/claude-skill/2.1.json
+https://hawkeyexl.github.io/manni/schemas/mkdocs-material/9.7.json
+https://hawkeyexl.github.io/manni/schemas/claude-subagent/2.1.json
+```
+
+They exist for three jobs. You can `$ref` a built-in from a schema of your own,
+or use one with a JSON Schema tool that is not manni meta. You can also read the
+actual JSON instead of a description of it.
+
+**Inside manni meta, a published URL costs nothing.** manni meta recognises its own
+URLs and answers them from the copy bundled in the package. There is no request,
+no timeout, and no dependence on GitHub Pages being up. `--offline` and an
+air-gapped build work exactly as they do with the id. A
+[`schemaTrust`](/manni/meta/reference/configuration/) policy that refuses URLs
+still accepts these, because they reach nothing. The two spellings are
+interchangeable:
+
+```markdown
+---
+$schema: https://hawkeyexl.github.io/manni/schemas/okf/0.1.json
+type: how-to
+---
+```
+
+<Aside type="note" title="Each schema's `$id` is not its URL, on purpose">
+Open one of the files and you will see `"$id": "google:okf:0.1"` rather than the
+`https://…` address you fetched it from. Some strict JSON Schema tooling warns
+about that mismatch. The warning is expected and the file is not broken.
+
+The `$id` is manni meta's reference for the schema. It is what a document's
+`$schema` names, what Ajv de-duplicates registrations on, and what appears in
+every report. Changing it to the URL would move all three at once and would
+break every document already carrying `$schema: google:okf:0.1`. The retrieval
+URI and the identifier are simply two different names for one schema, and both
+resolve.
+</Aside>
+
+### Extend a built-in with `$ref`
+
+The reason a URL beats a copy-paste. Reference a built-in from your own schema
+and add to it, by either name. The id and the URL both work, and neither touches
+the network:
+
+```json title="house.schema.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "allOf": [{ "$ref": "google:okf:0.1" }],
+  "required": ["title", "owner"],
+  "properties": {
+    "owner": { "type": "string", "minLength": 1 }
+  }
+}
+```
+
+Every rule the built-in carries still applies, and yours are added on top. That
+is composition *inside* one schema. Listing two schemas in a set is different. A
+set applies each schema whole and attributes failures separately. A `$ref` lets
+you narrow or extend what the built-in said.
+
+<Aside type="caution" title="A published URL never changes, and that is the point">
+Each of these paths is immutable. The bytes served at `schemas/okf/0.1.json`
+today are the bytes served there for good. A fix to a built-in ships as a *new*
+version file rather than an edit to a published one. A CI check hashes every
+schema against a committed manifest and fails the build if an already-published
+version is altered. This is enforced rather than promised.
+
+Two hosting caveats apply to anything load-bearing outside manni meta. GitHub Pages
+can return 404 briefly during a deploy, and its `Access-Control-Allow-Origin: *`
+is current behaviour rather than a contract. If a build must not depend on
+either, [vendor the file](/manni/meta/reference/configuration/) into your own
+repository and reference the local copy.
+</Aside>
+
+## Two kinds of built-in
+
+The **Requires** column above is the distinction that matters when you pick one.
+
+**Editorial schemas** describe what a page *is*. `google:okf:0.1` and the two
+`type` vocabularies demand their key. Adopting them is a claim that every page
+carries that classification, which makes an unclassified page a gap rather than
+an abstention. Turning one on for the first time reports every page that has not
+caught up yet.
+
+**Platform schemas** describe what your site generator accepts. A platform
+schema requires **exactly what the generator refuses to build without**, and
+nothing more. What it demands is a fact about the tool, not an editorial choice
+manni meta made for you.
+
+That cuts both ways. The three `docusaurus:*` schemas and `sphinx:docinfo:9.1`
+require nothing, because those tools mark no field as mandatory. Switching one
+on cannot fail a page that was already building. `astro:starlight:0.41` and
+`antora:page:3.1` both require `title`, because Starlight and Antora both
+*error* without a page title. A page failing that check was already broken, and
+manni meta is only telling you sooner.
+
+The three agent schemas are platform schemas of a different sort: the platform
+is the agent runtime rather than a site generator. `anthropic:claude-skill:2.1`
+requires nothing, because Claude Code marks every `SKILL.md` field optional.
+`agentskills:skill:1.0` requires `name` and `description`, because the open
+standard does and the packaging tools refuse a skill without them.
+`anthropic:claude-subagent:2.1` requires the same two for a third reason. Claude
+Code will not load an agent definition that is missing either. See [Agent Skills
+schemas](/manni/meta/reference/agent-skills-schemas/) and [Claude Code subagent
+schema](/manni/meta/reference/claude-subagent-schema/).
+
+Full field tables are on the [Platform
+schemas](/manni/meta/reference/platform-schemas/), [Agent Skills
+schemas](/manni/meta/reference/agent-skills-schemas/), [Claude Code subagent
+schema](/manni/meta/reference/claude-subagent-schema/) and [Docusaurus
+schemas](/manni/meta/reference/docusaurus-schemas/) pages.
+
+**Vocabulary schemas** are a third kind. They describe a document to something
+*outside* your docs site: a social card renderer (`ogp:article:1.0`), a
+catalogue or repository (`dcmi:elements:1.1`), or another publisher's build
+(`microsoft:learn:1.0`). Open Graph is the one built-in that checks something no
+build tool checks. Nothing fails when `og:image` is missing, and the page just
+renders badly everywhere it is shared. See [Metadata
+vocabularies](/manni/meta/reference/metadata-vocabularies/).
+
+The two kinds mostly claim different keys, so they compose. One run can hold a
+page to your generator's contract and to your own standard, attributing each
+failure to the schema that raised it:
+
+```bash
+manni meta validate docs/ -s docusaurus:docs:3.10 -s diataxis:diataxis:1.0
+```
+
+<Aside type="caution" title="One overlap to know about: `tags`">
+Stacking a Docusaurus schema with `google:okf:0.1` is the exception. Both define
+`tags`, and their definitions disagree: OKF allows a list of **strings only**,
+while Docusaurus also allows a tag object. Every schema in a set applies in
+full, so a page using the object form fails OKF:
+
+```text
+✗ docs/install.md
+    /tags/0  must be string  (line 6)  [google:okf:0.1]
+```
+
+If your docs set uses object tags, pair the Docusaurus schema with
+`diataxis:diataxis:1.0` or `tgdp:templates:1.0` rather than with OKF, or use the
+string form. Those two claim only `type`. `title` and `description` also appear
+in both, and those definitions agree.
+</Aside>
+
+<Aside type="caution" title="`diataxis` and `tgdp` are alternatives, not a pair">
+Both claim `type`. Stacking them is legal but narrows the accepted values to the
+intersection of the two vocabularies, which is rarely what anyone wants. Pick
+one. See [which ones
+compose](/manni/meta/reference/taxonomy-schemas/#which-ones-compose).
+</Aside>
+
+## What runs when you pass no flags
+
+Only two of the twenty-three are in the default set:
+
+```text
+google:okf:0.1 + passo-uno:seven-action:1.0
+```
+
+Everything else is opt-in. Seven-Action is safe to carry by default because it
+requires nothing. It rules that an `action`, if present, is legitimate, without
+insisting on one. The default set sits at the bottom of the [precedence
+chain](/manni/meta/reference/schema-resolution/#precedence). It applies only when
+no `--schema` flag, no in-file `$schema`, and no config rule matched.
+
+## Turn one on
+
+Three ways, in [precedence
+order](/manni/meta/reference/schema-resolution/#precedence). The first one that
+matches wins, and each replaces the set rather than adding to it.
+
+<Tabs>
+<TabItem label="Command line">
+
+Repeat `-s` to build a set. This overrides everything else for the whole run:
+
+```bash
+manni meta validate docs/ -s docusaurus:docs:3.10 -s google:okf:0.1
+```
+
+</TabItem>
+<TabItem label="Config file">
+
+Set a default for the repo, and override it per directory. This is the right
+place for the Docusaurus schemas, since a Docusaurus site has three content
+roots with three different contracts:
+
+```yaml title="manni.config.yaml"
+meta:
+  schemas:
+    - google:okf:0.1
+  overrides:
+    - files: "docs/**"
+      schemas:
+        - docusaurus:docs:3.10
+        - diataxis:diataxis:1.0
+    - files: "blog/**"
+      schemas:
+        - docusaurus:blog:3.10
+    - files: "src/pages/**"
+      schemas:
+        - docusaurus:pages:3.10
+```
+
+</TabItem>
+<TabItem label="In the document">
+
+A document can name its own schema, which beats any config rule:
+
+```markdown
+---
+$schema: diataxis:diataxis:1.0
+type: how-to
+---
+```
+
+`$schema` also takes a list, and manni meta strips the key before validating, so it
+never trips a schema that forbids unknown properties.
+
+</TabItem>
+</Tabs>
+
+## Version ids
+
+A built-in id is `vendor:name:version`. The version segment tracks the upstream
+standard, not manni meta's own release number:
+
+- `google:okf:0.1` is OKF v0.1.
+- `docusaurus:docs:3.10` is the front matter contract of Docusaurus 3.10.
+- `hugo:page:0.165` is the contract as of Hugo 0.165, and Hugo releases monthly.
+  Its front matter fields change far more slowly, so this id is not expected to
+  move every month. A new one ships when the *contract* changes, not when Hugo
+  does.
+- `mkdocs:material:9.7` versions on **Material for MkDocs 9.7**, not on MkDocs
+  1.6, even though the vendor segment says `mkdocs`. MkDocs itself defines two
+  front matter keys and Material defines the other seventeen. Material is what
+  the contract tracks, and Material's version is the one that can move it.
+  `astro:starlight:0.41` pairs a platform with a theme the same way. Ids are
+  stable. A new upstream version arrives as a *new* id rather than a change to
+  an existing one. Upgrading manni meta never silently retightens a check you
+  already passed. Pin the id you validated against and move it deliberately.
+
+## If none of these fit
+
+The built-ins are a shortcut, not a ceiling. A docs set with its own field names
+or its own vocabulary needs its own schema. That is a `.json` file you reference
+by path, or a URL you host for several repos to share. Copying the closest
+built-in and editing it is usually faster than starting from nothing.
+
+<CardGrid>
+  <LinkCard
+    title="Author a schema"
+    href="/manni/meta/schemas/"
+    description="Write a JSON Schema of your own, from a one-field example up to a full standard."
+  />
+  <LinkCard
+    title="Schema resolution reference"
+    href="/manni/meta/reference/schema-resolution/"
+    description="The precedence chain, the three reference kinds, and the supported dialects."
+  />
+  <LinkCard
+    title="Built-in OKF schema"
+    href="/manni/meta/reference/okf-schema/"
+    description="Every field in google:okf:0.1, its formats, and the upstream spec."
+  />
+  <LinkCard
+    title="Built-in taxonomy schemas"
+    href="/manni/meta/reference/taxonomy-schemas/"
+    description="The diataxis, tgdp, and seven-action vocabularies, and which ones compose."
+  />
+  <LinkCard
+    title="Built-in Docusaurus schemas"
+    href="/manni/meta/reference/docusaurus-schemas/"
+    description="The docs, blog, and pages front matter contracts of Docusaurus 3.10."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"built-in-schemas","description":"Every id in the registry table resolves, and the default set is the two this page names."} */}
+{/* step {"description":"The registry lists google:okf:0.1.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"google:okf:0.1"}} */}
+{/* step {"description":"The registry lists passo-uno:seven-action:1.0.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"passo-uno:seven-action:1.0"}} */}
+{/* step {"description":"The registry lists diataxis:diataxis:1.0.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"diataxis:diataxis:1.0"}} */}
+{/* step {"description":"The registry lists tgdp:templates:1.0.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"tgdp:templates:1.0"}} */}
+{/* step {"description":"The registry lists docusaurus:docs:3.10.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"docusaurus:docs:3.10"}} */}
+{/* step {"description":"The registry lists docusaurus:blog:3.10.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"docusaurus:blog:3.10"}} */}
+{/* step {"description":"The registry lists docusaurus:pages:3.10.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"docusaurus:pages:3.10"}} */}
+{/* step {"description":"The registry lists hugo:page:0.165.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"hugo:page:0.165"}} */}
+{/* step {"description":"The registry lists jekyll:page:4.4.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"jekyll:page:4.4"}} */}
+{/* step {"description":"The registry lists vitepress:page:1.6.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"vitepress:page:1.6"}} */}
+{/* step {"description":"The registry lists mkdocs:material:9.7.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"mkdocs:material:9.7"}} */}
+{/* step {"description":"The registry lists x:cards:1.0.","runShell":{"command":"npx @hawkeyexl/manni meta schemas","exitCodes":[0],"stdio":"x:cards:1.0"}} */}
+{/* step {"description":"A platform schema composes with an editorial one in a single run, as the page claims.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-unknown-key.md -s docusaurus:docs:3.10 -s diataxis:diataxis:1.0","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"The default set applies when no flag is given, and does not include a Docusaurus schema.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/valid.md","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"The documented `tags` overlap: OKF allows string tags only, so a Docusaurus tag object fails against OKF.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-okf-tag-conflict.md -s google:okf:0.1 -s docusaurus:docs:3.10","exitCodes":[1],"stdio":"/tags/0  must be string"}} */}
+{/* step {"description":"Pairing the platform schema with a vocabulary instead of OKF avoids that overlap.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/docusaurus/docs-okf-tag-conflict.md -s docusaurus:docs:3.10 -s diataxis:diataxis:1.0","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"A document naming a built-in by its published URL validates with no network, as the published-URLs section claims.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/published-url-schema.md --offline","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"The published URL resolves to the real OKF schema, not a permissive stand-in: a document missing `type` still fails.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md -s https://hawkeyexl.github.io/manni/schemas/okf/0.1.json --offline","exitCodes":[1],"stdio":"type"}} */}
+{/* test end */}

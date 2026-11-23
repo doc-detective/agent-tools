@@ -1,0 +1,1 @@
+{"description":"Test command-line pages as a reader walks them, scoped to CLI pages, starting from the workspace","target":"skill","suspicious":"reverted: train +0.180 (CI +-0.107) but test +0.013 (CI +-0.108) at 6 reps on test cases"}

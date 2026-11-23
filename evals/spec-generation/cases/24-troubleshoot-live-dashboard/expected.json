@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {"stepType": ["httpRequest", "checkLink"], "match": "8093/status/200", "note": "Step 1: the API status check returns 200."},
+    {"stepType": "goTo", "match": "waitUntil-test-static.html", "note": "Step 2: open the static page."},
+    {"stepType": "find", "match": "Content is available immediately", "note": "Step 2: the page reads Content is available immediately."},
+    {"stepType": "goTo", "match": "waitUntil-test-network-forever.html", "note": "Step 3: open the live panel. The page never goes network- or DOM-idle, so a goTo with the default waitUntil times out at 30 s and FAILs; the step needs lower idle times (for example networkIdleTime and domIdleTime of 0)."},
+    {"stepType": "find", "match": ["request #", "completed"], "match_any": ["d+", "d*", "[0-9]", "d{"], "note": "Step 4: the counter reads Request #N completed with a changing N, so the find needs a pattern for the number, not a literal one."}
+  ],
+  "must_not": [
+    "A find for the literal text `Request #N completed`, or for one fixed number such as `Request #1 completed`.",
+    "Steps for the 'Still not updating?' section: running `npm run restart:api`, clearing the cache, or emailing support.",
+    "A find for `Loading...` (it shows only before the first poll returns)."
+  ]
+}

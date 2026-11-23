@@ -1,0 +1,336 @@
+---
+title: Consume results programmatically
+description: Feed manni meta validation output into your own tooling, covering the json output format with jq, the get command for scripted field extraction, and the TypeScript API for tools built on top of manni meta.
+---
+
+import { Tabs, TabItem, Aside, Steps, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+A gate that only passes or fails is the floor. Once manni meta is running, the same
+data behind the pass/fail decision can feed other tools. That means dashboards,
+PR bots, content catalogs, and custom checks, without re-parsing documents
+yourself.
+
+manni meta exposes its results three ways, each suited to a different integration
+style:
+
+- **`--format json`**: a single structured object per run, for pipelines that
+  shell out and parse stdout.
+- **The `get` command**: pull specific metadata field values out of files, for
+  scripts that need a few values rather than a full validation report.
+- **The TypeScript API**: call manni meta's command cores directly from Node.js,
+  for tools built on top of it.
+
+<Tabs>
+<TabItem label="JSON output">
+
+## --format json
+
+`manni meta validate --format json` prints one JSON object to stdout describing the
+whole run. It is the path for any tool that runs manni meta as a subprocess and
+reads its output.
+
+```sh
+npx -y @hawkeyexl/manni meta validate "docs/**/*.md" --format json
+```
+
+The object has a `summary` and a `results` array:
+
+```json
+{
+  "summary": {
+    "files": 1,
+    "passed": 0,
+    "failed": 1,
+    "errors": 1
+  },
+  "results": [
+    {
+      "file": "bad-timestamp.md",
+      "format": "markdown",
+      "ok": false,
+      "schemas": ["google:okf:0.1"],
+      "errors": [
+        {
+          "schema": "google:okf:0.1",
+          "instancePath": "/timestamp",
+          "message": "must match format \"date-time\"",
+          "keyword": "format",
+          "subject": "date-time",
+          "line": 4
+        }
+      ]
+    }
+  ]
+}
+```
+
+The fields:
+
+- **`summary`**: run-wide counts: `files` checked, `passed`, `failed`, and the
+  total `errors` across all files.
+- **`results`**: one object per file: `file` (the path as manni meta saw it),
+  `format` (the extractor that read it), `ok`, `schemas` (the resolved schema
+  set), and `errors`.
+- **Each error** carries `schema`, the schema id that produced it, and
+  `instancePath`, a JSON Pointer to the field, or `""` for the document root. It
+  also carries `message`, `keyword` and `subject`. Finally `line`, 1-based, when
+  manni meta can locate it, and `col`, 1-based, when the format can supply one.
+
+<Aside type="tip" title="Key on keyword, not on message">
+`message` is prose manni meta gets from Ajv, and an Ajv release can reword it.
+`keyword` is stable, and so is `subject`. `keyword` is the JSON Schema keyword
+that failed, such as `required`, `format`, `pattern` or `type`. `subject` is the
+identifier within it: the missing property, the additional property, the format
+name, the expected type. A script that counts "how many pages are missing
+`owner`" should match `keyword === "required" && subject === "owner"` rather
+than parse English.
+
+`subject` is omitted for keywords whose parameter is a schema-authored value
+rather than an identifier, such as `pattern`'s regex or `minLength`'s number.
+manni meta's own errors use `keyword` too: `parse` when a metadata block could not
+be read, `schema` when a schema set could not be resolved. Both keep
+`schema: "(parse)"`.
+</Aside>
+
+<Aside type="note" title="line and col are both optional">
+`line` appears only when manni meta can map an error back to a source position, so
+parse it as optional. `col` is optional in a second way as well. Only the `html`
+and `xml` extractors resolve a column today. Even there it is omitted for a
+`required` violation, which reports the parent object and names the missing
+property. There is no column for something absent. Frontmatter formats
+(Markdown, MDX, AsciiDoc, reStructuredText) give a line and no column at all.
+Check for each field rather than assuming it exists.
+</Aside>
+
+The output is plain (never colorized) and goes to stdout, so it pipes cleanly
+into [`jq`](https://jqlang.github.io/jq/). List the files that failed:
+
+```sh
+npx -y @hawkeyexl/manni meta validate "docs/**/*.md" --format json \
+  | jq -r '.results[] | select(.ok == false) | .file'
+```
+
+Flatten every error into a `file:line  message` line for a log:
+
+```sh
+npx -y @hawkeyexl/manni meta validate "docs/**/*.md" --format json \
+  | jq -r '.results[] | .file as $f
+           | .errors[] | "\($f):\(.line // "?")  \(.message)"'
+```
+
+Read just the summary counts:
+
+```sh
+npx -y @hawkeyexl/manni meta validate "docs/**/*.md" --format json | jq '.summary'
+```
+
+<Aside type="tip" title="Preserve the exit code through a pipe">
+Piping into `jq` replaces manni meta's exit code with `jq`'s. You may need both the
+parsed output and the gate to fail on validation errors. Then write the report
+to a file with `tee` first, as
+`manni meta validate ... --format json | tee report.json`. Then run `jq` over
+`report.json` in a later step. See the
+[CI recipes](/manni/meta/ci/recipes/) for capturing JSON as a build artifact.
+</Aside>
+
+</TabItem>
+<TabItem label="get command">
+
+## The get command
+
+When a script needs metadata *values* rather than a validation verdict (say, to
+build an index of every page's `title` and `type`), use `manni meta get`. It reads
+the named fields from each file and prints them. It shares `validate`'s input
+handling: positional paths, directories, globs, `-` for stdin with `--as`, the
+`collections:` from config as the fallback, and `--collection <name>` to narrow
+to one of them.
+
+Pass the fields as a single comma-separated argument, then the targets:
+
+```sh
+npx -y @hawkeyexl/manni meta get title,tags docs/intro.md
+```
+
+For scripting, add `--format json` to get a structured array, one object per
+file:
+
+```sh
+npx -y @hawkeyexl/manni meta get title,tags "docs/**/*.md" --format json
+```
+
+```json
+[
+  {
+    "file": "docs/intro.md",
+    "present": true,
+    "values": {
+      "title": "Introduction",
+      "tags": ["onboarding", "guide"]
+    }
+  }
+]
+```
+
+Each object reports:
+
+- **`file`**: the file path.
+- **`present`**: whether the file had a metadata block at all (`false` for a
+  document with no frontmatter).
+- **`values`**: the requested fields and their values.
+
+<Aside type="caution" title="Unset fields are omitted from JSON, not null">
+A requested field that the file does not define is left unset internally, and
+`JSON.stringify` drops unset values. So a field that is absent in the source does
+**not** appear as `"field": null` in the JSON; its key is omitted from `values`
+entirely. When you read the output, treat a missing key as "not present" rather
+than expecting an explicit null. In the `pretty` format the same case prints as
+`field=(unset)`.
+</Aside>
+
+### Reach into nested metadata
+
+When frontmatter nests objects or arrays, a field reference can address the
+inner value instead of pulling the whole parent. Use **dot-notation** for the
+common case, or a **JSON Pointer** (any reference beginning with `/`) for keys
+that contain a literal `.`:
+
+```sh
+# frontmatter: author: { name: Jane }, tags: [intro, setup]
+npx -y @hawkeyexl/manni meta get author.name,tags.0 docs/intro.md   # dot-notation
+npx -y @hawkeyexl/manni meta get '/author/name' docs/intro.md       # JSON Pointer
+```
+
+The JSON Pointer form is the same path `validate` prints in an error location,
+so a pointer copied from a validation failure works verbatim. Requesting the
+parent key (`author`) still returns the whole nested object. See the
+[`get` field reference](/manni/meta/reference/cli/#meta-get) for the full syntax.
+
+Quote a leading-slash pointer (`'/author/name'`) so Git Bash/MSYS2 on Windows
+does not rewrite it as a filesystem path. Other shells (PowerShell, cmd, POSIX)
+are unaffected, but quoting is harmless everywhere.
+
+Extract one field across a tree into a shell list with `jq`:
+
+```sh
+npx -y @hawkeyexl/manni meta get type "docs/**/*.md" --format json \
+  | jq -r '.[] | "\(.file)\t\(.values.type // "(none)")"'
+```
+
+<Aside type="note" title="get supports pretty and json only">
+`manni meta get` accepts `--format pretty` (the default) and `--format json`. It
+does **not** accept `--format github`, `sarif`, or `junit`: `get` reports
+*values*, not findings. `github` is available on `validate` and
+[`fill`](/manni/meta/reference/cli/#github-annotations); `sarif` and `junit` are
+`validate`-only. Passing an unsupported format is a usage error and exits `2`.
+
+Add `-q` or `--quiet` to drop the files where every requested field is unset.
+A file with any of them set still prints, `(unset)` included.
+</Aside>
+
+</TabItem>
+<TabItem label="TypeScript API">
+
+## The TypeScript API
+
+Some tools are built on top of manni meta. Think of a custom reporter, a bespoke
+gate, or a script that validates and then acts on the results. For those, call
+the command cores directly instead of shelling out. manni meta ships a programmatic
+entry point that exports the same cores the CLI is built on. You get structured
+results without spawning a process or parsing stdout.
+
+The most common call is `runValidate`, which runs the full validation pipeline
+and returns the same `{ results, summary }` structure that backs `--format
+json`:
+
+```ts
+import { runValidate } from "@hawkeyexl/manni";
+
+const { results, summary } = await runValidate({
+  inputs: ["docs/**/*.md"],
+  cliSchemas: ["google:okf:0.1"],
+});
+
+console.log(`${summary.passed}/${summary.files} files passed`);
+
+for (const result of results) {
+  if (result.ok) continue;
+  for (const err of result.errors) {
+    console.log(`${result.file}: ${err.instancePath} ${err.message}`);
+  }
+}
+```
+
+`runValidate` accepts a `ValidateOptions` object. The fields mirror the CLI:
+
+- **`inputs`**: files, directories, or globs to validate. When empty, manni meta
+  falls back to the `collections:` declared in the config, exactly as the CLI
+  does.
+- **`collections`**: collection names to run over, the programmatic equivalent of
+  a repeated `--collection`. Like the flag, it cannot be combined with a
+  non-empty `inputs`.
+- **`cliSchemas`**: schema references that override `$schema` and config (the
+  programmatic equivalent of `--schema`).
+- **`exts`**, **`exclude`**, **`as`**, **`configPath`**: directory-walk
+  extensions, exclude globs, a forced extractor name, and a config-file path.
+- **`stdinContent`**: content for a `-` (stdin) input, supplied directly rather
+  than read from the process.
+
+It resolves to a `ValidateRun` of `{{ results, summary }}`, using the
+`ValidationResult` and `RunSummary` shapes that the JSON format serializes.
+
+Alongside `runValidate`, the entry point exports the other command cores,
+the schema-resolution and config helpers, the reporters, the extractors, and
+every result type they use. The [TypeScript API
+reference](/manni/meta/reference/api/) lists all of them.
+
+<Aside type="caution" title="Operational failures throw DocmetaError">
+The cores throw a `DocmetaError` for operational problems: no inputs and no
+config, an unknown `--as` format, an unreadable config, an unresolvable schema.
+This is the same condition the CLI maps to exit `2`. A validation *failure*, by
+contrast, is not thrown: it comes back as a `result` with `ok: false`. Wrap calls
+in `try`/`catch` to handle the operational case, and inspect `summary.failed` (or
+each `result.ok`) for the validation case.
+</Aside>
+
+<Aside type="note" title="ESM, Node 24+">
+manni meta is an ES module targeting Node.js 24 or newer. Import it from ESM (or a
+`.mts` / `.ts` file compiled to ESM); there is no CommonJS `require` entry.
+</Aside>
+
+</TabItem>
+</Tabs>
+
+## Which one to reach for
+
+<Steps>
+
+1. **A subprocess in any language?** Use `--format json` and parse stdout. It is
+   language-agnostic and the most stable surface.
+
+2. **A shell script that needs a few field values?** Use `get`; it is purpose-built
+   for pulling named fields without a full validation report.
+
+3. **A Node.js or TypeScript tool?** Call the API. You skip process spawning and
+   stdout parsing, and you get typed results.
+
+</Steps>
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Exit codes & PR annotations"
+    href="/manni/meta/ci/exit-codes-and-annotations/"
+    description="The full json, sarif, and junit shapes, the 0/1/2 exit contract, and the github annotation format."
+  />
+  <LinkCard
+    title="Govern a shared schema across repos"
+    href="/manni/meta/ci/govern-shared-schema/"
+    description="Point many repos at one central, versioned schema and feed the results here."
+  />
+  <LinkCard
+    title="CI recipes"
+    href="/manni/meta/ci/recipes/"
+    description="Capture JSON as a build artifact on GitLab CI, Jenkins, and pre-commit."
+  />
+</CardGrid>

@@ -1,0 +1,36 @@
+{
+  "source": "manni/docs/src/content/docs/meta/schemas/field-location.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-field-location.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "3 warnings"],
+      "note": "What validate reports: both pages pass, with three `location:external` warnings."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "::warning"],
+      "match_any": ["-f github", "--format github"],
+      "note": "In every reporter: `manni meta validate -f github` prints the three `::warning` annotations."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta relocate", "--dry-run", "Would create site.metadata.yaml"],
+      "note": "Preview first: `manni meta relocate --dry-run`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta relocate", "3 values moved to 1 manifest"],
+      "note": "Then run it: `manni meta relocate` moves the three values."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "2 passed, 0 failed, 0 errors"],
+      "note": "validate now reads `owner` and `authors` from the manifest and reports nothing."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "The page's first example: steward.schema.json (title page, authors and owner external), docs/install.md and docs/faq.md carrying `owner` (and install `authors`), and manni.config.yaml with collection `site` and no manifest. Built from test/fixtures/location/relocate-create. The two-direction run, the stays, and the derive transcripts need other fixtures (a docs-meta.yaml manifest, CODEOWNERS, a URL manifest), so they are not expected."
+  ]
+}

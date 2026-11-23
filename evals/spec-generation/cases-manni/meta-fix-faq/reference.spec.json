@@ -1,0 +1,81 @@
+{
+  "specId": "manni-meta-fix-faq",
+  "description": "manni docs meta/fix/faq, run in a repo whose docs/ holds a Markdown and an MDX page, a draft missing type, and a collection that excludes drafts.",
+  "tests": [
+    {
+      "testId": "fix-faq",
+      "steps": [
+        {
+          "description": "Read a field's value rather than validate it: get.",
+          "runShell": {
+            "command": "manni meta get type docs/guide.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "docs/guide.md: type=concept"
+          }
+        },
+        {
+          "description": "Validate content from stdin: pass - and name the format with --as.",
+          "runShell": {
+            "command": "manni meta validate - --as markdown < page.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "Without --as, stdin is an error (exit 2).",
+          "runShell": {
+            "command": "manni meta validate - < page.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "requires --as"
+          }
+        },
+        {
+          "description": "--ext md walks docs/ but considers only .md files, so widget.mdx is left out.",
+          "runShell": {
+            "command": "manni meta validate docs/ --ext md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/^(?![\\s\\S]*widget\\.mdx)[\\s\\S]*2 files checked/"
+          }
+        },
+        {
+          "description": "--exclude filters what this run walks: the drafts are skipped.",
+          "runShell": {
+            "command": "manni meta validate docs/ --exclude \"**/drafts/**\"",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/^(?![\\s\\S]*drafts)[\\s\\S]*0 failed/"
+          }
+        },
+        {
+          "description": "A collection's exclude does not filter a path you type: validate docs/ walks the drafts.",
+          "runShell": {
+            "command": "manni meta validate docs/",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "docs/drafts/wip.md"
+          }
+        },
+        {
+          "description": "A bare run reads the collections, so the drafts are skipped.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/^(?![\\s\\S]*drafts)[\\s\\S]*0 failed/"
+          }
+        }
+      ]
+    }
+  ]
+}

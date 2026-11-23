@@ -1,0 +1,57 @@
+{
+  "specId": "manni-meta-built-in-schemas",
+  "description": "manni docs meta/reference/built-in-schemas, run in a Docusaurus site whose docs/install.md uses a tag object.",
+  "tests": [
+    {
+      "testId": "built-in-schemas",
+      "steps": [
+        {
+          "description": "manni meta schemas prints the registry from the installed version.",
+          "runShell": {
+            "command": "manni meta schemas",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/google:okf:0\\.1[\\s\\S]*diataxis:diataxis:1\\.0[\\s\\S]*docusaurus:docs:3\\.10[\\s\\S]*anthropic:claude-subagent:2\\.1/"
+          }
+        },
+        {
+          "description": "A platform schema and an editorial one compose in one run.",
+          "runShell": {
+            "command": "manni meta validate docs/ -s docusaurus:docs:3.10 -s diataxis:diataxis:1.0",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "2 files checked, 2 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "Turn one on from the command line: stacked with OKF, the tag object fails OKF's string-only tags.",
+          "runShell": {
+            "command": "manni meta validate docs/ -s docusaurus:docs:3.10 -s google:okf:0.1",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/tags/0  must be string  (line 6)  [google:okf:0.1]"
+          }
+        },
+        {
+          "description": "Turn one on in config: a default set and one override per content root.",
+          "runShell": {
+            "command": "node -e \"require('fs').writeFileSync('manni.config.yaml','meta:\\n  schemas:\\n    - google:okf:0.1\\n  overrides:\\n    - files: \\x22docs/**\\x22\\n      schemas:\\n        - docusaurus:docs:3.10\\n        - diataxis:diataxis:1.0\\n    - files: \\x22blog/**\\x22\\n      schemas:\\n        - docusaurus:blog:3.10\\n    - files: \\x22src/pages/**\\x22\\n      schemas:\\n        - docusaurus:pages:3.10\\n')\""
+          }
+        },
+        {
+          "description": "The overrides apply: docs/ gets Docusaurus with Diataxis, so the tag object passes.",
+          "runShell": {
+            "command": "manni meta validate docs/ blog/ src/pages/",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "4 files checked, 4 passed, 0 failed, 0 errors"
+          }
+        }
+      ]
+    }
+  ]
+}

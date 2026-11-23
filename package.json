@@ -20,6 +20,7 @@
     "prepare": "husky",
     "validate:skills": "./scripts/doc-detective-validate-skills.sh",
     "test:lsp-plugin": "mocha tests/hooks/lsp-plugin.test.js --timeout 30000",
+    "test:evals": "mocha tests/evals/*.test.mjs",
     "semantic-release": "semantic-release"
   },
   "devDependencies": {

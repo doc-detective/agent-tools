@@ -1,0 +1,18 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "multi-tab.html", "note": "Step 1: open the record list."},
+    {"stepType": "find", "match": "MULTI-TAB HOME", "note": "Step 1: heading MULTI-TAB HOME."},
+    {"stepType": "click", "match": "Open child via window.open", "note": "Step 2: open the first record."},
+    {"stepType": "find", "match": "PAGE opened", "note": "Step 2: the new tab's label reads PAGE opened."},
+    {"stepType": "type", "match": "first draft", "note": "Step 3: enter first draft in the first record's Echo input: field."},
+    {"stepType": "find", "match": "first draft", "note": "Step 3: the note appears next to the field."},
+    {"stepType": "click", "match": "Open child in new tab", "note": "Step 4: back in the original tab, open the second record."},
+    {"stepType": "find", "match": "PAGE linked", "note": "Step 4: the second tab's label reads PAGE linked."},
+    {"stepType": "type", "match": "second draft", "note": "Step 5: enter second draft in the second record's Echo input: field."},
+    {"stepType": "find", "match": "second draft", "note": "Step 5: the note appears next to the field."},
+    {"stepType": "find", "match": "first draft", "note": "Step 6: the first record's tab still shows first draft (a second, separate find)."}
+  ],
+  "must_not": [
+    "Opening the records with goTo to multi-tab-child.html instead of clicking the buttons on the list page."
+  ]
+}

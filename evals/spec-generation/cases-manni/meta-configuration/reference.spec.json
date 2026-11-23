@@ -1,0 +1,87 @@
+{
+  "specId": "manni-meta-configuration",
+  "description": "manni docs meta/reference/configuration, run in a repo whose manni.config.yaml is the 0.3.0 form the migration section starts from.",
+  "tests": [
+    {
+      "testId": "migrate-and-select",
+      "steps": [
+        {
+          "description": "The 0.3.0 config is refused, naming where the key went.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "\"paths\" is no longer a meta key. Document sets are declared once for every tool, under a top-level collections: list."
+          }
+        },
+        {
+          "description": "Migrate: write the 1.0.0 form of the config.",
+          "runShell": {
+            "command": "node -e \"require('fs').writeFileSync('manni.config.yaml','collections:\\n  - name: pages\\n    paths: [\\x22docs/**/*.md\\x22]\\n    exclude: [\\x22docs/drafts/**\\x22]\\n    externalMetadata:\\n      - file: ./docs-meta.yaml\\n        keys: [source, jira]\\n  - name: guides\\n    paths: [\\x22docs/guides/**\\x22]\\n\\nmeta:\\n  overrides:\\n    - collection: guides\\n      schemas: [./schemas/guide.json]\\n')\""
+          }
+        },
+        {
+          "description": "With the collections in place, a bare run reads every collection; the drafts stay out.",
+          "runShell": {
+            "command": "manni meta validate",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "3 files checked, 3 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "--collection narrows the run to one collection.",
+          "runShell": {
+            "command": "manni meta validate --collection guides",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "Two collections, one name per occurrence.",
+          "runShell": {
+            "command": "manni meta validate --collection guides --collection pages",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "3 files checked, 3 passed"
+          }
+        },
+        {
+          "description": "An unknown collection name is a usage error.",
+          "runShell": {
+            "command": "manni meta validate --collection gides",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "no collection named \"gides\" in manni.config.yaml."
+          }
+        },
+        {
+          "description": "--collection cannot be combined with paths.",
+          "runShell": {
+            "command": "manni meta validate --collection guides docs/x.md",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "--collection selects a configured collection; it cannot be combined with paths."
+          }
+        },
+        {
+          "description": "--collection needs a config file.",
+          "runShell": {
+            "command": "manni meta validate --collection guides --no-config",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "--collection needs a config file to select from."
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,3 @@
+collections:
+  - name: docs-pages
+    paths: ["docs/**/*.md"]

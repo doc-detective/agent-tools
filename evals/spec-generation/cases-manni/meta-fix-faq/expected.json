@@ -1,0 +1,35 @@
+{
+  "source": "manni/docs/src/content/docs/meta/fix/faq.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-fix-faq.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta get", "type", "docs/guide.md"],
+      "note": "Read a field instead of validating it: `manni meta get type docs/guide.md`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--as markdown"],
+      "note": "Validate stdin: `cat page.md | manni meta validate - --as markdown`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--ext md"],
+      "note": "Check only Markdown: `manni meta validate docs/ --ext md`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--exclude", "**/drafts/**"],
+      "note": "Exclude drafts on the command line: `manni meta validate docs/ --exclude \"**/drafts/**\"`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "A bare `manni meta validate` reads the collections, so the collection's `exclude:` skips the drafts."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/guide.md (type concept) and docs/widget.mdx pass; docs/drafts/wip.md has no `type`, so a walk that includes the drafts fails. page.md is a passing document to pipe in on stdin. manni.config.yaml already declares the page's `pages` collection with `exclude: [\"**/drafts/**\"]`, so the bare run skips the drafts."
+  ]
+}

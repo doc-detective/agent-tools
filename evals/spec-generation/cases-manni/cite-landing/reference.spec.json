@@ -1,0 +1,75 @@
+{
+  "specId": "manni-cite-landing",
+  "description": "manni docs cite/index, the 30-second proof, run in a repo whose docs/limits.md cites nothing yet.",
+  "tests": [
+    {
+      "testId": "cite-landing-proof",
+      "steps": [
+        {
+          "description": "Pin both ends of the sentence on line 9.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite add docs/limits.md:9 lib/limits.ts:2 --id fetch-timeout",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/docs\\/limits\\.md: added fetch-timeout to frontmatter \\(claim at line 19, sha256-[0-9a-f]+…; source lib\\/limits\\.ts:2 \"export const FETCH_TIMEOUT_MS = 10_000;\"/"
+          }
+        },
+        {
+          "description": "Check it: both ends current.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check docs/limits.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:19 current\\s+lib\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+          }
+        },
+        {
+          "description": "Commit the citation.",
+          "runShell": {
+            "command": "git -c user.name=Docs -c user.email=docs@example.com commit -qam \"cite the fetch timeout\"",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "Someone raises the timeout to 30 seconds.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='lib/limits.ts';f.writeFileSync(p,f.readFileSync(p,'utf8').replace('FETCH_TIMEOUT_MS = 10_000','FETCH_TIMEOUT_MS = 30_000'))\""
+          }
+        },
+        {
+          "description": "And commits.",
+          "runShell": {
+            "command": "git -c user.name=Dev -c user.email=dev@example.com commit -qam \"raise fetch timeout to 30s\"",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "The page has not changed, so metadata validation still passes.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni meta validate docs/limits.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "1 file checked, 1 passed, 0 failed, 0 errors"
+          }
+        },
+        {
+          "description": "The citation check does not: the source end changed, 1 commit, exit 1.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check docs/limits.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/fetch-timeout\\s+:19 current\\s+lib\\/limits\\.ts:2 changed since [0-9a-f]+, 1 commit[\\s\\S]*1 file checked, 0 passed, 1 failed, 1 finding/"
+          }
+        }
+      ]
+    }
+  ]
+}

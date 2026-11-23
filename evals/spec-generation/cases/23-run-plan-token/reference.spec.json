@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "testId": "run-plan-token",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/resolved-tests",
+            "method": "get",
+            "request": {"headers": {"x-runner-token": "test-token-123"}},
+            "statusCodes": [200],
+            "response": {"body": {"resolvedTestsId": "api-resolved-tests-id"}}
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/resolved-tests",
+            "method": "get",
+            "statusCodes": [401],
+            "response": {"body": {"error": "Unauthorized"}}
+          }
+        }
+      ]
+    }
+  ]
+}

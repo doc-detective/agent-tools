@@ -1,0 +1,12 @@
+# Citations for the site collection, keyed by page path.
+src/content/docs/limits.md:
+  citations:
+    - id: fetch-timeout
+      claim:
+        lines: 6
+        integrity: sha256-921b21cccab21a4577f224ec4171aa56a3414bb3a5a4704ab8b6f314c46aa094
+      source:
+        file: lib/limits.ts
+        lines: 4
+        integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+        commit-sha: b9029ea7eceaa82eb892d74a679f43a6a4c8aaa1

@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "crop-sticky-header.html", "note": "Step 1: open the landing page."},
+    {"stepType": "find", "match": "Site banner", "note": "Step 1: the fixed Site banner is shown."},
+    {"stepType": "screenshot", "match": ["get-started.png", "crop"], "note": "Step 3: a screenshot cropped to the Get started button, saved as get-started.png."},
+    {"stepType": "find", "match": "Learn more", "note": "Step 4: the Learn more button is further down."}
+  ],
+  "must_not": [
+    "Steps for 'Publish the image': uploading to a content portal or asking an editor to approve.",
+    "A full-page screenshot with no crop (step 3 says to crop out the banner and the rest of the page)."
+  ]
+}
