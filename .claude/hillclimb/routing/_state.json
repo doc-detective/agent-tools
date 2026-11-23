@@ -179,5 +179,37 @@
     "val-before-commit",
     "val-config"
   ],
-  "reps": 3
+  "reps": 3,
+  "goal": {
+    "target": "correct",
+    "direction": "higher",
+    "hold": [
+      "lenient",
+      "false_trigger_rate"
+    ]
+  },
+  "approve_each_round": false,
+  "scope": {
+    "will_change": [
+      "src/skills/*/SKILL.md frontmatter description",
+      "src/agents/doc-detective-specialist.md description"
+    ],
+    "off_limits": [
+      "skill and agent bodies",
+      "scripts",
+      "hooks",
+      "build.js",
+      "evals/"
+    ]
+  },
+  "stop": {
+    "plateau_rounds": 3,
+    "max_rounds": 6,
+    "abort_if": "any false trigger on a none case"
+  },
+  "current_round": 1,
+  "best": {
+    "round": 1,
+    "test_score": 0.949
+  }
 }
