@@ -131,7 +131,7 @@ function mkdirNoFollow(dir) {
 // the same list so a suffixed ref never gets an extensionless shadow.
 const REF_EXTS = ['', '.html', '.txt', '.json'];
 
-// --- fill these in ----------------------------------------------------------
+// --- eval hooks: loadCases / runCase / gradeCase --------------------------------
 //
 // Inline eval: see grade.mjs for the cases, workspaces, and grading.
 

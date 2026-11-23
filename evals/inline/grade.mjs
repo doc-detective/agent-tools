@@ -263,7 +263,7 @@ export function placement(original, cmp, detected) {
       prevStart = start;
     }
   }
-  return { score: checkable ? placed / checkable : ours ? 1 : 0, misplaced };
+  return { score: checkable ? placed / checkable : ours ? 1 : 0, misplaced, checkable };
 }
 
 // --- grade ------------------------------------------------------------------------
@@ -297,8 +297,11 @@ export function gradeRun(c, run) {
       complete: !comment_only ? 'edits more than comments' : cov.score === 1 ? 'only comments, every expected step detected' : 'only comments, but misses expected steps',
       comment_only: run.text == null ? 'doc file missing' : cmp.ok ? 'only comments added' : cmp.reason,
       coverage: cov.misses.length ? `missing: ${cov.misses.join('; ')}` : 'all expected steps detected',
-      placement: place.misplaced.length ? `not after their text: ${place.misplaced.slice(0, 5).join('; ')}` : 'every checkable step after its text',
+      placement: place.misplaced.length ? `not after their text: ${place.misplaced.slice(0, 5).join('; ')}`
+        : place.checkable ? 'every checkable step after its text' : "no added step's text is in the doc",
       detected: `doc-detective --dry-run exit ${run.dry?.code}; ${steps.length} step(s) in ${tests.length} test(s)${run.dry?.code ? `: ${run.dry.log.split('\n')[0]}` : ''}`,
     },
+    // Steps whose text placement could check; 0 means placement had nothing to judge.
+    checkable: place.checkable,
   };
 }
