@@ -1,0 +1,10 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "waitUntil-test-late-element.html", "note": "Step 1: open the health dashboard."},
+    {"stepType": "find", "match_any": ["Dashboard", "dashboard-loaded"], "note": "Step 2: 'you'll know it's ready when its tile appears' - the tile's actual text is Dashboard; the doc never quotes it."},
+    {"stepType": "find", "match_any": ["operational", ".status"], "note": "Step 3: 'it tells you the system is operational' - the actual status text is 'System operational'; the doc phrases the expected result indirectly."}
+  ],
+  "must_not": [
+    "A step for the conditional 'If the status line reports anything else...' fallback (there is no service status page to visit)."
+  ]
+}

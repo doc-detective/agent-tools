@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "testId": "preview-notifications",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/click-shorthand.html"
+        },
+        {
+          "click": "Reveal by text"
+        },
+        {
+          "find": "Text click landed"
+        },
+        {
+          "click": "Reveal by object"
+        },
+        {
+          "find": "Object click landed"
+        },
+        {
+          "find": "Text click landed"
+        }
+      ]
+    }
+  ]
+}

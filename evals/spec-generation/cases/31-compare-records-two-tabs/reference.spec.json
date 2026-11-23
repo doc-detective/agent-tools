@@ -1,0 +1,109 @@
+{
+  "tests": [
+    {
+      "testId": "compare-records-two-tabs",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/multi-tab.html"
+        },
+        {
+          "find": "MULTI-TAB HOME"
+        },
+        {
+          "click": "Open child via window.open"
+        },
+        {
+          "find": {
+            "elementText": "PAGE opened",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=opened"
+              }
+            }
+          }
+        },
+        {
+          "type": {
+            "keys": "first draft",
+            "selector": "#echo-input",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=opened"
+              }
+            }
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo-out",
+            "elementText": "first draft",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=opened"
+              }
+            }
+          }
+        },
+        {
+          "click": {
+            "elementText": "Open child in new tab",
+            "surface": {
+              "browser": "chrome",
+              "tab": 0
+            }
+          }
+        },
+        {
+          "find": {
+            "elementText": "PAGE linked",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=linked"
+              }
+            }
+          }
+        },
+        {
+          "type": {
+            "keys": "second draft",
+            "selector": "#echo-input",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=linked"
+              }
+            }
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo-out",
+            "elementText": "second draft",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=linked"
+              }
+            }
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo-out",
+            "elementText": "first draft",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=opened"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

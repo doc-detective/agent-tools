@@ -1,0 +1,374 @@
+---
+title: Keep citations out of the page
+description: "Declare a manifest that owns the citations key for a collection, move a page's entries into it, and keep checking the same way. The page carries no citation YAML, and a finding on an entry names the manifest and the entry's line."
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+A citation entry is eleven lines of YAML, and three of them are hashes. On a
+page that carries four, the frontmatter a writer opens is mostly pins. This
+page moves those entries out, into one **sidecar manifest** per collection,
+and leaves the pages as prose with a title.
+
+Nothing about the check changes. The same `manni cite check` covers the same
+pages, `add` and `update` write the manifest instead of the page, and a
+finding lands where a reviewer can act on it. What changes is where the YAML
+lives.
+
+Every transcript below is real output from the built tool.
+
+## The example repository
+
+```
+manni.config.yaml
+docs-citations.yaml      the site collection's entries
+guides-citations.yaml    the guides collection's entries
+docs/                    limits.md, retries.md, moved.md, moved-two.md, own.md, entry-invalid.md
+guides/guide.md
+lib/                     limits.ts, moved.ts
+```
+
+Two collections, `site` and `guides`, and one manifest each. The pages under
+`docs/` carry a title and prose. Every citation they have is in
+`docs-citations.yaml`.
+
+<Steps>
+
+1. **Declare the manifest on the collection.** There is no `cite:` key for
+   this. The mechanism is the metadata tool's external metadata, and the
+   collection declares a manifest that owns the `citations` key:
+
+   ```yaml title="manni.config.yaml"
+   collections:
+     - name: site
+       paths: ["docs/**/*.md"]
+       externalMetadata:
+         - file: ./docs-citations.yaml
+           keys: [citations]
+   ```
+
+   `file` is relative to the config file. `keys` is the list of page keys this
+   manifest owns, and `citations` is the one cite reads and writes. A manifest
+   may own other keys beside it, and a collection may declare more than one
+   manifest, as long as only one of them owns `citations`.
+
+2. **Move each page's entries into it.** The manifest is a mapping from page
+   path, relative to the config file, to that page's keys. That holds wherever
+   the manifest sits. Cut the `citations:` block out of the page's frontmatter
+   and paste it under the page's path:
+
+   ```yaml title="docs-citations.yaml"
+   # The site collection's citations, keyed by page path relative to the config file.
+   docs/limits.md:
+     citations:
+       - id: fetch-timeout
+         claim:
+           lines: 3
+           integrity: sha256-921b21cccab21a4577f224ec4171aa56a3414bb3a5a4704ab8b6f314c46aa094
+         source:
+           file: lib/limits.ts
+           lines: 2
+           integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+   ```
+
+   `claim.lines` still counts the **page** body, not the manifest. The page
+   decides where its body starts, whoever keeps the entry. So moving an entry
+   into a manifest never changes a single number in it.
+
+   ```md title="docs/limits.md"
+   ---
+   title: Limits
+   ---
+   # Limits
+
+   The fetch timeout is 10 seconds.
+   ```
+
+3. **Confirm the page came out clean.** `meta get` reads the page alone under
+   `--no-config`, and reads the merged view when the config governs the run.
+   The pair is the proof:
+
+   ```sh
+   manni meta get docs/limits.md --no-config --fields title,citations
+   ```
+
+   ```
+   docs/limits.md: title=Limits (asserted)
+   docs/limits.md: citations=(unset)
+   ```
+
+   ```sh
+   manni meta get docs/limits.md --fields title,citations
+   ```
+
+   ```
+   docs/limits.md: title=Limits (asserted)
+   docs/limits.md: citations=[{"id":"fetch-timeout","claim":{"lines":3,…}] (asserted)
+   ```
+
+   The page's own bytes carry no citation metadata. Every tool that reads the
+   config still sees the key.
+
+4. **Check exactly as before.** A fourth column appears on the row, naming
+   the manifest and the line the entry starts on:
+
+   ```sh
+   manni cite check docs/limits.md
+   ```
+
+   ```
+   ✓ docs/limits.md
+       ✓ fetch-timeout   :6 current   lib/limits.ts:2 current   docs-citations.yaml:5
+
+   1 file checked, 1 passed, 0 failed, 0 findings
+   ```
+
+   The claim end reads `:6`, a line of the page, and the manifest column reads
+   `docs-citations.yaml:5`, a line of the manifest. A frontmatter entry leaves
+   that column empty.
+
+   Which manifest owns a page is decided by **every** collection in the
+   config, whatever `--collection` or the positional paths select. So a page
+   checked by path still finds its sidecar. `--no-config` reads frontmatter
+   only, and then the page looks like it has no citations at all.
+
+</Steps>
+
+## Where a finding lands
+
+{/* cite entry-finding-on-manifest-line */}
+A claim finding or a marker finding sits on the **page** line, where a
+reviewer reads the sentence. A finding about the entry itself sits on the
+**manifest**, on the entry's own first line:
+
+```
+✗ docs/entry-invalid.md
+    ✗ bad-pin   /source/integrity must match pattern "^(?:sha256|hmac-sha256)-[0-9a-f]{64}$"   (docs-citations.yaml:42)
+
+1 file checked, 0 passed, 1 failed, 1 finding
+```
+
+{/* cite github-annotates-manifest */}
+The file that failed is still the page, because the page is what stopped being
+checkable. The location is the manifest, because that is the file to open.
+`-f github` annotates it there, so the comment appears on the manifest's diff
+in the pull request:
+
+```
+::error file=docs-citations.yaml,line=42,title=manni%3Acite/entry-invalid::bad-pin (lib/limits.ts): /source/integrity must match pattern "^(?:sha256|hmac-sha256)-[0-9a-f]{64}$"
+```
+
+{/* cite manifest-outside-repo-on-page */}
+SARIF drops a location outside the repository, so a manifest kept outside it
+is reported on the page instead.
+
+<Aside type="note" title="Pretty prints one row per citation">
+  The row carries a status word, and only the entry rules carry their message
+  into it. A `claim-changed` row reads `:9 changed` and nothing more. The
+  sentence that explains it, `the claim at line 9 has changed since it was
+  pinned`, is in `-f github` and `-f json`, which is what CI reads.
+</Aside>
+
+## Half-moved pages are caught
+
+{/* cite half-moved-entry-invalid */}
+If you declare the manifest and forget to delete a page's own `citations:`,
+the page has two owners for one key. That is an error under both tools, and
+the message names the manifest and the collection:
+
+```
+✗ docs/own.md
+    ✓ on-the-page      lib/limits.ts current
+    ✗ page   "citations" is owned by manifest docs-citations.yaml (collection site); remove it from the document   (line 3)
+
+1 file checked, 0 passed, 1 failed, 1 finding
+```
+
+{/* cite half-moved-meta-external-owned */}
+`meta validate` reports the same page as `external:owned`. So a half-finished
+migration cannot pass quietly, whichever gate runs first.
+
+## Writing the manifest
+
+{/* cite manifest-splice-read-back */}
+{/* cite manifest-writers-rotate */}
+`add`, `update` and `manni key rotate` edit the manifest in place. They splice
+only that page's `citations` value, so comments, key order and every other
+byte survive, and they read the file back to confirm it.
+
+{/* cite add-placement-follows-config */}
+`add` needs no flag. Where the entry goes follows the config:
+
+```sh
+manni cite add docs/retries.md:6 lib/limits.ts:3 --id retries --dry-run
+```
+
+```diff
+--- docs-citations.yaml
++++ docs-citations.yaml
+@@ -55,1 +55,13 @@
+         integrity: sha256-aebba92fe4cddf100cc781281d1f24ad7c234b6189413e2130d5fe71ed86e023
++
++docs/retries.md:
++  citations:
++    - id: retries
++      claim:
++        lines: 3
++        integrity: sha256-d33051d7acffdfa8567c4615e8daf62d8c77672a15e9fcdab8cb5077f867abb6
++      source:
++        file: lib/limits.ts
++        lines: 3
++        integrity: sha256-e9f5bdf94a12c610b54573d2b66347592887805e59c69b64803a8c0d30edaea3
++        commit-sha: 9265563d8ea84a13fea0001b7e531c119f47d070
+```
+
+```
+docs/retries.md: added retries to docs-citations.yaml:59 (claim at line 6, sha256-d33051d7…; source lib/limits.ts:3, sha256-e9f5bdf9…, 9265563)
+```
+
+{/* cite add-manifest-page-untouched */}
+The report says the claim is at line 6, which is the line you typed. On a
+frontmatter page the same `add` would have pushed the sentence ten lines down
+and reported line 16. The page was not touched here, so nothing moved.
+
+{/* cite update-writes-manifest-once */}
+`update` writes each manifest **once per run**, however many entries it
+repaired:
+
+```sh
+manni cite update --dry-run docs/moved.md docs/moved-two.md
+```
+
+```
+docs/moved-two.md: fetch-timeout source lib/moved.ts:2 -> lib/moved.ts:4 (moved)
+docs/moved.md: fetch-timeout source lib/moved.ts:2 -> lib/moved.ts:4 (moved)
+--- docs-citations.yaml
++++ docs-citations.yaml
+@@ -22,3 +22,3 @@
+         file: lib/moved.ts
+-        lines: 2
++        lines: 4
+         integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+@@ -35,3 +35,3 @@
+         file: lib/moved.ts
+-        lines: 2
++        lines: 4
+         integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+2 citations rewritten in 2 files, 0 skipped
+```
+
+## Keying by a page field instead of by path
+
+{/* cite join-field-key */}
+A manifest keyed by path is orphaned by a `git mv`. A `join:` key says to
+match on a page field instead, and the entry then travels with the page:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: guides
+    paths: ["guides/**/*.md"]
+    externalMetadata:
+      - file: ./guides-citations.yaml
+        keys: [citations]
+        join: slug
+```
+
+```yaml title="guides-citations.yaml"
+guide-one:
+  citations:
+    - id: fetch-timeout
+      claim:
+        lines: 3
+        integrity: sha256-921b21cccab21a4577f224ec4171aa56a3414bb3a5a4704ab8b6f314c46aa094
+      source:
+        file: lib/limits.ts
+        lines: 2
+        integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+```
+
+The page that carries `slug: guide-one` in its frontmatter owns that entry,
+wherever the file moves to:
+
+```
+✓ guides/guide.md
+    ✓ fetch-timeout   :7 current   lib/limits.ts:2 current   guides-citations.yaml:4
+
+1 file checked, 1 passed, 0 failed, 0 findings
+```
+
+{/* cite duplicate-join-refused */}
+Two pages carrying one `join:` value is refused, because a write would land on
+whichever page the run reached last.
+
+## The three refusals
+
+Each is an operational error, exit `2`. The first is raised when the config is
+read, before any page is. The second is raised on a page both collections
+match. The third is raised after `add` reads the page from stdin.
+
+| You wrote | You hear |
+| --- | --- |
+| A URL in `file:` on the manifest that owns `citations`. | `manni.config.yaml: collection site: citations cannot come from a URL manifest, because cite writes them.` |
+| Two collections matching one page, both with a manifest owning `citations`. | `docs/page.md is in collections site and api, and both keep citations in a manifest.` |
+| `-` on `add`, to read the page from stdin. | `A page read from stdin has no path, and its citations live in docs-citations.yaml, which is keyed by path.` |
+
+The first two are about writing. A manifest cite writes has to be a file it
+can open. A page whose entries have two owners has nothing to say which
+manifest wins. A URL manifest would also put a private source path into public
+CI output, which the [output
+rule](/manni/cite/reference/citations/#the-output-rule) exists to prevent.
+
+The third is about identity. A page read from stdin has no path and no
+recorded fields, so there is no key to look the entry up under. Name the file
+instead of piping it.
+
+<Aside type="caution" title="A manifest entry naming a page that is gone">
+  A `git mv` leaves the manifest pointing at a path that no longer exists.
+  That is the metadata tool's orphan rule, and it is an error on a run that
+  covers the whole collection. A `join:` key avoids it, because the key
+  travels in the page rather than in the path.
+</Aside>
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="Set up citations in one repository"
+    href="/manni/cite/set-up/"
+    description="The collection, the root, the first add and the first check, for a repository whose pages and code sit together."
+  />
+  <LinkCard
+    title="Public docs, private code"
+    href="/manni/cite/set-up/public-docs-private-code/"
+    description="The layout the sidecar was built for: an encrypted source path in a manifest, and no citation YAML on a public page."
+  />
+  <LinkCard
+    title="Citations reference"
+    href="/manni/cite/reference/citations/#the-sidecar"
+    description="The manifest shape, what reads and writes it, where findings sit, and every refusal."
+  />
+  <LinkCard
+    title="Configuration reference"
+    href="/manni/cite/reference/configuration/#the-citations-manifest"
+    description="Where the manifest is declared, and every other key of the cite: section."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni cite behavior
+    against the local build, exposed as `manni cite` / `npx @hawkeyexl/manni cite` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"cite-sidecar","description":"A collection whose manifest owns citations: the clean page, the manifest column, a finding on the entry's line, the half-moved page, the writes, and the three refusals."} */}
+{/* step {"description":"The page's own frontmatter carries no citations: read alone, the key is unset.","runShell":{"command":"npx @hawkeyexl/manni meta get test/fixtures/cite-sidecar/pages/limits.md --no-config --fields title,citations","exitCodes":[0],"stdio":"/citations=\\(unset\\)/"}} */}
+{/* step {"description":"With the config governing the run, the merged view carries the manifest's entry.","runShell":{"command":"npx @hawkeyexl/manni meta get test/fixtures/cite-sidecar/pages/limits.md -c test/fixtures/cite-sidecar/manni.config.yaml --fields title,citations","exitCodes":[0],"stdio":"/citations=\\[\\{\"id\":\"fetch-timeout\"/"}} */}
+{/* step {"description":"The check passes, and the row gains a fourth column naming the manifest and the entry's first line.","runShell":{"command":"npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml test/fixtures/cite-sidecar/pages/limits.md","exitCodes":[0],"stdio":"/fetch-timeout\\s+:6 current\\s+src\\/limits\\.ts:2 current\\s+\\S*citations\\.yaml:5/"}} */}
+{/* step {"description":"A finding about the entry itself is located on the manifest, on the entry's own line, and the page is what failed.","runShell":{"command":"npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml test/fixtures/cite-sidecar/pages/entry-invalid.md","exitCodes":[1],"stdio":"/bad-pin\\s+\\/source\\/integrity must match pattern[\\s\\S]*citations\\.yaml:42\\)/"}} */}
+{/* step {"description":"github annotates the manifest at that line, so the comment lands on the manifest's diff.","runShell":{"command":"npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml -f github test/fixtures/cite-sidecar/pages/entry-invalid.md","exitCodes":[1],"stdio":"/::error file=\\S*citations\\.yaml,line=42,title=manni%3Acite\\/entry-invalid::bad-pin/"}} */}
+{/* step {"description":"A page that still carries its own citations while a manifest owns the key is an error naming the manifest and the collection.","runShell":{"command":"npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml test/fixtures/cite-sidecar/pages/own.md","exitCodes":[1],"stdio":"/\"citations\" is owned by manifest \\S*citations\\.yaml \\(collection site\\); remove it from the document/"}} */}
+{/* step {"description":"add writes the entry to the manifest, and the claim stays on the line that was typed, because the page is not touched.","runShell":{"command":"npx @hawkeyexl/manni cite add test/fixtures/cite-sidecar/pages/retries.md:6 src/limits.ts:3 --id retries --dry-run -c test/fixtures/cite-sidecar/manni.config.yaml","exitCodes":[0],"stdio":"/added retries to \\S*citations\\.yaml:59 \\(claim at line 6, sha256-d33051d7…/"}} */}
+{/* step {"description":"update repairs two entries in one manifest and writes that manifest once.","runShell":{"command":"npx @hawkeyexl/manni cite update -c test/fixtures/cite-sidecar/manni.config.yaml --dry-run test/fixtures/cite-sidecar/pages/moved.md test/fixtures/cite-sidecar/pages/moved-two.md","exitCodes":[0],"stdio":"2 citations rewritten in 2 files, 0 skipped"}} */}
+{/* step {"description":"A manifest keyed by a page field matches on that field, so the entry travels with the page rather than with its path.","runShell":{"command":"npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/manni.config.yaml --collection guides","exitCodes":[0],"stdio":"/fetch-timeout\\s+:7 current\\s+src\\/limits\\.ts:2 current\\s+slugs\\.yaml:4/"}} */}
+{/* step {"description":"Refusal one: a URL manifest cannot own citations, because cite writes them. Exit 2, before any page is read.","runShell":{"command":"npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/url/manni.config.yaml","exitCodes":[2],"stdio":"collection site: citations cannot come from a URL manifest, because cite writes them."}} */}
+{/* step {"description":"Refusal two: a page in two collections whose manifests both own citations has no owner the tool can pick.","runShell":{"command":"npx @hawkeyexl/manni cite check -c test/fixtures/cite-sidecar/conflict/manni.config.yaml","exitCodes":[2],"stdio":"docs/page.md is in collections site and api, and both keep citations in a manifest."}} */}
+{/* step {"description":"Refusal three: add from stdin has no path to key the manifest entry by.","runShell":{"command":"printf -- '---\\ntitle: T\\n---\\n# T\\n\\nThe fetch timeout is 10 seconds.\\n' | npx @hawkeyexl/manni cite add -:6 src/limits.ts:2 --as markdown --id t -c test/fixtures/cite-sidecar/manni.config.yaml","exitCodes":[2],"stdio":"A page read from stdin has no path, and its citations live in"}} */}
+{/* test end */}

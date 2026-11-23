@@ -1,0 +1,61 @@
+{
+  "specId": "dd-docs-find-by-image",
+  "description": "Doc Detective docs: Find elements by image. The page's inline test, run in a workspace that holds icons/save.svg.",
+  "tests": [
+    {
+      "testId": "find-by-image-guide",
+      "steps": [
+        {
+          "stepId": "find-by-image-guide-open",
+          "description": "Open the page.",
+          "goTo": "http://localhost:8092/find-image.html"
+        },
+        {
+          "stepId": "find-by-image-guide-capture",
+          "description": "Step 1: crop a reference of the chart from a screenshot.",
+          "screenshot": {
+            "path": "chart.png",
+            "overwrite": "true",
+            "crop": {
+              "selector": "#sample-chart"
+            }
+          }
+        },
+        {
+          "stepId": "find-by-image-guide-goto",
+          "description": "Reload the page, because the crop scrolled it.",
+          "goTo": "http://localhost:8092/find-image.html"
+        },
+        {
+          "stepId": "find-by-image-guide-find-icon",
+          "description": "Step 2: find the icon by its file.",
+          "find": {
+            "elementImage": "../icons/save.svg"
+          }
+        },
+        {
+          "stepId": "find-by-image-guide-click",
+          "description": "Click the icon by its file.",
+          "click": {
+            "elementImage": "../icons/save.svg"
+          }
+        },
+        {
+          "stepId": "find-by-image-guide-check",
+          "description": "Confirm the click landed on the icon.",
+          "find": {
+            "selector": "#log",
+            "elementText": "/^click button=0/"
+          }
+        },
+        {
+          "stepId": "find-by-image-guide-find-chart",
+          "description": "Find the chart by its cropped reference.",
+          "find": {
+            "elementImage": "chart.png"
+          }
+        }
+      ]
+    }
+  ]
+}

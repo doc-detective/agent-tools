@@ -1,0 +1,37 @@
+{
+  "tests": [
+    {
+      "testId": "api-error-responses",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/status/404",
+            "method": "get",
+            "statusCodes": [
+              404
+            ],
+            "response": {
+              "body": {
+                "status": 404
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/status/503",
+            "method": "get",
+            "statusCodes": [
+              503
+            ],
+            "response": {
+              "body": {
+                "status": 503
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

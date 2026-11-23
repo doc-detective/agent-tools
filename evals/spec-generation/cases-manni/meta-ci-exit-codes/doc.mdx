@@ -1,0 +1,365 @@
+---
+title: Exit codes & PR annotations
+description: The manni meta exit-code contract (0/1/2) and the pretty, json, github, sarif, and junit output formats, including the exact annotation line format and color behavior.
+---
+
+import { Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+This page is the contract between manni meta and your pipeline. It covers what each
+exit code means, what each output format looks like, and when color is emitted.
+If you are wiring manni meta into a gate or parsing its output, this is the
+reference to build against.
+
+## Exit codes
+
+`manni meta validate` returns one of three exit codes. Every CI platform treats a
+non-zero exit as a failed step, so the gate is enforced without extra scripting.
+
+| Code | Meaning | When it happens |
+|------|---------|-----------------|
+| `0`  | Success | Every validated file satisfies its schema set. |
+| `1`  | Validation failures | One or more files failed validation. The run completed; the documents are non-conformant. |
+| `2`  | Operational or usage error | manni meta could not complete the run. That covers an **unknown flag**, an **unknown subcommand**, or a **missing required argument**. It also covers no inputs and no config, **no files matched**, an unknown `--format`, an unreadable config file, and an unexpected internal error. |
+
+The distinction between `1` and `2` matters in a pipeline. Exit `1` is a
+*result*: manni meta ran and found problems your authors must fix. Exit `2` is a
+*failure of the run itself*: a misconfiguration or environment problem you must
+fix. A gate that treats every non-zero exit the same will still block bad
+metadata. Separating the two lets you tell "the docs are wrong" from "the check
+is broken."
+
+A mistyped flag or subcommand belongs to the second group. `manni meta validate
+--nope docs/` exits `2`, not `1`: nothing was validated, so the run produced no
+verdict about your documents at all.
+
+<Aside type="note" title="The default command is validate">
+`manni meta` with no subcommand runs `validate`, so `manni meta "**/*.md"` and
+`manni meta validate "**/*.md"` are equivalent and share these exit codes.
+</Aside>
+
+<Aside type="caution" title="Checking nothing is exit 2, not exit 0">
+A glob that matches no files, a directory that does not exist, or a named file
+that is missing all exit `2`. That is the case a green build hides worst: move
+`docs/` to `content/` and a gate that returned `0` for an empty run would report
+success forever. A repo may legitimately have nothing to check, as a shared
+workflow running across many repos might. Pass `--allow-empty` or set
+`allowEmpty: true` in that repo's config. See [empty input
+sets](/manni/meta/reference/cli/#empty-input-sets).
+</Aside>
+
+## Output formats
+
+`manni meta validate` supports five output formats, selected with `-f` / `--format`.
+The default is `pretty`.
+
+| Format   | Audience | Machine-readable | Available on |
+|----------|----------|------------------|--------------|
+| `pretty` | Humans, local runs | No | `validate`, `get`, `fill`, `schemas` |
+| `json`   | Dashboards, scripts, tooling | Yes | `validate`, `get`, `fill`, `schemas` |
+| `github` | GitHub Actions PR annotations | Yes (one line per finding) | `validate`, `fill` |
+| `sarif`  | Code scanning, security dashboards | Yes (SARIF 2.1.0) | `validate` only |
+| `junit`  | The CI "Tests" tab | Yes (JUnit XML) | `validate` only |
+
+<Aside type="caution" title="sarif and junit are validate-only">
+Only `validate` accepts those two. `get` and `schemas` accept `pretty` and
+`json`; `fill` adds [`github`](#github-annotations-from-fill), because a
+required property it could not fill is a thing a reviewer needs pointed at. It
+stops there. `sarif` and `junit` describe *findings in files*, and a skipped
+*optional* property is a proposal with a confidence score. Encoding one as a
+SARIF result would misrepresent it. Passing an unsupported format is a usage
+error and exits `2`.
+</Aside>
+
+<Aside type="tip" title="Pick by what you need to survive the job">
+`github` renders on the pull request and then vanishes with the log. `sarif`
+persists: findings become tracked alerts with state across commits, which is
+what makes "when did this regress" answerable. `junit` is the one CI systems
+already render as a test report. They compose, so a job can emit annotations for
+the reviewer and SARIF for the dashboard by running `validate` twice.
+</Aside>
+
+### pretty
+
+The default. A check mark or cross per file, indented error lines beneath each
+failing file, and a summary line. Intended for humans reading a terminal or a CI
+log.
+
+```sh
+$ manni meta validate bad-timestamp.md
+```
+
+```text
+✗ bad-timestamp.md
+    /timestamp  must match format "date-time"  (line 4)  [google:okf:0.1]
+
+1 file checked, 0 passed, 1 failed, 1 error
+```
+
+Passing files show as `✓ <file>`. Add `-q` / `--quiet` to hide passing files and
+show only failures plus the summary. The summary line reports
+`<n> files checked, <n> passed, <n> failed, <n> errors`.
+
+### json
+
+A single JSON object printed to stdout, suitable for dashboards or further
+processing. The top level has a `summary` and a `results` array.
+
+```sh
+$ manni meta validate bad-timestamp.md --format json
+```
+
+```json
+{
+  "summary": {
+    "files": 1,
+    "passed": 0,
+    "failed": 1,
+    "errors": 1
+  },
+  "results": [
+    {
+      "file": "bad-timestamp.md",
+      "format": "markdown",
+      "ok": false,
+      "schemas": ["google:okf:0.1"],
+      "errors": [
+        {
+          "schema": "google:okf:0.1",
+          "instancePath": "/timestamp",
+          "message": "must match format \"date-time\"",
+          "keyword": "format",
+          "subject": "date-time",
+          "line": 4
+        }
+      ]
+    }
+  ]
+}
+```
+
+The shape is stable:
+
+- **`summary`**: counts across the whole run.
+  - `files`: number of files checked.
+  - `passed`: files that satisfied every schema in their set.
+  - `failed`: files with at least one validation error.
+  - `errors`: total individual validation errors across all files.
+- **`results`**: one object per file.
+  - `file`: the file path as manni meta saw it.
+  - `format`: the extractor that read the file (for example `markdown`).
+  - `ok`: `true` when the file passed every schema in its set.
+  - `schemas`: the schema ids the file was validated against.
+  - `errors`: the individual violations for this file (empty when `ok`).
+- **Each error** describes one schema violation.
+  - `schema`: the schema id that produced the error.
+  - `instancePath`: a JSON Pointer to the offending field (`""` for the
+    document root, `"/tags/0"` for the first item of `tags`).
+  - `message`: the human-readable reason. This is generated prose, and an Ajv
+    release may reword it, so match on `keyword` instead when you need
+    stability.
+  - `keyword`: the JSON Schema keyword that failed (`required`, `format`,
+    `pattern`, `type`, …). manni meta's own errors use `parse` when a metadata
+    block could not be read and `schema` when a schema set could not be
+    resolved; both keep `schema: "(parse)"`.
+  - `subject`: the identifier within that keyword, which is the missing
+    property, the additional property, the format name, or the expected type.
+    Omitted for keywords whose parameter is a schema-authored value, such as
+    `pattern`'s regex or `minLength`'s number.
+  - `line`: 1-based source line, when manni meta can locate it. Omitted when
+    unknown. For example, errors at the document root often have no specific
+    line.
+  - `col`: 1-based column, when the format can supply one. The `html` and `xml`
+    extractors do. An HTML error points at the
+    `content=` attribute of the `<meta>` tag, and an XML one at the
+    offending attribute's value. Frontmatter formats give a line only. It is
+    also omitted for a `required` violation, which reports the parent object
+    rather than the property that is missing. There is no column for
+    something absent. Treat it as optional.
+
+<Aside type="note" title="line and col are best-effort">
+`line` and `col` appear only when manni meta can map the error back to a position
+in the source file. Parse them as optional: check for their presence rather than
+assuming every error carries them.
+</Aside>
+
+### github
+
+One [GitHub Actions workflow command](https://docs.github.com/en/actions/using-workflows/workflow-commands-for-github-actions#setting-an-error-message)
+per error. GitHub renders each line as an annotation pinned to the file and line
+in the pull request diff. There is no summary line and no per-file heading, only
+error lines, one per violation. A passing run prints nothing.
+
+The format of each line is:
+
+```text
+::error file=<file>,line=<line>,col=<col>::[<schema>] <field> <message>
+```
+
+- `file=` is always present.
+- `line=` is included only when the error has a known line.
+- `col=` is included only when the error has a known column, which today means
+  an `html` or `xml` document and a violation other than `required` or
+  `additionalProperties`. Those two name a property in the message but point at
+  its *parent*, so a caret would land on the wrong token. The line is still
+  reported.
+- `<schema>` is the schema id that produced the error.
+- `<field>` is the JSON Pointer to the offending field, or `(root)` when the
+  error is at the document root.
+- `<message>` is the human-readable reason.
+
+A concrete line, from a malformed `timestamp` field that fails the `date-time`
+format:
+
+```text
+::error file=bad-timestamp.md,line=4::[google:okf:0.1] /timestamp must match format "date-time"
+```
+
+The same violation in an HTML document also carries a column, pointing at the
+`content=` attribute of the `<meta>` tag that holds the bad value:
+
+```text
+::error file=bad-timestamp.html,line=6,col=28::[google:okf:0.1] /timestamp must match format "date-time"
+```
+
+When the line is unknown, `line=` is dropped and only `file=` remains. A
+required-property error at the document root reports the field as `(root)`, and
+carries no column even in a format that can supply one:
+
+```text
+::error file=missing-type.md::[google:okf:0.1] (root) must have required property 'type'
+```
+
+`<message>` is escaped as the workflow-command protocol requires: `%` becomes
+`%25`, a carriage return `%0D`, and a newline `%0A`. GitHub decodes them when it
+renders the annotation. Without it, a schema `pattern` containing `%` would
+corrupt the annotation, because Ajv quotes the regex into the message verbatim.
+Without it a multi-line message would truncate at the first newline. Do not decode these
+yourself if you post-process the lines; treat the message as
+percent-escaped-on-those-three.
+
+<Aside type="tip" title="github output outside GitHub">
+The `::error` lines are GitHub-specific. On other CI systems they print as plain
+text with no annotation behavior. Use `pretty`, `json`, `sarif`, or `junit`
+there; see [CI recipes](/manni/meta/ci/recipes/).
+</Aside>
+
+#### github annotations from fill
+
+[`fill`](/manni/meta/reference/cli/#meta-fill) emits the same workflow command, for the
+work it could **not** do. That is one `::error` per property the schema lists as
+`required` that was not filled confidently. It is exactly the set that makes
+`fill` exit `1`. Skipped *optional* properties are a normal outcome and stay
+silent, matching the exit-code rule.
+
+```text
+::error file=docs/api/legacy.md::[fill] /description is required and was not filled (confidence 0.42 is below the 0.7 threshold)
+```
+
+Two differences from `validate`'s annotations:
+
+- **No `line=`.** A `validate` finding is a violation *in* the document, so it
+  has a position. A `fill` report is about a property that is **missing** from
+  the document, so there is nothing to point at. GitHub anchors a file-only
+  annotation to line 1.
+- **`[fill]` in place of the schema id**, because the annotation is about the
+  fill run rather than about one schema's verdict.
+
+The message is escaped exactly as above, with `%` → `%25`, CR → `%0D`, and LF →
+`%0A`.
+
+<Aside type="caution" title="Not available with stdin">
+`manni meta fill - -f github` is a usage error (exit `2`). With `-`, the filled
+document owns stdout and the report goes to stderr, where GitHub never reads
+`::error`. Rather than emit annotations nothing will render, and leave a failing
+run looking clean on the pull request, manni meta refuses the combination. Pass
+file paths instead.
+</Aside>
+
+### sarif
+
+A [SARIF 2.1.0](https://docs.oasis-open.org/sarif/sarif/v2.1.0/sarif-v2.1.0.html)
+log on stdout, which GitHub code scanning, GitLab, and Azure DevOps ingest
+directly. Findings become tracked alerts with state across commits.
+
+```sh
+$ manni meta validate "docs/**/*.md" --format sarif > manni.sarif
+```
+
+Three things matter when wiring it up:
+
+- **`validate` exits 1 when there are findings, and the findings are the
+  point.** Without `continue-on-error: true` on the manni meta step and
+  `if: always()` on the upload, the job stops before anything is uploaded and
+  the dashboard stays permanently empty. See the
+  [`upload-sarif` recipe](/manni/meta/ci/recipes/#github-code-scanning-upload-sarif).
+- **A clean run still writes a full envelope**, so redirecting to a file always
+  produces a valid one. `upload-sarif` fails on an empty file.
+- **Paths are rebased onto the repository root**, because that is what GitHub
+  resolves `artifactLocation.uri` against. GitHub *silently drops* results that
+  do not resolve, so a wrong path uploads successfully with zero alerts.
+
+Every finding `manni meta validate` produces is reported at `level: "error"`.
+A finding's `severity` maps onto SARIF's triage axis directly. So a sibling
+tool's advisory findings arrive as `level: "warning"` through the same
+reporter, which is what closed
+[issue #78](https://github.com/hawkeyexl/manni/issues/78). The full field
+reference is on
+[Output formats & exit codes](/manni/meta/reference/output-and-exit-codes/).
+
+### junit
+
+JUnit XML on stdout, which Jenkins, GitLab, CircleCI, and Azure render in their
+"Tests" tab.
+
+```sh
+$ manni meta validate "docs/**/*.md" --format junit > manni-junit.xml
+```
+
+One `<testcase>` per **file** and one `<failure>` per violation, so the tab
+reads "2 tests, 1 failed" and matches the `2 files checked, 1 failed` summary.
+GitHub Actions has no native JUnit renderer; on GitHub prefer `github` for
+annotations or `sarif` for tracked alerts, and keep `junit` for the platforms
+that render it.
+
+## Color and TTY behavior
+
+manni meta follows [clig.dev](https://clig.dev/) conventions. Primary output goes
+to stdout, diagnostics go to stderr, and color is emitted only when it is safe
+to do so. Color affects only the `pretty` format; `json`, `github`, `sarif`, and
+`junit` are always plain text so they parse reliably. Those four also keep the
+"Using manni.config.yaml" notice on stderr, so a redirected report stays
+parseable.
+
+manni meta decides whether to emit ANSI color like this, in order:
+
+1. **`--no-color`**: passing this flag disables color unconditionally.
+2. **`NO_COLOR`**: if the [`NO_COLOR`](https://no-color.org/) environment
+   variable is set to any non-empty value, color is disabled.
+3. **TTY detection**: otherwise, color is emitted only when stdout is an
+   interactive terminal (a TTY).
+
+In practice this means color turns off automatically in CI, because a piped or
+redirected stream is not a TTY. You rarely need `--no-color` in a pipeline, but
+it is available when you want to force plain output. One example is capturing a
+log that a downstream tool will read.
+
+<Aside type="note" title="--no-color is a global flag">
+`--no-color` is a top-level option. Place it before the subcommand,
+`manni meta --no-color validate docs/`, or rely on `NO_COLOR` / TTY detection,
+which need no flag.
+</Aside>
+
+## Next steps
+
+<CardGrid>
+  <LinkCard
+    title="GitHub Actions recipe"
+    href="/manni/meta/ci/"
+    description="A ready-made workflow that uses --format github for inline PR annotations."
+  />
+  <LinkCard
+    title="CI recipes for other platforms"
+    href="/manni/meta/ci/recipes/"
+    description="GitLab CI, Jenkins, and pre-commit, each wired to the exit-code contract."
+  />
+</CardGrid>

@@ -1,0 +1,24 @@
+{
+  "source": "doc-detective/docs/fern/pages/docs/test-docs/automatic-recording.mdx@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/automatic-recording.mdx",
+  "steps": [
+    {
+      "stepType": "goTo",
+      "match": "localhost:8092",
+      "note": "The login.spec.json example's first step: go to http://localhost:8092."
+    },
+    {
+      "stepType": "goTo",
+      "match": "localhost:8092/enhanced-elements.html",
+      "note": "Its second step: go to http://localhost:8092/enhanced-elements.html."
+    }
+  ],
+  "must_not": [
+    "A runShell for `doc-detective --no-auto-record`; it illustrates the flag.",
+    "Contexts that run Firefox, headed browsers, or native apps to exercise the table's rows; the example runs headless Chrome.",
+    "record or stopRecord steps; the page is about recording without them."
+  ],
+  "scaffolding": [
+    "Nothing beyond the page. The local test server is on :8092."
+  ]
+}

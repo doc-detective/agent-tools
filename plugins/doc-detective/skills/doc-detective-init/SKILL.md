@@ -1,8 +1,8 @@
 ---
 name: doc-detective-init
-description: 'Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop'
+description: 'Set up Doc Detective in a repository that does not use it yet. Finds the docs, writes a config, generates and runs the first tests, fixes failures, and offers CI. Use for adopting, initializing, or getting started with Doc Detective in a project. If the project already has Doc Detective, use doc-detective-test to run tests or doc-detective-generate to add a spec. Not for developing Doc Detective or this plugin.'
 metadata:
-  version: '2.1.0'
+  version: '3.0.0'
   organization: Doc Detective
   date: November 2026
   abstract: Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.
@@ -13,7 +13,7 @@ user-invocable: true
 
 # Init Command
 
-**Skill:** `doc-detective:init`
+**Skill:** `doc-detective:doc-detective-init`
 
 ## Goal
 
@@ -51,23 +51,27 @@ Leave the repository with working Doc Detective test coverage for its documented
 
 ## Find the documentation
 
-Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json` or `doc-detective.config.js`.
+Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`. See [references/doc-patterns.md](references/doc-patterns.md) for detection patterns.
 
-Tests are worth generating only for files that walk a reader through a task. Run `npx doc-detective audit <docs-dir> --json` and flag each file with untested procedure steps as procedure-heavy. For the fields to read and how to tell whether `audit` is available, see `skills/doc-detective-project-bootstrap/references/audit-coverage.md`. `audit` finds procedures only in numbered lists, so also flag files with sequential bullet points that use action verbs. Such verbs include navigate, click, enter, verify, type, and select. Without `audit`, read each file and flag it when it has three or more numbered steps or such bullet points.
+Tests are worth generating only for files that walk a reader through a task. Run `npx doc-detective audit <docs-dir> --json` and flag each file with untested procedure steps as procedure-heavy. For the fields to read and how to tell whether `audit` is available, read [references/audit-coverage.md](references/audit-coverage.md). `audit` finds procedures only in numbered lists, so also flag files with sequential bullet points that use action verbs. Such verbs include navigate, click, enter, verify, type, and select. Without `audit`, read each file and flag it when it has three or more numbered steps or such bullet points. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
+
+Report the file counts, the key directories, the procedure-heavy files, and the audit's procedure step counts to the user.
 
 ## Configure
 
 Follow the "smallest reasonable config" principle: set only what the defaults don't already cover. Without an existing config, create `.doc-detective.json` with:
 
 ```json
-{ "input": "docs", "outputDir": ".doc-detective/results", "detectSteps": false }
+{ "input": "doc-detective-tests", "outputDir": ".doc-detective/results", "detectSteps": false }
 ```
 
-See `skills/doc-detective-project-bootstrap/references/config-guidance.md` for full options.
+`input` names the directory the generated specs go in, so a run without `--input`, such as the GitHub Action's or `/doc-detective-test`'s, finds them.
+
+See [references/config-guidance.md](references/config-guidance.md) for full options and merge rules.
 
 ## Generate tests
 
-For each procedure-heavy file, run:
+Unless `--dry-run` is set, create the `doc-detective-tests/` directory first, because `/doc-detective-generate` stops to ask when the `--output` directory doesn't exist. Then, for each procedure-heavy file, run:
 
 ```
 /doc-detective-generate <file-path> --output doc-detective-tests/<name>-spec.json
@@ -97,17 +101,7 @@ The exit code says what to do next:
 
 Skip fixes with `--skip-fix-loop`. Otherwise, give each failing test up to three fix attempts.
 
-In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`. Propose a fix, and score your confidence in it:
-
-- **High (80–100):** You found the exact alternative.
-- **Medium (50–79):** The fix is likely correct but uncertain.
-- **Low (0–49):** The fix is a best guess with significant uncertainty.
-
-| Confidence | Action |
-|---|---|
-| ≥ threshold (default 80%) | Apply automatically |
-| < threshold | Show proposed fix, ask user: apply / skip / edit manually |
-| < 50% | Ask the user regardless of threshold, unless `--auto-fix` is set |
+In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`. Propose a fix and rate your confidence from 0 to 100: 80 or more means you found the exact alternative, and below 50 is a best guess. Apply it when the rating meets `--fix-threshold`. Otherwise show it, and ask the user whether to apply it, skip it, or edit it by hand.
 
 Run the test again after each fix. Move on when it passes.
 

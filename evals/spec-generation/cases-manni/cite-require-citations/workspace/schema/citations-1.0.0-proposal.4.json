@@ -1,0 +1,115 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "manni:citations:1.0.0-proposal.4",
+  "title": "manni citations vocabulary (1.0.0-proposal.4)",
+  "description": "What do this page's claims rest on? For each claim, the page lines that make it, the source lines it was written from, and a hash of each. A manni common vocabulary: any drift check can implement it, and other schemas may compose on top of it. A pin is a record of the past, not a copy of the present. It says what the lines were when the sentence was written. The check compares that record with the files as they are now. Recompute it on every run and there is nothing to compare against. `source-of-truth` (manni:stewardship) names the file a page answers to; a citation names the lines a sentence answers to. The page root stays open so sibling tools' keys pass untouched. The `citation-` prefix is reserved, so an unrecognized `citation-*` key is rejected and a typo fails loudly.",
+  "type": "object",
+  "additionalProperties": true,
+  "properties": {
+    "citations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/citationEntry"
+      },
+      "description": "The page's citations, one entry per claim or pin. An empty list is not a declaration; a page with no citations omits the key. Ids are unique within a page, and two entries claiming one id is an error. JSON Schema cannot say that over a list whose members may omit the id. So it is a requirement on implementations, stated here so every tool agrees.",
+      "x-manni-location": "external"
+    }
+  },
+  "patternProperties": {
+    "^citation-": false
+  },
+  "$defs": {
+    "citationEntry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "source"
+      ],
+      "description": "One citation: the page text it supports, the source lines it rests on, and how the two are anchored. Both ends share one shape, a line range and a hash.",
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "description": "A kebab-case name for this citation, unique within the page. A body marker names an entry by it, and findings are reported under it. Optional for an entry anchored by its claim lines or pinned bare. Required when a marker names the entry."
+        },
+        "claim": {
+          "$ref": "#/$defs/claim"
+        },
+        "source": {
+          "$ref": "#/$defs/source"
+        },
+        "quote": {
+          "type": "boolean",
+          "default": false,
+          "description": "The claim is a fenced block that reproduces the source lines. The pinned claim covers the whole block, fences included. An implementer compares the lines inside the fences with the source under the pin's rule. So a quoted snippet that drifts from its source is a finding even while the pin still holds. Under a marker, the block is the next fence after the marker. Default false."
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "integrity"
+      ],
+      "description": "The page text the citation supports, pinned by lines and a hash. Absent, the entry is a bare pin, or a marker with no drift check on its sentence. Without `lines`, the text pinned is what a body marker naming this entry anchors.",
+      "properties": {
+        "lines": {
+          "$ref": "#/$defs/lines",
+          "description": "Lines of the page body. The body starts on the first line after the closing frontmatter fence, or on line 1 with no frontmatter. So editing the frontmatter never moves a claim. Required unless a marker names the entry, and never inside the frontmatter."
+        },
+        "integrity": {
+          "type": "string",
+          "pattern": "^sha256-[0-9a-f]{64}$",
+          "description": "`sha256-` and sixty-four lowercase hex digits over the claimed lines, under the rule `source.integrity` states. Always plain, never keyed: the page is public, so there is nothing to hide. With a marker, the lines hashed are the ones the marker anchors."
+        }
+      }
+    },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "file",
+        "integrity"
+      ],
+      "description": "The lines the claim rests on: a file, an optional line range, a pin, and the commit the pin was taken at.",
+      "properties": {
+        "file": {
+          "$ref": "#/$defs/fileRef"
+        },
+        "lines": {
+          "$ref": "#/$defs/lines",
+          "description": "File lines. Absent, the whole file is pinned. The lines stay readable even when `file` is encrypted."
+        },
+        "integrity": {
+          "type": "string",
+          "pattern": "^(?:sha256|hmac-sha256)-[0-9a-f]{64}$",
+          "description": "The pin: an algorithm prefix and sixty-four lowercase hex digits over the cited lines under one rule. Decode as UTF-8 and drop one leading byte-order mark. Turn CRLF into LF, split on LF, and discard the empty element a trailing LF leaves. Take lines L1 to L2 inclusive, or every line for a whole file. Join with LF and no trailing LF, and keep trailing whitespace. A plain `file` is pinned `sha256-` over that text. An encrypted `file` is pinned `hmac-sha256-`: the HMAC-SHA256 of that text under a key derived from the encryption key. So a public page carries no verifier a reader could run against a guessed private line. The prefix follows `file`, and any other pairing is an invalid entry."
+        },
+        "commit-sha": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{7,64}$",
+          "description": "The git commit hash the source pin was taken at, as lowercase hex. Seven digits is what git abbreviates to; sixty-four covers a SHA-256 repository. A tool writes the full hash, because an abbreviation that is unique today need not be next year. Without it, a check can still say the lines changed. With it, the check can say since when, and whether the pin was ever true."
+        }
+      }
+    },
+    "lines": {
+      "oneOf": [
+        {
+          "type": "integer",
+          "minimum": 1
+        },
+        {
+          "type": "string",
+          "pattern": "^[1-9][0-9]*-[1-9][0-9]*$"
+        }
+      ],
+      "description": "A line range, 1-based and inclusive: an integer for one line, or `\"L1-L2\"` for several. `L1 <= L2` is a rule on implementations, since a pattern cannot compare two numbers. There is no line 0 to cite."
+    },
+    "fileRef": {
+      "type": "string",
+      "pattern": "^(?:~[A-Za-z0-9_-]{82,}|(?!~)(?:(?!\\.\\.?(?:/|$))[^/\\\\:\\r\\n\\t]+)(?:/(?:(?!\\.\\.?(?:/|$))[^/\\\\:\\r\\n\\t]+))*)$",
+      "description": "The file: a path relative to the repository root, posix-separated, and free of `.` and `..` segments. Segments may hold spaces and dots but not `/`, `\\`, `:` or a line break. So a URL, a drive letter, a Windows path and an absolute path all fail here. In place of the path, `~` and at least 82 base64url characters is the path encrypted with the family key. Proposal 0045 states the construction. Only a checkout with the key and the files can decrypt the path and read the lines. So a public docs repo can cite a private code repo without publishing its paths. The value carries no encryption mark, because the citation tool encrypts it, and a plain path stays valid."
+    }
+  }
+}

@@ -1,0 +1,45 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/machine-authorship.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-machine-authorship.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta get", "provenance"],
+      "note": "Before anything is stamped, `get provenance docs/limits.md` reads the record from git."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta derive", "claude-fable-5", "uncommitted"],
+      "note": "Record an agent's edit: with MANNI_GENERATED_BY (or `--generated-by`) set, `derive` attributes the uncommitted lines."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta get", "provenance", "(asserted)"],
+      "note": "After committing the edit and its stamp, `get` shows the record as asserted."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta derive", "cannot overrule a recorded machine"],
+      "note": "A range git already attributes to another machine is refused."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta derive", "limits.md:17", "claude-sonnet-5"],
+      "note": "Attribute lines by hand: `derive docs/limits.md:17 --generated-by claude-sonnet-5`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "derived:stale"],
+      "note": "When a person edits machine text and commits, validate fails at the range."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta derive", "re-derived"],
+      "note": "The fix the message names: `derive` re-derives the range."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/limits.md is the page's example (test/fixtures/derive/provenance), and manni.config.yaml declares collection `site` with a permissive schema but does not yet manage provenance: the reader adds `derive:` (fields, sources, machines). The workspace is one commit with no machine trailer, so the first `get` reads `(unset)`. The page's story has the reader make the agent's edit, commit with its stamp, attribute a line by hand, and commit a person's copy edit, so a spec edits docs/limits.md and commits with git between the runs. The pre-commit hook needs pre-commit, and the moved-range, unstamped-trailer, manifest, HTML and fill transcripts are other setups, so none is expected."
+  ]
+}

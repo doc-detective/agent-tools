@@ -1,0 +1,410 @@
+---
+title: See which lines a machine wrote
+description: "Record which body lines an agent or a model wrote, pin each range with an integrity hash, and fail the build when a person edits machine text."
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+A **provenance pin** says that one machine wrote one range of a page's body.
+Each entry in a page's `provenance` list names the machine, the lines, and an
+integrity hash over those lines. `manni meta derive` stamps the entries from
+git. `manni meta validate` compares each pin with the page as it is now, and a
+range whose text changed fails the build at the line of the prose.
+
+`provenance` is one more [managed field](/manni/meta/set-up/derived-metadata/).
+It rides the same channel as `last-updated` and `owner`, so nothing about the
+gate, the finding or the fix is new.
+
+<Aside type="note" title="What this page covers">
+The journey. The contract, meaning every rule, message and exit code, lives in
+the [configuration reference](/manni/meta/reference/configuration/#derive).
+</Aside>
+
+## Review ends at the merge
+
+An agent rewrites a procedure. A support bot patches a troubleshooting
+section. A week later a person copy-edits both. You review each change as a
+pull request, and once it merges, the page no longer says which parts a
+machine wrote.
+
+Git does not answer that on its own. It knows who committed a change, and a
+person usually commits an agent's work. So review goes to the wrong text. You
+re-read whole pages to find the machine-written parts. Or you trust the last
+diff and miss the section an agent rewrote three pull requests ago. When
+someone later replaces text a machine was credited with, nothing notices.
+
+A provenance pin closes both gaps. The record names the ranges to review. The
+pin notices when those ranges change.
+
+## Configure it
+
+<Steps>
+
+1. **Manage `provenance`.** Add it to `derive.fields`. Only managed fields are
+   stamped and compared, so a config without it changes nothing.
+
+   ```yaml title="manni.config.yaml"
+   collections:
+     - name: site
+       paths: ["docs/**/*.md"]
+
+   meta:
+     derive:
+       fields: [provenance]
+       sources: [git]
+   ```
+
+2. **Name the machines in your history.** Many repositories already end agent
+   commits with a `Co-authored-by:` trailer naming the model. The tool cannot
+   tell that trailer from a person's, so you list the identities that are
+   machines. Each entry is a glob matched against a trailer's name and email.
+
+   ```yaml title="manni.config.yaml"
+   meta:
+     derive:
+       fields: [provenance]
+       machines: ["*[bot]", "noreply@anthropic.com"]
+   ```
+
+   The default is `["*[bot]"]`. Brackets are literal, so that means a name
+   ending in `[bot]`. Prefer exact addresses. A glob such as `*noreply*` also
+   matches the GitHub no-reply addresses real contributors commit with. A match
+   is left out of `authors` too.
+
+3. **Add the hook ahead of validation.** `manni-meta-derive` runs `derive` on
+   the staged files before `manni-meta` validates them.
+
+   ```yaml title=".pre-commit-config.yaml"
+   repos:
+     - repo: https://github.com/hawkeyexl/manni
+       rev: v2.6.0
+       hooks:
+         - id: manni-meta-derive
+         - id: manni-meta
+   ```
+
+</Steps>
+
+A repository that already carries those trailers attributes itself. Before
+anything is stamped, `get` reads the record from git:
+
+```sh
+npx -y @hawkeyexl/manni meta get provenance docs/limits.md
+```
+
+```
+docs/limits.md: provenance=lines 9-10 Claude Opus 5 (derived, git: blame 564a648)
+```
+
+The commit that wrote lines 9 and 10 carried
+`Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`. The name in the
+trailer is the machine's name in the record.
+
+## Record an agent's edit
+
+Blame cannot see lines that are not committed yet. `MANNI_GENERATED_BY` names
+the machine that wrote them. An agent session exports it once, and it is one
+line in a repository's agent instructions.
+
+```sh
+export MANNI_GENERATED_BY=claude-fable-5
+```
+
+The agent rewrites lines 9 to 11 of `docs/limits.md`. With the variable set,
+`derive` attributes the uncommitted lines:
+
+```sh
+npx -y @hawkeyexl/manni meta derive
+```
+
+```
+docs/limits.md
+    provenance  lines 9-11: (unset) → claude-fable-5  (git: uncommitted)
+
+1 file, 1 changed, 1 range written
+```
+
+The report counts lines in the file as `derive` read it. The stamp adds lines
+to the frontmatter, so the same prose now sits lower in the file:
+
+```yaml title="docs/limits.md"
+---
+title: Rate limits
+provenance:
+  - generated-by: claude-fable-5
+    lines: 6-8
+    integrity: sha256-537bc424c34e7cbbd04cc73c49df009628e35a3ab292f6da30ad1f071bfe8b62
+---
+```
+
+`lines` in the YAML counts **body** lines, from the first line after the
+frontmatter. So a later stamp, which only grows the frontmatter, never moves a
+pin. Every report and message uses file lines, as an editor does.
+
+Commit the edit and its stamp together. From then on the stamp is its own
+evidence, because the commit that wrote the lines carried it. No trailer is
+needed, and a squash merge keeps it. `get` shows the record in file lines:
+
+```sh
+npx -y @hawkeyexl/manni meta get provenance docs/limits.md
+```
+
+```
+docs/limits.md: provenance=lines 13-15 claude-fable-5 (asserted)
+```
+
+With the hook installed, the agent never runs `derive` by hand. When `derive`
+changes a staged file, pre-commit stops the commit, as it does for any
+formatter. Re-stage and commit again. The second attempt passes, because the
+stamp now reads as current, and the edit and its stamp land in one commit.
+
+<Aside type="caution" title="The variable names every uncommitted line">
+`MANNI_GENERATED_BY` attributes all the uncommitted body lines in the files
+`derive` reads. A person and an agent may both have uncommitted edits in one
+file. Then name the agent's lines with a range instead, as the next section
+shows.
+</Aside>
+
+A run that manages other fields, and not `provenance`, ignores the variable.
+`--generated-by <name>` is the same setting as a flag, and it wins over the
+variable. It wins even when empty, and an empty or blank name is unset.
+
+## Attribute lines by hand
+
+A range on the path names the lines, in the spelling `manni cite add` uses. A
+range works whether or not the lines are committed:
+
+```sh
+npx -y @hawkeyexl/manni meta derive docs/limits.md:17 --generated-by claude-sonnet-5
+```
+
+```
+docs/limits.md
+    provenance  lines 17: (unset) → claude-sonnet-5  (git: blame e437e9d)
+
+1 file, 1 changed, 1 range written
+```
+
+This is how you record a model's text that was pasted in by a person and
+committed without a trailer. A flag cannot overrule recorded evidence, so a
+range that git already attributes to another machine is refused:
+
+```
+$ manni meta derive docs/limits.md:13-15 --generated-by claude-sonnet-5
+manni: docs/limits.md:13-15: blame attributes these lines to claude-fable-5 (9badf21); --generated-by cannot overrule a recorded machine.
+```
+
+That is exit 2, and nothing is written. So is a range with no
+`--generated-by`, a range past the end of the file, and a range that reaches
+into the frontmatter. A range on a directory or a glob is refused too, since a
+range names lines of one file. Pass several ranges of one file to attribute
+each. The [output reference](/manni/meta/reference/output-and-exit-codes/#exit-2-from-a-derive-source)
+lists every message.
+
+A `Generated-by: claude-fable-5` trailer in a commit message works too. It is
+there for a tool that commits without running `derive`, and every later run
+reads it.
+
+## When a person edits machine text
+
+A person rewrites one of the agent's three lines and commits. The pin no longer
+matches, and `validate` says so at the first line of the range:
+
+```
+$ manni meta validate
+✗ docs/limits.md
+    /provenance  provenance lines 16-18 changed since claude-fable-5 wrote them — run manni meta derive  (line 16)  [derived:stale]
+
+1 file checked, 0 passed, 1 failed, 1 error
+```
+
+In a pull request, the `github` format puts that finding on the prose line of
+the diff. The message names the fix:
+
+```sh
+npx -y @hawkeyexl/manni meta derive
+```
+
+```
+docs/limits.md
+    provenance  lines 16-18: claude-fable-5 → re-derived  (git: pin)
+
+1 file, 1 changed, 1 range written
+```
+
+`derive` blames the range again. The two lines the agent's commit still owns
+keep their machine, because that commit carried the stamp. The line the person
+rewrote has no machine evidence, so it drops out of the record:
+
+```yaml title="docs/limits.md"
+provenance:
+  - generated-by: claude-fable-5
+    lines: 6
+    integrity: sha256-0c679dbd56e909d1a679ca962c7a474dcbca6d5db59af1c0e25b809a2feb588b
+  - generated-by: claude-fable-5
+    lines: 8
+    integrity: sha256-50635e50c91d1cc32038f5a7a53cd5457062dcd232da46e766f1ed564781ec94
+  - generated-by: claude-sonnet-5
+    lines: 10
+    integrity: sha256-88d2a28cb2cdde36b6f4cc713bbbcbe10c98777af6be7e5f9745777764bff13d
+```
+
+Commit that, and `validate` passes again.
+
+A range that only moved is not a finding. When someone adds a paragraph above
+the agent's text, every pin still matches somewhere below. `validate` and
+`derive --check` pass, and the next `derive` updates `lines`:
+
+```
+docs/limits.md
+    provenance  lines 21: moved from 19  (git: pin)
+    provenance  lines 23: moved from 21  (git: pin)
+    provenance  lines 25: moved from 23  (git: pin)
+
+1 file, 1 changed, 3 ranges written
+```
+
+Machine lines with no entry are a finding too. A commit whose trailer names a
+machine, stamped by nobody, reads like this:
+
+```
+$ manni meta validate
+✗ docs/limits.md
+    /provenance  provenance is unset for lines 26; blame says Claude Opus 5 (ecb9b0a) — run manni meta derive  (line 26)  [derived:stale]
+
+1 file checked, 0 passed, 1 failed, 1 error
+```
+
+<Aside type="note" title="No evidence is not a contradiction">
+A pin over lines whose commit names no machine stands for as long as its text
+matches. That is what lets a person attribute lines after the fact. Only a
+changed pin, or evidence that names a different machine, is a finding.
+</Aside>
+
+## Keep the record out of the page
+
+The record on a public page tells every reader which lines a model wrote. To
+keep it private, let an [external-metadata
+manifest](/manni/meta/set-up/external-metadata/) own `provenance`. This is the
+one managed field a manifest may own, because nobody curates a pin by hand.
+`derive` writes the entries into the manifest instead of the page.
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: site
+    paths: ["docs/**/*.md", "docs/**/*.html"]
+    externalMetadata:
+      - file: ./private/provenance.yaml
+        keys: [provenance]
+
+meta:
+  derive:
+    fields: [provenance]
+```
+
+```
+$ MANNI_GENERATED_BY=claude-fable-5 manni meta derive
+private/provenance.yaml (for docs/limits.md)
+    provenance  lines 9: (unset) → claude-fable-5  (git: uncommitted)
+docs/page.html  current
+
+2 files, 1 changed, 1 range written
+```
+
+```yaml title="private/provenance.yaml"
+# Provenance for pages that keep their record out of the page.
+docs/limits.md:
+  provenance:
+    - generated-by: claude-fable-5
+      lines: 6
+      integrity: sha256-0c679dbd56e909d1a679ca962c7a474dcbca6d5db59af1c0e25b809a2feb588b
+```
+
+The page is untouched, so its body lines are its file lines minus the
+frontmatter it already had. Commit the page and the manifest together, and the
+manifest's copy at that commit is the evidence from then on. When every range
+of a page loses its evidence, `derive` removes `provenance` from the entry, as
+it does on a page. An entry left with no keys goes too.
+
+The manifest must be a file in the repository, never a URL, because `derive`
+writes to it. Each page's record has to live in one manifest.
+
+HTML, XML and DITA keep their metadata inside the body a pin would hash. A
+stamp there would change the very lines it pins, so those formats need the
+manifest. Without one, the stamp is refused for that file, exit 1:
+
+```
+$ MANNI_GENERATED_BY=claude-fable-5 manni meta derive docs/page.html
+✗ docs/page.html
+    provenance cannot be stamped into the page: in the "html" format the metadata is part of the body it pins. Keep provenance in an externalMetadata manifest.
+
+1 file, 0 changed, 0 fields written, 1 error
+```
+
+## Review what fill proposed
+
+`provenance` covers prose. [`manni meta fill`](/manni/meta/reference/cli/#meta-fill)
+proposes frontmatter, and it records what it wrote in a second key,
+`meta-provenance`. The report shows the entry under the fields:
+
+```
+✓ docs/limits.md
+    /description  How many requests a token may send, and how bursts work.  0.91
+    /intent  Stay under the rate limit  0.84
+    meta-provenance  claude-sonnet-4-5: /description, /intent
+```
+
+```yaml title="docs/limits.md"
+---
+title: Rate limits
+description: How many requests a token may send, and how bursts work.
+intent: Stay under the rate limit
+meta-provenance:
+  - generated-by: claude-sonnet-4-5
+    fields:
+      - /description
+      - /intent
+    confidence:
+      /description: 0.91
+      /intent: 0.84
+---
+```
+
+Each field is a JSON Pointer, so `/kg/label` reaches inside a block. Once you
+have reviewed the values, delete the entry. A surviving entry means machine
+metadata nobody has checked yet. `fill` adds a pointer back only when it writes
+that field again.
+
+`meta-provenance` is not managed, and nothing derives it. `fill` never proposes
+either provenance key, and it leaves both out of what it sends a model. A page
+whose schemas do not allow the key still gets its fields, with a note in place
+of the entry:
+
+```
+    meta-provenance not written: this page's schemas do not allow it
+```
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Derive in the configuration reference"
+    href="/manni/meta/reference/configuration/#derive"
+    description="The evidence order, the machines key, and every rule for provenance."
+  />
+  <LinkCard
+    title="manni meta derive in the CLI reference"
+    href="/manni/meta/reference/cli/#meta-derive"
+    description="--generated-by, the range form, and the output shapes."
+  />
+  <LinkCard
+    title="Stamp stewardship fields from evidence"
+    href="/manni/meta/set-up/derived-metadata/"
+    description="The managed-field channel provenance rides, with the CI and rollout recipes."
+  />
+  <LinkCard
+    title="The pre-commit recipe"
+    href="/manni/meta/ci/recipes/#pre-commit"
+    description="Both published hooks, and why rev must be a concrete tag."
+  />
+</CardGrid>

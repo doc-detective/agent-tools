@@ -29,7 +29,7 @@ test specification, verify the change rather than assuming it works.
   `audit`. It runs no tests, and it exits `0`
   whatever the coverage, so read the report's counts. Its `guidance` object gives
   template statements for each file's `syntax`, with placeholder payloads to
-  replace. See `skills/doc-detective-project-bootstrap/references/audit-coverage.md`
+  replace. See `skills/doc-detective-init/references/audit-coverage.md`
   or https://docs.doc-detective.com/docs/test-docs/audit-test-coverage.
 - Validate any test spec you write against the Doc Detective schema before committing.
 

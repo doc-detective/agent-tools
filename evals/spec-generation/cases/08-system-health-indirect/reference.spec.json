@@ -1,0 +1,29 @@
+{
+  "tests": [
+    {
+      "testId": "system-health",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/waitUntil-test-late-element.html"
+        },
+        {
+          "find": "Initial content"
+        },
+        {
+          "find": {
+            "selector": "[data-testid='dashboard-loaded']",
+            "elementText": "Dashboard",
+            "timeout": 5000
+          }
+        },
+        {
+          "find": {
+            "selector": ".status",
+            "elementText": "System operational",
+            "timeout": 5000
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"stepType": ["checkLink", "goTo", "httpRequest"], "match": "localhost:8092", "note": "Home page link resolves. checkLink is the natural fit; goTo/httpRequest also verify reachability."},
+    {"stepType": ["checkLink", "goTo", "httpRequest"], "match": "drag-drop-test.html", "note": "Layout editor link resolves."},
+    {"stepType": ["checkLink", "goTo", "httpRequest"], "match": "type-echo.html", "note": "Live preview link resolves."},
+    {"stepType": ["checkLink", "httpRequest"], "match": "8093/status/200", "note": "API status endpoint link resolves with 200."}
+  ],
+  "must_not": [
+    "Steps that try to start the demo app or change ports (the 'Getting help' advice)."
+  ]
+}

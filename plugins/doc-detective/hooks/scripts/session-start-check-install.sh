@@ -54,7 +54,7 @@ else
     SAFE_OLD=$(printf '%s' "$OLD_GLOBAL" | sed 's#[\\"/]#\\&#g' | tr -d '\n')
     OLD_NOTE=" The global doc-detective is ${SAFE_OLD}, but these skills need Doc Detective 5 or later."
   fi
-  printf '{"additionalContext": "Doc Detective CLI is not installed.%s When the user requests test execution, suggest installation: npm i -g doc-detective@5, npx doc-detective@5, or Docker (docker pull docdetective/docdetective). Test spec generation and validation still work without the CLI."}\n' "$OLD_NOTE"
+  printf '{"additionalContext": "No Doc Detective 5 runner was confirmed at session start (npx is checked only outside CI, with an 8-second limit).%s When the user asks to run tests, use the skill'"'"'s runner fallback, and suggest installing (npm i -g doc-detective@5, or docker pull docdetective/docdetective) only if none works. Spec generation and validation work without a runner."}\n' "$OLD_NOTE"
 fi
 
 exit 0

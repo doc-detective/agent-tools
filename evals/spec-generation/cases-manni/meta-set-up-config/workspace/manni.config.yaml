@@ -1,0 +1,29 @@
+# Which documents exist. Every manni tool reads this.
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+
+  - name: articles
+    paths:
+      - "articles/**/*.md"
+    # Files these globs remove are not in the collection.
+    exclude:
+      - "**/drafts/**"
+
+  - name: authors
+    paths:
+      - "authors/**"
+
+# How the metadata tool judges them.
+meta:
+  # The schema set every matched file must satisfy by default.
+  schemas:
+    - google:okf:0.1
+
+  # Per-subset overrides (first match wins).
+  overrides:
+    - collection: articles
+      schemas:
+        - google:okf:0.1
+        - ./schemas/article.json

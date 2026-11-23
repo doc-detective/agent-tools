@@ -1,0 +1,84 @@
+{
+  "source": "doc-detective/docs/fern/pages/docs/test-code/generate-tests-from-openapi.mdx@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/test-code/generate-tests-from-openapi.mdx",
+  "steps": [
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "\"openApi\":\"getUserById\""
+      ],
+      "match_any": [
+        "\"id\":2",
+        "\"id\":\"2\""
+      ],
+      "note": "Step 2, by operationId only: the string shorthand `openApi: getUserById` with path parameter id 2."
+    },
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "\"name\":\"reqres\"",
+        "\"operationId\":\"getUserById\""
+      ],
+      "match_any": [
+        "\"id\":2",
+        "\"id\":\"2\""
+      ],
+      "note": "Step 2, by registered name and operationId: reqres and getUserById, id 2."
+    },
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "descriptionPath",
+        "reqres.openapi.json",
+        "\"operationId\":\"getUserById\""
+      ],
+      "match_any": [
+        "\"id\":3",
+        "\"id\":\"3\""
+      ],
+      "note": "Step 2, by inline descriptionPath ./reqres.openapi.json and getUserById, id 3."
+    },
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "\"operationId\":\"getUserById\"",
+        "Bearer $TOKEN"
+      ],
+      "note": "Step 3: authenticate every request from the description with openApi.headers Authorization Bearer $TOKEN."
+    },
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "\"operationId\":\"getUserById\"",
+        "Bearer $ADMIN_TOKEN"
+      ],
+      "note": "Step 3: override Authorization for one request with request.headers Bearer $ADMIN_TOKEN."
+    },
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "\"operationId\":\"createUser\"",
+        "\"useExample\":\"request\""
+      ],
+      "note": "Step 4: seed the createUser request from the operation's example with useExample request."
+    },
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "\"operationId\":\"createUser\"",
+        "\"mockResponse\":true",
+        "201"
+      ],
+      "note": "Step 5: mock the createUser response with mockResponse true and statusCode 201."
+    }
+  ],
+  "must_not": [
+    "Pointing any request at reqres.in or another public host; the workspace's reqres.openapi.json is the description to use.",
+    "Steps for the Step 6 run commands (`npx doc-detective --input openapi.spec.json`, `docker run ...`); they run the spec, they aren't part of it."
+  ],
+  "scaffolding": [
+    "reqres.openapi.json at the workspace root, as the page assumes. It's the description committed beside the page, with `getUserById` and `createUser` and its server on the local echo API (http://localhost:8092/api).",
+    "The description can be registered in the spec, the test, or a workspace `.doc-detective.json`; the grade runs with that file under the eval's settings. Relative paths resolve against the file that names them.",
+    "The echo API answers with the request, not reqres.in's data, so live calls fail the response schema. The reference mocks responses for the registered description, as the page's own test does. $TOKEN and $ADMIN_TOKEN aren't set."
+  ]
+}

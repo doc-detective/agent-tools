@@ -1,0 +1,9 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["author", "timestamp"],
+  "properties": {
+    "author": { "type": "string" },
+    "timestamp": { "type": "string", "format": "date-time" }
+  }
+}

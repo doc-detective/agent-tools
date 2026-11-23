@@ -1,0 +1,5 @@
+meta:
+  schemas: [./steward.schema.json]
+collections:
+  - name: site
+    paths: ["docs/**/*.md"]

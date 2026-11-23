@@ -1,0 +1,10 @@
+meta:
+  paths: ["docs/**/*.md"]
+  exclude: ["docs/drafts/**"]
+  sidecars:
+    - file: ./docs-meta.yaml
+      keys: [source, jira]
+  overrides:
+    - name: guides
+      files: "docs/guides/**"
+      schemas: [./schemas/guide.json]

@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"stepType": "httpRequest", "match": ["8093/api/users/42", "put", "grace hopper", "admiral"], "note": "Step 1: PUT the full record; the response echoes name and job."},
+    {"stepType": "httpRequest", "match": ["put", "x-echo-path", "/api/users/42"], "may_share": true, "note": "Step 1: the X-Echo-Path header reads /api/users/42 (checked on the PUT step)."},
+    {"stepType": "httpRequest", "match": ["8093/api/users/42", "patch", "rear admiral"], "note": "Step 2: PATCH only the job field."},
+    {"stepType": "httpRequest", "match": ["api/users/42/orders", "status", "shipped"], "note": "Step 3: GET the orders with status=shipped; the response echoes the filter."}
+  ],
+  "must_not": [
+    "A request to the literal `/api/users/{id}` placeholder."
+  ]
+}

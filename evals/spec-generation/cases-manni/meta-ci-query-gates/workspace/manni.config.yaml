@@ -1,0 +1,10 @@
+collections:
+  - name: pages
+    paths: ["docs/**/*.md"]
+  - name: authors
+    paths: ["authors/**"]
+
+meta:
+  overrides:
+    - collection: authors
+      schemas: [./schemas/author.json]

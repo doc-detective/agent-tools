@@ -1,0 +1,233 @@
+---
+title: Create your manni.config.yaml
+description: Declare your repo's document sets under collections, add the schema set the metadata tool holds them to, and let CI run a bare manni meta validate.
+---
+
+import { Aside, LinkCard } from '@astrojs/starlight/components';
+
+A `manni.config.yaml` stores what "valid" means for your repo: which documents exist, and which schema set they must satisfy. With it committed at your repo root, both you and CI can run a bare `manni meta validate` and get a consistent, repeatable result.
+
+The file has two halves. A top-level `collections:` list says which documents exist, and every manni tool reads it. A `meta:` section says how the metadata tool judges them. This page covers where manni looks for the file, then each half in turn. It then gives a complete worked example, and shows how command-line flags combine with what you configure.
+
+## Where manni meta looks for the config
+
+`manni.config.yaml` is one file shared by every tool under `manni`. `collections:` sits at the top level, and each tool owns one top-level key of its own; the metadata tool's is `meta:`:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+
+meta:
+  schemas:
+    - google:okf:0.1
+```
+
+manni meta finds your config in one of two ways:
+
+- **Discovery.** With no `--config` flag, manni meta looks in the current working directory for `manni.config.yaml`, then `manni.config.yml`, and then repeats that in each parent directory. The first file carrying a `meta:` key **or** a `collections:` list wins, and the search stops at your repo root. That is the first directory containing `.git`. If no parent is a repository, only the current directory is checked.
+- **Explicit path.** Pass `-c <path>` (or `--config <path>`) to point at a specific file. If that file does not exist, manni meta exits with an error rather than falling back to discovery.
+
+A file with `collections:` and no `meta:` is still the metadata tool's config. That is deliberate. One file describes the repository, so a repo that declares its documents has declared them for every tool. That holds whether or not it has tuned that tool yet.
+
+Two older file names are still read, each with a warning on stderr. `moose.config.yaml` is the family file under its previous name. `docmeta.config.yaml` holds the `meta:` section as its whole document, with no wrapper key. A legacy file has no top-level, so it cannot carry collections; rename it to `manni.config.yaml` and split its keys across the two halves. The [configuration reference](/manni/meta/reference/configuration/#discovery) has the full order.
+
+Because the search walks up, `manni meta validate` gives the same verdict from your repo root as it does from `docs/` or from a package subdirectory. When a config governs a run, manni meta prints a line naming it, such as `Using manni.config.yaml (../..)`. To run against the built-in defaults instead, pass `--no-config`.
+
+<Aside type="note" title="What relative paths are relative to">
+Relative paths written **in** the config resolve against the config file's own directory, not the directory you ran from. That covers a collection's `paths` and `exclude`, a manifest `file`, and any local `.json` schema file. Paths you type on the command line stay relative to where you are. See the [configuration reference](/manni/meta/reference/configuration/#what-relative-paths-are-relative-to).
+</Aside>
+
+## `collections:`, the document sets
+
+A **collection** is a named set of documents. It is declared once, at the top level, and every manni tool reads the same declaration:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+      - "articles/**/*.md"
+    exclude:
+      - "**/drafts/**"
+  - name: authors
+    paths:
+      - "authors/**"
+```
+
+With this in place, a bare `manni meta validate` reads every collection, in declaration order. Pass paths explicitly and they take priority, so `manni meta validate README.md` validates only `README.md`.
+
+The keys of one collection:
+
+| Key | Type | Required | Meaning |
+|---|---|---|---|
+| `name` | string | yes | What `--collection`, an override's `collection:` and a query's `FROM <name>` refer to. Unique, compared case-insensitively. |
+| `paths` | list | yes | Files, directories, or globs, relative to the config file's directory. |
+| `exclude` | list | no | Globs that remove files from `paths`. `**/node_modules/**` and `**/.git/**` are always excluded. |
+| `url` | string | no | Where the collection is published. `manni a11y check` seeds its crawl from it. |
+| `externalMetadata` | list | no | Manifests supplying frontmatter values that live outside the document. |
+
+The [configuration reference](/manni/meta/reference/configuration/#collections) has the types, the defaults, and every parse error in full.
+
+<Aside type="caution" title="`docs` is not an available name">
+`manni meta query` builds a SQL table called `docs`, and exposes each collection as a view beside it, so a collection named `docs` would shadow the table every query reads. manni refuses the name at parse time. `pages`, `site` or `guides` are the usual substitutes.
+</Aside>
+
+### Why this is not a `meta:` key
+
+`collections:` is the one top-level key that belongs to no tool. Which documents exist is a fact about the repository, not about the validator, and more than one tool needs it. That is clearest in `url:`, which the metadata tool never reads at all: it is where `manni a11y check` starts crawling when you give it no URLs. One declaration, several tools.
+
+If you are upgrading from a config with `meta.paths` or `meta.exclude`, manni refuses those keys and the message names their new home:
+
+```
+manni: manni.config.yaml: "paths" is no longer a meta key. Document sets are declared once for every tool, under a top-level collections: list. See https://hawkeyexl.github.io/manni/meta/reference/configuration/#collections
+```
+
+That is exit `2`, and there is no alias. Move the globs into a collection and the run works again.
+
+### Narrowing a run to one collection
+
+`--collection <name>` runs over the named collections only. It is repeatable, one name per occurrence, and it never splits on commas:
+
+```bash
+npx @hawkeyexl/manni meta validate --collection authors
+npx @hawkeyexl/manni meta validate --collection authors --collection pages
+```
+
+It selects from the config, so it cannot be combined with positional paths (`--collection selects a configured collection; it cannot be combined with paths.`), and it needs a config to select from. It is most useful as a CI gate over one part of a docs set. One thing it turns off: corpus [`checks:`](/manni/meta/reference/configuration/#checks) read the whole corpus or nothing, so a scoped run skips them with a notice on stderr.
+
+<Aside type="caution" title="`exclude` decides membership, not what a typed path covers">
+A collection's `exclude` says which files are **in** the collection. It does not filter a path you type on the command line. So with `exclude: ["**/drafts/**"]`, a bare `manni meta validate` skips the drafts, and `manni meta validate docs/` does not. You named `docs/`, and manni has no basis for picking which collection's exclusions to apply to it. `--exclude <glob>` is the spelling for "and skip these" on a typed path. This changed in 1.0; a config `exclude` used to be merged into every run.
+</Aside>
+
+### Metadata that lives outside the document
+
+A collection can declare **external metadata**: manifests that supply frontmatter values the documents do not carry. It is how a lean docset keeps a `source:` or `jira:` field out of every page, and how private values ride alongside public pages.
+
+<LinkCard
+  title="Keep metadata outside the document"
+  href="/manni/meta/set-up/external-metadata/"
+  description="Manifests beside the config or fetched by URL, joined by path or by field, and what a collision or an orphan entry looks like."
+/>
+
+## The `meta:` keys
+
+Everything under `meta:` is the metadata tool's business: which schemas apply, and how.
+
+### `schemas`
+
+The default schema **set** applied to every matched file. Each file must satisfy **all** schemas in the list: they are validated against the set, not against the first match.
+
+```yaml title="manni.config.yaml"
+meta:
+  schemas:
+    - google:okf:0.1
+```
+
+A schema reference can be one of three kinds:
+
+- A **built-in id** in `vendor:name:version` form, such as `google:okf:0.1`.
+- A **local file path** to a `.json` schema, such as `./schemas/article.json`.
+- An **`http(s)` URL** to a remotely hosted schema.
+
+If you omit `schemas` entirely, manni meta falls back to the built-in [`google:okf:0.1`](/manni/meta/schemas/) schema, which requires a `type` field.
+
+### `overrides`
+
+A list of rules that assign a different schema set to a subset of files. Each entry carries a `schemas` list, plus exactly one of two ways to say which files it governs:
+
+- **`collection: <name>`** points at a declared collection. Use it when the subset is a real document set the whole family cares about.
+- **`files: <glob>`** takes globs, or a list of them. Use it for a one-off subset that only affects schema choice.
+
+The first override whose files match wins, and its schema set replaces the default `schemas` for that file.
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths: ["docs/**/*.md"]
+  - name: api
+    paths: ["docs/api/**/*.md"]
+
+meta:
+  overrides:
+    - collection: api
+      schemas:
+        - google:okf:0.1
+        - ./schemas/api-reference.json
+```
+
+Overrides are how you require stricter metadata for one area of the repo without affecting the rest. They are not the last word, though: a file's own `$schema` field and the CLI `--schema` flag both take precedence over them. The dedicated overrides guide walks through the full resolution order, and when to reach for `collection:` rather than `files:`.
+
+<LinkCard
+  title="Apply different schemas to different folders"
+  href="/manni/meta/set-up/different-schemas-per-folder/"
+  description="A full walkthrough of collection and glob overrides, precedence, and validating one file against multiple schemas."
+/>
+
+## A complete example
+
+This config declares two collections, skips drafts, applies the OKF schema everywhere by default, and layers an extra schema onto the articles.
+
+```yaml title="manni.config.yaml"
+# Which documents exist. Every manni tool reads this.
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+
+  - name: articles
+    paths:
+      - "articles/**/*.md"
+    # Files these globs remove are not in the collection.
+    exclude:
+      - "**/drafts/**"
+
+# How the metadata tool judges them.
+meta:
+  # The schema set every matched file must satisfy by default.
+  schemas:
+    - google:okf:0.1
+
+  # Per-subset overrides (first match wins).
+  overrides:
+    - collection: articles
+      schemas:
+        - google:okf:0.1
+        - ./schemas/article.json
+```
+
+Run it from your repo root:
+
+```bash
+npx @hawkeyexl/manni meta validate
+```
+
+## How CLI flags combine with the config
+
+Some command-line flags layer onto the config; others replace it. Keep the distinction in mind when you run manni meta locally with extra flags:
+
+| Flag | Effect relative to config |
+|---|---|
+| positional `[paths...]` | **Replaces** the collections as the run's targets. A typed file is still tested for collection membership, which is what its external metadata attaches to. |
+| `--collection <name>` | **Narrows** the run to the named collections. Cannot be combined with positional paths. |
+| `--exclude <glob>` | **Adds** to the built-in ignores for this run. It is the only exclusion that filters a typed path. |
+| `-s, --schema <ref>` | **Overrides** all schema resolution. Config `schemas`, `overrides`, and file `$schema` are ignored. |
+
+<Aside type="tip">
+For the full flag list, see the [CLI reference](/manni/meta/reference/). For the complete schema-resolution precedence chain, see the [Schema resolution reference](/manni/meta/reference/schema-resolution/).
+</Aside>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"set-up-config","description":"Config-handling claims that are deterministic from the repo root."} */}
+{/* step {"description":"Explicit `-c <path>` to a missing file errors out (exit 2) rather than falling back to discovery.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c does-not-exist.yaml test/fixtures/valid.md","exitCodes":[2],"stdio":"Config file not found"}} */}
+{/* step {"description":"No positional paths and no config found exits 2, and the message names collections: as the place to declare a document set.","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config","exitCodes":[2],"stdio":"No files to validate. Pass paths/globs, or declare a collection under"}} */}
+{/* step {"description":"Explicit file arguments are validated regardless of config; a passing fixture exits 0.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/valid.md","exitCodes":[0],"stdio":"1 passed"}} */}
+{/* step {"description":"A bare run reads every declared collection, in declaration order.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --no-checks","exitCodes":[0],"stdio":"3 files checked, 3 passed"}} */}
+{/* step {"description":"--collection narrows the run to one declared collection.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection blog","exitCodes":[0],"stdio":"1 file checked, 1 passed"}} */}
+{/* step {"description":"--collection selects from the config, so it refuses to be combined with a typed path (exit 2).","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection blog test/fixtures/valid.md","exitCodes":[2],"stdio":"it cannot be combined with paths"}} */}
+{/* step {"description":"The flag never splits on commas: one name per occurrence, and the refusal lists the configured names.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/checks-collections/manni.config.yaml --collection guides,blog","exitCodes":[2],"stdio":"/no collection named \"guides,blog\"[\\s\\S]*Configured: guides, blog/"}} */}
+{/* test end */}

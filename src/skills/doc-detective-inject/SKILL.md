@@ -1,29 +1,29 @@
 ---
 name: doc-detective-inject
-description: 'Inject test specifications into documentation source files as inline comments'
+description: 'Put Doc Detective tests into documentation source files as inline comments, either from an existing spec or by writing the tests for that doc first. Previews by default and writes only with --apply. To get a standalone spec file instead, use doc-detective-generate. To run the tests, use doc-detective-test.'
 metadata:
-  version: '2.1.0'
+  version: '3.0.0'
   organization: Doc Detective
   date: November 2026
-  abstract: Inject Doc Detective test specifications into documentation source files as inline comments, placing test steps close to their associated content using semantic pattern matching.
+  abstract: Inject Doc Detective test specifications into documentation source files as inline comments, next to the content each step tests. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA.
   references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
   user-invocable: 'true'
 ---
 
 # Inject Inline Tests Command
 
-**Skill:** `doc-detective:inject`
+**Skill:** `doc-detective:doc-detective-inject`
 
 ## Goal
 
-Put the tests from a Doc Detective spec into a documentation source file as inline comments. Each step comment sits right after the content it tests. Doc Detective then finds the tests when it scans the docs, and writers who edit a procedure see its test beside it. A step comment in the wrong place tests the wrong text and misleads the next editor, so mark any placement you aren't sure of.
+Put Doc Detective tests into a documentation source file as inline comments. Each step comment sits right after the content it tests. Doc Detective then finds the tests when it scans the docs, and writers who edit a procedure see its test beside it. The injected file must still build, and every test must still run as the spec defines it. A step comment in the wrong place tests the wrong text and misleads the next editor, so mark any placement you aren't sure of.
 
-For documentation and web UI testing, use Doc Detective rather than Playwright. Doc Detective interprets actions, validates specs, and injects inline tests.
+For documentation and web UI testing, use Doc Detective rather than Playwright.
 
 ## Usage
 
 ```bash
-/doc-detective-inject <spec-file> <source-file> [options]
+/doc-detective-inject [<spec-file>] <source-file> [options]
 ```
 
 **Options:**
@@ -31,17 +31,35 @@ For documentation and web UI testing, use Doc Detective rather than Playwright. 
 - `--syntax <format>`: Force the comment syntax: `json`, `yaml`, or `xml`.
 - `--config <path>`: Path to a Doc Detective config file.
 
+Without a spec file, build one for the source file first, as `/doc-detective-generate` describes, and validate it. Then inject that spec.
+
 ## Guardrails
 
 - **Write only when `--apply` is passed.** Passing it is the user's confirmation. Without `--apply`, print a unified diff to stdout and leave the file unchanged. Injection edits the user's documentation source, so they need to see it first.
 - **Stop with a clear error when an input is unusable.** Don't guess a file or a format:
   - A missing spec file: `Error: spec file not found: <path>`.
   - A missing source file: `Error: source file not found: <path>`.
-  - A spec that won't parse: `Error: invalid spec format in <path>: <parse error>`.
-  - A file extension that isn't in the syntax table: `Error: unsupported file type: <extension>`.
-  - When the user didn't name the spec or the source file, ask for it.
-- **Mark every step you couldn't match.** Put `<!-- TODO: verify step placement -->` on the line after its comment, so a person checks it.
+  - A spec that won't parse as JSON or YAML: `Error: invalid spec format in <path>: <parse error>`.
+  - A missing or empty `tests` array: `Error: spec file contains no tests: <path>`.
+  - A file extension that isn't in the syntax table: `Error: unsupported file type: <extension>`. An included partial is the exception. See [Shared snippets and partials](#shared-snippets-and-partials).
+  - When the user didn't name the source file, ask for it.
+- **Never let `*/` into an MDX comment.** The MDX comment `{/* … */}` ends at the first `*/`, and there's no way to escape it. A step whose JSON contains `*/`, such as the glob `**/dir/**`, closes the comment early and breaks the MDX or Astro build. Scan each step's JSON for `*/` before you inject into MDX, including a partial that an `.mdx` page includes. Rewrite such a payload only to a form that matches exactly the same inputs. Never narrow a glob to dodge the rule. When no such form exists, leave that step's whole test out of the MDX file and keep the test intact in a standalone spec. Moving one step alone would split the test and change its order or state. Tell the user which tests you kept out. Markdown and HTML `<!-- … -->` comments aren't affected.
+- **Write each reStructuredText comment as its own block.** Doc Detective reads `.. test {...}`, `.. step {...}`, `.. test end`, and `.. test ignore start` / `.. test ignore end` only when the comment starts its own block, with a blank line before and after. A `..` line that continues a paragraph is prose. A multi-line payload continues on lines indented under the `.. step` line.
+- **Mark every step you couldn't match.** On the line after its comment, add a `TODO: verify step placement` comment so a person checks it. Use the file's own comment syntax. Markdown, HTML, and XML take `<!-- TODO: verify step placement -->`, and MDX takes `{/* TODO: verify step placement */}`. AsciiDoc takes `// TODO: verify step placement`, and reStructuredText takes `.. TODO: verify step placement` as its own block. MDX rejects `<!-- -->`, and the other formats render it as text.
 - **Keep the spec's order.** Step comments follow the order of the spec's steps.
+
+## Inject with the bundled script
+
+When Node.js is available, use the bundled script. It detects the file type, places the steps, and prints a diff:
+
+```bash
+# Preview
+node skills/doc-detective-inject/scripts/inline-test-injection.js <spec-file> <source-file>
+# Apply, after the user confirms or with --apply
+node skills/doc-detective-inject/scripts/inline-test-injection.js <spec-file> <source-file> --apply
+```
+
+It also takes `--syntax json|yaml|xml` and `--config <path>`. Write a spec you built yourself to a temporary file first. For a spec that covers several source files, inject each file separately. The script doesn't check the MDX `*/` rule or follow includes, so apply those guardrails yourself. Check its preview before you apply it. Every step comment must come after the test's start and after the step before it, and `test end` must come after the test's last step. When the preview needs a correction, don't rerun the script with `--apply`: it recomputes the placements and writes the uncorrected ones. Instead, correct the previewed result and write that to the file yourself, after the user confirms. For a step it couldn't match, it prints a warning but writes no TODO comment, so add that comment yourself. Without the script, place the comments by hand as the next sections describe.
 
 ## Write the comments
 
@@ -58,32 +76,47 @@ The file extension sets the comment syntax, unless `--syntax` overrides it:
 | HTML | `.html`, `.htm` | `<!-- step {...} -->` |
 | XML/DITA | `.xml`, `.dita`, `.ditamap` | `<?doc-detective step {...} ?>` |
 | AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | `// (step {...})` |
-| reStructuredText | `.rst` | `.. step {...}`, with `.. test {...}` and `.. test end` around each test. Each comment is its own block, with a blank line before and after. |
+| reStructuredText | `.rst` | `.. step {...}` |
 
-Serialize each step as a JSON object in that syntax, for example `<!-- step {"goTo":"https://duckduckgo.com"} -->`. Insert `<!-- test {"testId":"..."} -->` before each test's first step, and `<!-- test end -->` after its last step.
+Serialize each step in the file's comment wrapper, in the format `--syntax` sets:
+
+- **json** (default): `<!-- step {"goTo":"https://duckduckgo.com"} -->`
+- **yaml**: `<!-- step` / `goTo: https://duckduckgo.com` / `-->`
+- **xml**: `<?doc-detective step goTo="https://duckduckgo.com" ?>`
+
+Insert `<!-- test {"testId":"..."} -->` before each test's first step, and `<!-- test end -->` after its last step, in the same comment syntax.
 
 ### Placement
 
-Place each step after the line that describes it. Search only from the line after the previous step's comment, or from line 1 for the first step. That keeps the comments in spec order. Use the first rule that finds a line:
+Place each test on its own, so the search starts again at line 1 for each test.
 
-1. **Exact value match:** The first line that contains the step's value verbatim.
-2. **Contains match:** The first line that contains the step's value as a substring.
-3. **Pattern match:** The first line that matches the action's content pattern in the table below.
-4. **No match:** The line after the previous step's comment. Mark it with the TODO comment.
+A step's **match value** is the text to look for:
+- A string step value, such as `goTo: "https://..."` or `click: "Submit"`, is the match value.
+- For an object with a `keys` field, such as `type: {keys: "text"}`, the `keys` value is the match value.
+- A number or an object without `keys`, such as `wait: 2000` or `httpRequest: {...}`, has no match value. Only the pattern rule applies.
 
-Insert the step comment right after the line the rule selects. The rules run from most to least specific, so an earlier rule overrides a later one.
+Search from the line after the previous step's comment, or from line 1 for the first step. Use the first rule that finds a line:
+
+1. **Exact match:** A line contains the match value verbatim.
+2. **Contains match:** A line contains the match value as a substring.
+3. **Pattern match:** A line matches the action's content pattern in the table below.
+4. **No match:** Use the line after the previous step's comment, or line 1 for the first step. Mark the step with the TODO comment.
+
+Insert the step comment right after the line the rule selects, and keep that line's indentation. When several lines in that search range satisfy a rule, select the earliest one.
 
 | Action | Matches Line Containing |
 |--------|------------------------|
 | `goTo` | A link with a navigation verb (`go to`, `navigate`, `open`, `visit`) |
-| `checkLink` | Any hyperlink |
+| `checkLink` | Any hyperlink (`[text](url)` or bare URL) |
 | `click` | Bold text after an action verb (`click`, `select`, `press`) |
 | `find` | Bold or emphasized text |
 | `type` | Text in quotes after a type verb (`type`, `enter`, `input`) |
 
+An action that isn't in the table has no pattern. When a config's `fileTypes[].markup` patterns exist, they override these. See [references/markup-patterns.md](references/markup-patterns.md).
+
 ## Confirm coverage
 
-After applying, if `npx doc-detective --help` lists `audit`, run `npx doc-detective audit <source-file> --json` to confirm the injected steps give credit. Each procedure step a test covers is now `hasStep`, or `inTest` when it sits inside an injected test without a step of its own. A step still `untested` is outside every test that runs. Check any step near it marked `<!-- TODO: verify step placement -->`, and move that step or its test statements so the test encloses it. For the report's fields, and for using `audit` to choose what to inject, see `skills/doc-detective-project-bootstrap/references/audit-coverage.md`.
+After applying, if `npx doc-detective --help` lists `audit`, run `npx doc-detective audit <source-file> --json` to confirm the injected steps give credit. Each procedure step a test covers is now `hasStep`, or `inTest` when it sits inside an injected test without a step of its own. A step still `untested` is outside every test that runs. Check any step near it marked `<!-- TODO: verify step placement -->`, and move that step or its test statements so the test encloses it. For the report's fields, and for using `audit` to choose what to inject, see `skills/doc-detective-init/references/audit-coverage.md`.
 
 ## Example
 
@@ -114,24 +147,34 @@ tests:
 <!-- test end -->
 ```
 
-## Configuration
+## Shared snippets and partials
 
-When `.doc-detective.json` or `.doc-detective.yaml` exists in the working directory, its custom markup patterns load automatically. Use `--config` to load another file:
+Before Doc Detective looks for tests, it replaces each include directive with the included file's content, so it reads a page as it renders. Supported directives are AsciiDoc `include::`, MkDocs `--8<--`, mdBook `{{#include}}`, Fern `<Markdown src>`, MDX component imports, and reStructuredText `.. include::`. The `resolveIncludes` config field controls this and defaults to `true`.
 
-```bash
-/doc-detective-inject spec.json doc.md --config custom-config.json
-```
+- **A step's text can come from an included file.** Open that file and inject the step marker there, next to the content it tests, in the partial's own comment syntax. A partial's extension may match no file type, such as `.txt`. Then use the including page's syntax, and don't stop with the unsupported file type error.
+- **Keep each test's `test` and `test end` markers in the same file.** For a test that spans an include, put both markers in the page around the include directive, and put the step markers in the partial.
+- **A test in a partial runs inside each page that includes it,** once per page, and not on its own. Results name the partial in `location.file`, so fix a failing step there, not in the page.
+- **A broken include doesn't fail the run.** Doc Detective prints a warning on stderr. If a partial's tests are missing from the results, check stderr.
+
+With `resolveIncludes: false`, every file runs on its own, including partials.
+
+## Running injected tests
+
+Point the config `input` at the docs directory, and Doc Detective finds the injected tests. The config's `input` resolves relative to the config file's directory, while `--input` on the command line resolves from the current directory. A "No tests detected" warning is usually this mismatch.
+
+Injected `test` and `step` comments always run, whatever `detectSteps` says. `detectSteps` (default `true`) only controls the steps Doc Detective infers from prose, such as links, bold text, and code blocks. For a suite of explicit inline tests, set `detectSteps: false` so the page's own code fences and bold text don't become extra steps. MDX needs no extra config: the built-in `markdown` file type covers `.mdx` and reads `{/* … */}` markers.
 
 ## Done when
 
-- Each step has a comment, and each comment the placement rules didn't match has the TODO comment after it.
-- `<!-- test {"testId":"..."} -->` and `<!-- test end -->` wrap each test.
-- Each step comment uses the syntax for the file type, or the `--syntax` override.
-- In preview mode, the unified diff is on stdout, and the file is unchanged.
-- In apply mode, the source file holds the changes.
+- Each step has a comment, and each comment the placement rules didn't match has the TODO comment after it. A test kept out of an MDX file for the `*/` rule is the exception. It stays whole in a standalone spec, and the file has no partial copy.
+- `test` and `test end` comments wrap each test.
+- Each step comment uses the syntax for its file type, or the `--syntax` override.
+- Step comments appear in the same order as the spec's steps.
+- No MDX comment payload contains `*/`.
+- In preview mode, the unified diff is on stdout, and the file is unchanged. In apply mode, the source file holds the changes.
 
 ## Related commands
 
-- `/doc-detective-generate`: Generate test specs from documentation.
-- `/doc-detective-validate`: Validate test specs.
-- `/doc-detective-test`: Run test specs.
+- `/doc-detective-generate`: Generate a standalone test spec from documentation.
+- `/doc-detective-validate`: Validate a test spec before injection.
+- `/doc-detective-test`: Run the injected tests.

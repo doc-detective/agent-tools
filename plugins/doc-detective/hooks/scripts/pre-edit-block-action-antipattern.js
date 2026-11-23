@@ -56,10 +56,9 @@ async function main() {
   if (match) {
     const actionName = match[1];
     process.stderr.write(
-      `Doc Detective format error: Do not use {"action": "${actionName}"}.\n` +
-      `The action name IS the key. Use {"${actionName}": ...} instead.\n\n` +
-      `Correct:   {"${actionName}": "https://example.com"}\n` +
-      `Incorrect: {"action": "${actionName}", "url": "https://example.com"}\n`
+      `Doc Detective format error: don't use {"action": "${actionName}"}. ` +
+      `The action name is the key: write {"${actionName}": <value>} and move the fields that sat beside "action" into that value. ` +
+      `For example, {"action": "goTo", "url": "https://example.com"} becomes {"goTo": "https://example.com"}.\n`
     );
     process.exit(2);
   }

@@ -1,0 +1,7 @@
+collections:
+  - name: site
+    paths: ["docs/**/*.md"]
+
+meta:
+  schemas:
+    - ./permissive.schema.json

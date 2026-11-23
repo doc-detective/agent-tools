@@ -1,0 +1,38 @@
+{
+  "tests": [
+    {
+      "testId": "account-overview",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/annotate-late-element.html"
+        },
+        {
+          "find": "Ready immediately"
+        },
+        {
+          "find": {
+            "selector": "#late-panel",
+            "elementText": "Dashboard",
+            "timeout": 10000
+          }
+        },
+        {
+          "find": "API key 1"
+        },
+        {
+          "find": "API key 2"
+        },
+        {
+          "find": "API key 3"
+        },
+        {
+          "find": {
+            "selector": "#late-second",
+            "elementText": "Billing",
+            "timeout": 10000
+          }
+        }
+      ]
+    }
+  ]
+}

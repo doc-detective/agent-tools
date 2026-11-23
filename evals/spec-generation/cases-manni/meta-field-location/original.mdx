@@ -1,0 +1,529 @@
+---
+title: Keep maintainer metadata out of delivered pages
+description: "Mark each property x-manni-location page or external, then follow the value: what validate reports, how manni meta relocate moves values and edits collections:, what derive, fill and query write, and how to choose the marks."
+sidebar:
+  label: Field location
+  order: 5
+---
+
+import { Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+A page's metadata serves two readers. Some fields are for whoever fetches the
+page: `title`, `description`, `lifecycle`, the questions it answers. Others are
+for the people who maintain it: `owner`, `authors`, `review-interval`, the evals
+CI runs. Some platforms serve frontmatter unchanged in the markdown variant
+coding agents and retrieval pipelines fetch. On that surface every maintainer
+field is bytes an agent reads and cannot use.
+
+`x-manni-location` is how your standard says which is which. `page` keeps a
+field in the document. `external` keeps it in the collection's
+[external-metadata manifest](/manni/meta/set-up/external-metadata/), a YAML
+file beside the pages. This page follows one standard from the mark, through
+the report, to the move, and then through every command that writes a value.
+
+Every transcript below is real output from the built tool.
+
+## Mark the property
+
+The mark sits on the property, beside the rules it keeps:
+
+```json title="steward.schema.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "title": { "type": "string", "x-manni-location": "page" },
+    "authors": { "type": "array", "items": { "type": "string" }, "x-manni-location": "external" },
+    "owner": { "type": "string", "x-manni-location": "external" }
+  }
+}
+```
+
+No mark means no preference, and every command behaves as it did before the
+keyword existed. The mark changes where a value belongs, never whether it is
+valid. `owner` is still a string wherever it lives.
+
+The mark counts wherever the validator evaluates it: a `$ref`, an `allOf`, a
+referenced built-in, and the `if`/`then` branches the validator takes. Only a
+top-level property's mark has an effect, because a manifest owns top-level
+keys. When two schemas in a file's set disagree, the later one wins, so a house
+schema listed after a vocabulary refines it. The [schema resolution
+reference](/manni/meta/reference/schema-resolution/#field-location) has the
+rules and the three compile errors.
+
+## What validate reports
+
+Two pages carry values the schema prefers elsewhere:
+
+```yaml title="docs/install.md"
+---
+title: Install
+authors: [ada]
+owner: platform
+---
+```
+
+The config declares one collection, with no manifest yet:
+
+```yaml title="manni.config.yaml"
+meta:
+  schemas: [./steward.schema.json]
+collections:
+  - name: site
+    paths: ["docs/**/*.md"]
+```
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+⚠ docs/faq.md
+    /owner  warning "owner" is stored in the page; steward.schema.json prefers external metadata. Run manni meta relocate.  (line 3)  [location:external]
+⚠ docs/install.md
+    /authors  warning "authors" is stored in the page; steward.schema.json prefers external metadata. Run manni meta relocate.  (line 3)  [location:external]
+    /owner  warning "owner" is stored in the page; steward.schema.json prefers external metadata. Run manni meta relocate.  (line 4)  [location:external]
+
+2 files checked, 2 passed, 0 failed, 0 errors, 3 warnings
+# exit 0
+```
+
+Both pages pass. A misplaced value is a warning, so marking a vocabulary on a
+large docset never turns CI red overnight. The finding names the schema whose
+mark decided, at the line the value sits on.
+
+The other direction has its own finding. Here a manifest supplies `title`,
+which the schema prefers in the page:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+⚠ docs/faq.md
+    /title  warning "title" is stored in manifest docs-meta.yaml; steward.schema.json prefers the page. Run manni meta relocate.  (docs-meta.yaml:3)  [location:page]
+⚠ docs/install.md
+    /owner  warning "owner" is stored in the page; steward.schema.json prefers external metadata. Run manni meta relocate.  (line 2)  [location:external]
+    /title  warning "title" is stored in manifest docs-meta.yaml; steward.schema.json prefers the page. Run manni meta relocate.  (docs-meta.yaml:5)  [location:page]
+
+2 files checked, 2 passed, 0 failed, 0 errors, 3 warnings
+# exit 0
+```
+
+| Finding | Where it points | What it means |
+|---|---|---|
+| `location:external` | The page line | A value in the page whose schema prefers external metadata |
+| `location:page` | The manifest line | A value a manifest supplies whose schema prefers the page |
+
+Two cases file no location finding. A key a manifest owns and a page also
+carries is already an `external:owned` error, so it is not reported twice. And
+under a [field join](/manni/meta/set-up/external-metadata/#survive-renames-with-a-field-join),
+the join field stays in the page whatever its mark, because it is how the page
+finds its entry.
+
+A page in none of several collections has nowhere to go, and the finding says
+so instead of suggesting a move:
+
+```
+/owner  warning "owner" is stored in the page; steward.schema.json prefers external metadata, and this document is in none of the 2 collections.  (line 2)  [location:external]
+```
+
+### In every reporter
+
+```console
+$ manni meta validate -f github
+Using manni.config.yaml (.)
+::warning file=docs/faq.md,line=3::[location:external] /owner "owner" is stored in the page; steward.schema.json prefers external metadata. Run manni meta relocate.
+::warning file=docs/install.md,line=3::[location:external] /authors "authors" is stored in the page; steward.schema.json prefers external metadata. Run manni meta relocate.
+::warning file=docs/install.md,line=4::[location:external] /owner "owner" is stored in the page; steward.schema.json prefers external metadata. Run manni meta relocate.
+```
+
+| Format | What a location finding looks like |
+|---|---|
+| `pretty` | The word `warning` before the message, `⚠` on a file with no errors, and `location:external` or `location:page` in the bracket |
+| `json` | An entry in `errors[]` with `"keyword": "location"`, `"schema": "location:external"`, `"subject": "owner"` and `"severity": "warning"`. A `location:page` entry adds `"file": "docs-meta.yaml"` |
+| `github` | `::warning file=…,line=3::[location:external] /owner …`, as above. A `location:page` annotation sits on the manifest file |
+| `sarif` | `"ruleId": "location:external/location"` at `"level": "warning"` |
+| `junit` | Not a `<failure>`. The testcase passes, as it does for every warning |
+
+A [baseline](/manni/meta/reference/cli/#baselines) records warnings like any
+other finding.
+
+## Move the values with relocate
+
+[`manni meta relocate`](/manni/meta/reference/cli/#meta-relocate) puts every
+value where its mark says. Preview first:
+
+```console
+$ manni meta relocate --dry-run
+Using manni.config.yaml (.)
+Would create site.metadata.yaml; collections[site].externalMetadata[0] would own owner, authors.
+docs/faq.md
+    owner    → site.metadata.yaml
+docs/install.md
+    authors  → site.metadata.yaml
+    owner    → site.metadata.yaml
+2 files, 3 values would move to 1 manifest
+# exit 0
+```
+
+Then run it:
+
+```console
+$ manni meta relocate
+Using manni.config.yaml (.)
+Created site.metadata.yaml; collections[site].externalMetadata[0] owns owner, authors.
+docs/faq.md
+    owner    → site.metadata.yaml:2
+docs/install.md
+    authors  → site.metadata.yaml:4
+    owner    → site.metadata.yaml:6
+2 files, 3 values moved to 1 manifest
+# exit 0
+```
+
+Three files changed. The page keeps only what an agent uses:
+
+```yaml title="docs/install.md"
+---
+title: Install
+---
+```
+
+The manifest holds the rest, keyed by page:
+
+```yaml title="site.metadata.yaml"
+docs/faq.md:
+  owner: platform
+docs/install.md:
+  authors:
+    - ada
+  owner: platform
+```
+
+And the config declares the manifest. The edit keeps comments and key order:
+
+```yaml title="manni.config.yaml" ins={6-8}
+meta:
+  schemas: [./steward.schema.json]
+collections:
+  - name: site
+    paths: ["docs/**/*.md"]
+    externalMetadata:
+      - file: ./site.metadata.yaml
+        keys: [owner, authors]
+```
+
+`validate` now reads `owner` and `authors` from the manifest, checks them
+against the same schema, and reports nothing:
+
+```console
+$ manni meta validate
+Using manni.config.yaml (.)
+✓ docs/faq.md
+✓ docs/install.md
+
+2 files checked, 2 passed, 0 failed, 0 errors
+# exit 0
+```
+
+### Both directions in one run
+
+`relocate` moves a value back into the page just as readily. Over the
+two-finding example above, `title` comes out of the manifest and `owner` goes
+in:
+
+```console
+$ manni meta relocate
+Using manni.config.yaml (.)
+Removing title from docs-meta.yaml's keys moves it into every page in collection site.
+Adding owner to docs-meta.yaml's keys moves it out of every page in collection site.
+docs/faq.md
+    title    ← docs-meta.yaml
+docs/install.md
+    title    ← docs-meta.yaml
+    owner    → docs-meta.yaml:3
+2 files, 3 values moved: 2 into pages, 1 into 1 manifest
+# exit 0
+```
+
+When a move back empties a manifest's `keys:`, the entry leaves the config and
+the file stays on disk, with one more line:
+`docs-meta.yaml no longer owns any keys and is no longer declared; delete it when you are ready.`
+
+### A key covers the whole collection
+
+`keys:` is per collection, not per page. Adding a key moves it out of every
+member page, or each page still carrying it would fail `external:owned`. So a
+narrowed run widens, and says by how much:
+
+```console
+$ manni meta relocate docs/install.md --fields owner
+Using manni.config.yaml (.)
+Adding owner to docs-meta.yaml's keys moves it out of every page in collection site, 2 beyond the paths you named.
+docs/install.md
+    owner    → docs-meta.yaml:3
+… (2 more files)
+3 files, 3 values moved to 1 manifest
+# exit 0
+```
+
+Removing a key moves it back into every member page for the same reason.
+
+### Where a missing manifest comes from
+
+`relocate` creates what a move needs:
+
+| Your config | What `relocate` writes |
+|---|---|
+| The page's collection has a local manifest | The keys are appended to its `keys:` |
+| The collection has no manifest | `<collection>.metadata.yaml` beside the config file, declared under `externalMetadata:` |
+| No `collections:` at all | A collection named `default` whose `paths:` are the targets you typed, and `default.metadata.yaml` |
+| One collection, and the target is outside it | The target, appended to that collection's `paths:` |
+| Several collections, and the page is in none | Nothing. The value stays |
+
+Each change to `collections:` gets a line of its own:
+
+- With no collections, `manni meta relocate docs/ guides/intro.md` prints
+  `Created collection default (paths: docs/**, guides/intro.md) and default.metadata.yaml; it owns authors, owner.`
+- With one collection and a target outside it, `manni meta relocate notes/`
+  prints `Added notes/** to collection site's paths; docs-meta.yaml now owns owner, authors.`
+
+Growing a collection's `paths:` also grows what `manni cite` and `manni a11y`
+see for it, which is why the line always names the path. The [configuration
+reference](/manni/meta/reference/configuration/#what-relocate-writes) shows each
+config before and after.
+
+### A value that stays
+
+`relocate` never guesses. A value it cannot move stays where it is, is named
+with its reason, and the run exits 1:
+
+```console
+$ manni meta relocate --dry-run
+Using manni.config.yaml (.)
+api/joined.md
+    owner    → api-meta.yaml
+api/nojoin.md
+    owner    stays: this document has no id, which api-meta.yaml joins on
+docs/differ.md
+    owner    stays: the page and docs-meta.yaml hold different values
+docs/native.rst
+    owner    stays: the rst format cannot write this document's metadata
+docs/same.md
+    owner    → docs-meta.yaml
+    team     → docs-meta.yaml
+5 files, 3 values would move to 2 manifests, 3 stayed
+# exit 1
+```
+
+`team` has no mark. It moves because `docs-meta.yaml` already owns it, and a
+page carrying an owned key fails `external:owned` whatever the schema says.
+`docs/differ.md` holds one owner and the manifest another. Moving either copy
+would silently change what validation sees, so the value stays until someone
+decides. The other two reasons are a page in none of several collections, and
+a manifest that is a URL. A run fetches a URL manifest and cannot write it.
+
+## What the writers do
+
+`derive`, `fill` and `query` follow the manifest, not the mark. A key a local
+manifest owns is written into the page's entry there, and the page is not
+touched.
+
+`derive` stamps a managed field into the manifest and names where it went:
+
+```console
+$ manni meta derive
+Using manni.config.yaml (.)
+docs/faq.md
+    created  (unset) → 2026-09-13          (git: added in a32e411 (2026-09-13))
+    owner    (unset) → ["@platform-docs"]  (codeowners: .github/CODEOWNERS:1)  → site-meta.yaml:5
+docs/install.md
+    created  (unset) → 2026-09-13                (git: added in a32e411 (2026-09-13))
+    owner    ["@old-team"] → ["@platform-docs"]  (codeowners: .github/CODEOWNERS:1)  → site-meta.yaml:2
+
+2 files, 2 changed, 4 fields written
+# exit 0
+```
+
+`created` has no owner, so it went into the page. `query` writes an owned key
+the same way, and the bracket names the manifest:
+
+```console
+$ manni meta query "UPDATE docs SET owner = 'identity' WHERE _path = 'docs/auth.md'" --dry-run
+Using manni.config.yaml (.)
+docs/auth.md: owner: platform -> identity  [docs-meta.yaml]
+1 change across 1 file — dry run; run again without --dry-run to apply
+# exit 0
+```
+
+`fill` splices an accepted proposal into the manifest, and its report line ends
+with the destination, as in `/owner  platform  0.92  → site-meta.yaml`.
+
+| The key | derive, fill, query |
+|---|---|
+| Owned by a local manifest | Written into the manifest. This holds even when its schema prefers the page, and `validate` then reports `location:page`. |
+| Owned by a URL manifest | Refused: `"owner" is owned by manifest https://example.com/owners.yaml, which is fetched and cannot be written; set it in that repository.` |
+| Owned by a local manifest of a collection `--collection` leaves out | `derive` and `fill` read that manifest too, so a value it holds is never taken for missing, and write there. `query` refuses: `"docs/auth.md": "owner" is owned by manifest docs-meta.yaml of collection b, which --collection leaves out; include it or edit the manifest.` |
+| Prefers `external`, and no manifest owns it | Offered a manifest on a terminal. Otherwise written to the page, with one warning. |
+| Prefers `page`, or carries no mark, and is not owned | Written to the page, as always. |
+
+The warning names the fields and the command that fixes them:
+
+```console
+$ manni meta derive
+Using manni.config.yaml (.)
+manni: wrote owner to 2 pages in collection site; the schema prefers external metadata, and no manifest owns it. Run manni meta relocate to move it.
+docs/faq.md
+    created  (unset) → 2026-09-13          (git: added in 27b3d7c (2026-09-13))
+    owner    (unset) → ["@platform-docs"]  (codeowners: .github/CODEOWNERS:1)
+docs/install.md
+    created  (unset) → 2026-09-13          (git: added in 27b3d7c (2026-09-13))
+    owner    (unset) → ["@platform-docs"]  (codeowners: .github/CODEOWNERS:1)
+
+2 files, 2 changed, 4 fields written
+# exit 0
+```
+
+For a page in none of several collections it reads
+`manni: wrote owner to 1 page that is in none of the 2 collections; the schema prefers external metadata, and only a collection has a manifest.`
+Under `--dry-run` both read `would write`.
+
+## The question on a terminal
+
+On a terminal, a run offers the move instead of only warning about it. The
+question goes to stderr, and the answer is `y` or anything else.
+
+`validate` asks after its report, once per collection. Over the first example:
+
+```
+manni: in collection site, 3 values in 2 pages prefer external metadata.
+Move them (create site.metadata.yaml)? [y/N]
+```
+
+A yes runs `relocate` for those pages and keys, and prints its report on
+stderr, so a `-f json` report on stdout stays machine-readable. The exit code
+is still the report's.
+
+`derive`, `fill` and `query` ask before a value that prefers external metadata
+is written. `fill` asks before its first model request:
+
+```
+manni: collection site has no manifest for owner, which the schema prefers in external metadata.
+Create site.metadata.yaml and add it to manni.config.yaml? [y/N]
+```
+
+When pages already carry the value, the question ends
+`, and move them out of 2 pages?`. On yes, `relocate` runs and the write lands
+in the new manifest. On no, the run writes to the page and prints the warning.
+A page an `INSERT` creates is written with the warning, never offered.
+
+Nothing is asked when any of these hold, and the warning or finding stands on
+its own:
+
+- stdin or stderr is not a terminal, which covers CI, the
+  [pre-commit hook](/manni/meta/ci/recipes/#pre-commit) and the Action;
+- the run reads `-`;
+- `--dry-run`, `derive --check`, or `--no-config`;
+- the page has no possible home;
+- a [baseline](/manni/meta/reference/cli/#baselines) suppresses the finding.
+
+That last one is how someone who has decided to keep a value in the page stops
+being asked. There is no `--yes` flag. `relocate` is the non-interactive way to
+accept.
+
+<Aside type="note" title="Encrypted and external">
+A property marked both `x-manni-encrypt` and `external` keeps its ciphertext in
+the manifest. `validate` decrypts it there, and `manni key rotate` re-encrypts
+it there. See [Require a field and keep its value
+private](/manni/meta/schemas/encrypted-fields/#a-value-the-manifest-supplies).
+</Aside>
+
+## Choose which fields to mark
+
+One question decides a mark. **Would a third-party or user-owned agent fetching
+the page act on this field?** If yes, `page`. If the field serves authoring,
+review or CI, `external`.
+
+- `last-updated` is `page`. An agent uses it to judge whether a page is fresh
+  enough to trust. `owner` and `review-interval` name people and a cadence,
+  and are `external`.
+- `audiences` and `intent` are `page`, because an ingester filters and routes
+  on them. `personas` and `journeys` are internal names that mean nothing
+  outside.
+- `lifecycle` and `replaced-by` are `page`. An agent must see `deprecated` and
+  follow the replacement.
+- Evals and citations are CI's, and are `external`.
+
+The mark is a statement a delivery-side tool can read too. A served markdown
+variant can keep the `page` fields and drop the rest, from your schema, rather
+than from an allowlist of its own.
+
+The [proposed vocabularies](/manni/meta/proposals/frontmatter-vocabularies/)
+mark every field this way, in new draft revisions:
+
+| Draft | `page` | `external` |
+|---|---|---|
+| [`manni:core:1.0.0-proposal.4`](/manni/meta/proposals/core/) | `title`, `description`, `id`, `type`, `keywords`, `language`, `locale` | |
+| [`manni:stewardship:1.0.0-proposal.3`](/manni/meta/proposals/stewardship/) | `last-updated` | `authors`, `owner`, `stakeholders`, `reviewed-by`, `created`, `last-reviewed`, `review-interval`, `verified-against`, `source-of-truth` |
+| [`manni:audience:1.0.0-proposal.2`](/manni/meta/proposals/audience/) | `audiences`, `intent` | `personas`, `journeys`, `visibility` |
+| [`manni:lifecycle:1.0.0-proposal.2`](/manni/meta/proposals/lifecycle/) | `lifecycle`, `replaced-by` | `supersedes`, `remove-by` |
+| [`manni:structure:1.0.0-proposal.2`](/manni/meta/proposals/structure/) | `applies-to`, `not-applicable-to`, `concepts`, `prerequisites`, `next-steps`, `related-pages` | |
+| [`manni:ai-context:1.0.0-proposal.3`](/manni/meta/proposals/ai-context/) | `risks`, `sample-questions` | `provenance`, `meta-provenance` |
+| [`manni:evals:1.0.0-proposal.4`](/manni/meta/proposals/evals/) | | `evals`, `eval-suite`, `eval-skip` |
+| [`manni:kg:1.0.0-proposal.4`](/manni/meta/proposals/kg/) | `kg` | |
+| [`manni:artifact-evals:1.0.0-proposal.4`](/manni/meta/proposals/artifact-evals/) | | `metadata` |
+| [`manni:citations:1.0.0-proposal.4`](/manni/meta/proposals/citations/) | | `citations` |
+| [`manni:terminology:1.0.0-proposal.1`](/manni/meta/proposals/terminology/) | `label`, `definition`, `abstract`, `alt-labels`, `hidden-labels`, `broader`, `narrower`, `related-terms`, `see`, `scope-note` | |
+
+A mark covers a whole top-level key. `metadata` is `external`, so an Agent
+Skills `metadata` map moves entire, not only its evals.
+
+To keep one of these fields in the page anyway, list your own schema after the
+vocabulary and mark the property there. The later schema wins:
+
+```json title="house.schema.json"
+{
+  "properties": {
+    "owner": { "x-manni-location": "page" }
+  }
+}
+```
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Keep private metadata out of public pages"
+    href="/manni/meta/set-up/external-metadata/"
+    description="The manifest itself: layout, a private repository, a field join, and a page in two collections."
+  />
+  <LinkCard
+    title="Field location reference"
+    href="/manni/meta/reference/schema-resolution/#field-location"
+    description="Where a mark counts, which schema wins, the join-field rule, and the compile errors."
+  />
+  <LinkCard
+    title="meta relocate in the CLI reference"
+    href="/manni/meta/reference/cli/#meta-relocate"
+    description="Every option, every line of output, the json shape, and each exit code."
+  />
+  <LinkCard
+    title="Version & evolve a schema safely"
+    href="/manni/meta/schemas/versioning/"
+    description="Ship a new mark without surprising every consuming repo."
+  />
+</CardGrid>
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. None of these steps writes. */}
+{/* test {"testId":"field-location","description":"The two location findings, relocate's preview in both directions and its stays, and the keyword's compile error, over committed fixtures."} */}
+{/* step {"description":"A value in the page whose schema prefers external metadata is a warning, and the run still exits 0.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/location/relocate-create/manni.config.yaml","exitCodes":[0],"stdio":"/\"owner\" is stored in the page; steward\\.schema\\.json prefers external metadata\\. Run manni meta relocate\\.[\\s\\S]*2 files checked, 2 passed, 0 failed, 0 errors, 3 warnings/"}} */}
+{/* step {"description":"The github reporter annotates it as a warning on the value's line.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/location/relocate-create/manni.config.yaml -f github","exitCodes":[0],"stdio":"/::warning file=docs\\/install\\.md,line=3::\\[location:external\\] \\/authors/"}} */}
+{/* step {"description":"In SARIF the rule id is location:external/location at level warning.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/location/relocate-create/manni.config.yaml -f sarif","exitCodes":[0],"stdio":"/\"ruleId\": \"location:external\\/location\",\\s*\"level\": \"warning\"/"}} */}
+{/* step {"description":"A value a manifest supplies whose schema prefers the page is location:page, at the manifest line.","runShell":{"command":"npx @hawkeyexl/manni meta validate -c test/fixtures/location/validate-both/manni.config.yaml","exitCodes":[0],"stdio":"(docs-meta.yaml:3)  [location:page]"}} */}
+{/* step {"description":"A dry run previews the manifest relocate would create and the keys it would own.","runShell":{"command":"npx @hawkeyexl/manni meta relocate -c test/fixtures/location/relocate-create/manni.config.yaml --dry-run","exitCodes":[0],"stdio":"Would create site.metadata.yaml; collections[site].externalMetadata[0] would own owner, authors."}} */}
+{/* step {"description":"The json form of the same preview names the created manifest and the keys added.","runShell":{"command":"npx @hawkeyexl/manni meta relocate -c test/fixtures/location/relocate-create/manni.config.yaml --dry-run -f json","exitCodes":[0],"stdio":"/\"file\": \"site\\.metadata\\.yaml\",\\s*\"collection\": \"site\",\\s*\"created\": true,\\s*\"keysAdded\": \\[\\s*\"owner\",\\s*\"authors\"\\s*\\]/"}} */}
+{/* step {"description":"One run moves values in both directions: title into the pages, owner into the manifest.","runShell":{"command":"npx @hawkeyexl/manni meta relocate -c test/fixtures/location/relocate-both/manni.config.yaml --dry-run","exitCodes":[0],"stdio":"2 files, 3 values would move: 2 into pages, 1 into 1 manifest"}} */}
+{/* step {"description":"A value relocate cannot move stays, is named with its reason, and the run exits 1.","runShell":{"command":"npx @hawkeyexl/manni meta relocate -c test/fixtures/location/relocate-stays/manni.config.yaml --dry-run","exitCodes":[1],"stdio":"owner    stays: the page and docs-meta.yaml hold different values"}} */}
+{/* step {"description":"relocate refuses stdin (exit 2).","runShell":{"command":"npx @hawkeyexl/manni meta relocate -","exitCodes":[2],"stdio":"stdin is not a document on disk"}} */}
+{/* step {"description":"A mark other than page or external is a schema compile error (exit 2).","runShell":{"command":"npx @hawkeyexl/manni meta validate --no-config test/fixtures/location/relocate-create/docs/faq.md -s test/fixtures/location/bad-value.schema.json","exitCodes":[2],"stdio":"\"x-manni-location\" must be \"page\" or \"external\"."}} */}
+{/* test end */}

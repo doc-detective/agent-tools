@@ -1,0 +1,54 @@
+{
+  "source": "doc-detective/docs/fern/pages/docs/actions/runCode.mdx@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/reference/runcode.mdx",
+  "steps": [
+    {
+      "stepType": "runCode",
+      "match": "hello world",
+      "match_any": ["python", "\"py\""],
+      "note": "Run a basic Python script: print('hello world')."
+    },
+    {
+      "stepType": "runCode",
+      "match": "Hello from Node!",
+      "note": "Run JavaScript and check the output Hello from Node!."
+    },
+    {
+      "stepType": "runCode",
+      "match": ["bash", "\"code\":\"false\"", "\"exitCodes\":[1]"],
+      "note": "Run the Bash command false and expect exit code 1."
+    },
+    {
+      "stepType": "runCode",
+      "match": ["first arg: $1", "\"args\":[\"hello\"]"],
+      "note": "Pass hello as the first argument to a Bash snippet; it prints first arg: hello."
+    },
+    {
+      "stepType": "runCode",
+      "match": ["setup", "SETUP_VAL", "$$stdio.stdout"],
+      "match_any": ["python", "\"py\""],
+      "note": "Python prints setup; capture stdout into SETUP_VAL."
+    },
+    {
+      "stepType": "runCode",
+      "match": "echo $SETUP_VAL",
+      "note": "Bash echoes $SETUP_VAL and validates setup."
+    },
+    {
+      "stepType": "runCode",
+      "match": ["8088", "background"],
+      "note": "Start the Node.js HTTP server in the background and wait until port 8088 accepts connections."
+    },
+    {
+      "stepType": "closeSurface",
+      "match": "api",
+      "note": "Stop the server with closeSurface."
+    }
+  ],
+  "must_not": [
+    "A step for the output-regression example, which needs ./build/VERSION; the page says the docs tests skip it."
+  ],
+  "scaffolding": [
+    "Nothing beyond the page. node, python, and bash are on PATH; port 8088 is free."
+  ]
+}

@@ -1,0 +1,89 @@
+{
+  "specId": "manni-cite-require-citations",
+  "description": "manni docs cite/set-up/require-citations, run in a repo that holds the page's schema/ pair, the manni.config.yaml that wires them to the reference collection, the three docs/reference/ pages and lib/limits.ts.",
+  "tests": [
+    {
+      "testId": "cite-require-citations",
+      "steps": [
+        {
+          "description": "Try the $ref composition the page warns about: add an allOf $ref to the vocabulary in the house schema.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='schema/reference-page.schema.json',s=JSON.parse(f.readFileSync(p,'utf8'));s.allOf=[{['\\x24ref']:'manni:citations:1.0.0-proposal.4'}];f.writeFileSync(p,JSON.stringify(s,null,2))\""
+          }
+        },
+        {
+          "description": "The schema fails to compile when the first page it governs is validated, exit 2.",
+          "runShell": {
+            "command": "manni meta validate docs/reference/",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "failed to compile: can't resolve reference manni:citations:1.0.0-proposal.4 from id https://example.com/reference-page.schema.json"
+          }
+        },
+        {
+          "description": "Back out the $ref: compose the two as a set instead.",
+          "runShell": {
+            "command": "node -e \"const f=require('fs'),p='schema/reference-page.schema.json',s=JSON.parse(f.readFileSync(p,'utf8'));delete s.allOf;f.writeFileSync(p,JSON.stringify(s,null,2))\""
+          }
+        },
+        {
+          "description": "Three pages, three outcomes: the page with no citation fails under the house schema.",
+          "runShell": {
+            "command": "manni meta validate docs/reference/",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/retries\\.md\\s+\\(root\\)\\s+must have required property 'citations'.*\\[\\.\\/schema\\/reference-page\\.schema\\.json\\]/"
+          }
+        },
+        {
+          "description": "The malformed entry fails under the vocabulary, the two warnings don't fail the run, and the summary matches.",
+          "runShell": {
+            "command": "manni meta validate docs/reference/",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/must have required property 'integrity'.*\\[\\.\\/schema\\/citations-1\\.0\\.0-proposal\\.4\\.json\\][\\s\\S]*3 files checked, 1 passed, 2 failed, 2 errors, 2 warnings/"
+          }
+        },
+        {
+          "description": "claim-changed at its default is a warning: reported and green.",
+          "runShell": {
+            "command": "manni cite check docs/reference/limits.md",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/↕ fetch-timeout\\s+:15 changed\\s+lib\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 1 passed, 0 failed, 1 finding \\(1 warning\\)/"
+          }
+        },
+        {
+          "description": "Add the page's cite: severity section to manni.config.yaml.",
+          "runShell": {
+            "command": "node -e \"require('fs').appendFileSync('manni.config.yaml','\\ncite:\\n  severity:\\n    claim-changed: error\\n    source-moved: error\\n    marker-repeated: off\\n')\""
+          }
+        },
+        {
+          "description": "With claim-changed: error the same run blocks, exit 1.",
+          "runShell": {
+            "command": "manni cite check docs/reference/limits.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/✗ fetch-timeout\\s+:15 changed\\s+lib\\/limits\\.ts:2 current[\\s\\S]*1 file checked, 0 passed, 1 failed, 1 finding/"
+          }
+        },
+        {
+          "description": "A duplicate id is refused at check time, on the second entry's line.",
+          "runShell": {
+            "command": "manni cite check docs/reference/entry-invalid.md",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/duplicate id \"fetch-timeout\"\\s+\\(line 13\\)/"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "source": "manni/docs/src/content/docs/cite/set-up/public-docs-private-code.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-public-private.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "--encrypt", "--root", "--dry-run", "hmac-sha256-"],
+      "note": "Step 2: with a key in MANNI_ENCRYPTION_KEY, `cite add ... --id configurable --encrypt --root ../code --dry-run` prints the manifest entry with a keyed `hmac-sha256-` pin."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "--encrypt", "no encryption key is available"],
+      "note": "`--encrypt` with no key: off a terminal, add writes nothing and exits 2 with the quoted refusal."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "--no-check-sources"],
+      "note": "Step 3: the public job, `manni cite check --no-check-sources`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "--root", "manni_encryption_key"],
+      "note": "Step 4: the private job, `MANNI_ENCRYPTION_KEY=… manni cite check --root ../code`."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "--reveal"],
+      "note": "Locally, `--reveal` prints the decrypted path beside an encrypted source."
+    }
+  ],
+  "must_not": [
+    "Write the key into manni.config.yaml or any committed file: the page keeps it in the environment.",
+    "Run `manni key set`: the page has the reader generate the key and set the secret instead."
+  ],
+  "scaffolding": [
+    "The two checkouts side by side, as the page's workflow lays them out: docs/ is the public docs repo (manni.config.yaml with collection `site` and a docs-citations.yaml manifest that owns `citations`, src/content/docs/limits.md with its claims on lines 9, 12 and 14), and code/lib/limits.ts is the private code (CONFIGURABLE on line 3, FETCH_TIMEOUT_MS on line 4). The manifest holds one plain citation, fetch-timeout. It holds no encrypted entry, because the page never gives the key: the reader generates one (`openssl rand -hex 32` or any 256-bit hex value) and passes it in the environment. So the page's encrypted `retries` row and the `missing (no encryption key ...)` case can't be reproduced, and aren't expected. Commands run from docs/, with `--root ../code`."
+  ]
+}

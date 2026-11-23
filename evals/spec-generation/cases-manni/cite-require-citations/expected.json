@@ -1,0 +1,35 @@
+{
+  "source": "manni/docs/src/content/docs/cite/set-up/require-citations.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-require-citations.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "match_any": ["required property 'citations'", "2 failed"],
+      "note": "Three pages, three outcomes: the page with no citation fails under your schema."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "match_any": ["required property 'integrity'", "2 failed"],
+      "may_share": true,
+      "note": "The page with a malformed entry fails under the vocabulary. Same `meta validate docs/reference/` run."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "1 warning"],
+      "note": "At its default, `claim-changed` is a warning, reported and green."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "1 failed"],
+      "note": "With `claim-changed: error` the same run blocks the branch."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "schema/reference-page.schema.json is the page's house schema; schema/citations-1.0.0-proposal.4.json is the vocabulary already copied in, as the page says to.",
+    "manni.config.yaml declares the `reference` collection (docs/reference/**/*.md) and the meta override with both schemas as a set; it has no `cite:` section, so a spec adds the page's `severity:` block before the blocking run.",
+    "docs/reference/ holds entry-invalid.md (an entry missing source integrity, plus duplicate ids), limits.md (a pinned sentence since edited, so claim-changed), and retries.md (no citations); lib/limits.ts is the cited source."
+  ]
+}

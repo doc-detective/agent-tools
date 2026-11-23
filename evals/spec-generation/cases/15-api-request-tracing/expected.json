@@ -1,0 +1,24 @@
+{
+  "steps": [
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "8093/api/orders",
+        "x-test",
+        "trace-123",
+        "x-echo-test"
+      ],
+      "note": "Steps 2-3: send X-Test: trace-123 and assert the X-Echo-Test response header echoes it."
+    },
+    {
+      "stepType": "httpRequest",
+      "match": [
+        "x-server",
+        "doc-detective-echo-server"
+      ],
+      "note": "Step 3: assert the X-Server response header (may be the same step as above).",
+      "may_share": true
+    }
+  ],
+  "must_not": []
+}

@@ -1,0 +1,36 @@
+{
+  "source": "manni/docs/src/content/docs/meta/reference/built-in-schemas.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-built-in-schemas.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta schemas"
+      ],
+      "note": "Run `manni meta schemas` to print the list from the installed version."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "docusaurus:docs:3.10",
+        "diataxis:diataxis:1.0"
+      ],
+      "note": "Compose a platform and an editorial schema: `manni meta validate docs/ -s docusaurus:docs:3.10 -s diataxis:diataxis:1.0`."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "docusaurus:docs:3.10",
+        "google:okf:0.1",
+        "must be string"
+      ],
+      "note": "Turn one on from the command line, stacked with OKF: the `tags` overlap the page quotes, `/tags/0  must be string`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "A Docusaurus site: docs/install.md carries a tag object (line 6), docs/intro.md has an unknown key, plus blog/2026-03-14-shipping-v2.md and src/pages/about.md, built from the docusaurus fixtures. No manni.config.yaml. The config and in-document ways to turn a schema on carry no command, so they are not scored."
+  ]
+}

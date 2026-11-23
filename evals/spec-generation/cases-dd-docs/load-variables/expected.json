@@ -1,0 +1,23 @@
+{
+  "source": "doc-detective/docs/fern/pages/docs/actions/loadVariables.mdx@c14219057fff70f96f4327a603ecf2600ce658df",
+  "doc_path": "docs/reference/loadvariables.mdx",
+  "steps": [
+    {
+      "stepType": "loadVariables",
+      "match": "secrets.env",
+      "note": "Load the variables from secrets.env."
+    },
+    {
+      "stepType": "httpRequest",
+      "match": ["$DATA_URL", "Bearer $API_KEY"],
+      "note": "Send an HTTP request to $DATA_URL with $API_KEY in the Authorization header."
+    }
+  ],
+  "must_not": [
+    "Replacing $DATA_URL with the page's sample https://api.example.com/data; the request goes to whatever secrets.env holds.",
+    "Writing or overwriting secrets.env; the page assumes it already exists."
+  ],
+  "scaffolding": [
+    "secrets.env at the workspace root holds API_KEY and DATA_URL, as the page assumes. DATA_URL points at the local echo API."
+  ]
+}

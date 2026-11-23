@@ -1,0 +1,123 @@
+---
+title: manni meta
+description: Validate the presence and format of document metadata against JSON Schema, built for CI.
+tableOfContents: false
+hero:
+  tagline: Validate the presence and format of document metadata against JSON Schema, built for CI.
+  actions:
+    - text: Get started
+      link: /manni/meta/get-started/
+      icon: right-arrow
+      variant: primary
+    - text: Fix a failing check
+      link: /manni/meta/fix/
+      icon: error
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+manni meta checks that your documents carry the metadata your tooling depends on.
+It checks that every page declares a `type`, that timestamps are real dates, and
+that required fields are actually present. It fails your build when they aren't.
+It reads the frontmatter or headers from your files, validates them against a
+[JSON Schema](https://json-schema.org/), and reports what's missing or
+malformed.
+
+It validates the **presence and format** of metadata. It does not grade your
+prose, check your spelling, or judge your content. If your schema says every
+page needs a `title` and an ISO 8601 `timestamp`, manni meta enforces exactly that
+and nothing more.
+
+## A 30-second proof
+
+You don't need to install anything to try it. Point manni meta at a Markdown file:
+
+```sh
+npx @hawkeyexl/manni meta validate path/to/your-doc.md
+```
+
+A file with complete, well-formed metadata passes:
+
+```
+✓ path/to/your-doc.md
+
+1 file checked, 1 passed, 0 failed, 0 errors
+```
+
+A file that's missing a required field fails, and tells you which field, on
+which line, and which schema flagged it:
+
+```
+✗ path/to/your-doc.md
+    (root)  must have required property 'type'  [google:okf:0.1]
+
+1 file checked, 0 passed, 1 failed, 1 error
+```
+
+That's the whole loop: run it, read the result, fix the field, run it again.
+With no schema configured, manni meta validates against its built-in
+[OKF schema](https://github.com/GoogleCloudPlatform/knowledge-catalog/blob/main/okf/SPEC.md),
+which requires only `type`.
+
+## What do you want to do?
+
+<CardGrid>
+  <LinkCard
+    title="Set up validation"
+    href="/manni/meta/set-up/"
+    description="Add a config file and a schema, then wire manni meta into your repo. Start here if you own the docs."
+  />
+  <LinkCard
+    title="Run it in CI"
+    href="/manni/meta/ci/"
+    description="Drop manni meta into GitHub Actions, GitLab CI, Jenkins, or pre-commit. Exit codes and PR annotations."
+  />
+  <LinkCard
+    title="Define & evolve schemas"
+    href="/manni/meta/schemas/"
+    description="Encode your metadata standard as a JSON Schema, wire it to the right files, and evolve it safely."
+  />
+  <LinkCard
+    title="Fix a failing check"
+    href="/manni/meta/fix/"
+    description="Your PR's manni meta check is red? Map the error to a field and line, fix it, and confirm green."
+  />
+  <LinkCard
+    title="Reference"
+    href="/manni/meta/reference/"
+    description="Every command, flag, config key, output format, and exit code. The lookup shelf."
+  />
+</CardGrid>
+
+Not sure you need to write a schema at all? manni meta ships twenty-three. They run
+from the Hugo, Jekyll, Starlight, Docusaurus, Antora and Sphinx front matter
+contracts to the Diátaxis and Good Docs vocabularies. They also cover Dublin
+Core, Open Graph, and the Agent Skills `SKILL.md` format. The [built-in schema
+registry](/manni/meta/reference/built-in-schemas/) lists them all in one table.
+
+## What manni meta checks, and what it doesn't
+
+<CardGrid>
+  <Card title="It checks" icon="approve-check">
+    Required fields are present. Values match the format your schema declares
+    (`uri`, `date-time`, enums, types). Metadata stays consistent as your repo
+    grows.
+  </Card>
+  <Card title="It doesn't" icon="close">
+    Grade writing quality, check grammar or links, render your docs, or care
+    about anything below the frontmatter. Metadata in, pass/fail out.
+  </Card>
+</CardGrid>
+
+New here? The [Get started](/manni/meta/get-started/) page installs manni meta and walks you
+through your first passing and failing result in under a minute.
+
+{/* Doc Detective inline tests: verify this page's documented manni meta behavior
+    against the local build, exposed as `manni meta` / `npx @hawkeyexl/manni meta` via `npm link`
+    (see .github/workflows/docs-as-tests.yml), over committed fixtures.
+    Run with `npx doc-detective`. Config: .doc-detective.json. */}
+{/* test {"testId":"landing-proof","description":"The hero proof, run against the local CLI build and committed fixtures."} */}
+{/* step {"description":"A file with complete, well-formed metadata passes with a green summary.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/valid.md","exitCodes":[0],"stdio":"1 file checked, 1 passed, 0 failed, 0 errors"}} */}
+{/* step {"description":"A file missing a required field fails and names the field and the flagging schema.","runShell":{"command":"npx @hawkeyexl/manni meta validate test/fixtures/missing-type.md","exitCodes":[1],"stdio":"/must have required property 'type'.*google:okf:0.1/"}} */}
+{/* test end */}

@@ -4,7 +4,7 @@
 
 prompt = """# Install GitHub Action
 
-**Skill:** `doc-detective:install-github-action`
+**Skill:** `doc-detective:doc-detective-install-github-action`
 
 ## Goal
 
@@ -45,7 +45,7 @@ Add a GitHub Actions workflow that runs the project's Doc Detective tests in CI.
 
 The workflow must point at the project's real config and docs:
 
-- Look for an existing Doc Detective config, `.doc-detective.json` or `doc-detective.config.js`, and record its path.
+- Look for an existing Doc Detective config (`.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`), and record its path.
 - Note any existing `doc-detective*.yml` files in `.github/workflows/`, so the new file doesn't conflict with them.
 - Find the docs directory. Use the config's `input` field when there is one. Otherwise, look for common directories such as `docs/`, `documentation/`, `content/`, or `wiki/`. When none exists, use `.`.
 
@@ -93,11 +93,13 @@ Create `.github/workflows/` when it doesn't exist, and write the file there.
 
 Give the path of the workflow file and a summary of the configured features. Then list the manual steps that apply:
 
-- With `--create-pr-on-change`: The default `GITHUB_TOKEN` works for PR creation. A repository that requires specific token permissions may need a custom token.
+- With `--create-pr-on-change` and the default `GITHUB_TOKEN`: In the repository's **Settings** > **Actions** > **General**, select **Allow GitHub Actions to create and approve pull requests**. In an organization, an owner must allow it at the organization level first. Without this setting, the default token can't open the PR. The action never approves pull requests.
+- With `--create-pr-on-change` and a custom `token`: That setting doesn't apply; the token's own permissions do. The action pushes the branch with the checkout's credentials, so give `actions/checkout` the same token as its `token` input.
 - With `--create-pr-on-change`: Each run force-pushes one branch, `doc-detective-changes` by default, and updates its open PR. Nobody should commit to that branch by hand, and a branch protection rule that blocks force-pushes to it stops the PR. By default, the PR also commits every changed file, including images that `screenshot` steps save, which can show unreleased UI or customer data. Suggest setting `pr_paths` to the folders the PR should update.
 - With a custom `token` input: Add the secret to the repository settings.
-- When the repository has branch protection rules: PRs that the action creates use the default `GITHUB_TOKEN`, and may need approval before merging.
+- When the repository has branch protection rules: PRs that the action creates may need approval before merging.
 - Always: Confirm that GitHub Actions is enabled for the repository.
+- When the workflow triggers only on `pull_request`: GitHub makes the cache a `pull_request` run saves visible only to that pull request. Each new pull request's first run then installs Doc Detective, its runtime, and browsers again. Suggest adding a `push` trigger on the default branch, which saves a cache that every pull request can restore.
 - Run files: By default, Doc Detective takes a screenshot after each browser, app, or device step and records each such context. They go in the run folder, `.doc-detective/runs/<runId>/`, under the config's `outputDir`. The action keeps the run folder and reports out of git through `.git/info/exclude`. To keep them after the job, add an `actions/upload-artifact` step with `include-hidden-files: true`. Its `path` is the run folder relative to the repo root. With the config in `working_directory` and no `outputDir` set, that's `<working_directory>/.doc-detective/runs/`, for example `docs/.doc-detective/runs/`. See [references/action-reference.md](references/action-reference.md#run-files-and-secrets).
 - Secrets: Pass secrets to the job as environment variables, and reference them as `$NAME` in specs. Doc Detective shows their values as `***NAME***` in logs, results, and the issues the action creates.
 
@@ -224,7 +226,6 @@ jobs:
 ## Related commands
 
 - `/doc-detective-init`: Initialize Doc Detective in a repository. It offers GitHub Action setup when it finishes.
-- `/doc-detective-project-bootstrap`: Bootstrap a full project. It offers GitHub Action setup when it finishes.
 - `/doc-detective-test`: Run existing Doc Detective tests.
 """
-description="""Install and configure the Doc Detective GitHub Action workflow for automated documentation testing in CI"""
+description="""Add a GitHub Actions workflow that runs Doc Detective documentation tests in CI on pull requests, pushes, or a schedule. Use only for running Doc Detective in GitHub Actions. Not for other CI systems, general GitHub workflows, or editing the workflows of the Doc Detective repositories themselves. To set up Doc Detective in a project first, use doc-detective-init."""

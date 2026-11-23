@@ -1,0 +1,29 @@
+{
+  "source": "manni/docs/src/content/docs/meta/reference/docusaurus-schemas.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-docusaurus-schemas.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "--collection blog"
+      ],
+      "note": "Wire them up: with the three collections declared, `manni meta validate --collection blog` addresses one root."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "docs/",
+        "docusaurus:docs:3.10"
+      ],
+      "note": "For a one-off run, pass the id directly: `manni meta validate docs/ -s docusaurus:docs:3.10`."
+    }
+  ],
+  "must_not": [
+    "Do not run `manni meta fill` without `--fields`; the page warns it can rewrite structural fields."
+  ],
+  "scaffolding": [
+    "A Docusaurus site with docs/install.md and docs/intro.md (each with a Diataxis `type`), blog/2026-03-14-shipping-v2.md and src/pages/about.md, built from the docusaurus fixtures. No manni.config.yaml: the page has the reader declare the three collections and their overrides, so a spec writes it before `--collection blog`. The `fill --dry-run` example needs a model provider, so it is not expected. The strict-schema tip is conditional advice with no command, so it is not expected either."
+  ]
+}

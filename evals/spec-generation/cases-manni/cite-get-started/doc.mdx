@@ -1,0 +1,543 @@
+---
+title: Get started
+description: Pin your first claim to a source line, watch each end move and change, and fix it with one command. Then anchor with a marker and pin a code block.
+---
+
+import { Steps, Tabs, TabItem, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+This page takes you from a sentence to a citation CI can check. You'll pin one
+claim, read what got written, and run the check. Then you'll make the source
+change and move, and the sentence too, to see how each is reported and what
+fixes it. Finally you'll anchor a citation with a marker, and pin a fenced
+code block.
+
+Every transcript below is real output from the built tool.
+
+## Before you start
+
+- **Node.js 24 or newer.** Check with `node --version`.
+- **A git repository** holding both the page and the source it cites. manni
+  cite finds sources through `git ls-files` and reads history through
+  `git show`. So an untracked file is reported `missing`, and a shallow clone
+  loses the `source-never-true` status and the diff. Where git is not
+  available, manni cite walks the directory instead and warns once. The check
+  still classifies both ends, just without commits.
+
+manni cite ships in the same package as manni meta. If you have one, you have
+the other.
+
+<Tabs>
+  <TabItem label="npx (no install)">
+    ```sh
+    npx @hawkeyexl/manni cite --help
+    ```
+  </TabItem>
+  <TabItem label="Global install">
+    ```sh
+    npm install -g @hawkeyexl/manni
+    manni cite --help
+    ```
+  </TabItem>
+</Tabs>
+
+<Aside type="tip" title="Without a global install">
+  The rest of this page writes commands as `manni cite …`. If you didn't
+  install globally, prefix each one with `npx @hawkeyexl/manni`.
+</Aside>
+
+## Pin a claim
+
+The example repo has one source file and one page. The page says something the
+source decides:
+
+```ts title="lib/limits.ts"
+export const MAX_FILES = 10_000;
+export const FETCH_TIMEOUT_MS = 10_000;
+export const RETRIES = 3;
+```
+
+```md title="docs/limits.md"
+---
+title: Limits
+---
+# Limits
+
+The fetch timeout is 10 seconds. It is
+not configurable.
+
+Retries default to 3.
+```
+
+{/* cite nothing-copied-into-entry */}
+The sentence sits on lines 6 and 7, as an editor numbers them. That is what
+you give `add`, after the page, and it is the whole claim: nothing is copied
+into the entry.
+
+<Steps>
+
+1. **Preview the citation.** `add` takes the page with its lines, then the
+   source with its lines. `--dry-run` prints the diff and writes nothing:
+
+   ```sh
+   manni cite add docs/limits.md:6-7 lib/limits.ts:2 --id fetch-timeout --dry-run
+   ```
+
+   ```diff
+   --- docs/limits.md
+   +++ docs/limits.md
+   @@ -2,2 +2,12 @@
+    title: Limits
+   +citations:
+   +  - id: fetch-timeout
+   +    claim:
+   +      lines: 3-4
+   +      integrity: sha256-93f59d1e26513d9a8be099c55aa8ba06c90020f079d7fb16d4a7ca65851f0ec3
+   +    source:
+   +      file: lib/limits.ts
+   +      lines: 2
+   +      integrity: sha256-78af1d3321f9cbb177a7e4c958e39be56fd14cb93c1e441778bc4232e0fe4b1f
+   +      commit-sha: 9265563d8ea84a13fea0001b7e531c119f47d070
+    ---
+
+   docs/limits.md: added fetch-timeout to frontmatter (claim at lines 16-17, sha256-93f59d1e…; source lib/limits.ts:2 "export const FETCH_TIMEOUT_MS = 10_000;", sha256-78af1d33…, 9265563)
+   ```
+
+2. **Write it.** Drop `--dry-run`:
+
+   ```sh
+   manni cite add docs/limits.md:6-7 lib/limits.ts:2 --id fetch-timeout
+   ```
+
+   ```
+   docs/limits.md: added fetch-timeout to frontmatter (claim at lines 16-17, sha256-93f59d1e…; source lib/limits.ts:2 "export const FETCH_TIMEOUT_MS = 10_000;", sha256-78af1d33…, 9265563)
+   ```
+
+3. **Read what it wrote.** One entry landed in the frontmatter, and the body
+   was not touched. The entry has two blocks. `claim` holds the page lines
+   and a hash of them. `source` holds the file, its lines, a hash of those,
+   and the commit they were read at.
+
+   Two numbers look different, and both are right. You typed `:6-7`, the
+   report said lines 16-17, and the entry stored `lines: 3-4`. The entry
+   counts the page **body**, which starts after the frontmatter, so editing
+   the frontmatter never moves a claim. The report counts the file, after the
+   entry pushed the sentence down by ten lines. Everything you type and
+   everything you read is a file line.
+
+   With a family encryption key available, `source.file` holds a ciphertext
+   instead of the path.
+   [Public docs, private code](/manni/cite/set-up/public-docs-private-code/)
+   explains when you want that.
+
+   `add` refuses a claim it can already see is wrong, rather than minting a
+   citation it knows is broken:
+
+   ```
+   manni: docs/limits.md:2 is in the frontmatter. A claim is body text.
+   manni: docs/limits.md:40 is past the end of the page (19 lines).
+   ```
+
+4. **Check it.**
+
+   ```sh
+   manni cite check docs/limits.md
+   ```
+
+   ```
+   ✓ docs/limits.md
+       ✓ fetch-timeout   :16-17 current   lib/limits.ts:2 current
+
+   1 file checked, 1 passed, 0 failed, 0 findings
+   ```
+
+   Commit the page. From here on, `manni cite check` is something CI runs on
+   every push; see [Run it in CI](/manni/cite/ci/).
+
+</Steps>
+
+<Aside type="note" title="Let the config supply the paths">
+  With the pages declared as a collection under `collections:` in
+  `manni.config.yaml`, a bare `manni cite check` checks the same pages CI
+  does. The example repo's config is three lines, and every manni tool reads
+  them:
+
+  ```yaml title="manni.config.yaml"
+  collections:
+    - name: docs-pages
+      paths: ["docs/**/*.md"]
+  ```
+
+  Every key is in the [configuration reference](/manni/cite/reference/configuration/).
+</Aside>
+
+## Read a result
+
+{/* cite one-row-per-citation */}
+Each citation gets one line under its page, with both ends on it:
+
+```
+<mark> <id>   <claim end>   <source end>   <manifest>
+```
+
+| Part | What it tells you |
+| --- | --- |
+| `<mark>` | `✓` current, `↕` a warning, `ℹ` a notice, `✗` an error, `·` skipped or baselined. The glyph carries the meaning, not only the colour. |
+| `<id>` | The entry's `id`. An entry without one leaves the column empty; the two ends say which entry it is. |
+| `<claim end>` | The page lines and their status, as in `:16-17 current` or `:9 moved -> :11`. A marker-anchored claim reads `marker :30 current`, and `marker :30 -> :28 current` when the marker is misplaced. Empty for a bare pin. |
+| `<source end>` | The source as the entry spelled it, then its status: `lib/limits.ts:2 current`, `~AQm4…:5 changed since 3f9c2a1, 1 commit`. |
+| `<manifest>` | Where the entry is kept, when a [sidecar](/manni/cite/reference/citations/#the-sidecar) owns it, as in `docs-citations.yaml:6`. Empty for a frontmatter entry. |
+
+{/* cite summary-counts */}
+{/* cite summary-green */}
+{/* cite check-exit-code */}
+{/* cite exit-two-operational */}
+The summary line ends every run. `findings` counts errors, warnings and
+notices together, and the parentheses say how many were each. A run is green
+only when nothing is an error. The exit code is `0` when every finding is a
+warning or a notice. It is `1` when at least one is an error, and `2` when the
+tool couldn't run at all.
+
+## When the source changes
+
+Someone raises the timeout. `FETCH_TIMEOUT_MS = 10_000` becomes `30_000`,
+and the sentence on the page is no longer true:
+
+```sh
+manni cite check
+```
+
+```
+✗ docs/limits.md
+    ✗ fetch-timeout   :16-17 current   lib/limits.ts:2 changed since 9265563, 1 commit
+
+1 file checked, 0 passed, 1 failed, 1 finding
+```
+
+{/* cite source-changed-error */}
+{/* cite changed-names-commit-and-count */}
+{/* cite changed-annotates-sentence */}
+{/* cite commits-touching-file */}
+{/* cite show-diff-prints-diff */}
+`source-changed` is an **error**, exit code `1`. The check has done its whole
+job. It annotated the sentence, named the commit the pin was minted at, and
+said how many commits have touched the file since. What the sentence should
+say now is a question for a person. `--show-diff` puts the answer on screen:
+
+```sh
+manni cite check --show-diff
+```
+
+```
+✗ docs/limits.md
+    ✗ fetch-timeout   :16-17 current   lib/limits.ts:2 changed since 9265563, 1 commit
+        raise fetch timeout to 30s
+        diff --git a/lib/limits.ts b/lib/limits.ts
+        index 145123e..b40d339 100644
+        --- a/lib/limits.ts
+        +++ b/lib/limits.ts
+        @@ -1,3 +1,3 @@
+         export const MAX_FILES = 10_000;
+        -export const FETCH_TIMEOUT_MS = 10_000;
+        +export const FETCH_TIMEOUT_MS = 30_000;
+         export const RETRIES = 3;
+
+1 file checked, 0 passed, 1 failed, 1 finding
+```
+
+{/* cite plain-update-skips-changed */}
+{/* cite plain-update-reports-skipped */}
+{/* cite update-exit-one-undone */}
+A plain `update` won't touch it, and says so, with exit code `1` because work
+is left undone:
+
+```
+docs/limits.md: fetch-timeout  ✗ skipped: changed since 9265563, 1 commit
+0 citations rewritten in 0 files, 1 skipped
+```
+
+{/* cite accept-repins-source-at-head */}
+{/* cite accept-repins-claim */}
+So fix the page. Change the sentence to say 30 seconds. Then re-pin both ends
+at HEAD with `--accept`:
+
+```sh
+manni cite update --accept
+```
+
+```
+docs/limits.md: fetch-timeout claim at line 16 re-pinned (changed; now "The fetch timeout is 30 seconds. It is not configurable.")
+docs/limits.md: fetch-timeout source lib/limits.ts:2 re-pinned at 9b1e04c (changed; sha256-78af1d33… -> sha256-7cb6e7f1…)
+2 citations rewritten in 1 file, 0 skipped
+```
+
+{/* cite accept-prints-pins-and-text */}
+Both pins are printed, and the accepted claim's text with them, so the change
+is on the record. The next check is `current` at both ends.
+
+<Aside type="caution" title="Accept only after reading the diff">
+  `--accept` records that the source is now what the page says. Run it after
+  you have read the diff and fixed the prose, not instead of that. Scope it
+  with `--only <id>` when a page has more than one citation.
+</Aside>
+
+## When the source moves
+
+{/* cite source-move-search */}
+Now someone adds two comment lines at the top of `lib/limits.ts`. The cited
+line is line 4, and its bytes are unchanged. The check finds it:
+
+```sh
+manni cite check
+```
+
+```
+⚠ docs/limits.md
+    ↕ fetch-timeout   :16-17 current   lib/limits.ts:2 moved -> lib/limits.ts:4
+
+1 file checked, 1 passed, 0 failed, 1 finding (1 warning)
+```
+
+{/* cite source-moved-warning */}
+{/* cite source-moved-exit-zero */}
+{/* cite update-dry-run-shows-diff */}
+`source-moved` is a **warning**. The page still says something true, so the
+exit code is `0` and CI stays green. Rewrite the range with `update`;
+`--dry-run` shows the diff first:
+
+```sh
+manni cite update --dry-run
+```
+
+```diff
+--- docs/limits.md
++++ docs/limits.md
+@@ -9,3 +9,3 @@
+       file: lib/limits.ts
+-      lines: 2
++      lines: 4
+       integrity: sha256-7cb6e7f1f11ec2d780b8018abc00ddcb6019080a9d1932fd25dacc55a0d2aed3
+docs/limits.md: fetch-timeout source lib/limits.ts:2 -> lib/limits.ts:4 (moved)
+1 citation rewritten in 1 file, 0 skipped
+```
+
+```sh
+manni cite update
+```
+
+```
+docs/limits.md: fetch-timeout source lib/limits.ts:2 -> lib/limits.ts:4 (moved)
+1 citation rewritten in 1 file, 0 skipped
+```
+
+{/* cite update-splices-one-scalar */}
+`update` splices the one `lines:` scalar and touches nothing else: comments,
+quoting and the rest of the frontmatter stay as they were. The next check is
+`current` at `lib/limits.ts:4`.
+
+<Aside type="note" title="Move, then change">
+  `update` rewrites the range and keeps the entry's `commit-sha`. If the line
+  later changes as well, the check finds the pinned bytes at their old line
+  in that commit. So it reports `changed since <commit>`, and the fix is the
+  one above. `source-never-true` is kept for a pin that matches nowhere in
+  the file at its commit, such as one typed by hand.
+  [Fix a failing check](/manni/cite/fix/#source-never-true) has the details.
+</Aside>
+
+## When the page changes
+
+{/* cite claim-classified-same-way */}
+The claim end moves and changes too, and it is classified the same way.
+
+{/* cite claim-found-verbatim-moved */}
+**Insert a paragraph above the sentence.** The pinned text is found verbatim
+two lines further down, so nothing drifted:
+
+```
+ℹ docs/limits.md
+    ℹ fetch-timeout   :16-17 moved -> :18-19   lib/limits.ts:4 current
+
+1 file checked, 1 passed, 0 failed, 1 finding (1 notice)
+```
+
+{/* cite claim-moved-notice */}
+{/* cite update-rewrites-claim-lines */}
+`claim-moved` is a **notice**, the quietest level there is, and `update`
+rewrites `claim.lines` exactly as it rewrites the source's:
+
+```
+docs/limits.md: fetch-timeout claim lines 16-17 -> 18-19 (moved)
+1 citation rewritten in 1 file, 0 skipped
+```
+
+{/* cite claim-changed-nowhere */}
+**Edit the sentence.** Now the pinned text is nowhere on the page:
+
+```
+⚠ docs/limits.md
+    ↕ fetch-timeout   :18-19 changed   lib/limits.ts:4 current
+
+1 file checked, 1 passed, 0 failed, 1 finding (1 warning)
+```
+
+{/* cite claim-changed-warning */}
+{/* cite show-diff-claim-text */}
+`claim-changed` is a **warning**, not an error. It fires on any edit to the
+pinned lines, a typo fix included. A red build
+for that would block prose work for nothing. Read the new text with
+`--show-diff`, then accept it:
+
+```sh
+manni cite update --accept --only fetch-timeout
+```
+
+```
+docs/limits.md: fetch-timeout claim at line 18 re-pinned (changed; now "The fetch timeout is 30 seconds. It is not configurable per request.")
+1 citation rewritten in 1 file, 0 skipped
+```
+
+{/* cite accept-unit-at-first-line */}
+{/* cite accept-prints-claim-text */}
+`--accept` re-pins over the paragraph or fenced block now at the claim's first
+line, and prints it. So the log says exactly what was accepted. A sentence
+that was reworded **and** moved has left that line. `--accept` then re-pins
+whatever paragraph now starts there, so read the printed text. If it is not
+the sentence, `cite add` the sentence again.
+
+{/* cite severity-config-levels */}
+{/* cite severity-overrides-defaults */}
+A team that wants every edit to a cited sentence reviewed sets
+`claim-changed: error` under `severity:` in the
+[config](/manni/cite/reference/configuration/#severity).
+
+## Anchor with a marker
+
+{/* cite marker-travels-with-text */}
+{/* cite marker-writes-and-pins */}
+Claim lines are one anchor. A **marker** is the other, and it is the easier
+one to keep true, because it travels with its text. `--marker` writes the
+marker and pins what it anchors:
+
+```sh
+manni cite add docs/limits.md:21 lib/limits.ts:5 --id retries --marker
+```
+
+```
+docs/limits.md: added retries to frontmatter; marker at line 29, claim pinned at line 30 (sha256-3049e93e…; source lib/limits.ts:5 "export const RETRIES = 3;", sha256-e9f5bdf9…, d7a5cf4)
+```
+
+```md title="docs/limits.md"
+<!-- cite retries -->
+Retries default to 3.
+```
+
+```yaml title="docs/limits.md (frontmatter)"
+  - id: retries
+    claim:
+      integrity: sha256-3049e93e72873542aac2c1c4778fa655e70656f03c08f202444062f404a3315d
+    source:
+      file: lib/limits.ts
+      lines: 5
+      integrity: sha256-e9f5bdf94a12c610b54573d2b66347592887805e59c69b64803a8c0d30edaea3
+      commit-sha: d7a5cf43e7e81698327752ce75b01e4c17c66a41
+```
+
+{/* cite marker-claim-no-lines */}
+{/* cite marker-claim-never-moves */}
+The entry has a `claim` with an `integrity` and no `lines`, because the marker
+says where it is. Insert as many paragraphs above it as you like and the claim
+never moves. Edit the sentence itself and it is `claim-changed`, exactly as a
+line-anchored claim would be.
+
+The marker is a line in the body, though, and a merge of prose edits can
+conflict on it. [Choose an anchor](/manni/cite/set-up/#choose-an-anchor)
+weighs that against claim lines.
+
+{/* cite marker-carries-id-only */}
+The marker carries an id and nothing else. Every format has its own comment
+syntax, and the [citations
+reference](/manni/cite/reference/citations/#markers) lists them all:
+
+| Format | Form |
+| --- | --- |
+| Markdown, MDX | `<!-- cite retries -->`, `{/* cite retries */}` or `[comment]: # (cite retries)` |
+| HTML, XML | `<!-- cite retries -->` |
+| AsciiDoc | `// (cite retries)` |
+| reStructuredText | `.. (cite retries)` |
+
+{/* cite marker-json-invalid */}
+{/* cite marker-json-message */}
+An entry is never written into the body. A marker that carries JSON is
+`marker-invalid`, and hears where the entry belongs.
+
+## Pin a code block
+
+{/* cite quote-needs-fenced-block */}
+{/* cite quote-add-checks-block */}
+To pin a fenced block instead of a sentence, use `--quote`. The block on the
+page has to reproduce the cited lines, and `add` checks that before it writes:
+
+```sh
+manni cite add docs/limits.md:32-36 lib/limits.ts:3-5 --quote --id limits-block
+```
+
+```
+docs/limits.md: added limits-block to frontmatter (claim lines 42-46, a block that reproduces lib/limits.ts:3-5)
+```
+
+````md title="docs/limits.md"
+```ts
+export const MAX_FILES = 10_000;
+export const FETCH_TIMEOUT_MS = 30_000;
+export const RETRIES = 3;
+```
+````
+
+{/* cite quote-compares-inside-fences */}
+{/* cite quote-drift-finding */}
+{/* cite quote-marker-next-fence */}
+{/* cite quote-pins-whole-block */}
+The claim pins the whole block, fences included, and the lines inside the
+fences are compared with the source. So a block that stops reproducing its
+source is `quote-drift`, even while the pin still holds. A quote can be
+marker-anchored too, and then the block is the next fence after the marker.
+
+All three citations show up in one check:
+
+```
+✓ docs/limits.md
+    ✓ fetch-timeout   :36-37 current       lib/limits.ts:4 current
+    ✓ retries         marker :39 current   lib/limits.ts:5 current
+    ✓ limits-block    :42-46 current       lib/limits.ts:3-5 current
+
+1 file checked, 1 passed, 0 failed, 0 findings
+```
+
+## Next steps
+
+You have pinned one claim, cleared a change and a move on each end, and
+anchored a citation two more ways. To make this a standing guarantee, run the
+check on every push. If your docs are public and your code is not, set up the
+two-repo layout.
+
+<CardGrid>
+  <LinkCard
+    title="Run it in CI"
+    href="/manni/cite/ci/"
+    description="PR annotations, SARIF and JUnit output, the exit-code contract, and the baseline ramp."
+  />
+  <LinkCard
+    title="Public docs, private code"
+    href="/manni/cite/set-up/public-docs-private-code/"
+    description="Encrypt a private repository's source paths, so a public site can cite it without publishing them."
+  />
+  <LinkCard
+    title="Fix a failing check"
+    href="/manni/cite/fix/"
+    description="Every rule, what it means, and which update flag clears it."
+  />
+  <LinkCard
+    title="CLI reference"
+    href="/manni/cite/reference/cli/"
+    description="Every flag of check, add and update."
+  />
+</CardGrid>

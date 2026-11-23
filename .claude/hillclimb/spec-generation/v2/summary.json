@@ -1,0 +1,1 @@
+{"description":"Test command-line pages the way a reader walks them: page order, scripted edits and commits, shown failures","target":"skill","suspicious":"reverted: train +0.081 but test -0.015 (CI +-0.153); dd-docs fell 0.875 -> 0.625"}

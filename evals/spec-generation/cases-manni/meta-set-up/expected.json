@@ -1,0 +1,25 @@
+{
+  "source": "manni/docs/src/content/docs/meta/set-up/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-set-up.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Step 1: validate a folder with no setup (docs/)."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate"],
+      "note": "Step 3: a bare `manni meta validate` reads the stored config."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "--format github"],
+      "note": "Step 4: the CI gate, `--format github`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/intro.md passes the built-in OKF schema and docs/billing.md has no `type`, so validating docs/ fails with exit 1. No manni.config.yaml: the page has the reader add it in step 2, so a spec writes it (or runs the no-config check before it does)."
+  ]
+}

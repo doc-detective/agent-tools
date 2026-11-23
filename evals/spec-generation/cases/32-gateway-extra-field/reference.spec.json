@@ -1,0 +1,53 @@
+{
+  "tests": [
+    {
+      "testId": "gateway-extra-field",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8092/api/feedback",
+            "method": "post",
+            "request": {
+              "body": {
+                "rating": 5,
+                "comment": "Fast setup"
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "rating": 5,
+                "comment": "Fast setup",
+                "extraField": "added by server"
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/feedback",
+            "method": "post",
+            "request": {
+              "body": {
+                "rating": 5,
+                "comment": "Fast setup"
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "rating": 5,
+                "comment": "Fast setup"
+              }
+            },
+            "allowAdditionalFields": false
+          }
+        }
+      ]
+    }
+  ]
+}

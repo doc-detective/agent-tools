@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["title", "deprecated", "replacement"],
+  "properties": {
+    "title": { "type": "string", "minLength": 1 },
+    "deprecated": { "const": true },
+    "replacement": { "type": "string", "minLength": 1 }
+  }
+}

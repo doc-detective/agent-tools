@@ -1,0 +1,114 @@
+---
+title: Stand up metadata validation for your repo
+description: Go from zero to a working CI gate, by installing manni meta, validate a folder, add a config file and schema, then enforce it on every pull request.
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+You own a docs repo, and you want every page to carry correct, complete frontmatter so search and your content catalog stay trustworthy. This guide threads the whole setup together. Install manni meta, validate a folder by hand, then capture your rules in a `manni.config.yaml`. Then land a CI gate that runs the same check on every pull request.
+
+By the end you will have a committed config file and a check that fails the build when a doc is missing required metadata.
+
+<Aside type="note" title="What manni meta checks">
+manni meta validates the **presence and format** of your frontmatter against [JSON Schema](https://json-schema.org/): that `type` exists, that `timestamp` is a real date-time, that `resource` is a URI. It does not review your prose. If a field is required by your schema and missing, the run fails.
+</Aside>
+
+## Before you start
+
+- **Node.js 24 or newer.** Check with `node --version`.
+- A docs repo with frontmatter you want to enforce. The examples below assume Markdown under a `docs/` folder, but manni meta handles other formats too; see the [supported formats reference](/manni/meta/reference/).
+
+## Stand it up
+
+<Steps>
+
+1. **Validate a folder, no setup required.**
+
+   Run manni meta against a directory with `npx`. No install, no config. This tells you where you stand today.
+
+   ```bash
+   npx @hawkeyexl/manni meta validate docs/
+   ```
+
+   manni meta walks `docs/`, finds every supported file, and validates each one against the built-in [`google:okf:0.1`](/manni/meta/schemas/) schema, which requires a `type` field. You will see a pass/fail line per file and a summary. A nonzero exit code means at least one file failed.
+
+   <Aside type="tip">
+   To check a single file instead, pass its path: `npx @hawkeyexl/manni meta validate docs/intro.md`. Explicit file arguments are always validated, regardless of extension filters.
+   </Aside>
+
+2. **Add a `manni.config.yaml` at your repo root.**
+
+   The command above works, but you do not want to retype paths and schemas every run. CI also needs a stored definition of what "valid" means for your repo. Capture it in a config file so a bare `manni meta validate` knows what to do.
+
+   ```yaml title="manni.config.yaml"
+   # Which documents exist. Every manni tool reads this.
+   collections:
+     - name: pages
+       paths:
+         - "docs/**/*.md"
+
+   # How the metadata tool judges them.
+   meta:
+     # The schema set every matched file must satisfy.
+     schemas:
+       - google:okf:0.1
+   ```
+
+   The file has two halves. A top-level `collections:` list declares your document sets, once, for every tool under `manni`. A bare `manni meta validate` reads them all when you name no files on the command line. `meta.schemas` is the set each file is validated against; every file must satisfy every schema you list.
+
+   <LinkCard
+     title="Create your manni.config.yaml"
+     href="/manni/meta/set-up/config/"
+     description="Both halves explained: collections with their paths and exclusions, then schemas and overrides, with a complete worked example."
+   />
+
+3. **Run the stored configuration.**
+
+   With the config committed, you no longer pass paths or schemas. manni meta discovers `manni.config.yaml` in the current directory, reads every collection it declares, and applies `meta.schemas`.
+
+   ```bash
+   npx @hawkeyexl/manni meta validate
+   ```
+
+   This is the exact command CI will run. Confirm it reports what you expect locally before you wire it up.
+
+   <Aside type="caution">
+   A bare `manni meta validate` with no config file and no paths exits with code `2`. The message tells you to pass paths or declare a collection. That is an operational error rather than a silent pass. It means manni meta had nothing to do.
+   </Aside>
+
+4. **Land the CI gate.**
+
+   The same `npx @hawkeyexl/manni meta validate` command becomes a pull-request gate. manni meta exits `0` when everything passes and `1` when a file fails validation, so any CI system can use it as a pass/fail step. The `--format github` flag turns failures into inline annotations on the PR diff.
+
+   ```bash
+   npx -y @hawkeyexl/manni meta validate --format github
+   ```
+
+   The full recipe (workflow file, exit-code contract, and annotation behavior) lives in the CI track. Copy the ready-made recipe there instead of assembling your own.
+
+   <LinkCard
+     title="Run it in CI"
+     href="/manni/meta/ci/"
+     description="Ready-made recipes for GitHub Actions, GitLab CI, Jenkins, and pre-commit, plus the exit-code and annotation contract."
+   />
+
+</Steps>
+
+## What you have now
+
+A committed `manni.config.yaml` whose `collections:` list defines which documents exist, and whose `meta:` section defines the schema they must satisfy. Plus a CI step that runs the same check on every pull request, and fails the build on bad metadata. New contributors get the same enforcement you do, without any review fatigue on your side.
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Apply different schemas to different folders"
+    href="/manni/meta/set-up/different-schemas-per-folder/"
+    description="Require stricter metadata for /api than for /guides using config overrides."
+  />
+  <LinkCard
+    title="Author a schema for your standard"
+    href="/manni/meta/schemas/"
+    description="Move beyond the built-in OKF schema and encode your own required and recommended fields."
+  />
+</CardGrid>

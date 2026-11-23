@@ -1,0 +1,92 @@
+{
+  "source": "manni/docs/src/content/docs/key/set-up/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/key-set-up.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": [
+        "key set",
+        "--dry-run",
+        "Would write encryptionKey"
+      ],
+      "note": "Step 1: `manni key set --dry-run` says what it would write."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "key set",
+        "--dry-run",
+        "is not ignored by git"
+      ],
+      "may_share": true,
+      "note": "Step 2: the same run warns that manni.config.yaml is not covered by .gitignore."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "key set",
+        "Encryption key written"
+      ],
+      "note": "Step 3: write it. `manni key set` writes the key to manni.config.yaml."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "encrypted values were not verified"
+      ],
+      "note": "Validation goes quiet: one warning counts the values nobody checked."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta validate",
+        "3 passed"
+      ],
+      "may_share": true,
+      "note": "The same run passes all three pages and exits 0."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "cite check",
+        "no encryption key is available to decrypt it"
+      ],
+      "note": "A citation without the key: the encrypted source is missing and the run fails."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "cite check",
+        "--no-check-sources",
+        "1 passed"
+      ],
+      "note": "`--no-check-sources` reports the source skipped and passes."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "meta query",
+        "UPDATE",
+        "must be encrypted"
+      ],
+      "note": "Off a terminal, a `manni meta query` write refuses with exit 2."
+    },
+    {
+      "stepType": "runShell",
+      "match": [
+        "cite add",
+        "--encrypt",
+        "--dry-run",
+        "must be encrypted"
+      ],
+      "note": "Off a terminal, `manni cite add --encrypt` refuses with exit 2."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "manni.config.yaml declares collection `site` over docs/**/*.md (excluding docs/limits.md), joins owners.yaml's encrypted `owner` values, and applies schemas/encrypted.schema.json, which marks `owner` x-manni-encrypt. No key yet: no encryptionKey and no MANNI_ENCRYPTION_KEY.",
+    "docs/auth.md, docs/stale.md, docs/wrong.md are the three pages validate reports; docs/limits.md cites an encrypted source path; src/limits.ts is the plain source `cite add` names.",
+    "No .gitignore, so `key set` warns that manni.config.yaml is not ignored. The 'What each tool does with no key' section describes the state before a key exists, so a spec runs it before `manni key set` (which writes a fresh key). Not required: openssl, the MANNI_ENCRYPTION_KEY refusal (needs an env var), and the with-key validate transcript (it depends on the key that encrypted owners.yaml, not on a freshly generated one)."
+  ]
+}

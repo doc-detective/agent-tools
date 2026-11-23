@@ -1,0 +1,304 @@
+---
+title: runCode
+description: Assemble and run code snippets in various languages.
+---
+
+
+The `runCode` action executes a code snippet in a specified language (like JavaScript, Python, Bash, etc.) on the local machine and evaluates the results. This allows embedding executable code directly within your tests.
+
+`runCode` executes the code using the appropriate interpreter available on the machine.
+
+`runCode` writes your snippet to a temporary file and runs it with the interpreter directly. That avoids the shell-quoting problems of embedding code in a [`runShell`](/docs/actions/runshell) command. Your snippet's contents never pass through a shell-quoting step, so nested quotes and parentheses stay intact. For a JavaScript, Python, or Bash snippet with nested quotes, parentheses, or multiple lines, reach for `runCode` instead of a `runShell` one-liner like `node -e "..."`.
+
+You must specify the `runCode` action using an object format with the following properties:
+
+- **Object Format:**
+  - `language`: (Required) The programming language of the code snippet: `javascript` or `js`, `python` or `py`, or `bash`. `js` and `py` run the same as `javascript` and `python`.
+
+    > Note: `bash` works on every platform, Windows included. Doc Detective uses Git Bash there. Without Git for Windows installed, it downloads a portable copy into its cache the first time a test needs one. See [Shell selection](/docs/actions/runshell#shell-selection).
+
+  - `code`: (Required) The code snippet to execute as a string.
+  - `workingDirectory`: (Optional) The folder to run the code in. Omit it to run in the folder you ran Doc Detective from. A relative path resolves against the spec file, so `.` is the spec's folder. When [`relativePathBase`](/reference/schemas/config) is `cwd`, it resolves against the current directory instead.
+  - `timeout`: (Optional) Maximum duration in milliseconds, `1` or more, to wait for the code execution to complete (default: `60000`).
+  - `exitCodes`: (Optional) An array of acceptable exit codes. If the code execution's exit code is not in this list, the step fails (default: `[0]`).
+  - `stdio`: (Optional) A string or regular expression to validate against the code's combined stdout and stderr. If the output doesn't match, the step fails. Regex must start and end with `/` (for example, `/^hello world.*/`).
+  - `background`: (Optional) An object that starts the code as a long-running background process. The step returns as soon as the process is ready, instead of waiting for it to exit. Including this object enables background mode. Omit it for a normal blocking run. See [Background processes](#background-processes).
+    - `name`: (Required) A unique identifier for the background process within the run. Reference it from a [`closeSurface`](/docs/actions/closesurface) step to stop the process, or from a [`type`](/docs/actions/type) step to send it keystrokes.
+    - `waitUntil`: (Optional) The conditions that must be met before the process is considered ready. See [Wait conditions](#wait-conditions).
+    - `tty`: (Optional) Run the process under a pseudo-terminal (PTY) instead of a pipe so full-screen terminal UIs render and accept keystrokes. `true` uses a terminal 120 columns by 30 rows. An object such as `{"cols": 80, "rows": 24}` sets the size. Defaults to `false`. See [Full-screen terminal UIs](#full-screen-terminal-uis).
+  - *Output Saving:* You can also save the code's output using `path`, `directory`, `maxVariation`, and `overwrite` properties. The saved file shows environment variable values as `***NAME***`. See [Saved files](/docs/ci/secrets#saved-files) and the [`runCode`](/reference/schemas/runcode) reference.
+
+**Output Regression Testing:** Set both `path` and `maxVariation`, with a reference file present at that `path`. The action then compares the new code output to the reference file's content. A difference within `maxVariation` passes the step. A difference beyond the threshold returns WARNING, and behavior then depends on the `overwrite` setting:
+
+- `"true"`: The reference file is always replaced with the new output.
+- `"false"`: The reference file isn't modified.
+- `"aboveVariation"` (default): The reference file is replaced only when the difference exceeds `maxVariation`, so you can save updated artifacts for review.
+
+This allows tests to continue while flagging output changes that exceed your acceptable variation threshold.
+
+**Setting Variables:** To capture output into variables for later steps, use the step-level `variables` object. You can assign values based on the code's output using expressions like `$$stdio.stdout`, `$$stdio.stderr`, or `$$exitCode`. When you set `stdio`, the action also exposes `$$stdioMatches`, a boolean indicating whether the expected output was found in stdout or stderr. When you save output with `path` and a reference file already exists, the action exposes `$$variation`, the fractional difference between the new output and the reference file.
+
+**Secrets in output:** Logs and reports show environment variable values in the code and its output as `***NAME***`. The `stdio` check and `variables` expressions still use the real values, so write expected output with the real value. Code inherits the whole environment, so it can print a variable that no step substitutes. Doc Detective masks that variable when a `.env` or [`loadVariables`](/docs/actions/loadvariables) file sets it. It also masks a variable whose name contains a word such as `TOKEN`, `SECRET`, or `PASSWORD`. The name rule applies only to variables present when the run started, such as CI secrets, and to variables a step set with `variables`. See [Keep secrets out of logs, reports, and captures](/docs/ci/secrets).
+
+> For comprehensive options, see the [`runCode`](/reference/schemas/runcode) reference.
+
+## Background processes
+
+To start a long-running process, such as a local server, add a `background` object. The step returns as soon as the process is ready instead of waiting for it to exit. The process keeps running while later steps and tests execute. To stop it, use a [`closeSurface`](/docs/actions/closesurface) step. To send keystrokes to an interactive process while it runs, use a [`type`](/docs/actions/type) step with a `surface`.
+
+When you add a `background` object:
+
+- `name` is required inside `background`. It identifies the process within the run so that a later `closeSurface` step can stop it, or a `type` step can target it. Doc Detective trims leading and trailing whitespace from the name, and so do the `closeSurface` and `type` steps, so the names match after trimming.
+- `timeout` is the maximum time in milliseconds to wait for the process to become ready, not the maximum time the process can run.
+- Doc Detective doesn't apply the `exitCodes`, `stdio`, or output-saving (`path`, `directory`, `maxVariation`, `overwrite`) assertions, because the process doesn't exit during the step.
+
+The run owns the process. If you don't stop it with a `closeSurface` step, Doc Detective stops it automatically when the run finishes, including when you interrupt the run with `Ctrl+C`.
+
+A common pattern is to start the process in a setup test, run your tests against it, and stop it in a cleanup test. See the [`before` and `after`](/reference/schemas/test) test properties for setup and cleanup specs.
+
+### Wait conditions
+
+Inside the `background` object, use `waitUntil` to block the step until the process is ready. If you omit `waitUntil`, Doc Detective treats the process as ready as soon as it starts. You can set any combination of the following conditions, and every condition you set must pass before `timeout` elapses.
+
+- `port`: Wait until this TCP port accepts connections on localhost. An integer between 1 and 65535.
+- `stdio`: Wait until the process output contains this content. Doc Detective searches both stdout and stderr and supports strings and regular expressions. To use a regular expression, start and end the string with a forward slash, as in `/ready to accept/`.
+- `httpGet`: Wait until an HTTP GET request to this URL returns a 2xx status.
+- `delayMs`: Wait at least this many milliseconds before considering the process ready. An integer, minimum 0.
+
+If the process exits or doesn't become ready before `timeout` elapses, the step fails and Doc Detective stops the process.
+
+Some processes, such as certain Docker images and databases, fork a daemon and then exit. Because the foreground process doesn't stay alive, Doc Detective treats it as having exited before it became ready, and the step fails. For these processes, use a `port`, `httpGet`, or `delayMs` condition instead of `stdio`.
+
+### Full-screen terminal UIs
+
+By default, a background process runs behind a pipe. That works for line-oriented REPLs and basic CLIs, but not for full-screen terminal UIs (TUIs). Programs built with frameworks like Ink check whether their output is attached to a terminal (`process.stdout.isTTY`). They won't render or accept keystrokes over a pipe. Set `tty` to `true` to run the process under a real pseudo-terminal (PTY) instead. These interactive TUIs then render and respond to the keystrokes a [`type`](/docs/actions/type) step sends.
+
+In PTY mode, the process's stdout and stderr merge into a single stream that both `waitUntil.stdio` here and a `type` step's `waitUntil.stdio` search. PTY output also includes raw ANSI escape sequences, such as colors and cursor movement. Match against text that renders without interleaved control codes, or use a regular expression that tolerates them. `tty` defaults to `false`, which keeps the standard pipe behavior.
+
+With `tty` set to `true`, the terminal is 120 columns wide and 30 rows tall. To pick the size, set `tty` to an object with `cols` and `rows`, such as `{"cols": 80, "rows": 24}`. Each is an integer from 1 to 1000. A missing value keeps its default, so `{}` behaves like `true`. Results show the size that ran, so `true` appears as `{"cols": 120, "rows": 30}`. See [Full-screen terminal UIs](/docs/actions/runshell#full-screen-terminal-uis) in `runShell` for why the width matters.
+
+## Examples
+
+The docs tests run every example below except the regression-testing example.
+
+### Run a basic Python script
+
+This example prints "hello world" using Python.
+
+{/* test {"testId":"runcode-python-basic","detectSteps":false} */}
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "description": "Run a basic Python script.",
+          "runCode": {
+            "language": "python",
+            "code": "print('hello world')"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+{/* step {"stepId":"runcode-python","description":"Run a basic Python script and verify its output","runCode":{"language":"python","code":"print('hello world')","stdio":"hello world"}} */}
+{/* test end */}
+
+### Run JavaScript code with expected output validation
+
+This example runs a short Node.js script and checks the output.
+
+{/* test {"testId":"runcode-javascript-stdio","detectSteps":false} */}
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "description": "Run JS code and check the output.",
+          "runCode": {
+            "language": "javascript",
+            "code": "console.log('Hello from Node!');",
+            "stdio": "Hello from Node!"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+{/* step {"stepId":"runcode-js","description":"Run JS code and check the output","runCode":{"language":"javascript","code":"console.log('Hello from Node!');","stdio":"Hello from Node!"}} */}
+{/* test end */}
+
+### Test a failure condition using exit codes (Bash)
+
+This example runs a Bash command (`false`) via `runCode` and checks that the exit code is `1`. Because the command is expected to fail with exit code 1, the step passes.
+
+{/* test {"testId":"runcode-bash-exitcode","detectSteps":false} */}
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "description": "Run a failing Bash command and expect exit code 1.",
+          "runCode": {
+            "language": "bash",
+            "code": "false",
+            "exitCodes": [1]
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+{/* step {"stepId":"runcode-bash-exit","description":"Run a failing Bash command and expect exit code 1","runCode":{"language":"bash","code":"false","exitCodes":[1]}} */}
+{/* test end */}
+
+### Pass arguments to the script
+
+Doc Detective passes each item in `args` to your snippet as a positional argument. In Bash, read them as `$1`, `$2`, and so on. In Python, the first argument is `sys.argv[1]`, and in Node it's `process.argv[2]`.
+
+{/* test {"testId":"runcode-with-args","detectSteps":false} */}
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "description": "Read the first argument in a Bash snippet.",
+          "runCode": {
+            "language": "bash",
+            "code": "echo \"first arg: $1\"",
+            "args": ["hello"],
+            "stdio": "first arg: hello"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+{/* step {"stepId":"runcode-args","description":"Pass an argument to a Bash snippet and check it prints","runCode":{"language":"bash","code":"echo \"first arg: $1\"","args":["hello"],"stdio":"first arg: hello"}} */}
+{/* test end */}
+
+### Set a variable based on code output (Python)
+
+The first step runs Python code to print "setup", validates the output using a regex, and captures the full stdout into a variable named `SETUP_VAL`. The second step uses Bash via `runCode` to echo the content of the `SETUP_VAL` variable and validates that the output is indeed "setup".
+
+{/* test {"testId":"runcode-variable-capture","detectSteps":false} */}
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "description": "Set a variable based on Python output.",
+          "runCode": {
+            "language": "python",
+            "code": "import sys; sys.stdout.write('setup')",
+            "stdio": "/.+/"
+          },
+          "variables": {
+            "SETUP_VAL": "$$stdio.stdout"
+          }
+        },
+        {
+          "description": "Echo and validate the variable using Bash.",
+          "runCode": {
+            "language": "bash",
+            "code": "echo $SETUP_VAL",
+            "stdio": "setup"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+{/* step {"stepId":"runcode-set-var","description":"Set a variable based on Python output","runCode":{"language":"python","code":"import sys; sys.stdout.write('setup')","stdio":"/.+/"},"variables":{"SETUP_VAL":"$$stdio.stdout"}} */}
+{/* step {"stepId":"runcode-use-var","description":"Echo and validate the variable using Bash","runCode":{"language":"bash","code":"echo $SETUP_VAL","stdio":"setup"}} */}
+{/* test end */}
+
+### Save output to a file for regression testing
+
+Set `workingDirectory` to run the snippet somewhere other than the run's directory, and save its output with `path` and `directory`. On later runs, `maxVariation` and `overwrite` compare the new output against the saved copy.
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "description": "Save the snippet's output and refresh it only on drift.",
+          "runCode": {
+            "language": "python",
+            "code": "print(open('VERSION').read().strip())",
+            "workingDirectory": "./build",
+            "timeout": 5000,
+            "path": "version-output.txt",
+            "directory": "./output",
+            "maxVariation": 0.1,
+            "overwrite": "aboveVariation"
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### Start a background server and stop it later
+
+This example starts a Node.js HTTP server in the background, waits until port `8088` accepts connections, and then stops the server with a [`closeSurface`](/docs/actions/closesurface) step.
+
+{/* test {"testId":"runcode-background-server","detectSteps":false} */}
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "description": "Start an HTTP server in the background.",
+          "runCode": {
+            "language": "javascript",
+            "code": "require('http').createServer((req, res) => res.end('ok')).listen(8088);",
+            "background": {
+              "name": "api",
+              "waitUntil": {
+                "port": 8088
+              }
+            },
+            "timeout": 15000
+          }
+        },
+        {
+          "description": "Stop the server.",
+          "closeSurface": "api"
+        }
+      ]
+    }
+  ]
+}
+```
+
+{/* step {"stepId":"runcode-start-server","description":"Start an HTTP server in the background","runCode":{"language":"javascript","code":"require('http').createServer((req, res) => res.end('ok')).listen(8088);","background":{"name":"runcode-api","waitUntil":{"port":8088}},"timeout":15000}} */}
+{/* step {"stepId":"runcode-verify-server","description":"Confirm the server actually responds on the port it claimed to be ready on","httpRequest":{"url":"http://localhost:8088","response":{"body":"ok"}}} */}
+{/* step {"stepId":"runcode-stop-server","description":"Stop the server","closeSurface":"runcode-api"} */}
+{/* test end */}
+
+

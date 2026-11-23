@@ -1,0 +1,13 @@
+{
+  "tests": [
+    {
+      "testId": "login",
+      "steps": [
+        { "goTo": "http://localhost:8092" },
+        { "click": "Sign in" },
+        { "type": { "keys": "user@example.com", "selector": "#email" } },
+        { "find": "Dashboard" }
+      ]
+    }
+  ]
+}

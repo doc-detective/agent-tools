@@ -1,0 +1,33 @@
+diff --git a/src/skills/doc-detective-generate/SKILL.md b/src/skills/doc-detective-generate/SKILL.md
+index cceaf9d..fee6b1b 100644
+--- a/src/skills/doc-detective-generate/SKILL.md
++++ b/src/skills/doc-detective-generate/SKILL.md
+@@ -81,6 +81,28 @@ Match elements by their visible text, as a reader does: write `{ "click": "Submi
+ 
+ Full action catalog, with every field: [references/actions.md](references/actions.md). Other skills and the specialist agent use it too.
+ 
++### Test commands and file edits
++
++Use this section when the page has the reader run a command-line tool against their own files. Test the page the way a reader walks it: top to bottom, in one working copy.
++
++A page that documents a Doc Detective action, or shows a Doc Detective test, is different. Its example steps are your steps, so copy them into the spec. Don't write the example to a file and run Doc Detective on it from a `runShell` step.
++
++- **Follow the page's order.** Each step runs against the files that earlier steps left. Make one test per procedure, and keep the tests in page order.
++- **Script the changes the page makes.** When the page has the reader create, edit, move, or delete a file, or commit, add a `runShell` step that makes that change. Put it right before the command that depends on it. Change the file the page names, not a copy. Don't skip a section because it changes files or needs a commit.
++- **Start from the workspace.** A file the page says already exists is a prerequisite, not a step. Use the workspace's copy as it is. Don't recreate it, and don't replace its values with the page's sample values.
++- **Treat config snippets as partial.** A snippet often shows only the keys one section adds, or a layout from another repository. Write one only when a later command on the page runs against it. Append it when its top-level key is new. Otherwise write the whole file: the workspace's content plus the snippet's keys. Skip a snippet that names paths the workspace doesn't have.
++- **Test what the page shows a result for.** That means a command in a code block, or a message or output the page quotes. A flag the page only mentions in prose, with no stated result, needs no step. Don't make up file content to stage an error the page only describes.
++- **Write files with bash.** `runShell` runs `bash` by default, Git Bash on Windows, unless the step or config sets `shell`. Write a whole file with a quoted heredoc, append with `printf '...' >> <file>`, and change one line with `sed -i`. Keep the whole edit in `command`. Don't split it into `args`, and don't use `runCode` for it. To commit, pass an identity: `git -c user.name=docs -c user.email=docs@example.com commit -am "<message>"`.
++- **Run where Doc Detective runs.** Omit `workingDirectory` unless the page changes directory, and use the paths the page uses.
++- **Watch state between sections.** When a section describes the state before an earlier change, test it before that change. Or undo the change first.
++- **Test the failures the page shows.** A refusal, an error, or a run that reports failures is a step too. Set `exitCodes` to the code the page states. A transcript that shows failures or a refusal means a nonzero exit, so don't leave the default `[0]`.
++- **Assert what the page quotes.** Set `stdio` to a short substring of the line the page quotes, such as the summary or the error message.
++- **Don't make the changes yourself.** Write them into the spec. The spec starts from the files as they are now.
++
++```json
++{ "runShell": { "command": "cat > app.config.yaml <<'EOF'\nname: demo\nmode: strict\nEOF" } }
++```
++
+ ### Validate
+ 
+ Validate with Doc Detective's own CLI. It checks the spec without running it:

@@ -1,0 +1,101 @@
+{
+  "specId": "manni-meta-external-metadata",
+  "description": "manni docs meta/set-up/external-metadata, run in a repo that holds the page's worked examples under test/fixtures/.",
+  "tests": [
+    {
+      "testId": "lean-docset",
+      "steps": [
+        {
+          "description": "A bare run reports the bad manifest value at its manifest line.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate -c test/fixtures/external-metadata/manni.config.yaml",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "(docs-meta.yaml:6)"
+          }
+        },
+        {
+          "description": "The owned-key finding names the manifest and its collection, and the summary counts three failures.",
+          "runShell": {
+            "command": "npx -y @hawkeyexl/manni meta validate -c test/fixtures/external-metadata/manni.config.yaml",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "/is owned by manifest docs-meta.yaml \\(collection pages\\)[\\s\\S]*4 files checked, 1 passed, 3 failed, 3 errors/"
+          }
+        },
+        {
+          "description": "The run sees the manifest's key on the page.",
+          "runShell": {
+            "command": "manni meta get jira test/fixtures/external-metadata/docs/auth.md -c test/fixtures/external-metadata/manni.config.yaml",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "jira=PLAT-412"
+          }
+        },
+        {
+          "description": "A manifest entry naming a page the run did not load is exit 2.",
+          "runShell": {
+            "command": "manni meta validate -c test/fixtures/external-metadata/manni.orphan.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "names \"docs/gone.md\", which this run did not load"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "field-join",
+      "steps": [
+        {
+          "description": "Two pages sharing one id is a finding on both.",
+          "runShell": {
+            "command": "manni meta validate -c test/fixtures/external-metadata-join/manni.config.yaml",
+            "exitCodes": [
+              1
+            ],
+            "stdio": "docs-meta.yaml cannot tell them apart"
+          }
+        },
+        {
+          "description": "An entry whose id no page carries is exit 2.",
+          "runShell": {
+            "command": "manni meta validate -c test/fixtures/external-metadata-join/manni.orphan.config.yaml",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "names id \"gone-guide\", which no loaded document carries"
+          }
+        },
+        {
+          "description": "Changing a field-joined page's id is refused.",
+          "runShell": {
+            "command": "manni meta query -c test/fixtures/external-metadata-join/manni.config.yaml \"UPDATE docs SET id = 'other' WHERE _path = 'docs/auth.md'\"",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "is the field manifest docs-meta.yaml joins on"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "editing-values",
+      "steps": [
+        {
+          "description": "A write to a manifest-owned key lands in the manifest, named in brackets.",
+          "runShell": {
+            "command": "manni meta query -c test/fixtures/external-metadata/manni.config.yaml \"UPDATE docs SET jira = 'PLAT-1' WHERE _path = 'docs/auth.md'\" --dry-run",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "jira: PLAT-412 -> PLAT-1  [docs-meta.yaml]"
+          }
+        }
+      ]
+    }
+  ]
+}

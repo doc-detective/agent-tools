@@ -1,0 +1,163 @@
+{
+  "flow": "spec-generation",
+  "model": "claude-sonnet-5-5",
+  "metrics": [
+    {
+      "id": "complete",
+      "label": "Complete",
+      "kind": "binary"
+    },
+    {
+      "id": "verified_coverage",
+      "label": "Verified cov.",
+      "kind": "continuous"
+    },
+    {
+      "id": "passes",
+      "label": "Spec passes",
+      "kind": "binary"
+    },
+    {
+      "id": "coverage",
+      "label": "Step coverage",
+      "kind": "continuous"
+    },
+    {
+      "id": "spec_written",
+      "label": "Spec written",
+      "kind": "binary"
+    }
+  ],
+  "perf_fields": [
+    "latency_s",
+    "tool_calls",
+    "turns",
+    "spec_steps",
+    "usage"
+  ],
+  "harness_paths": [
+    "evals/lib/claude-run.mjs",
+    "evals/spec-generation/grade.mjs",
+    "evals/spec-generation/doc-detective.config.json"
+  ],
+  "prices": {
+    "claude-sonnet-5-5": {
+      "in": 2,
+      "out": 10
+    }
+  },
+  "harness_sha": "3f525d7247e6a994bd478e3da21e3452b70f42cdd39009e8f93889846405f83f",
+  "train_ids": [
+    "dd-docs-automatic-recording",
+    "dd-docs-find-by-image",
+    "dd-docs-load-variables",
+    "dd-docs-runcode",
+    "manni-cite-get-started",
+    "manni-cite-require-citations",
+    "manni-cite-sidecar",
+    "manni-key-set-up",
+    "manni-meta-fix",
+    "manni-meta-get-started",
+    "manni-meta-per-folder-schemas",
+    "manni-meta-schemas",
+    "manni-meta-set-up",
+    "manni-meta-set-up-config",
+    "web-04-live-preview",
+    "web-05-profile-form",
+    "web-06-billing-frequency-ambiguous",
+    "web-07-background-action",
+    "web-09-loading-content",
+    "web-10-open-record-new-tab",
+    "web-12-api-list-users",
+    "web-13-api-create-user",
+    "web-15-api-request-tracing",
+    "web-16-resource-links",
+    "web-18-saved-preferences-prerequisite",
+    "web-30-account-overview-slow-panels",
+    "web-24-troubleshoot-live-dashboard",
+    "web-26-order-lookup-variable-number",
+    "web-28-message-actions-right-click",
+    "manni-meta-field-location",
+    "manni-meta-ci-consume-results",
+    "manni-meta-machine-authorship",
+    "manni-meta-ci-github"
+  ],
+  "test_ids": [
+    "dd-docs-automatic-screenshots",
+    "dd-docs-doc-content",
+    "dd-docs-run-shell-and-code",
+    "dd-docs-runshell",
+    "manni-cite-ci",
+    "manni-cite-fix",
+    "manni-cite-set-up",
+    "manni-key-ci",
+    "manni-meta-ci-exit-codes",
+    "manni-meta-ci-query-gates",
+    "manni-meta-external-metadata",
+    "manni-meta-new-required-field",
+    "manni-meta-retrofit",
+    "web-01-home-page-tour",
+    "web-02-jump-to-section",
+    "web-03-preview-notifications",
+    "web-08-system-health-indirect",
+    "web-11-dashboard-layout-drag",
+    "web-14-api-error-responses",
+    "web-17-verify-installation-ui-api",
+    "web-19-join-workspace-manual-steps",
+    "web-20-export-customer-table-manual-steps",
+    "web-21-sync-feed-troubleshooting",
+    "web-32-gateway-extra-field",
+    "web-29-capture-get-started-button",
+    "web-22-update-user-record",
+    "web-31-compare-records-two-tabs",
+    "web-33-toolbar-icon-buttons",
+    "web-27-plan-tier-shared-labels",
+    "web-25-checkout-controls-indirect",
+    "web-23-run-plan-token",
+    "manni-meta-fix-faq",
+    "manni-cite-public-private",
+    "manni-meta-built-in-schemas",
+    "manni-meta-configuration",
+    "manni-meta-docusaurus-schemas",
+    "manni-meta-landing",
+    "manni-cite-landing",
+    "manni-meta-encrypted-fields",
+    "dd-docs-generate-tests-from-openapi"
+  ],
+  "reps": 3,
+  "current_round": 7,
+  "goal": {
+    "target": "verified_coverage",
+    "direction": "higher",
+    "hold": [
+      "passes",
+      "spec_written"
+    ]
+  },
+  "approve_each_round": false,
+  "scope": {
+    "will_change": [
+      "SKILL.md bodies of generate, test, validate, init",
+      "their references/",
+      "src/skills/_shared/"
+    ],
+    "off_limits": [
+      "frontmatter descriptions",
+      "scripts",
+      "hooks",
+      "build.js",
+      "evals/"
+    ]
+  },
+  "stop": {
+    "plateau_rounds": 3,
+    "max_rounds": 7,
+    "note": "Raised from 6 to 7 by the maintainer on 2026-11-22 for the heredoc fix."
+  },
+  "best": {
+    "round": 7,
+    "test_score": 0.838,
+    "note": "generate: write the spec with the file-writing tool; +0.073 +-0.074 verified and +0.100 +-0.075 passes over round 5 on test"
+  },
+  "split_note": "Cases added after round 3 (25): two thirds of each slice to test, seeded shuffle (mulberry32, seed 20261119), to narrow the held-out noise floor. The original 48 keep their split."
+}

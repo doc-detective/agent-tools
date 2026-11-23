@@ -1,0 +1,49 @@
+{
+  "source": "manni/docs/src/content/docs/cite/set-up/citations-in-a-sidecar.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/cite-sidecar.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta get", "--no-config", "citations=(unset)"],
+      "note": "Confirm the page came out clean: `meta get` under `--no-config` reads the page alone, and citations is unset."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta get"],
+      "match_any": ["citations=[", "fetch-timeout"],
+      "note": "With the config governing the run, `meta get` reads the merged view, which carries the entry."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "docs-citations.yaml:5"],
+      "note": "Check exactly as before: a fourth column names the manifest and the line the entry starts on."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "is owned by manifest"],
+      "note": "A half-moved page has two owners for one key: an error naming the manifest and the collection."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite add", "--dry-run"],
+      "match_any": ["added retries to", "docs-citations.yaml"],
+      "note": "`add` needs no flag: the entry goes to the manifest, and the claim stays at the line typed."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite update", "--dry-run", "2 citations rewritten"],
+      "note": "`update` writes each manifest once per run, however many entries it repaired."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["cite check", "guides-citations.yaml:4"],
+      "note": "The page that carries `slug: guide-one` owns the `join:`-keyed entry."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "The page's example repository: manni.config.yaml declares the `site` collection (docs/**/*.md, manifest docs-citations.yaml) and the `guides` collection (guides/**/*.md, manifest guides-citations.yaml joined on `slug`).",
+    "docs/ holds limits.md, retries.md, moved.md, moved-two.md, own.md (still carries its own citations) and entry-invalid.md (its manifest entry has a malformed integrity); guides/guide.md carries `slug: guide-one`; lib/ holds limits.ts and moved.ts (lines shifted by two).",
+    "The refusals need configs the repo doesn't have (a URL manifest; two owning collections), so a spec writes them."
+  ]
+}

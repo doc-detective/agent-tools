@@ -102,7 +102,7 @@ describe('Hook 1: post-edit-validate-test-spec', function () {
 describe('Bundled validator: doc-detective-validate-test.js', function () {
   this.timeout(30000);
 
-  const SCRIPTS_DIR = path.resolve(__dirname, '../../src/skills/doc-detective-doc-testing/scripts');
+  const SCRIPTS_DIR = path.resolve(__dirname, '../../src/skills/doc-detective-test/scripts');
   const BUNDLE = path.join(SCRIPTS_DIR, 'doc-detective-validate-test.js');
   let tmpDir;
 

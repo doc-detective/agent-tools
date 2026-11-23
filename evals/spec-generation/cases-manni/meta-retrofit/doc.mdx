@@ -1,0 +1,277 @@
+---
+title: Retrofit manni meta into an existing docs repo
+description: Adopt manni meta on a repo that has never had metadata validation. Measure the metadata you already have, start with a permissive schema so the build goes green on day one, wire the CI gate, then ratchet strictness over time.
+---
+
+import { Steps, Aside, LinkCard, CardGrid } from '@astrojs/starlight/components';
+
+Adding metadata validation to a mature docs repo has a chicken-and-egg problem. You want validation because the existing metadata is inconsistent, with fields missing, values fat-fingered, and no enforcement. But if your very first CI run holds every page to a strict standard, hundreds of long-lived docs fail at once. The gate is then unmergeable before anyone has written a single new line.
+
+The way through is to adopt **incrementally**. Land a permissive schema that the repo already satisfies, so the build is green on day one and the gate is real. Then tighten the standard over time, on your schedule, while the gate quietly catches new regressions from the start.
+
+<Aside type="note" title="The goal on day one">
+A green build with a working gate beats a red build with a perfect standard. Once the check is wired and passing, every future pull request is held to whatever the schema currently requires. Even a near-empty schema stops *new* metadata from getting worse while you work on the backlog.
+</Aside>
+
+## Step 1: Take a coverage reading
+
+Before you pick a schema, find out what the repo already has. [`manni meta schemas infer`](/manni/meta/reference/cli/#meta-schemas-infer) reads every metadata block in a docset and counts it. It is purely statistical, with no network, no model, and no credentials, so it is safe to run against anything, including in CI.
+
+```sh
+npx @hawkeyexl/manni meta schemas infer docs/
+```
+
+```
+1,204 files scanned · 38 with no metadata block
+
+key            coverage  types            sample
+title             99.8%  string           "Getting started"
+type              61.4%  string (7 enum)  guide | reference | how-to | …
+owner             12.0%  string           "docs-team"
+lastReviewed       3.2%  string (date)    "2026-04-01"
+```
+
+This table is the whole retrofit plan in one screen:
+
+- **`title` at 99.8%.** You can require this today, and fix the two pages that fail.
+- **`type` at 61.4%.** Requiring it breaks 39% of the repo. This is a step 6 ratchet, not a day-one rule.
+- **`lastReviewed` at 3.2%.** One team's convention. Adopting it as a standard would create 1,165 pages of new debt for a field almost nobody uses.
+
+And read the **`38 with no metadata block`** count carefully; it is the number the rest of this page keeps coming back to.
+
+<Aside type="note" title="`infer` never marks anything required">
+It reports; you decide. There is deliberately no flag that turns a coverage percentage into a `required` list. What your docset happens to contain is not the same thing as what your standard should demand.
+</Aside>
+
+## Step 2: Start with a permissive schema
+
+The built-in [`google:okf:0.1`](/manni/meta/schemas/) schema requires a single field, `type`. That is lenient, but on a repo that has never enforced metadata, even one required field may fail a lot of pages. For a true day-one-green adoption, start from a schema that **requires nothing** and tighten from there.
+
+You do not have to write it by hand. `--out` turns the reading you just took into exactly that schema, with your repo's real properties in it:
+
+```sh
+npx @hawkeyexl/manni meta schemas infer docs/ --out ./schemas/permissive.json
+```
+
+What comes out looks like this, with nothing in `required` and a constraint only where one was observed:
+
+```json title="schemas/permissive.json"
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "type": { "type": "string", "minLength": 1 },
+    "title": { "type": "string", "minLength": 1 }
+  }
+}
+```
+
+This schema requires no field. It only checks format **when a field is present**, so a `title:` that is accidentally empty fails, but a doc with no `title` at all passes. You get format enforcement immediately without demanding any field be filled in yet.
+
+The draft is a starting point, not a verdict. Read it and cut anything that is noise rather than standard. (`--out` refuses to overwrite an existing file, so your edits are safe on a re-run. It also refuses a path `.gitignore` covers, because a schema you cannot commit is missing in CI.)
+
+Point your config at it:
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths:
+      - "docs/**/*.md"
+
+meta:
+  schemas:
+    - ./schemas/permissive.json
+```
+
+Run a full pass to confirm the repo is green as it stands:
+
+```bash
+npx @hawkeyexl/manni meta validate
+```
+
+If something still fails here, it is a genuine format problem (a malformed `timestamp`, an empty required-by-you field), not a missing-field avalanche. Fix those few, and your baseline is clean.
+
+<Aside type="caution" title="Files with no frontmatter">
+A file with no frontmatter block at all still gets validated. With a require-nothing schema it passes, because there is no required field to be missing. But the moment you add a field to `required`, every frontmatter-free file fails it. A blank doc has no `type`, so a rule that requires `type` flags it. This is what the `with no metadata block` count from [step 1](#step-1-take-a-coverage-reading) is for. It is exactly the number of files that will turn red on your first ratchet. You want to know it before CI tells you.
+</Aside>
+
+## Step 3: Wire the CI gate
+
+With a green baseline committed, add the gate now, before the standard is perfect. manni meta exits `0` when everything passes and `1` when a file fails, so any CI system can use a bare `manni meta validate` as a pass/fail step. Wiring it early means the gate starts catching regressions immediately, even while the schema is still permissive.
+
+```bash
+npx -y @hawkeyexl/manni meta validate --format github
+```
+
+The `--format github` flag turns failures into inline annotations on the pull-request diff. The full recipe (workflow file, the exit-code contract, and annotation behavior) lives in the CI track; copy it instead of assembling your own.
+
+<LinkCard
+  title="Run it in CI"
+  href="/manni/meta/ci/"
+  description="Ready-made recipes for GitHub Actions, GitLab CI, Jenkins, and pre-commit, plus the exit-code and annotation contract."
+/>
+
+## Step 4: Scope what gets checked
+
+A real repo has files you do not want to validate yet: archived content, generated pages, drafts. Your collection is what decides which documents exist. Narrow it with `paths` and `exclude` to cover only what you are ready to stand behind on day one. Widen it as you go.
+
+<Steps>
+
+1. **Limit `paths` to the areas you have reviewed.** A collection's `paths` is what a bare run reads when you name no files on the command line. Point it at the subtree you have confirmed is green rather than the whole repo.
+
+   ```yaml title="manni.config.yaml"
+   collections:
+     - name: pages
+       paths:
+         - "docs/guides/**/*.md"
+   ```
+
+2. **Exclude the corners you are not ready for.** A collection's `exclude` globs remove files from its `paths`. manni meta's built-in ignores (`**/node_modules/**` and `**/.git/**`) always apply on top.
+
+   ```yaml title="manni.config.yaml"
+   collections:
+     - name: pages
+       paths:
+         - "docs/**/*.md"
+       exclude:
+         - "**/drafts/**"
+         - "docs/archive/**"
+   ```
+
+</Steps>
+
+Exclusions are how you sequence the rollout. You bring each subtree under the gate when its metadata is clean, instead of blocking the whole adoption on the messiest folder.
+
+<Aside type="caution" title="`exclude` shapes the collection, not a path you type">
+These globs decide which files are **in** the collection. They do not filter a path you name on the command line, so a bare `manni meta validate` skips the drafts and `manni meta validate docs/` does not. Use `--exclude "**/drafts/**"` when you type a path and want the same corners skipped. That distinction is new in 1.0, where a config `exclude` used to be merged into every run.
+</Aside>
+
+## Step 5: Roll out folder by folder
+
+You rarely tighten the whole repo at once. Use per-folder **overrides** to hold a stricter schema where the metadata is already clean. The rest of the repo stays on the permissive default. New and well-maintained areas adopt the real standard first; legacy areas catch up on their own timeline.
+
+```yaml title="manni.config.yaml"
+collections:
+  - name: pages
+    paths: ["docs/**/*.md"]
+  - name: guides
+    paths: ["docs/guides/**/*.md"]
+
+meta:
+  # Permissive default for the long tail.
+  schemas:
+    - ./schemas/permissive.json
+
+  # Stricter rule for an area that is already clean.
+  overrides:
+    - collection: guides
+      schemas:
+        - ./schemas/guide.json
+```
+
+Files in the `guides` collection are held to `guide.json` (which can require `type`, `title`, and more); everything else stays on the permissive default. As another area reaches full coverage, declare it as a collection and add an override for it, or widen an existing collection's `paths`. Overrides are evaluated in order and the first matching entry wins, so order them most-specific first. For an exception too small to be worth a collection, an override can still take a bare `files:` glob.
+
+<LinkCard
+  title="Apply different schemas to different folders"
+  href="/manni/meta/set-up/different-schemas-per-folder/"
+  description="The full mechanics of overrides: glob precedence, first-match-wins, and validating one file against multiple schemas."
+/>
+
+## Step 6: Ratchet strictness with a baseline
+
+The permissive schema was only ever a starting line. Once the gate is wired, tighten the standard. You do not have to wait for coverage before you do it. Add the field to `required`, record the existing violations once, and let manni meta fail only on new ones:
+
+```bash
+npx @hawkeyexl/manni meta validate --write-baseline
+```
+
+```
+Baseline written to .manni-baseline.json
+  412 findings recorded (+412 new, -0 no longer occur)
+```
+
+Commit that file and point your config at it:
+
+```yaml title="manni.config.yaml"
+meta:
+  baseline: .manni-baseline.json
+```
+
+From here the build is green, the stricter rule applies to everything anyone writes, and the summary reports the outstanding debt on every run. Raise the bar one field at a time; each promotion costs one re-record rather than a backlog sprint.
+
+<LinkCard
+  title="Roll out a new required field without breaking the build"
+  href="/manni/meta/set-up/new-required-field/"
+  description="The full ratchet: make the field required today, record the backlog as a baseline, and watch it shrink."
+/>
+
+## Step 7: Close the backlog with `fill`
+
+Ratcheting works because new pages arrive already compliant. It does nothing for the pages that were already there, and on a mature repo that backlog is most of the docset. Typing `description:` into four hundred existing files by hand is the reason adoption stalls at step 6.
+
+[`manni meta fill`](/manni/meta/reference/cli/#meta-fill) works that backlog down. For each page it resolves the same schema set the gate uses. It asks an LLM to infer the properties that are missing or invalid, and writes back only the values it is confident about. Because the schema drives the prompt, the fields it proposes are exactly the ones you are about to require.
+
+That inference is the one part of manni meta that leaves your machine. So before you point it at a whole docset, read [Run `fill` under a data-egress policy](/manni/meta/set-up/fill-providers/). It covers what each call transmits, what the proposal cache keeps afterwards, and how to keep inference local.
+
+Preview before you trust it:
+
+```sh
+manni meta fill docs/reference/ --dry-run
+```
+
+```
+✓ docs/reference/api.md
+    /description  Reference for the public HTTP API.  0.93
+    meta-provenance  claude-sonnet-4-5: /description
+    below 0.7: /resource 0.41
+
+anthropic/claude-sonnet-4-5 · Threshold 0.7 · 12 files · 9 fields would be written · 7 skipped
+```
+
+Then run it for real on **one folder at a time**, and review the diff like any other pull request:
+
+```sh
+manni meta fill docs/reference/ && git diff
+```
+
+<Aside type="caution">
+`fill` writes to your files by default. `--dry-run` is the flag that holds it back. Run it on a clean working tree so `git diff` shows exactly what changed, and keep the blast radius to one folder per commit.
+</Aside>
+
+Each page `fill` writes to also gains a `meta-provenance` entry, naming the model and the fields it wrote. That is the review list. Delete a page's entry once a person has checked its values, so a surviving entry always means machine metadata nobody has read. A schema that does not allow the key gets the fields without the entry, and the report says so.
+
+Values below the threshold are skipped, and the report lists each one by name and score. Those pages genuinely need a human, and now you have a short list of them to work through. Raise `--confidence` when you want only near-certain values:
+
+```sh
+manni meta fill docs/reference/ --confidence 0.9 --dry-run
+```
+
+Re-running at a different threshold re-scores the cached proposals, so tuning the gate costs nothing after the first pass.
+
+Once a folder is filled and reviewed, promote its field to `required` using the ratchet from step 6. `fill` is what makes that promotion cheap.
+
+## What you have now
+
+You now have four things:
+
+- A repo that went green on day one.
+- A CI gate that has been catching regressions since before the standard was finished.
+- A folder-by-folder path to the stricter rules you actually want.
+- A way to clear the existing backlog without a data-entry marathon.
+
+You adopted manni meta without a flag day and without a backlog of red checks blocking everyone's work.
+
+## Where to go next
+
+<CardGrid>
+  <LinkCard
+    title="Create your manni.config.yaml"
+    href="/manni/meta/set-up/config/"
+    description="Both halves explained: collections with their paths and exclusions, then schemas and overrides, with a complete worked example."
+  />
+  <LinkCard
+    title="Author a schema for your standard"
+    href="/manni/meta/schemas/"
+    description="Encode your metadata standard as a JSON Schema, starting permissive and adding required fields deliberately."
+  />
+</CardGrid>

@@ -1,0 +1,76 @@
+{
+  "specId": "manni-cite-public-private",
+  "description": "manni docs cite/set-up/public-docs-private-code, run with the docs checkout at docs/ and the code checked out beside it at code/, as the page's two-job workflow lays them out. The key is one the reader generated (openssl rand -hex 32).",
+  "tests": [
+    {
+      "testId": "public-docs-private-code",
+      "steps": [
+        {
+          "description": "Step 2: mint a citation from the docs checkout, with the key in the environment. The dry run shows the manifest entry with an encrypted source and a keyed pin.",
+          "runShell": {
+            "command": "MANNI_ENCRYPTION_KEY=55d04190162e4bcfe93063dd2f172733a8ed10d651449251c64525d0764c51e7 npx @hawkeyexl/manni cite add src/content/docs/limits.md:14 lib/limits.ts:3 --id configurable --encrypt --root ../code --dry-run",
+            "workingDirectory": "../docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/--- docs-citations\\.yaml[\\s\\S]*\\+    - id: configurable[\\s\\S]*\\+        lines: 11[\\s\\S]*\\+        file: ~[A-Za-z0-9_-]{82,}[\\s\\S]*\\+        integrity: hmac-sha256-[0-9a-f]{64}/"
+          }
+        },
+        {
+          "description": "The dry run wrote nothing: the manifest still holds one citation.",
+          "runShell": {
+            "command": "node -e \"const t=require('fs').readFileSync('docs-citations.yaml','utf8');if(/configurable/.test(t))process.exit(1)\"",
+            "workingDirectory": "../docs",
+            "exitCodes": [
+              0
+            ]
+          }
+        },
+        {
+          "description": "--encrypt with no key is a refusal: off a terminal, add writes nothing and exits 2.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite add src/content/docs/limits.md:14 lib/limits.ts:3 --id configurable --encrypt --root ../code",
+            "workingDirectory": "../docs",
+            "exitCodes": [
+              2
+            ],
+            "stdio": "manni: lib/limits.ts:3 must be encrypted, and no encryption key is available. Run `manni key set`, or set MANNI_ENCRYPTION_KEY."
+          }
+        },
+        {
+          "description": "Step 3: the public job, with no key and no code, runs the page-side rules only. The claim end is checked; the source end is skipped.",
+          "runShell": {
+            "command": "npx @hawkeyexl/manni cite check --no-check-sources",
+            "workingDirectory": "../docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:9 current\\s+lib\\/limits\\.ts:4 skipped\\s+docs-citations\\.yaml:4[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+          }
+        },
+        {
+          "description": "Step 4: the private job, with the key and --root pointing at the code checkout.",
+          "runShell": {
+            "command": "MANNI_ENCRYPTION_KEY=55d04190162e4bcfe93063dd2f172733a8ed10d651449251c64525d0764c51e7 npx @hawkeyexl/manni cite check --root ../code",
+            "workingDirectory": "../docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:9 current\\s+lib\\/limits\\.ts:4 current\\s+docs-citations\\.yaml:4[\\s\\S]*1 file checked, 1 passed, 0 failed, 0 findings/"
+          }
+        },
+        {
+          "description": "Locally, --reveal prints the decrypted path beside an encrypted source, in the pretty reporter.",
+          "runShell": {
+            "command": "MANNI_ENCRYPTION_KEY=55d04190162e4bcfe93063dd2f172733a8ed10d651449251c64525d0764c51e7 npx @hawkeyexl/manni cite check --root ../code --reveal",
+            "workingDirectory": "../docs",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "/fetch-timeout\\s+:9 current\\s+lib\\/limits\\.ts:4 current/"
+          }
+        }
+      ]
+    }
+  ]
+}

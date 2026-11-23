@@ -1,0 +1,20 @@
+{
+  "source": "manni/docs/src/content/docs/meta/fix/index.mdx@3a8b3d51399c4bac38021656b338af0f57376e88",
+  "doc_path": "manni-docs/meta-fix.mdx",
+  "steps": [
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "required property 'type'"],
+      "note": "Reproduce locally: `manni meta validate docs/guide.md` shows the missing-field error the page decodes."
+    },
+    {
+      "stepType": "runShell",
+      "match": ["meta validate", "1 passed"],
+      "note": "After the fix, run it again and confirm `1 file checked, 1 passed, 0 failed, 0 errors`."
+    }
+  ],
+  "must_not": [],
+  "scaffolding": [
+    "docs/guide.md is the page's example document, missing the required `type` (no config, so the built-in OKF schema applies). The reader adds `type: concept`, so a spec edits the file between the two runs. The derive (stale provenance) and fill entries need machine-authored git history or an LLM provider, so they are not expected."
+  ]
+}
