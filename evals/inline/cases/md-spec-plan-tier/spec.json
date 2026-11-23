@@ -1,0 +1,36 @@
+{
+  "tests": [
+    {
+      "testId": "plan-tier",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/multiple-matches.html"
+        },
+        {
+          "click": {
+            "selector": "button.multi",
+            "elementText": "Third"
+          }
+        },
+        {
+          "find": "Third clicked"
+        },
+        {
+          "click": {
+            "selector": "button.multi",
+            "elementText": "Second"
+          }
+        },
+        {
+          "find": "Second clicked"
+        },
+        {
+          "runBrowserScript": {
+            "script": "return Array.from(document.querySelectorAll('#messages p')).map(p => p.textContent).join('|');",
+            "output": "Third clicked|Second clicked"
+          }
+        }
+      ]
+    }
+  ]
+}

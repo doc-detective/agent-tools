@@ -1,0 +1,11 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "waitUntil-test-network.html", "note": "Step 1: open the live content page."},
+    {"stepType": "find", "match": "Network Activity Test", "note": "Step 1: the heading reads Network Activity Test."},
+    {"stepType": "find", "match": "Content loaded from API", "note": "Step 2: the content area updates to Content loaded from API."}
+  ],
+  "must_not": [
+    "Asserting the transient 'Loading...' placeholder: it is replaced about 300 ms after load, so a find for it races the page.",
+    "A reload step for the note."
+  ]
+}

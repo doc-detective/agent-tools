@@ -1,0 +1,63 @@
+{
+  "tests": [
+    {
+      "testId": "profile-form",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "type": {
+            "keys": "Ada Lovelace",
+            "selector": "#text-input"
+          }
+        },
+        {
+          "type": {
+            "keys": "ada@example.com",
+            "selector": "#email-input"
+          }
+        },
+        {
+          "type": {
+            "keys": "Analytical engine enthusiast.",
+            "selector": "#textarea"
+          }
+        },
+        {
+          "runBrowserScript": {
+            "script": "return [document.getElementById('text-input').value, document.getElementById('email-input').value, document.getElementById('textarea').value].join('|');",
+            "output": "Ada Lovelace|ada@example.com|Analytical engine enthusiast."
+          }
+        },
+        {
+          "click": "#checkbox1"
+        },
+        {
+          "click": "#checkbox3"
+        },
+        {
+          "find": "#checkbox1:checked"
+        },
+        {
+          "find": "#checkbox3:checked"
+        },
+        {
+          "runBrowserScript": {
+            "script": "return String(document.getElementById('checkbox2').checked);",
+            "output": "false"
+          }
+        },
+        {
+          "click": "#select"
+        },
+        {
+          "click": "#select option[value='option2']"
+        },
+        {
+          "find": "#select option[value='option2']:checked"
+        }
+      ]
+    }
+  ]
+}

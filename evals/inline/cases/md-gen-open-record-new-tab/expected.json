@@ -1,0 +1,14 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "multi-tab.html", "note": "Step 1: go to the list page."},
+    {"stepType": "find", "match": "MULTI-TAB HOME", "note": "Step 1: the heading MULTI-TAB HOME."},
+    {"stepType": "click", "match": "Open child in new tab", "note": "Step 2: click Open child in new tab."},
+    {"stepType": "find", "match": "PAGE linked", "note": "Step 2: the NEW tab shows PAGE linked (needs to target the new tab, e.g. via surface.tab)."},
+    {"stepType": "type", "match": "draft note", "note": "Step 3: enter draft note in the Echo input: field in the new tab."},
+    {"stepType": "find", "match": "draft note", "note": "Step 3: the note appears next to the field."},
+    {"stepType": "find", "match": "MULTI-TAB HOME", "note": "Step 4: back on the original tab, MULTI-TAB HOME is still shown (needs to target the first tab)."}
+  ],
+  "must_not": [
+    "Opening the child page with a plain goTo to multi-tab-child.html instead of clicking the link (that skips the documented step)."
+  ]
+}

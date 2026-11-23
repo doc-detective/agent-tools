@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "testId": "install-cli",
+      "steps": [
+        {
+          "runShell": "pip install example-cli"
+        },
+        {
+          "runShell": {
+            "command": "example-cli --version",
+            "stdio": "/example-cli \\d+\\.\\d+\\.\\d+/"
+          }
+        },
+        {
+          "runShell": {
+            "command": "example-cli login --token \"$EXAMPLE_TOKEN\"",
+            "stdio": "Signed in"
+          }
+        }
+      ]
+    }
+  ]
+}

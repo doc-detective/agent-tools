@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE task PUBLIC "-//OASIS//DTD DITA Task//EN" "task.dtd">
+<task id="sign-in">
+  <title>Sign in to the console</title>
+  <shortdesc>Sign in with your work account to manage your team.</shortdesc>
+  <taskbody>
+    <steps>
+      <step>
+        <cmd>Go to <xref href="https://console.example.com" scope="external" format="html">the console</xref>.</cmd>
+      </step>
+      <step>
+        <cmd>In the <uicontrol>Email</uicontrol> field, type <userinput>ada@example.com</userinput>.</cmd>
+      </step>
+      <step>
+        <cmd>Click <uicontrol>Continue</uicontrol>.</cmd>
+      </step>
+    </steps>
+    <result>The console shows <uicontrol>Team overview</uicontrol>.</result>
+  </taskbody>
+</task>

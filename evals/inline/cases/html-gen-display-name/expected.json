@@ -1,0 +1,24 @@
+{
+  "steps": [
+    {
+      "stepType": "goTo",
+      "match": "app.example.com/settings/profile",
+      "note": "Open Profile settings."
+    },
+    {
+      "stepType": "type",
+      "match": "Ada L.",
+      "note": "Type the new display name."
+    },
+    {
+      "stepType": "click",
+      "match": "Save changes",
+      "note": "Click Save changes."
+    },
+    {
+      "stepType": "find",
+      "match": "Profile updated",
+      "note": "The Profile updated banner shows."
+    }
+  ]
+}
