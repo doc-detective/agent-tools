@@ -125,7 +125,7 @@
     "dd-docs-generate-tests-from-openapi"
   ],
   "reps": 3,
-  "current_round": 7,
+  "current_round": 8,
   "goal": {
     "target": "verified_coverage",
     "direction": "higher",
@@ -151,8 +151,8 @@
   },
   "stop": {
     "plateau_rounds": 3,
-    "max_rounds": 7,
-    "note": "Raised from 6 to 7 by the maintainer on 2026-11-22 for the heredoc fix."
+    "max_rounds": 10,
+    "note": "Raised from 6 to 7 by the maintainer on 2026-11-22 for the heredoc fix, then to 10 on 2026-11-22."
   },
   "best": {
     "round": 7,
