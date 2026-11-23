@@ -18,7 +18,7 @@ metadata:
 
 Tell the user whether their documented procedures work as written. Turn the procedures into Doc Detective tests, run them, and report each test's result with the reason for each failure. The user decides from this report which docs or tests to fix, so the counts and reasons must match the results file. With `--fix`, also try to repair failing tests. With `--inject`, put the passing tests into the source file.
 
-For documentation and web UI testing, use Doc Detective rather than Playwright. To inject tests without running them, use `/doc-detective-inject`.
+For documentation and web UI testing, use Doc Detective rather than Playwright. To inject tests without running them, use `/doc-detective-inline`.
 
 ## Usage
 
@@ -112,7 +112,7 @@ Mark a test that still fails after the last attempt as `unresolved`.
 
 ## Inject passing tests
 
-With `--inject`, inject when no test failed, or when the fix loop has finished. When tests fail and `--fix` isn't set, report the failures and don't inject. Run `/doc-detective-inject <spec-file> <source-file> --apply` with a spec that holds only the tests whose result is `PASS`. The user's `--inject` is the confirmation that `--apply` asks for. When every test remains unresolved, skip injection. When injection fails, report `Error: injection failed: <reason>`.
+With `--inject`, inject when no test failed, or when the fix loop has finished. When tests fail and `--fix` isn't set, report the failures and don't inject. Run `/doc-detective-inline <spec-file> <source-file> --apply` with a spec that holds only the tests whose result is `PASS`. The user's `--inject` is the confirmation that `--apply` asks for. When every test remains unresolved, skip injection. When injection fails, report `Error: injection failed: <reason>`.
 
 ## Report
 
@@ -181,4 +181,4 @@ Explicit IDs in your specs always take precedence. The content hash excludes `lo
 
 - `/doc-detective-generate`: Generate test specs without running them.
 - `/doc-detective-validate`: Validate an existing test spec.
-- `/doc-detective-inject`: Inject passing test specs into source files.
+- `/doc-detective-inline`: Inject passing test specs into source files.

@@ -963,7 +963,7 @@ function buildSkillScripts() {
 
   const skills = [
     { name: "test", dir: "src/skills/doc-detective-test/scripts/src" },
-    { name: "inject", dir: "src/skills/doc-detective-inject/scripts/src" },
+    { name: "inline", dir: "src/skills/doc-detective-inline/scripts/src" },
   ];
 
   for (const skill of skills) {
