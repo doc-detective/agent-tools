@@ -67,4 +67,4 @@ A procedure step gets credit only from steps in the doc file itself. A spec in a
 - A link that a `goTo` or `checkLink` step targets
 - An image that a `screenshot` step writes
 
-To credit procedure steps, inject the tests into the doc files with the `doc-detective-inject` skill.
+To credit procedure steps, inject the tests into the doc files with the `doc-detective-inline` skill.

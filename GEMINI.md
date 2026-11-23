@@ -11,7 +11,7 @@ Documentation contains testable assertions — promises to users about what happ
 - `/doc-detective-init` — Bootstrap Doc Detective in a repository (detect docs, generate config, create tests, run and fix)
 - `/doc-detective-generate <file>` — Convert documentation procedures into test specifications without executing
 - `/doc-detective-test <file>` — Generate tests from docs, validate, execute, and report results
-- `/doc-detective-inject <spec> <source>` — Inject test specs into documentation as inline comments
+- `/doc-detective-inline <spec> <source>` — Inject test specs into documentation as inline comments
 - `/doc-detective-validate <spec>` — Validate test specification structure
 - `/doc-detective-install-github-action [options]` — Install a Doc Detective GitHub Actions workflow for CI
 
@@ -22,8 +22,8 @@ These scripts are available in the extension directory for validating, fixing, a
 - **Validate test spec:** `node skills/doc-detective-test/scripts/doc-detective-validate-test.js <spec-file>`
 - **Validate from stdin:** `echo '<json>' | node skills/doc-detective-test/scripts/doc-detective-validate-test.js --stdin`
 - **Fix failing tests:** `node skills/doc-detective-test/scripts/fix-tests.js <results-file> --spec <spec-file> [--threshold 80] [--auto-fix] [--dry-run]`
-- **Inject inline tests (preview):** `node skills/doc-detective-inject/scripts/inline-test-injection.js <spec-file> <source-file>`
-- **Inject inline tests (apply):** `node skills/doc-detective-inject/scripts/inline-test-injection.js <spec-file> <source-file> --apply`
+- **Inject inline tests (preview):** `node skills/doc-detective-inline/scripts/inline-test-injection.js <spec-file> <source-file>`
+- **Inject inline tests (apply):** `node skills/doc-detective-inline/scripts/inline-test-injection.js <spec-file> <source-file> --apply`
 
 ## Doc Detective Action Reference
 
@@ -84,5 +84,5 @@ For complete documentation, read these files:
 - Configuration guidance: `skills/doc-detective-init/references/config-guidance.md`
 - Procedure heuristics: `skills/doc-detective-init/references/procedure-heuristics.md`
 - Audit coverage: `skills/doc-detective-init/references/audit-coverage.md`
-- Markup patterns: `skills/doc-detective-inject/references/markup-patterns.md`
+- Markup patterns: `skills/doc-detective-inline/references/markup-patterns.md`
 - Doc Detective docs: https://docs.doc-detective.com

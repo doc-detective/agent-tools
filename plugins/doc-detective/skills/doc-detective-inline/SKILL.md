@@ -1,11 +1,19 @@
 ---
-description: Put Doc Detective tests into documentation source files as inline comments, either from an existing spec or by writing the tests for that doc first. Previews by default and writes only with --apply. To get a standalone spec file instead, use doc-detective-generate. To run the tests, use doc-detective-test.
-skill: doc-detective-inject
+name: doc-detective-inline
+description: 'Put Doc Detective tests into documentation source files as inline comments, either from an existing spec or by writing the tests for that doc first. Previews by default and writes only with --apply. To get a standalone spec file instead, use doc-detective-generate. To run the tests, use doc-detective-test.'
+metadata:
+  version: '3.0.0'
+  organization: Doc Detective
+  date: November 2026
+  abstract: Inject Doc Detective test specifications into documentation source files as inline comments, next to the content each step tests. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA.
+  references: https://docs.doc-detective.com, https://github.com/doc-detective/doc-detective
+  user-invocable: 'true'
+user-invocable: true
 ---
 
 # Inject Inline Tests Command
 
-**Skill:** `doc-detective:doc-detective-inject`
+**Skill:** `doc-detective:doc-detective-inline`
 
 ## Goal
 
@@ -16,7 +24,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright.
 ## Usage
 
 ```bash
-/doc-detective-inject [<spec-file>] <source-file> [options]
+/doc-detective-inline [<spec-file>] <source-file> [options]
 ```
 
 **Options:**
@@ -47,9 +55,9 @@ When Node.js is available, use the bundled script. It detects the file type, pla
 
 ```bash
 # Preview
-node skills/doc-detective-inject/scripts/inline-test-injection.js <spec-file> <source-file>
+node skills/doc-detective-inline/scripts/inline-test-injection.js <spec-file> <source-file>
 # Apply, after the user confirms or with --apply
-node skills/doc-detective-inject/scripts/inline-test-injection.js <spec-file> <source-file> --apply
+node skills/doc-detective-inline/scripts/inline-test-injection.js <spec-file> <source-file> --apply
 ```
 
 It also takes `--syntax json|yaml|xml` and `--config <path>`. Write a spec you built yourself to a temporary file first. For a spec that covers several source files, inject each file separately. The script doesn't check the MDX `*/` rule or follow includes, so apply those guardrails yourself. Check its preview before you apply it. Every step comment must come after the test's start and after the step before it, and `test end` must come after the test's last step. When the preview needs a correction, don't rerun the script with `--apply`: it recomputes the placements and writes the uncorrected ones. Instead, correct the previewed result and write that to the file yourself, after the user confirms. For a step it couldn't match, it prints a warning but writes no TODO comment, so add that comment yourself. Without the script, place the comments by hand as the next sections describe.

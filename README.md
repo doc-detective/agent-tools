@@ -365,7 +365,7 @@ What installing the plugin gives you:
 
 - **Skills.** The Doc Detective skills load into Cursor and are invocable as slash
   commands (`/doc-detective-test`, `/doc-detective-generate`, `/doc-detective-validate`,
-  `/doc-detective-inject`, `/doc-detective-init`, `/doc-detective-install-github-action`).
+  `/doc-detective-inline`, `/doc-detective-init`, `/doc-detective-install-github-action`).
 - **Agent.** The `doc-detective-specialist` subagent is available for documentation-testing tasks.
 - **Rule.** A persistent "docs as tests" rule reminds the agent to validate and test
   documented procedures (and to use the correct `{ "action-name": ... }` spec format)
@@ -461,7 +461,7 @@ Validates structure before execution:
 ### Inject Tests into Documentation
 
 ```bash
-/doc-detective-inject tests/spec.yaml docs/procedure.md --apply
+/doc-detective-inline tests/spec.yaml docs/procedure.md --apply
 ```
 
 Takes a well-formed test specification and injects test steps as inline comments into the associated documentation content so you don't have to maintain separate files.
@@ -541,7 +541,7 @@ The server activates automatically on install. It launches through `lsp/lsp-laun
 Inject test steps from separate spec files directly into documentation as inline comments:
 
 ```bash
-/doc-detective-inject tests/login.yaml docs/login.md --apply
+/doc-detective-inline tests/login.yaml docs/login.md --apply
 ```
 
 **Before:**

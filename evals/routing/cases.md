@@ -4,14 +4,14 @@ Each case is one request sent to Claude Code with only this plugin loaded. `expe
 
 | id | expected | also accepted | workspace | source | difficulty |
 |---|---|---|---|---|---|
-| real-inline-page | doc-detective-inject | doc-detective-inline-test-injection, doc-detective-doc-testing | docs-project | real | easy |
-| real-inline-api | doc-detective-inject | doc-detective-inline-test-injection, doc-detective-doc-testing | docs-project | real | easy |
+| real-inline-page | doc-detective-inline | doc-detective-inline-test-injection, doc-detective-doc-testing | docs-project | real | easy |
+| real-inline-api | doc-detective-inline | doc-detective-inline-test-injection, doc-detective-doc-testing | docs-project | real | easy |
 | real-ci-single-action | doc-detective-install-github-action | - | configured-project | real | easy |
 | real-ci-make-sure | doc-detective-install-github-action | - | configured-project | real | hard |
 | real-run-yourself | doc-detective-test | doc-detective-doc-testing | configured-project | real | easy |
 | real-authoritative-gate | doc-detective-test | doc-detective-doc-testing | configured-project | real | hard |
 | real-valid-or-invalid | doc-detective-validate | - | configured-project | real | easy |
-| real-comment-syntax | agent:doc-detective-specialist | doc-detective-inline-test-injection, doc-detective-inject, doc-detective-doc-testing, none | empty | real | easy |
+| real-comment-syntax | agent:doc-detective-specialist | doc-detective-inline-test-injection, doc-detective-inline, doc-detective-doc-testing, none | empty | real | easy |
 | real-map-instructions | doc-detective-generate | doc-detective-doc-testing, agent:doc-detective-specialist | empty | real | easy |
 | real-author-guide-tests | doc-detective-generate | doc-detective-doc-testing | docs-project | real | easy |
 | neg-dev-claude-md | none | - | docs-project | real | hard |
@@ -37,10 +37,10 @@ Each case is one request sent to Claude Code with only this plugin loaded. `expe
 | val-config | doc-detective-validate | - | configured-project | variant | easy |
 | val-before-commit | doc-detective-validate | - | empty | variant | easy |
 | val-will-it-accept | doc-detective-validate | - | empty | variant | hard |
-| inj-from-spec | doc-detective-inject | doc-detective-inline-test-injection | configured-project | variant | easy |
-| inj-api | doc-detective-inject | doc-detective-inline-test-injection | docs-project | variant | easy |
-| inj-move-into-md | doc-detective-inject | doc-detective-inline-test-injection | configured-project | variant | hard |
-| inj-self-testing | doc-detective-inject | doc-detective-inline-test-injection | docs-project | variant | hard |
+| inj-from-spec | doc-detective-inline | doc-detective-inline-test-injection | configured-project | variant | easy |
+| inj-api | doc-detective-inline | doc-detective-inline-test-injection | docs-project | variant | easy |
+| inj-move-into-md | doc-detective-inline | doc-detective-inline-test-injection | configured-project | variant | hard |
+| inj-self-testing | doc-detective-inline | doc-detective-inline-test-injection | docs-project | variant | hard |
 | gha-every-pr | doc-detective-install-github-action | - | configured-project | variant | easy |
 | gha-nightly | doc-detective-install-github-action | - | configured-project | variant | easy |
 | gha-open-issue | doc-detective-install-github-action | - | configured-project | variant | hard |
@@ -77,9 +77,9 @@ Each case is one request sent to Claude Code with only this plugin loaded. `expe
 | hard-test-after-ui-change | doc-detective-test | - | configured-project | hard-set | hard |
 | hard-test-flaky | doc-detective-test | - | configured-project | hard-set | hard |
 | hard-test-smoke | doc-detective-test | - | configured-project | hard-set | hard |
-| hard-inj-keep-together | doc-detective-inject | - | configured-project | hard-set | hard |
-| hard-inj-mdx | doc-detective-inject | - | docs-project | hard-set | hard |
-| hard-inj-annotate | doc-detective-inject | - | docs-project | hard-set | hard |
+| hard-inj-keep-together | doc-detective-inline | - | configured-project | hard-set | hard |
+| hard-inj-mdx | doc-detective-inline | - | docs-project | hard-set | hard |
+| hard-inj-annotate | doc-detective-inline | - | docs-project | hard-set | hard |
 | hard-init-new-repo | doc-detective-init | - | docs-project | hard-set | hard |
 | hard-init-where-start | doc-detective-init | - | docs-project | hard-set | hard |
 | hard-init-config-first | doc-detective-init | - | docs-project | hard-set | hard |
@@ -114,7 +114,7 @@ Each case is one request sent to Claude Code with only this plugin loaded. `expe
 | h2-test-typo | doc-detective-test | - | configured-project | hard-set-2 | hard |
 | h2-gen-terse | doc-detective-generate | - | docs-project | hard-set-2 | hard |
 | h2-gha-terse | doc-detective-install-github-action | - | configured-project | hard-set-2 | hard |
-| h2-inj-terse | doc-detective-inject | - | configured-project | hard-set-2 | hard |
+| h2-inj-terse | doc-detective-inline | - | configured-project | hard-set-2 | hard |
 | h2-test-check-docs | doc-detective-test | - | configured-project | hard-set-2 | hard |
 | h2-val-check-spec | doc-detective-validate | - | configured-project | hard-set-2 | hard |
 | h2-test-verify-spec | doc-detective-test | - | configured-project | hard-set-2 | hard |
@@ -129,8 +129,8 @@ Each case is one request sent to Claude Code with only this plugin loaded. `expe
 | h2-gen-api-only | doc-detective-generate | - | docs-project | hard-set-2 | hard |
 | h2-gen-extend | doc-detective-generate | - | configured-project | hard-set-2 | hard |
 | h2-test-one-file | doc-detective-test | - | configured-project | hard-set-2 | hard |
-| h2-inj-from-scratch | doc-detective-inject | - | docs-project | hard-set-2 | hard |
-| h2-inj-asciidoc | doc-detective-inject | - | docs-project | hard-set-2 | hard |
+| h2-inj-from-scratch | doc-detective-inline | - | docs-project | hard-set-2 | hard |
+| h2-inj-asciidoc | doc-detective-inline | - | docs-project | hard-set-2 | hard |
 | h2-init-monorepo | doc-detective-init | - | docs-project | hard-set-2 | hard |
 | h2-init-no-config | doc-detective-init | - | docs-project | hard-set-2 | hard |
 | h2-gha-nightly-issue | doc-detective-install-github-action | - | configured-project | hard-set-2 | hard |

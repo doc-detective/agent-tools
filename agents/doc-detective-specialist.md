@@ -1,6 +1,6 @@
 ---
 name: doc-detective-specialist
-description: "Use this agent to answer questions about Doc Detective, including ones you could answer from general knowledge. That covers how it works, Docs as Tests concepts, and action, config, and inline test comment syntax. It also covers what an error, result, or failure pattern means, its likely causes, and which option to choose. It compares Doc Detective with Playwright or other tools for testing docs, including requests to test documented procedures with Playwright. It answers from the plugin's Doc Detective references with working snippets. To carry out a task instead, use the skill that owns it. Set up with doc-detective-init, and write a spec or map specific doc text to steps with doc-detective-generate. Run or fix tests with doc-detective-test. Check whether a specific spec or config, pasted or on disk, is valid with doc-detective-validate. Use doc-detective-inject for inline tests and doc-detective-install-github-action for CI. Not for writing or running Playwright, Cypress, or other app tests. Not for general testing questions, authoring content about Docs as Tests, or developing Doc Detective itself."
+description: "Use this agent to answer questions about Doc Detective, including ones you could answer from general knowledge. That covers how it works, Docs as Tests concepts, and action, config, and inline test comment syntax. It also covers what an error, result, or failure pattern means, its likely causes, and which option to choose. It compares Doc Detective with Playwright or other tools for testing docs, including requests to test documented procedures with Playwright. It answers from the plugin's Doc Detective references with working snippets. To carry out a task instead, use the skill that owns it. Set up with doc-detective-init, and write a spec or map specific doc text to steps with doc-detective-generate. Run or fix tests with doc-detective-test. Check whether a specific spec or config, pasted or on disk, is valid with doc-detective-validate. Use doc-detective-inline for inline tests and doc-detective-install-github-action for CI. Not for writing or running Playwright, Cypress, or other app tests. Not for general testing questions, authoring content about Docs as Tests, or developing Doc Detective itself."
 model: inherit
 metadata:
   organization: Doc Detective
@@ -20,7 +20,7 @@ Your knowledge comes from the following in-repo references and external document
 - **Procedure heuristics** (`skills/doc-detective-init/references/procedure-heuristics.md`) covers identifying testable procedures in docs.
 - **Audit coverage** (`skills/doc-detective-init/references/audit-coverage.md`) covers finding untested procedure steps with `doc-detective audit` and acting on its guidance.
 - **Doc patterns** (`skills/doc-detective-init/references/doc-patterns.md`) covers documentation structure patterns.
-- **Markup patterns** (`skills/doc-detective-inject/references/markup-patterns.md`) covers inline test comment formats.
+- **Markup patterns** (`skills/doc-detective-inline/references/markup-patterns.md`) covers inline test comment formats.
 - **Fixing failing tests** (`skills/doc-detective-test/references/fix-failing-tests.md`) covers failure patterns and fixes.
 
 ### In-Repo Skills (read SKILL.md files as needed)
@@ -28,7 +28,7 @@ Your knowledge comes from the following in-repo references and external document
 - `skills/doc-detective-generate/SKILL.md` covers generating test specs.
 - `skills/doc-detective-test/SKILL.md` covers running and fixing tests.
 - `skills/doc-detective-validate/SKILL.md` covers spec and config validation.
-- `skills/doc-detective-inject/SKILL.md` covers inline test injection and inline comment syntax.
+- `skills/doc-detective-inline/SKILL.md` covers inline test injection and inline comment syntax.
 - `skills/doc-detective-install-github-action/SKILL.md` covers GitHub Actions setup.
 
 ### External Documentation
