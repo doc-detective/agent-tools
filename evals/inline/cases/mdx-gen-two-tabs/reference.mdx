@@ -1,0 +1,41 @@
+---
+title: Work in two tabs
+---
+
+import { Steps, Step, Note } from '@/components'
+
+# Work in two tabs
+
+The demo list page opens each record in a new tab, so the list stays where you
+left it.
+
+{/* test {"testId":"work-in-two-tabs"} */}
+<Steps>
+  <Step title="Open the list">
+    Go to [the list page](http://localhost:8092/multi-tab.html), and check that
+    the heading reads **MULTI-TAB HOME**.
+    {/* step {"goTo":"http://localhost:8092/multi-tab.html"} */}
+    {/* step {"find":"MULTI-TAB HOME"} */}
+  </Step>
+  <Step title="Open a record">
+    Click **Open child in new tab**. The record opens in a new tab, which shows
+    the label **PAGE linked**.
+    {/* step {"click":"Open child in new tab"} */}
+    {/* step {"find":{"elementText":"PAGE linked","surface":{"browser":"chrome","tab":{"url":"page=linked"}}}} */}
+  </Step>
+  <Step title="Add a note">
+    In the new tab, enter "call back Friday" in the **Echo input** field. The note
+    appears next to the field as you type.
+    {/* step {"type":{"keys":"call back Friday","selector":"#echo-input","surface":{"browser":"chrome","tab":{"url":"page=linked"}}}} */}
+    {/* step {"find":{"selector":"#echo-out","elementText":"call back Friday","surface":{"browser":"chrome","tab":{"url":"page=linked"}}}} */}
+
+    <Note>
+    Notes aren't saved. When you reload the tab, the field is empty again.
+    </Note>
+  </Step>
+  <Step title="Return to the list">
+    Switch back to the first tab. It still shows **MULTI-TAB HOME**.
+    {/* step {"find":{"elementText":"MULTI-TAB HOME","surface":{"browser":"chrome","tab":0}}} */}
+  </Step>
+</Steps>
+{/* test end */}

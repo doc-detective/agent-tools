@@ -1,0 +1,62 @@
+{
+  "tests": [
+    {
+      "testId": "work-in-two-tabs",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/multi-tab.html"
+        },
+        {
+          "find": "MULTI-TAB HOME"
+        },
+        {
+          "click": "Open child in new tab"
+        },
+        {
+          "find": {
+            "elementText": "PAGE linked",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=linked"
+              }
+            }
+          }
+        },
+        {
+          "type": {
+            "keys": "call back Friday",
+            "selector": "#echo-input",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=linked"
+              }
+            }
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo-out",
+            "elementText": "call back Friday",
+            "surface": {
+              "browser": "chrome",
+              "tab": {
+                "url": "page=linked"
+              }
+            }
+          }
+        },
+        {
+          "find": {
+            "elementText": "MULTI-TAB HOME",
+            "surface": {
+              "browser": "chrome",
+              "tab": 0
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

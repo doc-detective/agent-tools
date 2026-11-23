@@ -1,0 +1,51 @@
+{
+  "tests": [
+    {
+      "testId": "manage-users",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users?page=2",
+            "method": "get",
+            "statusCodes": [
+              200
+            ]
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/invites",
+            "method": "post",
+            "request": {
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "email": "ada@example.com",
+                "role": "editor"
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "email": "ada@example.com",
+                "role": "editor"
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users/2",
+            "method": "delete",
+            "statusCodes": [
+              200
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

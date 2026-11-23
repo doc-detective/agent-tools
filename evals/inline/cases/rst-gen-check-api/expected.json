@@ -1,0 +1,10 @@
+{
+  "steps": [
+    {"stepType": "runShell", "match": "node --version", "note": "Check your tools: run node --version."},
+    {"stepType": "httpRequest", "match": "/api/status", "note": "Check the API: GET /api/status returns 200."},
+    {"stepType": "httpRequest", "match": ["/api/webhooks", "localhost:4000/hook"], "note": "Register a webhook: POST the body to /api/webhooks."}
+  ],
+  "must_not": [
+    "Indenting a step comment under the literal or code block, where it becomes code."
+  ]
+}

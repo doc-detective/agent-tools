@@ -1,0 +1,52 @@
+{
+  "tests": [
+    {
+      "testId": "check-api",
+      "steps": [
+        {
+          "runShell": {
+            "command": "node --version",
+            "stdio": "/v\\d+\\.\\d+\\.\\d+/"
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/status",
+            "method": "get",
+            "statusCodes": [
+              200
+            ]
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/webhooks",
+            "method": "post",
+            "request": {
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "url": "http://localhost:4000/hook",
+                "events": [
+                  "deploy"
+                ]
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "url": "http://localhost:4000/hook",
+                "events": [
+                  "deploy"
+                ]
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

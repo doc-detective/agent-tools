@@ -46,7 +46,7 @@
       "out": 10
     }
   },
-  "harness_sha": "8e1e38a83c7800621d00c27679862d396ff39de772f9c5ba0f88c9af90f31531",
+  "harness_sha": "5858cc86520fe163c528f10a484031f97cda7757452d50cbd50e5712607c4d5e",
   "train_ids": [
     "adoc-gen-api-key",
     "adoc-spec-api-key",
@@ -64,7 +64,11 @@
     "mdx-gen-automatic-screenshots",
     "mdx-spec-run-shell-and-code",
     "rst-gen-sample",
-    "rst-spec-sample"
+    "rst-spec-sample",
+    "md-spec-form-basics",
+    "md-gen-form-basics",
+    "mdx-spec-manage-orders",
+    "mdx-gen-manage-orders"
   ],
   "test_ids": [
     "adoc-gen-sample",
@@ -87,7 +91,13 @@
     "mdx-gen-sample",
     "mdx-spec-sample",
     "rst-gen-cli",
-    "rst-spec-cli"
+    "rst-spec-cli",
+    "md-spec-manage-users",
+    "md-gen-manage-users",
+    "mdx-spec-two-tabs",
+    "mdx-gen-two-tabs",
+    "rst-spec-check-api",
+    "rst-gen-check-api"
   ],
   "reps": 3,
   "current_round": 1,
@@ -118,6 +128,6 @@
     "plateau_rounds": 3,
     "max_rounds": 6
   },
-  "split_note": "Grouped by source doc, so a doc's spec and no-spec cases share a split; within each format, a seeded shuffle (mulberry32, seed 20261122) sends half the docs to train and the rest to test.",
-  "cost_note": "Estimated, not measured: about $0.13 per spec-given session and $0.25 per no-spec session at Sonnet 5.5 prices, from spec-generation v7's measured $0.15 per case (Claude Code's own figure). 22 + 16 cases come to about $6 to $8 per rep, so a 3-rep run is about $18 to $25."
+  "split_note": "Grouped by source doc, so a doc's spec and no-spec cases share a split; within each format, a seeded shuffle (mulberry32, seed 20261122) sends half the docs to train and the rest to test. Ten harder cases, added after round 1, were split by hand so Markdown and MDX each have one new doc in train and one in test: train has md form-basics and mdx manage-orders; test has md manage-users, mdx two-tabs, and rst check-api.",
+  "cost_note": "Measured: the baseline on 48 cases at 3 reps cost $14.61, about $0.10 per session at Sonnet 5.5 prices, so a 3-rep run of all 48 cases is about $15."
 }

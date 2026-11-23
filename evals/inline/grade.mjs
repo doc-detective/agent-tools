@@ -120,8 +120,9 @@ const COMMENTS = {
   mdx: [/\{\/\*(?:(?!\*\/)[\s\S])*\*\/\s*\}/g],
   dita: [HTML_COMMENT, /<\?doc-detective[\s\S]*?\?>/g],
   adoc: [/^[ \t]*\/\/.*$/gm],
-  // A `..` block that isn't a directive, target, footnote, or substitution, with its indented lines.
-  rst: [/^\.\.(?![ \t]+(?:[\w:-]+::|_|\[|\|))(?:[ \t].*)?$(?:\n[ \t]+\S.*$)*/gm],
+  // A `..` block that isn't a directive, target, footnote, or substitution, with the lines
+  // indented deeper than it. It may itself be indented, inside a directive such as `note`.
+  rst: [/^([ \t]*)\.\.(?![ \t]+(?:[\w:-]+::|_|\[|\|))(?:[ \t].*)?$(?:\n\1[ \t]+\S.*$)*/gm],
 };
 const FAMILY = { '.md': 'md', '.markdown': 'md', '.mdx': 'mdx', '.html': 'html', '.htm': 'html',
                  '.dita': 'dita', '.ditamap': 'dita', '.xml': 'dita', '.adoc': 'adoc', '.asciidoc': 'adoc', '.asc': 'adoc', '.rst': 'rst' };
@@ -147,7 +148,8 @@ function codeAfter(lines, ext) {
   for (const l of lines) {
     // ponytail: any fence line toggles; a longer fence nested in a shorter one confuses it.
     if (fence) { if (fence.test(l)) inside = !inside; }
-    else if (fam === 'rst') inside = /::\s*$|^\.\. (code-block|code|sourcecode)::/.test(l) || (inside && (!l.trim() || /^\s/.test(l)));
+    // A `::` paragraph or a code directive starts code; other directives, such as `note`, hold prose.
+    else if (fam === 'rst') inside = (/::\s*$/.test(l) && !/^\s*\.\. [\w:-]+::/.test(l)) || /^\s*\.\. (code-block|code|sourcecode)::/.test(l) || (inside && (!l.trim() || /^\s/.test(l)));
     after.push(inside);
   }
   return after;
