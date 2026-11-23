@@ -581,10 +581,10 @@ async function main() {
   // rate extrapolation from this pass.
   const t0 = Date.now();
   const progress = () => {
-    const done = ok + fail, total = tasks.length;
+    const finished = ok + fail, total = tasks.length;
     const el = (Date.now() - t0) / 1000;
-    const eta = done ? Math.round((el / done) * (total - done)) : null;
-    const line = `[${args.variant}] ${done}/${total} done (${ok} ok, ${fail} failed), `
+    const eta = finished ? Math.round((el / finished) * (total - finished)) : null;
+    const line = `[${args.variant}] ${finished}/${total} done (${ok} ok, ${fail} failed), `
       + `${Math.round(el)}s elapsed` + (eta != null ? `, ~${eta}s left` : '');
     eprint(line);
     try { writeFileNoFollow(join(vdir, 'progress.txt'), line + '\n'); } catch {}

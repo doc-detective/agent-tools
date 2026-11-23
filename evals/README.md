@@ -60,7 +60,7 @@ There are three slices:
 DD_NODE_DIR=<node dir> node evals/inline/run-eval.mjs --flow .claude/hillclimb/inline --variant baseline --model claude-sonnet-5-5 --reps 3
 ```
 
-No one has approved this eval's code yet, so the first run needs `--approve-harness` after you review the eval code. See [Approve changed eval code](#approve-changed-eval-code).
+The eval code is approved. Pass `--approve-harness` only after you change a file in its `harness_paths`, and review the change first. See [Approve changed eval code](#approve-changed-eval-code).
 
 Each case runs `/doc-detective:doc-detective-inline [tests/<name>.spec.json] docs/<name>.<ext> --apply` in a fresh workspace. A `spec` case hands the session a spec to inject; a `gen` case hands it only the doc, so it writes the tests first. [inline/cases.md](inline/cases.md) lists the 38 cases: Markdown, MDX, HTML, AsciiDoc, reStructuredText, and DITA.
 
