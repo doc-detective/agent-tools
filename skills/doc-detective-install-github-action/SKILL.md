@@ -2,7 +2,7 @@
 name: doc-detective-install-github-action
 description: 'Add a GitHub Actions workflow that runs Doc Detective documentation tests in CI on pull requests, pushes, or a schedule. Use only for running Doc Detective in GitHub Actions. Not for other CI systems, general GitHub workflows, or editing the workflows of the Doc Detective repositories themselves. To set up Doc Detective in a project first, use doc-detective-init.'
 metadata:
-  version: '2.1.4'
+  version: '3.0.0'
   organization: Doc Detective
   date: November 2026
   abstract: Install and configure the Doc Detective GitHub Action workflow for automated documentation testing in CI. Detects project context, creates workflow file, and configures action inputs including PR creation, issue creation, and integrations.
