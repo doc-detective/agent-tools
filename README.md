@@ -450,13 +450,10 @@ Runs tests from docs or test specification files:
 
 ```bash
 /doc-detective-validate test-spec.json
+/doc-detective-validate --config .doc-detective.json
 ```
 
-Validates structure before execution:
-
-- Required fields present
-- Action types recognized
-- Parameter types correct
+Checks a test spec or config without running any tests, and names each invalid field. You can also paste the spec or config into your message instead of giving a file path. The skill validates with `npx doc-detective@5 validate` first. When the CLI can't run, it checks a spec with the plugin's bundled validator. It can also use the MCP server's `validate_spec` tool when it's registered. If no validator can run, the skill says so instead of reporting a pass.
 
 ### Inject Tests into Documentation
 
@@ -487,6 +484,10 @@ Installs a Doc Detective GitHub Actions workflow for automated documentation tes
 | `--create-issue-on-fail` | false | Create a GitHub issue when tests fail |
 | `--integrations <list>` | (none) | Comma-separated integrations to mention in issues |
 | `--ci` | false | Non-interactive; use defaults, no prompts |
+
+### Ask Questions About Doc Detective
+
+Ask in plain language, for example "What does this error mean?" or "Should I use Doc Detective or Playwright to test these docs?" The `doc-detective-specialist` agent answers these questions in hosts that load the plugin's subagents, such as Claude Code and Cursor. It covers how Doc Detective works, action and config syntax, failure causes, and comparisons with other tools for testing docs. To carry out a task, use the skill that owns it, such as `/doc-detective-generate` to write a test, `/doc-detective-test` to run one, or `/doc-detective-validate` to check one.
 
 ## Doc Detective Actions Reference
 
@@ -639,6 +640,8 @@ Doc Detective hosts a remote Model Context Protocol server at `https://agency.do
 | `detect_tests` | Parse documentation content into a resolved Doc Detective test plan. |
 | `validate_spec` | Validate a spec, config, test, step, or context object against `doc-detective-common` schemas. |
 | `log_observation` | Send anonymous, agent-initiated feedback to Doc Detective for roadmap improvement. Never carries user content. |
+
+The skills don't need these tools. They use the Doc Detective CLI first, `npx doc-detective@5 validate` to validate and `npx doc-detective@5 --dry-run --input <doc-file>` to list the tests Doc Detective finds in a doc. They call `validate_spec` and `detect_tests` only when the CLI can't run or, for `detect_tests`, when you paste doc text instead of naming a file.
 
 When you install the plugin or extension, the MCP server is auto-registered for:
 
