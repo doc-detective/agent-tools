@@ -497,6 +497,8 @@ The plugin includes complete documentation for Doc Detective actions:
 | `goTo`                    | Navigate to a URL                    |
 | `click`                   | Click an element (prefer text-based) |
 | `find`                    | Verify an element exists             |
+| `dragAndDrop`             | Drag an element onto a target        |
+| `swipe`                   | Scroll or swipe a surface            |
 | `type`                    | Type text input                      |
 | `httpRequest`             | Make HTTP requests                   |
 | `runShell`                | Execute shell commands               |
@@ -518,7 +520,7 @@ The plugin includes hooks that activate automatically when installed. Hooks prov
 | **Test spec validation** | After editing a `.json` test spec | Automatically validates the spec structure and reports errors |
 | **Action anti-pattern blocker** | Before writing test spec content | Blocks the common mistake of `{"action": "goTo"}` — the correct format is `{"goTo": "url"}` |
 | **Documentation test reminder** | After editing a documentation file | Suggests running `/doc-detective-test` if the project has a Doc Detective config |
-| **Installation check** | Session start | Checks for Doc Detective 5 or later as a global install, through `npx doc-detective@5`, or as a pulled `docdetective/docdetective` image. If none qualifies, the agent gets installation instructions and the version of any older global install it skipped. To upgrade a global install, run `npm i -g doc-detective@5`. Test spec generation and validation work without the CLI |
+| **Installation check** | Session start | Checks for Doc Detective 5 or later as a global install, through `npx doc-detective@5`, or as a pulled `docdetective/docdetective` image. It skips the `npx` check in CI and stops it after 8 seconds. When no check confirms Doc Detective, the agent still tries each runner in the `doc-detective-doc-testing` skill when you ask to run tests. It suggests installing only if none works, and reports the version of any older global install it skipped. To upgrade a global install, run `npm i -g doc-detective@5`. Test spec generation and validation work without the CLI |
 | **Test spec formatting** | After editing a `.json` test spec | Normalizes JSON formatting to 2-space indentation |
 | **Inline test warning** | After editing a doc with inline tests | Warns that inline Doc Detective test comments may need updating |
 
