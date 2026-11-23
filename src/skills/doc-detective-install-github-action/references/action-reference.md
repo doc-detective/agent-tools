@@ -103,7 +103,7 @@ permissions:
 - **Headless browsers on Ubuntu.** Ubuntu runners have no display, so Chrome and Firefox run headless. Doc Detective records headless Chrome, but not headless Firefox. To run headed or record Firefox, install Xvfb, or use a `macos-latest` or `windows-latest` runner.
 - **Android emulator tests are Linux-only.** The `android` input enables KVM only on Linux runners. macOS and Windows runners can't accelerate the hosted emulator, so `android` contexts don't run there. See [Android emulator tests](#android-emulator-tests).
 - **iOS tests are macOS-only.** iOS simulators run only on macOS runners, so `ios` platform contexts don't run on Linux or Windows. The action caches the WebDriverAgent build between runs. See [iOS tests](#ios-tests).
-- **Default token scope.** The default `GITHUB_TOKEN` can create PRs and issues within the same repository. For cross-repo operations or repos with strict token policies, a custom `token` input may be required.
+- **Default token scope.** The default `GITHUB_TOKEN` can create issues within the same repository. It can open PRs only after **Settings** > **Actions** > **General** > **Allow GitHub Actions to create and approve pull requests** is on. In an organization, an owner must allow it first. For cross-repo operations or repos with strict token policies, a custom `token` input may be required.
 
 ## Android emulator tests
 
@@ -122,6 +122,8 @@ The action caches the WDA build when all of these are true:
 - The job runs on macOS.
 - `cache` is on, and `version` isn't empty.
 - A spec or config in `input`, `config`, or `working_directory` sets `ios` as a `platform` or `platforms` value. The action scans JSON, YAML, and Markdown files, up to six folders below each of those paths, and skips subfolders named `node_modules`, `.git`, and `.github`. A path that points straight into one of those folders, such as an `input` of `.github/ios`, is still scanned.
+
+The scan doesn't find iOS tests in other formats, such as AsciiDoc. When those are your only iOS tests, the action doesn't cache the build. Keep it yourself, as [Earlier Doc Detective versions, or `cache: false`](#earlier-doc-detective-versions-or-cache-false) describes.
 
 The build has its own cache entry, about 70 MB, separate from the runtime and browsers. After the first save, the action saves the entry again only when a run builds WDA, such as after an Xcode or driver update. A failed restore or save logs a warning, and the run continues.
 
