@@ -62,6 +62,16 @@ page's original, with its inline tests, is its reference. Short new docs fill fo
 | mdx-spec-run-shell-and-code | mdx | spec | 5 in 4 tests | dd-docs run-shell-and-code | Four tests in one page. |
 | mdx-gen-load-variables | mdx | gen | 2 | dd-docs load-variables | A `workspace/secrets.env` the page names. |
 | mdx-gen-automatic-screenshots | mdx | gen | 2 | dd-docs automatic-screenshots | Both steps sit after one code block. |
+| md-spec-manage-users | md | spec | 3 | new doc | hard: three `httpRequest` steps in separate sections. One URL is only in prose, and one is only inside a `curl` fence, where a comment would be code. |
+| md-gen-manage-users | md | gen | 3 | new doc | |
+| mdx-spec-manage-orders | mdx | spec | 3 | new doc | hard: the MDX counterpart. `httpRequest` steps around a `<CodeGroup>`, a `<Callout>`, and a multi-line `curl` fence. |
+| mdx-gen-manage-orders | mdx | gen | 3 | new doc | |
+| md-spec-form-basics | md | spec | 8 in 2 tests | new doc | hard: a `find` on the same list item as its `goTo`, a selector-only `click`, and a `type` and `find` of the same text in one item. |
+| md-gen-form-basics | md | gen | 8 | new doc | |
+| mdx-spec-two-tabs | mdx | spec | 7 | new doc | hard: steps inside JSX `<Steps>` and `<Step>` components, multi-tab `surface` steps, and a `type` and `find` of the same text. |
+| mdx-gen-two-tabs | mdx | gen | 7 | new doc | |
+| rst-spec-check-api | rst | spec | 3 | new doc | hard: a `::` literal block, a `runShell` regex, and `httpRequest` steps. One URL is only in prose, one only in a `code-block`, and a `note` names a URL no step tests. |
+| rst-gen-check-api | rst | gen | 3 | new doc | |
 
-By format: Markdown 18, MDX 6, HTML 4, AsciiDoc 4, reStructuredText 4, DITA 2. By kind: 22
-`spec`, 16 `gen`.
+By format: Markdown 22, MDX 10, HTML 4, AsciiDoc 4, reStructuredText 6, DITA 2. By kind: 27
+`spec`, 21 `gen`.

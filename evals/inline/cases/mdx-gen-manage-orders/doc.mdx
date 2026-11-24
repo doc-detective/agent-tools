@@ -1,0 +1,45 @@
+---
+title: Manage orders with the API
+description: List open orders, cancel one, and get its receipt.
+---
+
+import { CodeGroup, Callout } from '@/components'
+
+# Manage orders with the API
+
+The orders API runs at `http://localhost:8093`, and every response is JSON.
+
+## List open orders
+
+To list the orders that haven't shipped, send a `GET` request to
+`http://localhost:8093/api/orders?status=open`.
+
+<CodeGroup>
+```bash curl
+curl "http://localhost:8093/api/orders?status=open"
+```
+```js fetch
+await fetch("http://localhost:8093/api/orders?status=open");
+```
+</CodeGroup>
+
+## Cancel an order
+
+<Callout type="warning">
+You can't undo a cancellation.
+</Callout>
+
+To cancel order `7`, send a `POST` request with the reason in the body:
+
+```bash
+curl -X POST http://localhost:8093/api/orders/7/cancel \
+  -H "Content-Type: application/json" \
+  -d '{"reason": "duplicate"}'
+```
+
+The API echoes the reason back.
+
+## Get the receipt
+
+The receipt for a cancelled order lives at `http://localhost:8093/api/receipts/7`.
+Send a `GET` request to it, and check that the response is `200 OK`.

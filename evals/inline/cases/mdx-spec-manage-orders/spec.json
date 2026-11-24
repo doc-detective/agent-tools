@@ -1,0 +1,49 @@
+{
+  "tests": [
+    {
+      "testId": "manage-orders",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/orders?status=open",
+            "method": "get",
+            "statusCodes": [
+              200
+            ]
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/orders/7/cancel",
+            "method": "post",
+            "request": {
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "reason": "duplicate"
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "reason": "duplicate"
+              }
+            }
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/receipts/7",
+            "method": "get",
+            "statusCodes": [
+              200
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 |---|---|---|---|---|---|---|---|---|
 | 0 | baseline | 0.937 | 0.937 | 0.882 | 0.991 | 34 | $11.21 | $11.21 |
 | 1 (reverted) | Check the injected doc with a dry run | 0.952 | 0.951 | 0.902 | 0.983 | 35 | $12.54 | $23.75 |
+| 0b | baseline on 48 cases (10 added) | 0.889 | 0.926 | 0.905 | 1.000 | 33 | $3.49 | $27.24 |
 
 The baseline runs `/doc-detective-inline` as it stands after the rename, on 38 cases at 3 reps. It scores high, with `complete` at 0.912 across all runs. Spec-given cases reach 0.97, and cases where the session writes the tests first reach 0.83. Sessions almost never edit the doc's prose: `comment_only` failed once, on a reStructuredText step comment indented into a code block. reStructuredText is the weakest format (`complete` 0.58), then AsciiDoc (0.83). HTML and DITA scored 1.00.
 
@@ -12,3 +13,9 @@ The run cost $11.21, about half the estimate, at 34 seconds per session.
 Round 1 had the session run `doc-detective --dry-run` on the doc after injecting into it. On a rejected step it fixes the field that stderr names, and on success it checks the plan against what it injected. It removed the failure it targeted: no run left a doc that Doc Detective rejects, and `detected` reached 1.000 on train and test. Held-out `complete` rose 0.937 to 0.952, but that gain (+0.016 +-0.071) is within noise, so the round was reverted. Train `complete` rose 0.882 to 0.902 (+0.020 +-0.104). One train run reworded a line of the doc, and `comment_only` fell to 0.961 on train.
 
 The noise floor on test is larger than the room left to climb. Held-out `complete` was 0.937, so a perfect skill gains 0.063, against a paired CI of about +-0.07. Remaining failures are mostly systematic, the same in every run. All three `rst-spec-cli` runs leave out 2 of its 3 steps, and all three `md-gen-open-record-new-tab` runs leave out a "draft note" step. Five runs place an `httpRequest` step before the text that names its URL, because the placement rules give `httpRequest` no match value. Sessions took 35 seconds per case, with 0.7 more tool calls.
+
+Round 1 showed the eval was saturated, so 10 harder cases were added: five new docs, each with a spec case and a no-spec case. Markdown and MDX each gained two docs, one in train and one in test, and reStructuredText gained one, in test. They target the systematic failures: `httpRequest` steps whose URLs sit in prose or only inside a code fence, a `type` and a `find` of the same text, steps inside JSX `<Steps>` components, and a reStructuredText `note` directive. Row 0b is the baseline skill on them, plus the old cases unchanged. Held-out `complete` is now 0.889, which leaves 0.111 to gain.
+
+The new cases fail where the old ones did. All three `mdx-gen-two-tabs` runs leave out the `find` for the note the session just typed, like `md-gen-open-record-new-tab`. Two of three `rst-gen-check-api` runs wrote `runShell.output`, which Doc Detective rejects, so the dry run found nothing. One `mdx-gen-manage-orders` run also wrote a rejected step.
+
+Writing the cases exposed two grader bugs in reStructuredText, both fixed. A step comment indented inside a `note` directive counted as prose, though Doc Detective reads it. And a `note` body counted as a code block, because the directive line ends in `::`. The 4 baseline runs those bugs affected were rerun, along with both `manage-users` cases, whose `http` fence held a blank line. That blank split the fence into two blocks for `placement`. Its doc now uses a `curl` fence. Round 1 rows are as recorded under the old grader.
