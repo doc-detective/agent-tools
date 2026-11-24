@@ -202,6 +202,7 @@ function parseArgs(argv) {
     else if (k === '--concurrency') a.concurrency = +val(++i);
     else if (k === '--timeout-s') a.timeoutS = +val(++i);
     else if (k === '--approve-harness') a.approveHarness = true;
+    else if (k === '--split') a.split = val(++i);
     else if (k === '-h' || k === '--help') { usage(); process.exit(0); }
     else { eprint(`unknown argument: ${k}`); usage(); process.exit(2); }
   }
@@ -219,7 +220,7 @@ function parseArgs(argv) {
   return a;
 }
 function usage() {
-  eprint('usage: node run-eval.mjs --flow DIR --variant ID [--model ID] [--reps N] [--concurrency N] [--timeout-s N (0 = no ceiling)] [--approve-harness]');
+  eprint('usage: node run-eval.mjs --flow DIR --variant ID [--model ID] [--reps N] [--concurrency N] [--timeout-s N (0 = no ceiling)] [--split train|val|test] [--approve-harness]');
 }
 
 // Harness integrity gate. The hillclimb loop gets this runner command
@@ -447,7 +448,11 @@ async function main() {
   }
   const refDir = join(args.flow, 'baseline', 'ref');
   const tasks = [];
+  // --split train|val|test runs only that split's cases, such as extra reps on test to tighten a CI.
+  const only = args.split ? new Set((st[`${args.split}_ids`] ?? []).map(String)) : null;
+  if (only && !only.size) { eprint(`_state.json has no ${args.split}_ids`); process.exit(2); }
   for (const c of cases) for (let rep = 0; rep < args.reps; rep++) {
+    if (only && !only.has(pathSafeId(c.id))) continue;
     if (done.has(`${pathSafeId(c.id)}\0${rep}`)) continue;
     tasks.push({ c, rep });
   }

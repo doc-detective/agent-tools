@@ -3,6 +3,8 @@
 | 0 | baseline | 0.937 | 0.937 | 0.882 | 0.991 | 34 | $11.21 | $11.21 |
 | 1 (reverted) | Check the injected doc with a dry run | 0.952 | 0.951 | 0.902 | 0.983 | 35 | $12.54 | $23.75 |
 | 0b | baseline on 48 cases (10 added) | 0.889 | 0.926 | 0.905 | 1.000 | 33 | $3.49 | $27.24 |
+| 0c | baseline, test split to 6 reps | 0.870 | 0.926 | 0.905 | 1.000 | 32 | $8.09 | $35.33 |
+| 2 (not kept) | Dry run, and a `find` for each stated result | 0.957 | 0.969 | 0.984 | 1.000 | 38 | $24.78 | $60.11 |
 
 The baseline runs `/doc-detective-inline` as it stands after the rename, on 38 cases at 3 reps. It scores high, with `complete` at 0.912 across all runs. Spec-given cases reach 0.97, and cases where the session writes the tests first reach 0.83. Sessions almost never edit the doc's prose: `comment_only` failed once, on a reStructuredText step comment indented into a code block. reStructuredText is the weakest format (`complete` 0.58), then AsciiDoc (0.83). HTML and DITA scored 1.00.
 
@@ -19,3 +21,7 @@ Round 1 showed the eval was saturated, so 10 harder cases were added: five new d
 The new cases fail where the old ones did. All three `mdx-gen-two-tabs` runs leave out the `find` for the note the session just typed, like `md-gen-open-record-new-tab`. Two of three `rst-gen-check-api` runs wrote `runShell.output`, which Doc Detective rejects, so the dry run found nothing. One `mdx-gen-manage-orders` run also wrote a rejected step.
 
 Writing the cases exposed two grader bugs in reStructuredText, both fixed. A step comment indented inside a `note` directive counted as prose, though Doc Detective reads it. And a `note` body counted as a code block, because the directive line ends in `::`. The 4 baseline runs those bugs affected were rerun, along with both `manage-users` cases, whose `http` fence held a blank line. That blank split the fence into two blocks for `placement`. Its doc now uses a `curl` fence. Round 1 rows are as recorded under the old grader.
+
+Round 2 targeted the baseline's train failures. Half were docs Doc Detective rejects (`adoc-gen-api-key` twice, `mdx-gen-manage-orders` once), with fields such as `httpRequest.response.statusCode`. So round 1's dry-run check came back. One more was a typed note never checked with a `find` (`md-gen-open-record-new-tab`), so the skill now says to test every result a doc states, including text the reader just typed. At 3 reps held-out `complete` rose 0.889 to 0.938 (+0.049 +-0.109). To tighten that, both arms got 3 more reps on the test split, through a new `--split` option on the runner: 0.870 to 0.957 (+0.086 +-0.099), still inside the noise, so the round isn't kept on its own. The gains are concentrated and systematic: `mdx-gen-two-tabs` went 0 of 6 to 6 of 6, and `rst-gen-check-api` and `rst-gen-cli` 2 of 6 to 6 of 6, while `rst-spec-cli` went 2 to 1 of 6. More reps barely narrow the interval, because the spread is between cases, not between runs. `detected` reached 1.000 on both splits. Sessions took 6 seconds longer, with one more tool call.
+
+Round 3 builds on round 2 rather than the baseline, since both of its fixes clear train failures, and is compared against the baseline. That's a second look at the same test set, so a round 3 keep needs the same margin.
