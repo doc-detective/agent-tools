@@ -155,7 +155,17 @@ export const testText = (path, t) => (/\.mdx?$/i.test(path) ? (t.match(COMMENT) 
 // `doc-detective` as the command a segment executes: bare, by path, or through npx, npm exec,
 // bunx, or a dlx, after optional `(`, `&`, or VAR=value prefixes; or the Docker image under
 // `docker run`. An argument (`echo doc-detective`, `cat .doc-detective.json`) doesn't match.
-const DD_CMD = /^[(&\s]*(?:\w+=\S*\s+)*(?:(?:npx(?:\.cmd)?|bunx|npm\s+exec|(?:pnpm|yarn)\s+dlx)(?:\s+-\S+)*\s+(?:--\s+)?)?(?:\S*[/\\])?doc-detective(?:@\S+)?(?=[\s)]|$)|^[(&\s]*docker\s+run\b.*\sdocdetective\/docdetective\b/;
+const DD_CMD = /^[(&\s]*(?:\w+=\S*\s+)*(?:(?:npx(?:\.cmd)?|bunx|npm\s+exec|(?:pnpm|yarn)\s+dlx)(?:\s+-\S+)*\s+(?:--\s+)?)?(?:\S*[/\\])?doc-detective(?:@\S+)?(?=[\s)]|$)/;
+// `docker run` flags that take no value; any other flag without `=` takes the next token.
+const DOCKER_BOOL = new Set(['--rm', '-d', '--detach', '-i', '--interactive', '-t', '--tty', '-it', '-ti', '--init', '--privileged', '-P', '--publish-all', '-q', '--quiet']);
+// Whether `docker run` runs the Doc Detective image: the image is the first token that isn't a flag or a flag's value.
+const dockerRunsDD = seg => {
+  const t = seg.replace(/^[(&\s]*/, '').split(/\s+/);
+  if (t[0] !== 'docker' || t[1] !== 'run') return false;
+  let i = 2;
+  while (i < t.length && t[i].startsWith('-')) i += DOCKER_BOOL.has(t[i]) || t[i].includes('=') ? 1 : 2;
+  return /^(?:\S+\/)?docdetective\/docdetective(?::\S+)?$/.test(t[i] ?? '');
+};
 const NOT_A_RUN = /--version|--help|--dry-run|doc-detective(?:@\S+)?\s+(?:-[vh]|validate)(?:\s|$)/;
 const FILE_TOOLS = ['Edit', 'Write', 'MultiEdit', 'NotebookEdit'];
 // A shell command's segments, in order. `|` inside the class is a literal pipe, not
@@ -164,7 +174,7 @@ const FILE_TOOLS = ['Edit', 'Write', 'MultiEdit', 'NotebookEdit'];
 // stays with its command.
 const segments = tc => ['Bash', 'PowerShell'].includes(tc?.name)
   ? String(tc.input?.command ?? '').replace(/[\\`]\r?\n/g, ' ').split(/&&|\|\||[;|\n]/).map(s => s.trim()) : [];
-const isDDSegment = seg => DD_CMD.test(seg) && !NOT_A_RUN.test(seg);
+const isDDSegment = seg => (DD_CMD.test(seg) || dockerRunsDD(seg)) && !NOT_A_RUN.test(seg);
 const isEditSegment = seg => (/fix-tests\.js/.test(seg) && !/--dry-run/.test(seg)) || /\bsed\s+-i|Set-Content|Out-File|writeFileSync/.test(seg);
 /** Whether a tool call runs Doc Detective's tests, not just its version, help, dry run, or `validate`. */
 export const isDDRun = tc => segments(tc).some(isDDSegment);

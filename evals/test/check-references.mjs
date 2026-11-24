@@ -88,6 +88,8 @@ for (const [cmd, want] of [
   ['grep doc-detective package.json', false],
   ['which doc-detective', false],
   ['echo docdetective/docdetective', false],
+  ['docker run busybox echo docdetective/docdetective', false],
+  ['docker run --rm -it -e CI=1 -w /app docdetective/docdetective:latest --input x', true],
   ['npx doc-detective@5 --input docs/x.md \\\n  --dry-run', false],
 ]) assert.equal(isDDRun(bash(cmd)), want, cmd);
 assert.equal(isEdit(bash('node skills/doc-detective-test/scripts/fix-tests.js r.json --spec s.json')), true);
