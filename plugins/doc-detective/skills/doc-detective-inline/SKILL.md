@@ -93,8 +93,8 @@ Place each test on its own, so the search starts again at line 1 for each test.
 
 A step's **match value** is the text to look for:
 - A string step value, such as `goTo: "https://..."` or `click: "Submit"`, is the match value.
-- For an object with a `keys` field, such as `type: {keys: "text"}`, the `keys` value is the match value.
-- A number or an object without `keys`, such as `wait: 2000` or `httpRequest: {...}`, has no match value. Only the pattern rule applies.
+- For an object with a `keys`, `url`, or `elementText` field, such as `type: {keys: "text"}` or `httpRequest: {url: "https://..."}`, that field's value is the match value. A request's step then follows the text or code block that names its URL, not the response the doc describes after it.
+- A number or an object without those fields, such as `wait: 2000`, has no match value. Only the pattern rule applies.
 
 Search from the line after the previous step's comment, or from line 1 for the first step. Use the first rule that finds a line:
 
@@ -103,7 +103,7 @@ Search from the line after the previous step's comment, or from line 1 for the f
 3. **Pattern match:** A line matches the action's content pattern in the table below.
 4. **No match:** Use the line after the previous step's comment, or line 1 for the first step. Mark the step with the TODO comment.
 
-Insert the step comment right after the line the rule selects, and keep that line's indentation. When several lines in that search range satisfy a rule, select the earliest one.
+Insert the step comment right after the line the rule selects, and keep that line's indentation. When that line sits inside a code block, insert the comment after the block's closing line instead, because a comment inside the block becomes code. When several lines in that search range satisfy a rule, select the earliest one.
 
 | Action | Matches Line Containing |
 |--------|------------------------|
