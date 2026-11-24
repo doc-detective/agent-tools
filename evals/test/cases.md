@@ -56,7 +56,7 @@ design on every machine.
 
 | Metric | 1 when |
 | --- | --- |
-| `ran` | The session ran Doc Detective (a Bash call that invokes it, not just `--version`). |
+| `ran` | The session ran Doc Detective's tests: a Bash call that invokes it, not `--version`, `--help`, `--dry-run`, or `validate`. |
 | `cause` | The final report has every `must_mention` string, and the judge (`claude-haiku-4-5`) says it meets the `cause` rubric. |
 | `right_file` | Only `editable` files changed, and no Markdown prose did. |
 | `fixed` | Every `fix` test passes on the rerun, `must_contain` and `must_not_contain` hold, and the session ran Doc Detective after its last edit. 1 when `fix` is empty. |

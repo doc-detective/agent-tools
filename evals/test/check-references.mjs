@@ -11,8 +11,9 @@
 //   wrong[k]       each of expected.json's `wrong` edits: complete 0, and its `fails` metric 0
 // Same environment as run-eval.mjs (DD_NODE_DIR; servers on :8092 and :8093). Exit 1 if any case fails.
 
+import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { loadCases, makeWorkspace, checkDown, collect, rerun, gradeRun, judge, removeWorkspace } from './grade.mjs';
+import { loadCases, makeWorkspace, checkDown, collect, rerun, gradeRun, judge, removeWorkspace, isDDRun, isEdit } from './grade.mjs';
 import { ensureServers } from '../spec-generation/grade.mjs';
 
 const dd = c => ({ name: 'Bash', input: { command: `npx doc-detective@5 --input ${c.target} --output results.json` } });
@@ -68,6 +69,18 @@ async function check(c) {
   }
   return `${ok ? 'ok  ' : 'FAIL'} ${c.id}\n${lines.join('\n')}`;
 }
+
+// The tool-call classifiers, on commands sessions have used.
+const bash = command => ({ name: 'Bash', input: { command } });
+for (const [cmd, want] of [
+  ['npx -y doc-detective@5 --input docs/x.md --output r.json', true],
+  ['docker run -v "$(pwd):/app" docdetective/docdetective --input /app/x', true],
+  ['npx --yes doc-detective@5 validate tests/a.spec.json; echo exit=$?', false],
+  ['doc-detective --version 2>&1 | head -3', false],
+  ['cat .doc-detective.json', false],
+]) assert.equal(isDDRun(bash(cmd)), want, cmd);
+assert.equal(isEdit(bash('node skills/doc-detective-test/scripts/fix-tests.js r.json --spec s.json')), true);
+assert.equal(isEdit(bash('node skills/doc-detective-test/scripts/fix-tests.js r.json --dry-run')), false);
 
 await ensureServers();
 const cases = await loadCases();

@@ -128,11 +128,11 @@ export const testText = (path, t) => (/\.mdx?$/i.test(path) ? (t.match(COMMENT) 
 // `doc-detective` as a command: after npx, a path, or the start of a command, and followed
 // by a space or the end. `.doc-detective.json` and `skills/doc-detective-test/` don't match.
 const DD_CMD = /(?:^|[\s/(])doc-detective(?:@\S+)?(?=\s|$)|docdetective\/docdetective/;
-/** Whether a tool call runs Doc Detective on something, not just asks its version or help. */
+/** Whether a tool call runs Doc Detective's tests, not just its version, help, dry run, or `validate`. */
 export function isDDRun(tc) {
   if (!['Bash', 'PowerShell'].includes(tc?.name)) return false;
   return String(tc.input?.command ?? '').split(/&&|\|\||[;|\n]/)
-    .some(seg => DD_CMD.test(seg.trim()) && !/--version|--help|--dry-run|(?:^|\s)-[vh](?:\s|$)/.test(seg));
+    .some(seg => DD_CMD.test(seg.trim()) && !/--version|--help|--dry-run|doc-detective(?:@\S+)?\s+(?:-[vh]|validate)(?:\s|$)/.test(seg));
 }
 /** Whether a tool call can change a file: a file tool, the fix tool without --dry-run, or an in-place shell edit. */
 export function isEdit(tc) {
