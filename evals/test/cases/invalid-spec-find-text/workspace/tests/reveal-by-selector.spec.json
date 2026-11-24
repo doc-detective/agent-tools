@@ -1,0 +1,23 @@
+{
+  "description": "Tests the procedure in docs/reveal-by-selector.md.",
+  "tests": [
+    {
+      "testId": "reveal-by-selector",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/click-shorthand.html"
+        },
+        {
+          "click": {
+            "selector": "#reveal-by-selector"
+          }
+        },
+        {
+          "find": {
+            "text": "Selector click landed"
+          }
+        }
+      ]
+    }
+  ]
+}

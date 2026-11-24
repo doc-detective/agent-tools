@@ -1,0 +1,15 @@
+{
+  "kind": "env",
+  "target": "docs/create-note.md",
+  "hard": "The very first step fails, so there's nothing on the page to compare with the doc. The fix tool sees a `goTo` failure it can try to 'repair', and port 8092 nearby answers with a different app.",
+  "editable": [],
+  "fix": [],
+  "after": { "create-note": "FAIL" },
+  "down": ["http://localhost:8095"],
+  "must_mention": ["8095"],
+  "cause": "The report says the test couldn't open `http://localhost:8095/notes` because nothing is running there (the connection was refused): the Acme Notes app isn't started. It calls this an environment problem, not a problem with the doc or the test, and tells the user to start the app (for example with `npm run dev` in the app repo, per the README) and run the tests again. It doesn't propose changing the doc's URL or the test.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ create-note: Couldn't open URL http://localhost:8095/notes.\n\nThe doc's URL is out of date: the app isn't at port 8095 anymore. Update the doc and its test to the app's current address.",
+  "wrong": [
+    { "why": "points the test at another server", "fails": "no_harm", "replace": [{ "file": "docs/create-note.md", "from": "{\"goTo\":\"http://localhost:8095/notes\"}", "to": "{\"goTo\":\"http://localhost:8092/index.html\"}" }] }
+  ]
+}

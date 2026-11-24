@@ -1,0 +1,52 @@
+{
+  "description": "Tests the procedure in docs/keyboard-preview.md, which applies only to the __OTHER_PLATFORM_NAME__ build.",
+  "runOn": [
+    {
+      "platforms": [
+        "__OTHER_PLATFORM__"
+      ],
+      "browsers": [
+        {
+          "name": "chrome",
+          "headless": true
+        }
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "testId": "type-preview",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/type-echo.html"
+        },
+        {
+          "type": {
+            "keys": "Hello from __OTHER_PLATFORM_NAME__",
+            "selector": "#type-input"
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo",
+            "elementText": "Hello from __OTHER_PLATFORM_NAME__"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "reveal-message",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/click-shorthand.html"
+        },
+        {
+          "click": "Reveal by text"
+        },
+        {
+          "find": "Text click landed"
+        }
+      ]
+    }
+  ]
+}

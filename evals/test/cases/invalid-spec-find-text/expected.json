@@ -1,0 +1,16 @@
+{
+  "kind": "invalid",
+  "target": "tests/reveal-by-selector.spec.json",
+  "hard": "Nothing runs: Doc Detective exits 2 before the browser starts, so there's no failing step and no screenshot, only the schema error naming `find.text`.",
+  "editable": ["tests/reveal-by-selector.spec.json"],
+  "fix": ["reveal-by-selector"],
+  "after": { "reveal-by-selector": "PASS" },
+  "must_contain": ["Selector click landed"],
+  "must_not_contain": ["\"text\":"],
+  "must_mention": ["text"],
+  "cause": "The report says the spec was invalid, so nothing ran: the `find` step used a `text` key, which `find` doesn't accept. It names that field and says it changed it to a valid one (such as `elementText`, or the string shorthand), and that the test passes on the rerun.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ reveal-by-selector: Couldn't find element `Selector click landed`.\n\nThe message never appeared after the click, so the selector button may be broken in the app. Check the button's click handler.",
+  "wrong": [
+    { "why": "drops the `find` step to get past validation", "fails": "fixed", "write": { "tests/reveal-by-selector.spec.json": { "tests": [{ "testId": "reveal-by-selector", "steps": [{ "goTo": "http://localhost:8092/click-shorthand.html" }, { "click": { "selector": "#reveal-by-selector" } }] }] } } }
+  ]
+}

@@ -1,0 +1,28 @@
+{
+  "description": "Tests the procedure in docs/home-page-tour.md.",
+  "tests": [
+    {
+      "testId": "home-page-tour",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "find": "Common UI Elements"
+        },
+        {
+          "find": "Text Inputs"
+        },
+        {
+          "find": "Selection Elements"
+        },
+        {
+          "find": "Simple Data Table"
+        },
+        {
+          "find": "Jane Smith"
+        }
+      ]
+    }
+  ]
+}

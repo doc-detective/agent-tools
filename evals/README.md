@@ -7,6 +7,7 @@ Three evals measure the plugin the way users meet it: through Claude Code, with 
 | [routing](routing/) | Does a request reach the one skill or agent that owns it? | `correct`: the case's preferred route fired |
 | [spec-generation](spec-generation/) | Does `/doc-detective-generate` turn a doc into a spec that runs and covers the doc? | `complete`: the spec passes and has every expected step |
 | [inline](inline/) | Does `/doc-detective-inline` put tests into a doc as comments that Doc Detective reads back, without touching the prose? | `complete`: only comments added, and every expected step detected |
+| [test](test/) | Does `/doc-detective-test --fix` run a user's tests, name why each failed, and fix only what belongs to the test? | `complete`: ran, right cause, right files, fixed, no harm |
 
 Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (`baseline`, `v1`, `v2`, and so on). `_state.json` in each eval's directory declares its metrics and the files whose hash the runner checks before it spends anything.
 
@@ -78,6 +79,19 @@ The grade runs no browser and no model. It reads the doc as the session left it:
 - The unchanged doc, and the doc with one bogus step, score 0.
 - The reference with one prose line edited fails `comment_only`.
 - The reference with its comments moved to the top of the file loses `placement`.
+
+## Run the test eval
+
+```bash
+DD_REPO=<doc-detective checkout> DD_NODE_DIR=<node dir> \
+  node evals/test/run-eval.mjs --flow .claude/hillclimb/test --variant baseline --model claude-sonnet-5-5
+```
+
+Each case is a small docs repo, one git commit, with one planted defect or condition: a doc that's out of date, a test that's wrong, an invalid spec field, a service that's down, a test that skips by design, everything passing, or two failures with different causes. The session gets `/doc-detective:doc-detective-test <target> --fix`. Afterwards the grade diffs the workspace against the original and reruns the target with `doc-detective@5.6.0`. A `claude-haiku-4-5` judge reads the final report against the case's rubric, so the eval bills that model too, at about $0.02 a case.
+
+The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 and 8096 must stay free: the environment cases need nothing there.
+
+[test/cases.md](test/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/test/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $0.50 for all of them.
 
 ## Run a subset
 
