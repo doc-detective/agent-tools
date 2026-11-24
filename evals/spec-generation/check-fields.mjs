@@ -8,6 +8,7 @@ const req = role => ({ httpRequest: { url: 'http://localhost:8093/api/invites', 
 assert.equal(coverage([invite], [req('editor')]).score, 1);
 assert.equal(coverage([invite], [req('viewer')]).score, 0);
 assert.equal(coverage([invite], [req('not-editor')]).score, 0);
+assert.equal(coverage([invite], [req('EDITOR')]).score, 0);
 const tabs = exp('mdx-gen-two-tabs');
 const find = (text, tab) => ({ find: { elementText: text, ...(tab === undefined ? {} : { surface: { tab } }) } });
 for (const t of [-1, 1, { url: 'page=linked' }, { title: 'Child linked' }]) assert.equal(coverage([tabs[3]], [find('PAGE linked', t)]).score, 1, JSON.stringify(t));

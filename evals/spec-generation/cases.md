@@ -28,7 +28,7 @@ test servers (`http://localhost:8092` static pages, `http://localhost:8093` echo
   JSON-serialized step.
 - `match_any`: optional array. At least one must appear in the serialized step.
 - `fields`: optional object. Each key is a dotted path inside the action's value, such as
-  `request.body.role`. Its value is a case-insensitive regex that the value at that path must
+  `request.body.role`. Its value is a case-sensitive regex that the value at that path must
   match. A string is tested as is, anything else as JSON. Use it when a substring could match
   the wrong part of the step, such as an expected response instead of the request.
 - Matching strips backslashes first, so regex escapes in a step still match.

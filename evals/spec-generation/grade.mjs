@@ -269,13 +269,13 @@ function has(text, m) {
 
 /**
  * `fields` maps a dotted path inside the action's value, such as `request.body.role`, to a
- * case-insensitive regex the value there must match. A string is tested as is, anything else
+ * case-sensitive regex the value there must match. A string is tested as is, anything else
  * as JSON, and a missing path fails.
  */
 function fieldsMatch(fields, payload) {
   return Object.entries(fields ?? {}).every(([path, re]) => {
     const v = path.split('.').reduce((o, k) => (o != null && typeof o === 'object' ? o[k] : undefined), payload);
-    return v !== undefined && new RegExp(re, 'i').test(typeof v === 'string' ? v : JSON.stringify(v));
+    return v !== undefined && new RegExp(re).test(typeof v === 'string' ? v : JSON.stringify(v));
   });
 }
 
