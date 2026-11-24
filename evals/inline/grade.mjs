@@ -149,7 +149,7 @@ function codeAfter(lines, ext) {
     // ponytail: any fence line toggles; a longer fence nested in a shorter one confuses it.
     if (fence) { if (fence.test(l)) inside = !inside; }
     // A `::` paragraph or a code directive starts code; other directives, such as `note`, hold prose.
-    else if (fam === 'rst') inside = (/::\s*$/.test(l) && !/^\s*\.\. [\w:-]+::/.test(l)) || /^\s*\.\. (code-block|code|sourcecode)::/.test(l) || (inside && (!l.trim() || /^\s/.test(l)));
+    else if (fam === 'rst') inside = (/::\s*$/.test(l) && !/^\s*\.\. [\w:-]+::/.test(l)) || /^\s*\.\. (code-block|code|sourcecode|parsed-literal)::/.test(l) || (inside && (!l.trim() || /^\s/.test(l)));
     after.push(inside);
   }
   return after;
