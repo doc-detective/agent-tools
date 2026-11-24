@@ -126,7 +126,7 @@ export function changes(c, ws) {
   for (const p of walk(ws, (rel, n) => n.isDirectory() && SKIP_DIRS.has(n.name))) {
     if (p in c.files || !/\.(mdx?|json|ya?ml)$/i.test(p)) continue;
     // A run that stops early writes a results file without specs, so a results-named JSON is a results file too.
-    if (!isResults(readOr(join(ws, p), '')) && !/(^|\/)[\w.-]*results[\w.-]*\.json$/i.test(p)) out.push({ path: p, status: 'added' });
+    if (!isResults(readOr(join(ws, p), '')) && !/(^|\/)results[\w.-]*\.json$/i.test(p)) out.push({ path: p, status: 'added' });
   }
   return out;
 }
