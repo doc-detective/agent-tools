@@ -87,7 +87,7 @@ DD_REPO=<doc-detective checkout> DD_NODE_DIR=<node dir> \
   node evals/test/run-eval.mjs --flow .claude/hillclimb/test --variant baseline --model claude-sonnet-5-5
 ```
 
-Each case is a small docs repo, one git commit, with one planted defect or condition: a doc that's out of date, a test that's wrong, an invalid spec field, a service that's down, a test that skips by design, everything passing, or two failures with different causes. The session gets `/doc-detective:doc-detective-test <target> --fix`. Afterwards the grade diffs the workspace against the original and reruns the target with `doc-detective@5.6.0`. A `claude-haiku-4-5` judge reads the final report against the case's rubric, so the eval bills that model too, at about $0.02 a case.
+Each case is a small docs repo, one git commit, with one planted defect or condition: a doc that's out of date, a test that's wrong, an invalid spec field, a service that's down, a test that skips by design, everything passing, or two failures with different causes. The session gets `/doc-detective:doc-detective-test <target> --fix`. Afterwards the grade diffs the workspace against the original and reruns the target with `doc-detective@5.6.3`, what `doc-detective@5` resolves to now. A `claude-haiku-4-5` judge reads the final report against the case's rubric, so the eval bills that model too, at about $0.02 a case.
 
 The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 and 8096 must stay free: the environment cases need nothing there.
 

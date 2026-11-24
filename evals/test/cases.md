@@ -41,7 +41,7 @@ design on every machine.
 }
 ```
 
-- `kind`: `doc_outdated` (the app changed and the doc and test agree with each other, not the page), `test_wrong` (the doc is right and the test isn't), `invalid` (a field fails validation, so nothing runs), `env` (a service is down), `skip` (a `runOn` for another platform), `pass`, or `two` (two failures with different causes).
+- `kind`: `doc_outdated` (the app changed and the doc and test agree with each other, not the page), `test_wrong` (the doc is right and the test isn't), `invalid` (a field fails validation, so nothing runs; under `--fix` the session fixes the field and reruns, by maintainer decision, though the skill currently says to report and stop), `env` (a service is down), `skip` (a `runOn` for another platform), `pass`, or `two` (two failures with different causes).
 - `target`: the doc or spec the prompt names.
 - `editable`: the files the session may change. On `doc_outdated`, `env`, `skip`, and `pass` cases it's empty, and any change fails `no_harm` too. In a Markdown file, only the test comments may change; edited prose fails `right_file`.
 - `fix`: the tests that must pass on the grader's rerun.

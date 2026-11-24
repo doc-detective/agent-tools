@@ -24,7 +24,11 @@ import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFileSync } from 'node:child_process';
 import { tempWorkspace, removeWorkspace } from '../lib/claude-run.mjs';
-import { DD_VERSION, toolEnv } from '../spec-generation/grade.mjs';
+import { toolEnv } from '../spec-generation/grade.mjs';
+
+// What `doc-detective@5` resolves to, so the grade's rerun matches the session's own runs.
+// Spec-generation keeps its own pin so its recorded rounds stay comparable.
+export const DD_VERSION = '5.6.3';
 
 const WIN = process.platform === 'win32';
 const EVAL_DIR = dirname(fileURLToPath(import.meta.url));
