@@ -61,6 +61,8 @@ const eprint = (...a) => console.error(...a.map(termSafe));
 // symlink in between is still followed. This stops a planted link, not a
 // writer racing the run.
 let flowRealRoot = null;
+// Set once the workers start; the main().catch at the bottom reads it.
+let workersStarted = false;
 function assertInFlow(dir, what) {
   if (flowRealRoot == null) throw new Error(`refusing to ${what}: flow root not resolved yet`);
   const dirReal = realpathSync(dir);
@@ -137,9 +139,14 @@ const REF_EXTS = ['', '.html', '.txt', '.json'];
 //
 // Test eval: see grade.mjs for the cases, the workspace, and the grade.
 
-import { runClaude, buildPlugin, removeWorkspace } from '../lib/claude-run.mjs';
-import { loadCases as loadTestCases, makeWorkspace, checkDown, collect, gradeRun } from './grade.mjs';
-import { ensureServers, toolEnv } from '../spec-generation/grade.mjs';
+// The eval's modules load only after checkHarness approves them (see main): importing a
+// module runs its top-level code, and grade.mjs and claude-run.mjs are harness paths.
+let runClaude, buildPlugin, removeWorkspace, loadTestCases, makeWorkspace, checkDown, collect, gradeRun, ensureServers, toolEnv;
+async function loadEvalModules() {
+  ({ runClaude, buildPlugin, removeWorkspace } = await import('../lib/claude-run.mjs'));
+  ({ loadCases: loadTestCases, makeWorkspace, checkDown, collect, gradeRun } = await import('./grade.mjs'));
+  ({ ensureServers, toolEnv } = await import('../spec-generation/grade.mjs'));
+}
 
 // --- run (hooks) --------------------------------------------------------------------
 
@@ -150,30 +157,46 @@ async function loadCases() {
   return loadTestCases();
 }
 
+// One server start for every worker: assigned before the first await, so workers that
+// start together share it instead of each spawning servers on the same ports.
+let servers = null;
+
 async function runCase(c, ctx) {
-  await ensureServers();
+  await (servers ??= ensureServers());
   await checkDown(c);
+  // The server start and the check can outlast the case's ceiling; don't bill a session after it.
+  if (Date.now() >= ctx.deadline) throw Object.assign(new Error('wall-clock ceiling exceeded before the session started'), { failure_class: 'timeout' });
   const ws = makeWorkspace(c);
+  let run;
   try {
-    // Doc Detective's Node first on PATH; an npm prefix of its own, so a global install stays in the workspace.
-    const env = { ...toolEnv(), npm_config_prefix: join(ws, '.npm-global') };
-    const run = await runClaude({ prompt: c.prompt, cwd: ws, model: ctx.model, env });
-    const facts = await collect(c, ws, run.toolCalls);
-    // The final message is the report; a session the eval stopped has none, so take its last words.
-    const report = run.finalText ?? run.transcript.filter(t => t.role === 'assistant' && t.content).at(-1)?.content ?? '';
-    return {
-      output: report,
-      model: run.model, usage: run.usage,
-      stop_reason: run.result_subtype,
-      transcript: [{ role: 'user', content: c.prompt }, ...run.transcript,
-        { role: 'tool_result', content: `[grader] changed: ${JSON.stringify(facts.changed)}; rerun exit ${facts.rerun.code}: ${JSON.stringify(facts.rerun.tests)}` }],
-      tool_calls: run.toolCalls.length,
-      num_turns: run.num_turns,
-      cc_cost_usd: run.cost_usd_reported,
-      facts: { ...facts, report },
-    };
-  } finally {
-    removeWorkspace(ws);
+    try {
+      // Doc Detective's Node first on PATH; an npm prefix of its own, so a global install stays in the workspace.
+      const env = { ...toolEnv(), npm_config_prefix: join(ws, '.npm-global') };
+      run = await runClaude({ prompt: c.prompt, cwd: ws, model: ctx.model, env });
+      // A session that ended without a final result is incomplete, not a scored attempt.
+      if (run.result_subtype === 'no_result')
+        throw Object.assign(new Error(`claude exited ${run.exitCode} without a final result`), { failure_class: 'incomplete' });
+      const facts = await collect(c, ws, run.toolCalls);
+      // The final message is the report; a session the eval stopped has none, so take its last words.
+      const report = run.finalText ?? run.transcript.filter(t => t.role === 'assistant' && t.content).at(-1)?.content ?? '';
+      return {
+        output: report,
+        model: run.model, usage: run.usage,
+        stop_reason: run.result_subtype,
+        transcript: [{ role: 'user', content: c.prompt }, ...run.transcript,
+          { role: 'tool_result', content: `[grader] changed: ${JSON.stringify(facts.changed)}; rerun exit ${facts.rerun.code}: ${JSON.stringify(facts.rerun.tests)}` }],
+        tool_calls: run.toolCalls.length,
+        num_turns: run.num_turns,
+        cc_cost_usd: run.cost_usd_reported,
+        facts: { ...facts, report },
+      };
+    } finally {
+      removeWorkspace(ws);
+    }
+  } catch (e) {
+    // A billed session keeps its model and usage on the error row, whatever failed after it.
+    if (run && e && typeof e === 'object') { e.model ??= run.model; e.usage ??= run.usage; }
+    throw e;
   }
 }
 
@@ -408,6 +431,7 @@ async function main() {
     catch { eprint(`${statePath} exists but is not valid JSON - fix it before spending a pass`); process.exit(2); }
   }
   checkHarness(statePath, st, args.approveHarness);
+  await loadEvalModules();
   const ctx = { ...args, state: st };
 
   // Resume: which (id, rep) pairs already have a row?
@@ -479,7 +503,7 @@ async function main() {
         // so a hung judge stream can't hold the slot either.
         const { run, g, latency_s } = await withTimeout((async () => {
           let tAttempt = t0;
-          const run = await withBackoff(() => { tAttempt = Date.now(); return runCase(c, ctx); },
+          const run = await withBackoff(() => { tAttempt = Date.now(); return runCase(c, { ...ctx, deadline }); },
             appRetry, deadline);
           lastRun = run;
           // latency_s = the final app attempt only; backoff sleeps, failed
@@ -537,11 +561,13 @@ async function main() {
           latency_s, ...perfFrom(run),
           grade: g.grade, explanation: g.explanation,
         };
-        appendFileNoFollow(resultsPath, JSON.stringify(row) + '\n');
-        rowWritten = true; // past this point the attempt is scored - a later throw (trace write, ref freeze) must not also append an error row
+        // The trace lands before the row: resume reruns a case with no row, so a failed trace
+        // write leaves none, rather than a scored case whose trace is missing for good.
         if (run.transcript)
           writeFileNoFollow(join(vdir, 'traces', `${safeId}_rep${rep}.json`),
             JSON.stringify(run.transcript, null, 2));
+        appendFileNoFollow(resultsPath, JSON.stringify(row) + '\n');
+        rowWritten = true; // past this point the attempt is scored - a later throw (ref freeze) must not also append an error row
         // For pairwise: on the baseline run, freeze the reference output once.
         if (args.variant === 'baseline' && run.output != null
             && !REF_EXTS.some(ext => lexists(join(refDir, safeId) + ext))) {
@@ -605,7 +631,6 @@ async function main() {
 // results.jsonl, an lstat that fails, an error from loadCases) and exits 2 like
 // the preflight refusals. After they start, only a failed errors.jsonl append
 // gets here; rows may already be on disk, so say that and exit 1.
-let workersStarted = false;
 main().catch(e => {
   const m = String(e?.message || e);
   if (workersStarted) { eprint('stopped mid-run (rows already written are kept; re-run to resume): ' + m); process.exit(1); }
