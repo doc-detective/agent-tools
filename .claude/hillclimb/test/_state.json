@@ -100,5 +100,5 @@
     ]
   },
   "split_note": "15 cases, 6 held out (40%): one of each kind except pass, which is cheap and stays in train; inline and spec targets mixed on both sides.",
-  "harness_sha": "7da2c8b4bd5b2353b2584862c29dc367c7cbc0b389d41725d6d1a581f0caff3d"
+  "harness_sha": "779d321b19e6d176f7d7a0431b6dc60d525fd9f3f515c7620b644fe09d9af6db"
 }
