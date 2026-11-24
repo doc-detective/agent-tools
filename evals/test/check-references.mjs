@@ -13,7 +13,7 @@
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { loadCases, makeWorkspace, checkDown, collect, rerun, gradeRun, judge, removeWorkspace, isDDRun, isEdit } from './grade.mjs';
+import { loadCases, makeWorkspace, checkDown, collect, rerun, gradeRun, judge, removeWorkspace, isDDRun, isEdit, reranAfterEdit, prose } from './grade.mjs';
 import { ensureServers } from '../spec-generation/grade.mjs';
 
 const dd = c => ({ name: 'Bash', input: { command: `npx doc-detective@5 --input ${c.target} --output results.json` } });
@@ -56,8 +56,11 @@ async function check(c) {
       ['unfixed', () => grade(c, {}, [dd(c)], c.referenceReport), g => g.grade.fixed === 0],
       ['no_rerun', () => grade(c, ref, [dd(c), ...edited.map(edit)], c.referenceReport), g => g.grade.fixed === 0],
     ] : []),
-    ...(e.wrong ?? []).map((w, k) => [`wrong[${k}]`, () => grade(c, applyWrong(c, w), [dd(c), edit(Object.keys(applyWrong(c, w))[0]), dd(c)], c.referenceReport),
-      g => g.grade.complete === 0 && g.grade[w.fails] === 0]),
+    ...(e.wrong ?? []).map((w, k) => {
+      const overlay = applyWrong(c, w);
+      return [`wrong[${k}]`, () => grade(c, overlay, [dd(c), edit(Object.keys(overlay)[0]), dd(c)], c.referenceReport),
+        g => g.grade.complete === 0 && g.grade[w.fails] === 0];
+    }),
   ];
   const lines = [];
   let ok = true;
@@ -78,9 +81,31 @@ for (const [cmd, want] of [
   ['npx --yes doc-detective@5 validate tests/a.spec.json; echo exit=$?', false],
   ['doc-detective --version 2>&1 | head -3', false],
   ['cat .doc-detective.json', false],
+  ['(npx doc-detective@5 --input tests/a.spec.json --output results.json) 2>&1', true],
+  ['doc-detective --input docs/x.md --output results.json 2>&1 | tail -20', true],
+  ['DEBUG=1 ./node_modules/.bin/doc-detective --input docs/x.md', true],
+  ['echo doc-detective --input docs/x.md', false],
+  ['grep doc-detective package.json', false],
+  ['which doc-detective', false],
+  ['echo docdetective/docdetective', false],
+  ['npx doc-detective@5 --input docs/x.md \\\n  --dry-run', false],
 ]) assert.equal(isDDRun(bash(cmd)), want, cmd);
 assert.equal(isEdit(bash('node skills/doc-detective-test/scripts/fix-tests.js r.json --spec s.json')), true);
 assert.equal(isEdit(bash('node skills/doc-detective-test/scripts/fix-tests.js r.json --dry-run')), false);
+// A run counts after an edit only when it comes later, within one command too.
+const sedThenRun = bash('sed -i "s/a/b/" tests/a.spec.json && npx doc-detective@5 --input tests/a.spec.json');
+const runThenSed = bash('npx doc-detective@5 --input tests/a.spec.json; sed -i "s/a/b/" tests/a.spec.json');
+assert.equal(reranAfterEdit([sedThenRun]), true);
+assert.equal(reranAfterEdit([runThenSed]), false);
+assert.equal(reranAfterEdit([edit('a'), runThenSed]), false);
+assert.equal(reranAfterEdit([]), true);
+// Markdown prose: test comments don't count; paragraph breaks and hard breaks do.
+const doc = 'Intro.\n\n<!-- step {"find":"x"} -->\nClick **Go**.  \nThen wait.\n\nDone.\n';
+assert.equal(prose(doc.replace('{"find":"x"}', '{"find":"y"}')), prose(doc));
+assert.equal(prose(doc.replace('Click', '<!-- step {"click":"Go"} -->\nClick')), prose(doc));
+assert.notEqual(prose(doc.replace('wait.\n\nDone', 'wait.\nDone')), prose(doc));
+assert.notEqual(prose(doc.replace('**Go**.  \n', '**Go**.\n')), prose(doc));
+assert.notEqual(prose(doc.replace('<!-- step {"find":"x"} -->\n', '<!-- a --> Hi.\n')), prose(doc));
 
 await ensureServers();
 const cases = await loadCases();
@@ -96,4 +121,6 @@ await Promise.all(Array.from({ length: 3 }, async () => {
   }
 }));
 console.log(`${cases.length - bad} of ${cases.length} cases ok`);
+// Exit only once stdout drains, so a piped log keeps the last lines.
+await new Promise(r => process.stdout.write('', r));
 process.exit(bad ? 1 : 0);

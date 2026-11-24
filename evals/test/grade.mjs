@@ -5,15 +5,16 @@
 // repo's plugin loaded, runs `/doc-detective-test <target> --fix` in a fresh copy.
 //
 // The grade is deterministic except `cause`:
-//   ran         the session ran Doc Detective (a Bash call that invokes it)
+//   ran         the session ran Doc Detective (a Bash call that executes it)
 //   cause       the final report names each must_mention string, and an LLM judge
 //               agrees it gives the case's cause (expected.json `cause` is the rubric)
 //   right_file  only `editable` files changed, and Markdown prose didn't (only test comments)
 //   fixed       each test in `fix` passes on the grader's rerun, the test text keeps
 //               `must_contain` and drops `must_not_contain`, and when the session edited
 //               anything it ran Doc Detective again afterwards
-//   no_harm     every other test's rerun result is the one in `after`; on doc_outdated,
-//               env, skip, and pass cases nothing changed at all
+//   no_harm     every other test's rerun result is the one in `after`, and in a spec target
+//               every test outside `fix` is unchanged; on doc_outdated, env, skip, and pass
+//               cases nothing changed at all
 //   complete    all five
 //
 // Environment: DD_NODE_DIR, as for spec-generation (see evals/README.md). The pages and
@@ -23,6 +24,7 @@ import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 
 import { dirname, join, relative } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFileSync } from 'node:child_process';
+import { isDeepStrictEqual } from 'node:util';
 import { tempWorkspace, removeWorkspace } from '../lib/claude-run.mjs';
 import { toolEnv } from '../spec-generation/grade.mjs';
 
@@ -34,6 +36,7 @@ const WIN = process.platform === 'win32';
 const EVAL_DIR = dirname(fileURLToPath(import.meta.url));
 const CASES = join(EVAL_DIR, 'cases');
 export const JUDGE_MODEL = 'claude-haiku-4-5';
+const JUDGE_TIMEOUT_MS = 180_000;
 export const KINDS = ['doc_outdated', 'test_wrong', 'invalid', 'env', 'skip', 'pass', 'two'];
 const NO_EDIT = new Set(['doc_outdated', 'env', 'skip', 'pass']);
 
@@ -47,7 +50,8 @@ const walk = (root, skip = () => false, d = root) => readdirSync(d, { withFileTy
   if (skip(rel, n)) return [];
   return n.isDirectory() ? walk(root, skip, p) : [rel];
 });
-const readOr = (p, v = null) => { try { return readFileSync(p, 'utf8'); } catch { return v; } };
+// Only a missing file reads as `v`; any other failure is a real error, not a deletion.
+const readOr = (p, v = null) => { try { return readFileSync(p, 'utf8'); } catch (e) { if (e?.code === 'ENOENT') return v; throw e; } };
 
 export async function loadCases() {
   const sharedConfig = readFileSync(join(EVAL_DIR, 'doc-detective.config.json'), 'utf8');
@@ -70,23 +74,28 @@ export async function loadCases() {
     });
   }
   const only = process.env.EVAL_ONLY?.split(',').map(s => s.trim()).filter(Boolean);
-  return only?.length ? cases.filter(c => only.includes(c.id)) : cases;
+  if (!only?.length) return cases;
+  const unknown = only.filter(id => !cases.some(c => c.id === id));
+  if (unknown.length) throw new Error(`EVAL_ONLY names no case ${unknown.join(', ')}`);
+  return cases.filter(c => only.includes(c.id));
 }
 
 /** A fresh one-commit repo holding the case's files, with `overlay` (path -> text) written on top. */
 export function makeWorkspace(c, overlay = {}) {
   const ws = tempWorkspace(`test-${c.id}`);
-  for (const [p, text] of Object.entries(c.files)) {
-    mkdirSync(dirname(join(ws, p)), { recursive: true });
-    writeFileSync(join(ws, p), text);
-  }
-  const git = (...a) => execFileSync('git', ['-c', 'user.name=eval', '-c', 'user.email=eval@example.invalid', '-c', 'core.autocrlf=false', ...a], { cwd: ws, stdio: 'ignore' });
-  git('init', '-q'); git('add', '-A'); git('commit', '-qm', 'docs');
-  for (const [p, text] of Object.entries(overlay)) {
-    mkdirSync(dirname(join(ws, p)), { recursive: true });
-    writeFileSync(join(ws, p), text);
-  }
-  return ws;
+  try {
+    for (const [p, text] of Object.entries(c.files)) {
+      mkdirSync(dirname(join(ws, p)), { recursive: true });
+      writeFileSync(join(ws, p), text);
+    }
+    const git = (...a) => execFileSync('git', ['-c', 'user.name=eval', '-c', 'user.email=eval@example.invalid', '-c', 'core.autocrlf=false', ...a], { cwd: ws, stdio: 'ignore' });
+    git('init', '-q'); git('add', '-A'); git('commit', '-qm', 'docs');
+    for (const [p, text] of Object.entries(overlay)) {
+      mkdirSync(dirname(join(ws, p)), { recursive: true });
+      writeFileSync(join(ws, p), text);
+    }
+    return ws;
+  } catch (e) { removeWorkspace(ws); throw e; }
 }
 
 /** Fail fast, as a harness error, when a URL the case needs down is answering. */
@@ -121,29 +130,51 @@ export function changes(c, ws) {
   return out;
 }
 
-const COMMENT = /<!--[\s\S]*?-->/g;
-/** Markdown prose: the text with comments removed, blank lines and trailing spaces ignored. */
-export const prose = t => nl(t).replace(COMMENT, '').split('\n').map(l => l.trimEnd()).filter(Boolean).join('\n');
+const COMMENT = /<!--(?:(?!-->)[\s\S])*-->/g;
+const COMMENT_LINE = /^[ \t]*(?:<!--(?:(?!-->)[\s\S])*-->[ \t]*)+(?:\n|$)/gm;
+/**
+ * Markdown prose: the text with comments removed. A line that held only comments goes. Paragraph
+ * breaks count (a run of blank lines as one), and trailing spaces only as a hard break (two or more).
+ */
+export const prose = t => nl(t).replace(COMMENT_LINE, '').replace(COMMENT, '').split('\n')
+  .map(l => / {2,}$/.test(l) ? l.trimEnd() + '  ' : l.trimEnd()).join('\n').replace(/\n{3,}/g, '\n\n').trim();
+/** A spec target's tests outside `fix` that the session changed or removed, by testId. */
+export function changedTests(c, now, fix) {
+  if (!/\.json$/i.test(c.target)) return [];
+  const byId = text => Object.fromEntries((JSON.parse(text ?? 'null')?.tests ?? []).map(t => [t.testId, t]));
+  const before = byId(c.files[c.target]);
+  let after;
+  try { after = byId(now); } catch { after = {}; }
+  return Object.keys(before).filter(id => !fix.includes(id) && !isDeepStrictEqual(before[id], after[id]));
+}
 /** The tests in a file, whitespace removed: a Markdown file's comments, or a whole spec. */
 export const testText = (path, t) => (/\.mdx?$/i.test(path) ? (t.match(COMMENT) ?? []).join('') : t).replace(/\s+/g, '');
 
 // --- the session's tool calls ----------------------------------------------------
 
-// `doc-detective` as a command: after npx, a path, or the start of a command, and followed
-// by a space or the end. `.doc-detective.json` and `skills/doc-detective-test/` don't match.
-const DD_CMD = /(?:^|[\s/(])doc-detective(?:@\S+)?(?=\s|$)|docdetective\/docdetective/;
+// `doc-detective` as the command a segment executes: bare, by path, or through npx, npm exec,
+// bunx, or a dlx, after optional `(`, `&`, or VAR=value prefixes; or the Docker image under
+// `docker run`. An argument (`echo doc-detective`, `cat .doc-detective.json`) doesn't match.
+const DD_CMD = /^[(&\s]*(?:\w+=\S*\s+)*(?:(?:npx(?:\.cmd)?|bunx|npm\s+exec|(?:pnpm|yarn)\s+dlx)(?:\s+-\S+)*\s+(?:--\s+)?)?(?:\S*[/\\])?doc-detective(?:@\S+)?(?=[\s)]|$)|^[(&\s]*docker\s+run\b.*\sdocdetective\/docdetective\b/;
+const NOT_A_RUN = /--version|--help|--dry-run|doc-detective(?:@\S+)?\s+(?:-[vh]|validate)(?:\s|$)/;
+const FILE_TOOLS = ['Edit', 'Write', 'MultiEdit', 'NotebookEdit'];
+// A shell command's segments, in order. `|` inside the class is a literal pipe, not
+// alternation: `doc-detective ... | tee log` is a segment that still runs the tests.
+// Line continuations (`\` or PowerShell's backtick) join first, so a flag on the next line
+// stays with its command.
+const segments = tc => ['Bash', 'PowerShell'].includes(tc?.name)
+  ? String(tc.input?.command ?? '').replace(/[\\`]\r?\n/g, ' ').split(/&&|\|\||[;|\n]/).map(s => s.trim()) : [];
+const isDDSegment = seg => DD_CMD.test(seg) && !NOT_A_RUN.test(seg);
+const isEditSegment = seg => (/fix-tests\.js/.test(seg) && !/--dry-run/.test(seg)) || /\bsed\s+-i|Set-Content|Out-File|writeFileSync/.test(seg);
 /** Whether a tool call runs Doc Detective's tests, not just its version, help, dry run, or `validate`. */
-export function isDDRun(tc) {
-  if (!['Bash', 'PowerShell'].includes(tc?.name)) return false;
-  return String(tc.input?.command ?? '').split(/&&|\|\||[;|\n]/)
-    .some(seg => DD_CMD.test(seg.trim()) && !/--version|--help|--dry-run|doc-detective(?:@\S+)?\s+(?:-[vh]|validate)(?:\s|$)/.test(seg));
-}
+export const isDDRun = tc => segments(tc).some(isDDSegment);
 /** Whether a tool call can change a file: a file tool, the fix tool without --dry-run, or an in-place shell edit. */
-export function isEdit(tc) {
-  if (['Edit', 'Write', 'MultiEdit', 'NotebookEdit'].includes(tc?.name)) return true;
-  if (!['Bash', 'PowerShell'].includes(tc?.name)) return false;
-  const cmd = String(tc.input?.command ?? '');
-  return (/fix-tests\.js/.test(cmd) && !/--dry-run/.test(cmd)) || /\bsed\s+-i|Set-Content|Out-File|writeFileSync/.test(cmd);
+export const isEdit = tc => FILE_TOOLS.includes(tc?.name) || segments(tc).some(isEditSegment);
+/** Whether Doc Detective ran after the session's last edit, in order down to one shell command's segments. */
+export function reranAfterEdit(toolCalls) {
+  const ev = toolCalls.flatMap(tc => FILE_TOOLS.includes(tc?.name) ? ['edit']
+    : segments(tc).flatMap(seg => [...(isEditSegment(seg) ? ['edit'] : []), ...(isDDSegment(seg) ? ['run'] : [])]));
+  return !ev.includes('edit') || ev.lastIndexOf('run') > ev.lastIndexOf('edit');
 }
 
 // --- Doc Detective rerun ---------------------------------------------------------
@@ -161,8 +192,11 @@ export function rerun(c, ws) {
   const args = ['-y', `doc-detective@${DD_VERSION}`, '-i', c.target, '-c', config,
                 '-o', join(out, 'results.json'), '--output-dir', out,
                 '--no-auto-update', '--no-telemetry', '--no-hints', '--no-input'];
-  return new Promise(resolvePromise => {
-    const child = spawn(WIN ? 'npx.cmd' : 'npx', args, { cwd: ws, env: toolEnv(), shell: WIN, stdio: ['ignore', 'pipe', 'pipe'] });
+  return new Promise((resolvePromise, reject) => {
+    // Windows runs npx.cmd through cmd.exe, which splits unquoted arguments at spaces (a TEMP under
+    // `C:\Users\Jane Doe`), so quote those there.
+    const argv = WIN ? args.map(a => /\s/.test(a) ? `"${a}"` : a) : args;
+    const child = spawn(WIN ? 'npx.cmd' : 'npx', argv, { cwd: ws, env: toolEnv(), shell: WIN, stdio: ['ignore', 'pipe', 'pipe'] });
     let log = '';
     child.stdout.on('data', d => { log += d; });
     child.stderr.on('data', d => { log += d; });
@@ -170,7 +204,11 @@ export function rerun(c, ws) {
     child.on('error', err => { clearTimeout(timer); resolvePromise({ code: null, tests: {}, failures: [], log: `Couldn't start Doc Detective: ${err.message}` }); });
     child.on('close', code => {
       clearTimeout(timer);
-      const results = JSON.parse(readOr(join(out, 'results.json'), 'null'));
+      let results;
+      try { results = JSON.parse(readOr(join(out, 'results.json'), 'null')); }
+      catch (e) {
+        return reject(Object.assign(new Error(`Couldn't read the grader's Doc Detective results (exit ${code}): ${e.message}`), { failure_class: 'harness' }));
+      }
       const tests = {}, failures = [];
       for (const s of results?.specs ?? []) for (const t of s.tests ?? []) {
         tests[t.testId] = t.result;
@@ -189,12 +227,10 @@ export function rerun(c, ws) {
 export async function collect(c, ws, toolCalls, rerunFn = rerun) {
   const changed = changes(c, ws);
   const files = Object.fromEntries([...new Set([...Object.keys(c.files), ...changed.map(x => x.path)])].map(p => [p, readOr(join(ws, p))]));
-  const runs = toolCalls.flatMap((tc, k) => isDDRun(tc) ? [k] : []);
-  const edits = toolCalls.flatMap((tc, k) => isEdit(tc) ? [k] : []);
   return {
     changed, files,
-    dd_runs: runs.length,
-    reran_after_edit: !edits.length || runs.some(k => k > edits.at(-1)),
+    dd_runs: toolCalls.filter(isDDRun).length,
+    reran_after_edit: reranAfterEdit(toolCalls),
     rerun: await rerunFn(c, ws),
   };
 }
@@ -210,11 +246,15 @@ export function judge(rubric, report) {
                 '--strict-mcp-config', '--tools', '', '--no-session-persistence', '--system-prompt', JUDGE_SYSTEM];
   return new Promise((resolvePromise, reject) => {
     const child = spawn('claude', args, { cwd: EVAL_DIR, stdio: ['ignore', 'pipe', 'pipe'] });
-    let out = '', err = '';
+    let out = '', err = '', timedOut = false;
     child.stdout.on('data', d => { out += d; });
     child.stderr.on('data', d => { err += d; });
-    child.on('error', reject);
+    // A hung judge would hold its caller forever; one call takes seconds.
+    const timer = setTimeout(() => { timedOut = true; child.kill(); }, JUDGE_TIMEOUT_MS);
+    child.on('error', e => { clearTimeout(timer); reject(e); });
     child.on('close', code => {
+      clearTimeout(timer);
+      if (timedOut) return reject(new Error(`judge timed out after ${JUDGE_TIMEOUT_MS / 1000}s`));
       let r;
       try { r = JSON.parse(out); } catch { return reject(Object.assign(new Error(`judge exited ${code}: ${(err || out).slice(0, 300)}`), { status: /overloaded|rate.?limit/i.test(err + out) ? 529 : undefined })); }
       const m = String(r.result ?? '').match(/\{[\s\S]*\}/);
@@ -262,7 +302,8 @@ export async function gradeRun(c, facts, judgeFn = judge) {
 
   const moved = Object.entries(e.after).filter(([id, want]) => !fix.includes(id) && tests[id] !== want).map(([id, want]) => `${id} ${tests[id] ?? 'missing'}, want ${want}`);
   const touched = NO_EDIT.has(c.kind) && facts.changed.length > 0;
-  const no_harm = !moved.length && !touched ? 1 : 0;
+  const altered = changedTests(c, target, fix);
+  const no_harm = !moved.length && !touched && !altered.length ? 1 : 0;
 
   const complete = ran && cause && right_file && fixed && no_harm ? 1 : 0;
   return {
@@ -278,7 +319,8 @@ export async function gradeRun(c, facts, judgeFn = judge) {
         : [unfixed.length && `not passing: ${unfixed.map(id => `${id} ${tests[id] ?? 'missing'}`).join(', ')}`,
            lostText.length && `test text lost ${JSON.stringify(lostText)}`, keptText.length && `test text still has ${JSON.stringify(keptText)}`,
            !facts.reran_after_edit && 'no Doc Detective run after the last edit'].filter(Boolean).join('; '),
-      no_harm: no_harm ? 'other tests keep their expected results' : [moved.length && `results moved: ${moved.join('; ')}`, touched && `edited a ${c.kind} case: ${facts.changed.map(x => x.path).join(', ')}`].filter(Boolean).join('; '),
+      no_harm: no_harm ? 'other tests keep their expected results' : [moved.length && `results moved: ${moved.join('; ')}`, touched && `edited a ${c.kind} case: ${facts.changed.map(x => x.path).join(', ')}`,
+        altered.length && `changed tests outside fix: ${altered.join(', ')}`].filter(Boolean).join('; '),
       rerun: `exit ${facts.rerun.code}; ${JSON.stringify(tests)}${facts.rerun.failures.length ? `; ${facts.rerun.failures.join(' | ')}` : ''}`,
     },
     judge_model: verdict ? verdict.model : undefined,
