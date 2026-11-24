@@ -1,0 +1,32 @@
+{
+  "description": "Tests docs/check-service-health.md.",
+  "tests": [
+    {
+      "testId": "api-users",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users?page=1",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "page": "1"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "testId": "status-page",
+      "steps": [
+        {
+          "checkLink": "http://localhost:8098/health"
+        }
+      ]
+    }
+  ]
+}

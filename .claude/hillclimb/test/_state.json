@@ -74,7 +74,21 @@
     "invalid-md-status-code",
     "env-http-api-down",
     "skip-md-other-platform",
-    "two-spec-selector-and-env"
+    "two-spec-selector-and-env",
+    "outdated-md-modal-close",
+    "outdated-yaml-table-caption",
+    "testbug-http-status-code",
+    "testbug-md-type-keys",
+    "invalid-spec-request-data",
+    "invalid-md-click-button",
+    "env-md-admin-down",
+    "env-spec-checklink-down",
+    "skip-spec-with-outdated",
+    "skip-yaml-http-helper",
+    "pass-spec-snapshot-warning",
+    "pass-md-delayed-flow",
+    "two-spec-case-and-outdated",
+    "two-md-invalid-then-env"
   ],
   "reps": 3,
   "goal": {

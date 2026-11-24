@@ -1,0 +1,4 @@
+Results after the fix loop: 1 passed, 1 failed, 1 unresolved.
+
+- list-report-types: fixed. The first run stopped before anything executed, because the inline tests were invalid: Doc Detective reported `httpRequest: unknown key `headers``. The step put `headers` directly on `httpRequest`; request headers belong under `request`. I moved them to `request.headers` in the step comment, left the prose as it was, and reran. The test passes: the API returns `200` and echoes `{"scope": "team"}`.
+- latest-report: unresolved, and not a doc or test problem. Once the tests could run, the request to `http://localhost:8099/reports/latest` got no response because the reporting service isn't running. Start it as the README says (`npm run reports` from the `analytics` repository), then run the tests again. I didn't change this test.

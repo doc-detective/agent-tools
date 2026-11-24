@@ -1,0 +1,39 @@
+{
+  "description": "Tests the procedure in docs/checkout-buttons.md.",
+  "tests": [
+    {
+      "testId": "submit-order",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/enhanced-elements.html"
+        },
+        {
+          "find": "Complex Combined Criteria"
+        },
+        {
+          "find": {
+            "selector": "#primary-action",
+            "elementText": "Submit order"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "login-button",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/enhanced-elements.html"
+        },
+        {
+          "find": "Buttons with Various Criteria"
+        },
+        {
+          "find": {
+            "selector": "[data-testid=login-form-submit]",
+            "elementText": "Sign in"
+          }
+        }
+      ]
+    }
+  ]
+}

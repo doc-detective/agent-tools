@@ -89,9 +89,9 @@ DD_REPO=<doc-detective checkout> DD_NODE_DIR=<node dir> \
 
 Each case is a small docs repo, one git commit, with one planted defect or condition. It might be a doc that's out of date, a test that's wrong, or an invalid spec field. It might be a service that's down, a test that skips by design, everything passing, or two failures with different causes. The session gets `/doc-detective:doc-detective-test <target> --fix`. Afterwards the grade diffs the workspace against the original and reruns the target with `doc-detective@5.6.3`, what `doc-detective@5` resolves to now. A `claude-haiku-4-5` judge reads the final report against the case's rubric, so the eval bills that model too, at about $0.02 a case.
 
-The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 and 8096 must stay free: the environment cases need nothing there.
+The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 to 8099 must stay free: the environment cases need nothing there.
 
-[test/cases.md](test/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/test/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $0.50 for all of them.
+[test/cases.md](test/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/test/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $1 for all of them.
 
 ## Run a subset
 

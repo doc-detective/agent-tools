@@ -1,0 +1,47 @@
+{
+  "description": "Tests docs/page-through-users.md. The second test also compares the response with the copy saved in snapshots/.",
+  "tests": [
+    {
+      "testId": "users-page-1",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users?page=1",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "page": "1"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "testId": "users-page-2",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users?page=2&per_page=6",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "page": "2",
+                "per_page": "6"
+              }
+            },
+            "path": "../snapshots/users-page-2.json",
+            "maxVariation": 0.1,
+            "overwrite": "false"
+          }
+        }
+      ]
+    }
+  ]
+}

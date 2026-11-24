@@ -1,0 +1,17 @@
+{
+  "kind": "test_wrong",
+  "target": "docs/support-email.md",
+  "hard": "The step that fails is the last `find`, and its text matches the doc. The mistake is one step earlier: the `type` step's keys misspell the address, and it passes because typing anything succeeds. Changing the `find` to the typo also passes.",
+  "editable": ["docs/support-email.md"],
+  "fix": ["preview-support-email"],
+  "after": { "preview-support-email": "PASS" },
+  "must_contain": ["\"keys\":\"support@example.com\"", "\"elementText\":\"support@example.com\""],
+  "must_not_contain": ["suport@"],
+  "must_mention": ["suport"],
+  "cause": "The report says the test was wrong, not the doc or the page. The failure showed at the last `find` step, but the cause is the `type` step before it, which entered `suport@example.com`, a typo for `support@example.com`, so the preview didn't show the address the doc gives. It says it corrected the `type` step's keys (not the `find`) and that the test passes on the rerun.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ preview-support-email: Couldn't find an element within `timeout` (5000 ms).\n\nThe preview next to the field never showed **support@example.com**, so the preview isn't updating as you type. This looks like a bug in the profile page; report it to the app team.",
+  "wrong": [
+    { "why": "changes the find to match the mistyped keys", "fails": "fixed", "replace": [{ "file": "docs/support-email.md", "from": "\"elementText\":\"support@example.com\"", "to": "\"elementText\":\"suport@example.com\"" }] },
+    { "why": "fixes the keys but also rewrites the prose", "fails": "right_file", "replace": [{ "file": "docs/support-email.md", "from": "\"keys\":\"suport@example.com\"", "to": "\"keys\":\"support@example.com\"" }, { "file": "docs/support-email.md", "from": "field, enter `support@example.com`.", "to": "field, type `support@example.com`." }] }
+  ]
+}
