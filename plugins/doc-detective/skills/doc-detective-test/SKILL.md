@@ -103,9 +103,9 @@ Fix tests only when the user set `--fix`. Without it, report each failing test w
 
 `--fix` repairs tests, not docs or the environment. Before you change anything, decide where each failure belongs:
 
-- **The test is wrong.** The test disagrees with its own doc, such as a typo, a wrong selector, or an expected value the doc doesn't state. Fix the test so it checks what the doc says.
-- **The doc is out of date.** The doc and its test agree, and the page doesn't. The product changed, or it regressed. Don't edit the doc or the test, even when a one-word change would make it pass. A test bent to match the page stops catching the stale doc. Report what the doc says, what the page shows, and the doc edit you propose, and ask before you make it.
-- **The environment is down.** A connection is refused or a server doesn't answer. Don't edit anything, and don't point the test at another host or port. Report which service is down, and how to start it when the repo's README or config says so.
+- **The test is wrong.** The test disagrees with its own doc. Examples are a typo, a wrong selector, a host or port the doc doesn't name, and an expected value the doc contradicts. Fix the test so it checks what the doc says. A value the doc doesn't state, such as a status code, is different. When the response breaks it, the product may be failing, so report it.
+- **The doc is out of date.** The doc and its test agree, and the page doesn't. The product changed, or it regressed. Don't edit the doc or the test, even when a one-word change would make it pass. A test bent to match the page stops catching the stale doc. Report what the doc says, what the page shows, and the doc edit you propose, and ask before you make it, even with `--auto-fix`.
+- **The environment is down.** A connection to the host and port the doc names is refused, or the server doesn't answer. Don't edit anything, and don't point the test at another host or port. Report which service is down, and how to start it when the repo's README or config says so.
 - **A test skipped by design.** A `runOn` that excludes this platform skips the test. That's not a failure, so don't change `runOn`.
 - **An invalid field.** Doc Detective exits `2` and names the field. Fix that field in the test, validate the spec again, and run it.
 
@@ -113,7 +113,7 @@ When one run has failures of different kinds, handle each one by its kind.
 
 The bundled fix tool analyzes a results file and proposes fixes with confidence scores: `node skills/doc-detective-test/scripts/fix-tests.js <results-file> --spec <spec-file> --dry-run`. It reads and writes JSON specs only, so apply a fix to a YAML spec by hand. Read [references/fix-failing-tests.md](references/fix-failing-tests.md) for its options, failure patterns, and confidence scoring.
 
-For each failing test, try fixes until the test passes or you reach `--max-fix-attempts`:
+For each test that failed because the test is wrong or has an invalid field, try fixes until the test passes or you reach `--max-fix-attempts`. Handle the other kinds as the list above says:
 
 - Analyze the failure, and propose a fix with a confidence score from 0 to 100. The score is how sure you are that the fix resolves the failure.
 - With `--auto-fix`, or with confidence at or above `--fix-threshold`, apply the fix to the spec. Otherwise follow the guardrail above. A fix the user declines still counts as an attempt.
