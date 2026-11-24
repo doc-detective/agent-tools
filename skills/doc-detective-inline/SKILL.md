@@ -172,7 +172,7 @@ When the user passed `--config <path>`, add `--config <path>` to the dry run too
 
 - **Exit `2` with `Invalid test specifications`** means Doc Detective rejected a step, and stderr names the field, such as ``httpRequest.response: unknown key `statusCode`.`` One rejected step stops every test in the file. Fix that field in the step's comment, and run the dry run again.
 - **Exit `0`** prints the plan. Check that it holds every test and step you injected. A missing step means its comment isn't where Doc Detective reads it, or its syntax is wrong for the file type.
-- **In preview mode,** don't write the source file. Write the injected result to a scratch folder outside the repository, with the same file name, and run the dry run there. When a test spans an include, copy the partials it includes too, at the same paths relative to the page, so the dry run resolves them.
+- **In preview mode,** don't write the source file. Write the injected result to a scratch folder outside the repository, with the same file name, and run the dry run there. When a test spans an include, copy its partials too. Keep their paths relative to the page, so the dry run resolves them.
 
 ## Done when
 
