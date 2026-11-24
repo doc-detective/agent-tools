@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "testId": "console-sign-in",
+      "steps": [
+        {
+          "goTo": "https://console.example.com"
+        },
+        {
+          "type": {
+            "keys": "ada@example.com",
+            "selector": "#email"
+          }
+        },
+        {
+          "click": "Continue"
+        },
+        {
+          "find": "Team overview"
+        }
+      ]
+    }
+  ]
+}

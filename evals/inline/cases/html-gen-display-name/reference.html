@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Change your display name</title>
+</head>
+<body>
+  <h1>Change your display name</h1>
+  <p>Your display name appears on comments and in the member list.</p>
+  <!-- test {"testId":"change-display-name"} -->
+  <ol>
+    <li>Open <a href="https://app.example.com/settings/profile">Profile settings</a>.</li>
+    <!-- step {"goTo":"https://app.example.com/settings/profile"} -->
+    <li>In the <strong>Display name</strong> field, type "Ada L.".</li>
+    <!-- step {"type":{"keys":"Ada L.","selector":"#display-name"}} -->
+    <li>Click <strong>Save changes</strong>.</li>
+    <!-- step {"click":"Save changes"} -->
+  </ol>
+  <p>A <strong>Profile updated</strong> banner confirms the change.</p>
+  <!-- step {"find":"Profile updated"} -->
+  <!-- test end -->
+  <p>To change your email address instead, see <a href="https://docs.example.com/email">Change your email</a>.</p>
+</body>
+</html>

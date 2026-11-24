@@ -1,0 +1,33 @@
+{
+  "tests": [
+    {
+      "testId": "home-page-tour",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "find": "Common HTML Elements"
+        },
+        {
+          "find": "Text Inputs"
+        },
+        {
+          "find": "Selection Elements"
+        },
+        {
+          "find": "Tables"
+        },
+        {
+          "find": "Simple Data Table"
+        },
+        {
+          "find": "Jane Smith"
+        },
+        {
+          "find": "Canada"
+        }
+      ]
+    }
+  ]
+}

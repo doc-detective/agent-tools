@@ -1,0 +1,25 @@
+---
+title: Check your docs for broken links
+---
+
+import { Callout } from '@/components'
+
+# Check your docs for broken links
+
+Run the link checker on every Markdown file under `docs`, at any depth:
+
+```bash
+npx markdown-link-check docs/**/*.md
+```
+
+The command prints `0 broken links` when every link resolves.
+
+<Callout type="info">
+In Bash, turn on `globstar` first. Without it, `**` matches one folder level.
+</Callout>
+
+Then list the top-level files it checked:
+
+```bash
+ls docs
+```

@@ -1,0 +1,24 @@
+{
+  "tests": [
+    {
+      "testId": "change-display-name",
+      "steps": [
+        {
+          "goTo": "https://app.example.com/settings/profile"
+        },
+        {
+          "type": {
+            "keys": "Ada L.",
+            "selector": "#display-name"
+          }
+        },
+        {
+          "click": "Save changes"
+        },
+        {
+          "find": "Profile updated"
+        }
+      ]
+    }
+  ]
+}

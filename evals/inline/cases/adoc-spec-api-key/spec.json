@@ -1,0 +1,48 @@
+{
+  "tests": [
+    {
+      "testId": "create-api-key",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "https://api.example.com/v1/keys",
+            "method": "post",
+            "request": {
+              "headers": {
+                "Authorization": "Bearer $TOKEN"
+              },
+              "body": {
+                "name": "ci"
+              }
+            },
+            "response": {
+              "required": [
+                "key"
+              ]
+            },
+            "statusCodes": [
+              201
+            ]
+          },
+          "variables": {
+            "KEY": "$$response.body.key"
+          }
+        },
+        {
+          "httpRequest": {
+            "url": "https://api.example.com/v1/reports",
+            "method": "get",
+            "request": {
+              "headers": {
+                "X-Api-Key": "$KEY"
+              }
+            },
+            "statusCodes": [
+              200
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

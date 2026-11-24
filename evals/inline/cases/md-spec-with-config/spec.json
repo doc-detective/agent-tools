@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "testId": "custom-pattern-flow",
+      "steps": [
+        {
+          "goTo": "https://example.com"
+        },
+        {
+          "click": "Submit"
+        },
+        {
+          "click": "Settings"
+        },
+        {
+          "find": "Success"
+        }
+      ]
+    }
+  ]
+}

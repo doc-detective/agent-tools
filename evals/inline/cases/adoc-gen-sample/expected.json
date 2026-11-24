@@ -1,0 +1,19 @@
+{
+  "steps": [
+    {
+      "stepType": "goTo",
+      "match": "https://example.com",
+      "note": "Open the application."
+    },
+    {
+      "stepType": "find",
+      "match": "Welcome",
+      "note": "Welcome shows on the landing page."
+    },
+    {
+      "stepType": "click",
+      "match": "Get Started",
+      "note": "Click Get Started."
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+= Create an API key
+
+You need an API key to call the reporting API.
+
+== Create the key
+
+Send a `POST` request to `https://api.example.com/v1/keys` with your token:
+
+[source,bash]
+----
+curl -X POST https://api.example.com/v1/keys \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"ci"}'
+----
+
+The response has status `201` and holds the new key in its `key` field.
+
+== Check the key
+
+List your reports with the new key:
+
+[source,bash]
+----
+curl https://api.example.com/v1/reports -H "X-Api-Key: $KEY"
+----
+
+The request returns status `200`.

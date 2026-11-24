@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "testId": "check-links",
+      "steps": [
+        {
+          "runShell": {
+            "command": "npx markdown-link-check docs/**/*.md",
+            "stdio": "0 broken links"
+          }
+        }
+      ]
+    },
+    {
+      "testId": "list-docs",
+      "steps": [
+        {
+          "runShell": "ls docs"
+        }
+      ]
+    }
+  ]
+}
