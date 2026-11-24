@@ -464,7 +464,7 @@ Validates structure before execution:
 /doc-detective-inline tests/spec.yaml docs/procedure.md --apply
 ```
 
-Takes a well-formed test specification and injects test steps as inline comments into the associated documentation content so you don't have to maintain separate files.
+Takes a well-formed test specification and injects test steps as inline comments into the associated documentation content so you don't have to maintain separate files. When you pass only the doc, it writes the tests first.
 
 ### Install the Doc Detective GitHub Action
 
@@ -538,7 +538,7 @@ The server activates automatically on install. It launches through `lsp/lsp-laun
 
 ## Inline Test Injection
 
-Inject test steps from separate spec files directly into documentation as inline comments:
+Inject test steps from a spec file directly into documentation as inline comments:
 
 ```bash
 /doc-detective-inline tests/login.yaml docs/login.md --apply
@@ -560,7 +560,11 @@ Inject test steps from separate spec files directly into documentation as inline
 <!-- step {"click":"Sign In"} -->
 ```
 
-Steps are matched to content using semantic patterns (links, bold text, action verbs) and placed close to their associated documentation.
+Each step comment goes after the text it tests. The skill looks first for a line with the URL the step opens or requests, or the text it types. Otherwise it looks for a pattern, such as a link, bold text, or an action verb. When the matching line is inside a code block, the comment goes after the block, so it doesn't become code. A step the skill can't place gets a `TODO: verify step placement` comment for you to check.
+
+Without a spec file, as in `/doc-detective-inline docs/login.md`, the skill writes the tests first. Each result the doc says the reader sees becomes a `find` step.
+
+After injecting, the skill checks the file with `npx doc-detective@5 --dry-run --input <file>`, which runs no steps. If Doc Detective rejects a step, the skill fixes it and checks again. Without `--apply`, the skill prints a diff, checks a copy in a scratch folder outside your repository, and leaves your file unchanged.
 
 ## Examples
 
