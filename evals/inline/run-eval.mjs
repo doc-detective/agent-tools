@@ -202,7 +202,10 @@ function parseArgs(argv) {
     else if (k === '--concurrency') a.concurrency = +val(++i);
     else if (k === '--timeout-s') a.timeoutS = +val(++i);
     else if (k === '--approve-harness') a.approveHarness = true;
-    else if (k === '--split') a.split = val(++i);
+    else if (k === '--split') {
+      a.split = val(++i);
+      if (!['train', 'val', 'test'].includes(a.split)) { eprint(`--split must be train, val, or test, got '${a.split}'`); usage(); process.exit(2); }
+    }
     else if (k === '-h' || k === '--help') { usage(); process.exit(0); }
     else { eprint(`unknown argument: ${k}`); usage(); process.exit(2); }
   }
@@ -450,7 +453,7 @@ async function main() {
   const tasks = [];
   // --split train|val|test runs only that split's cases, such as extra reps on test to tighten a CI.
   const only = args.split ? new Set((st[`${args.split}_ids`] ?? []).map(String)) : null;
-  if (only && !only.size) { eprint(`_state.json has no ${args.split}_ids`); process.exit(2); }
+  if (only && !cases.some(c => only.has(pathSafeId(c.id)))) { eprint(`_state.json ${args.split}_ids match no loaded case`); process.exit(2); }
   for (const c of cases) for (let rep = 0; rep < args.reps; rep++) {
     if (only && !only.has(pathSafeId(c.id))) continue;
     if (done.has(`${pathSafeId(c.id)}\0${rep}`)) continue;

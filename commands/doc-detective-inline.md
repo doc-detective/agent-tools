@@ -24,7 +24,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright.
 - `--syntax <format>`: Force the comment syntax: `json`, `yaml`, or `xml`.
 - `--config <path>`: Path to a Doc Detective config file.
 
-Without a spec file, build one for the source file first, as `/doc-detective-generate` describes, and validate it. Then inject that spec. Test every result the doc states, not only its actions. A sentence that says what the reader sees is a `find` step, even when the text is what the reader just typed, such as a note that appears as they type it.
+Without a spec file, build one for the source file first, as `/doc-detective-generate` describes, and validate it. Then inject that spec. Test every result the doc states, not only its actions. A sentence that says what the reader sees is a `find` step. That holds even for text the reader just typed, such as a note that appears as they type it.
 
 ## Guardrails
 
@@ -161,9 +161,11 @@ After you write the file, run Doc Detective's dry run on it. It runs nothing, an
 npx doc-detective@5 --dry-run --input <source-file>
 ```
 
+When the user passed `--config <path>`, add `--config <path>` to the dry run too, so the config's markup patterns and settings apply.
+
 - **Exit `2` with `Invalid test specifications`** means Doc Detective rejected a step, and stderr names the field, such as ``httpRequest.response: unknown key `statusCode`.`` One rejected step stops every test in the file. Fix that field in the step's comment, and run the dry run again.
 - **Exit `0`** prints the plan. Check that it holds every test and step you injected. A missing step means its comment isn't where Doc Detective reads it, or its syntax is wrong for the file type.
-- **In preview mode,** don't write the source file. Write the injected result to a scratch folder outside the repository, with the same file name, and run the dry run there.
+- **In preview mode,** don't write the source file. Write the injected result to a scratch folder outside the repository, with the same file name, and run the dry run there. When a test spans an include, copy the partials it includes too, at the same paths relative to the page, so the dry run resolves them.
 
 ## Done when
 
