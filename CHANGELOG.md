@@ -1,3 +1,10 @@
+## [3.1.0](https://github.com/doc-detective/agent-tools/compare/v3.0.0...v3.1.0) (2026-11-24)
+
+### Features
+
+* **skills:** inline checks with a dry run and tests stated results ([#112](https://github.com/doc-detective/agent-tools/issues/112)) ([0b0d831](https://github.com/doc-detective/agent-tools/commit/0b0d8316bb7ba9899405778402ea29f08d26a4b0))
+* **skills:** inline places requests after the text naming their URL ([#113](https://github.com/doc-detective/agent-tools/issues/113)) ([0fffed6](https://github.com/doc-detective/agent-tools/commit/0fffed6089a99fa8bf5daabfde04868ba0933514))
+
 ## [3.0.0](https://github.com/doc-detective/agent-tools/compare/v2.1.4...v3.0.0) (2026-11-23)
 
 ### ⚠ BREAKING CHANGES

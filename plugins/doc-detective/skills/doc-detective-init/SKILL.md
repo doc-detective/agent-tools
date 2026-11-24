@@ -2,7 +2,7 @@
 name: doc-detective-init
 description: 'Set up Doc Detective in a repository that does not use it yet. Finds the docs, writes a config, generates and runs the first tests, fixes failures, and offers CI. Use for adopting, initializing, or getting started with Doc Detective in a project. If the project already has Doc Detective, use doc-detective-test to run tests or doc-detective-generate to add a spec. Not for developing Doc Detective or this plugin.'
 metadata:
-  version: '3.0.0'
+  version: '3.1.0'
   organization: Doc Detective
   date: November 2026
   abstract: Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.

@@ -1,6 +1,6 @@
 {
   "name": "agent-tools",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "private": true,
   "repository": "github:doc-detective/agent-tools",
   "engines": {
