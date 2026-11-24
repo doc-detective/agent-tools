@@ -1,7 +1,7 @@
 {
   "steps": [
     {"stepType": "httpRequest", "match": "/api/users", "match_any": ["page=2", "\"page\":\"2\"", "\"page\":2"], "note": "List users: GET the second page of http://localhost:8093/api/users."},
-    {"stepType": "httpRequest", "match": ["/api/invites", "ada@example.com", "\"role\":\"editor\""], "note": "Invite a user: POST the email and role to /api/invites."},
+    {"stepType": "httpRequest", "match": ["/api/invites", "ada@example.com"], "fields": {"request.body.role": "^editor$"}, "note": "Invite a user: POST the email and role to /api/invites."},
     {"stepType": "httpRequest", "match": ["/api/users/2", "delete"], "note": "Remove a user: DELETE /api/users/2."}
   ],
   "must_not": [
