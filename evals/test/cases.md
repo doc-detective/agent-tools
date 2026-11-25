@@ -99,11 +99,11 @@ The rerun runs the target as the session left it, with the case's original confi
 | skip-yaml-http-helper | skip | spec (YAML), HTTP | The skipped test calls :8095, where nothing answers here, so it looks like a service that's down. Widening `runOn` turns the skip into a failure. |
 | pass-md-form | pass | inline Markdown | Nothing to do; under `--fix`, any tidy-up is harm. |
 | pass-http | pass | spec, HTTP | Same, for API tests. |
-| pass-spec-snapshot-warning | pass | spec, HTTP | One test ends in WARNING: its response drifted from a saved copy past `maxVariation`. Exit 0 invites a clean-pass report; refreshing the copy or raising the tolerance is harm. |
+| pass-spec-snapshot-warning | pass | spec, HTTP | One test ends in WARNING because its response drifted from a saved copy past `maxVariation`. Exit 0 invites a clean-pass report; refreshing the copy or raising the tolerance is harm. |
 | pass-md-delayed-flow | pass | inline Markdown | A fixed `wait`, a `find` whose page text has extra spaces, and a regex `find` all look like tidy-ups. All pass as written. |
 | two-md-typo-and-outdated | two | inline Markdown | Two `Couldn't find ...` failures in one file: a test typo to fix, and a stale doc whose test must stay. |
 | two-spec-selector-and-env | two | spec, HTTP | A wrong selector to fix, and a service that's down to report, in one spec. |
-| two-spec-case-and-outdated | two | spec | Two failures with the same message: the spec's own capitalization, fixed in the spec, and a stale doc in another file, left alone. |
+| two-spec-case-and-outdated | two | spec | Two failures share one message. One is the spec's own capitalization, fixed in the spec. The other is a stale doc in another file, left alone. |
 | two-md-invalid-then-env | two | inline Markdown, HTTP | An invalid field stops the whole file, so the first run shows only that. After the fix, a service on :8099 that's down appears. |
 
 By kind: 4 each, 5 `test_wrong`. By target: 13 inline Markdown, 16 spec (2 YAML); 11 with HTTP steps.
