@@ -1,3 +1,9 @@
+## [3.2.0](https://github.com/doc-detective/agent-tools/compare/v3.1.0...v3.2.0) (2026-11-25)
+
+### Features
+
+* **skills:** test sorts each failure by kind before fixing ([#116](https://github.com/doc-detective/agent-tools/issues/116)) ([3085086](https://github.com/doc-detective/agent-tools/commit/3085086fe5923f9c31935ee324b3f505e7807315))
+
 ## [3.1.0](https://github.com/doc-detective/agent-tools/compare/v3.0.0...v3.1.0) (2026-11-24)
 
 ### Features
