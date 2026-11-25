@@ -1,0 +1,58 @@
+{
+  "kind": "config",
+  "args": "--ci",
+  "hard": "The config is site/.doc-detective.yml: YAML with the `.yml` extension, one folder down, and no `input`, so Doc Detective tests the folder it runs in. `config: site/.doc-detective.yml` with no `working_directory` finds the file but tests the whole repository; `working_directory: site` with `config: site/.doc-detective.yml` names site/site/.doc-detective.yml.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": "site/.doc-detective.yml",
+    "input": [
+      "site"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests from `site/` with `site/.doc-detective.yml`. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "points `config` at the file from the root, so it tests the whole repository",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "          working_directory: site\n          config: .doc-detective.yml\n",
+          "to": "          config: site/.doc-detective.yml\n"
+        }
+      ]
+    },
+    {
+      "why": "repeats site/ in `config`, so it resolves to site/site/",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "config: .doc-detective.yml",
+          "to": "config: site/.doc-detective.yml"
+        }
+      ]
+    },
+    {
+      "why": "names `.doc-detective.json`, which doesn't exist",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "config: .doc-detective.yml",
+          "to": "config: .doc-detective.json"
+        }
+      ]
+    }
+  ]
+}

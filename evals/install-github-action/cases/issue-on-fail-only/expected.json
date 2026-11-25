@@ -1,0 +1,71 @@
+{
+  "kind": "feature",
+  "args": "--ci --create-issue-on-fail",
+  "hard": "Issue creation alone needs `issues: write` and nothing more. Every skill example that opens issues also sets `issue_mentions` or other write scopes, and no integration was asked for. The trigger stays the default, pull_request.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "permissions": [
+      {
+        "contents": "read",
+        "issues": "write"
+      }
+    ],
+    "with": {
+      "create_issue_on_fail": true
+    },
+    "without": [
+      "issue_mentions",
+      "integrations"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests and opens a GitHub issue when tests fail, and that opening issues needs the `issues: write` permission. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on pull requests. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "grants `contents: write`, which issue creation doesn't need",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  contents: read\n",
+          "to": "  contents: write\n"
+        }
+      ]
+    },
+    {
+      "why": "leaves out `issues: write`",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  issues: write\n",
+          "to": ""
+        }
+      ]
+    },
+    {
+      "why": "mentions an integration nobody asked for",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "          create_issue_on_fail: true\n",
+          "to": "          create_issue_on_fail: true\n          issue_mentions: claude\n"
+        }
+      ]
+    }
+  ]
+}

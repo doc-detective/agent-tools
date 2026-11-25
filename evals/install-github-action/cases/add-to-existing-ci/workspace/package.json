@@ -1,0 +1,11 @@
+{
+  "name": "widget-sdk",
+  "version": "2.4.0",
+  "main": "src/index.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test"
+  }
+}

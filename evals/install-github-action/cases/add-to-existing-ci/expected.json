@@ -1,0 +1,48 @@
+{
+  "kind": "existing",
+  "args": "--ci Add Doc Detective to our CI.",
+  "hard": "The user said \"our CI\", and ci.yml already runs on pull requests, so adding a job there reads as what they asked. That changes a file the skill should leave alone, and ci.yml pins Node.js 20, which Doc Detective 5 can't use.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added Doc Detective as a new, separate workflow under `.github/workflows/` that runs on pull requests, and that it left the existing `ci.yml` unchanged. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added a `doc-detective` job to `.github/workflows/ci.yml`, so Doc Detective runs with your SDK tests on every pull request. Commit and push it, and confirm that GitHub Actions is enabled for the repository.",
+  "wrong": [
+    {
+      "why": "adds a Doc Detective job to ci.yml instead of a new workflow",
+      "fails": "no_harm",
+      "base": "original",
+      "replace": [
+        {
+          "file": ".github/workflows/ci.yml",
+          "from": "      - run: npm test\n",
+          "to": "      - run: npm test\n\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+        }
+      ]
+    },
+    {
+      "why": "copies ci.yml's Node.js 20",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "node-version: 24",
+          "to": "node-version: 20"
+        }
+      ]
+    }
+  ]
+}

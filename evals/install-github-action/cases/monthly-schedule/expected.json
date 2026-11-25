@@ -1,0 +1,61 @@
+{
+  "kind": "trigger",
+  "args": "--ci --trigger schedule Run it at 3:15 AM UTC on the first day of every month.",
+  "hard": "`--trigger schedule` points at the skill's suggested `0 6 * * 1`, Monday mornings, but the words ask for a monthly run at 3:15 UTC: `15 3 1 * *`, with the minute before the hour.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "schedule": {
+        "minute": "15",
+        "hour": "3",
+        "dom": "1",
+        "month": "*",
+        "dow": "*"
+      }
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective at 3:15 AM UTC on the first day of every month. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective every Monday at 6 AM UTC. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "keeps the skill's weekly default",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "cron: '15 3 1 * *'",
+          "to": "cron: '0 6 * * 1'"
+        }
+      ]
+    },
+    {
+      "why": "swaps the minute and hour fields",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "cron: '15 3 1 * *'",
+          "to": "cron: '3 15 1 * *'"
+        }
+      ]
+    },
+    {
+      "why": "writes `schedule` as a bare event with no `cron` list",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  schedule:\n    - cron: '15 3 1 * *'\n",
+          "to": "  schedule:\n"
+        }
+      ]
+    }
+  ]
+}

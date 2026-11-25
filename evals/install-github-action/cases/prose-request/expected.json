@@ -1,0 +1,87 @@
+{
+  "kind": "feature",
+  "args": "Set up Doc Detective in GitHub Actions so it runs whenever someone pushes to main or opens a pull request. If the tests fail, open an issue and tag Claude on it. Go ahead and write the workflow without asking me first.",
+  "hard": "No flags: two triggers, issue creation, and a mention all come in prose. \"Tag Claude\" maps to `issue_mentions: claude`, not the deprecated `integrations` input the skill's `--integrations` flag is named after, and \"pushes to main\" limits `push` to `main`.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "push": {
+        "branches": [
+          "main"
+        ]
+      },
+      "pull_request": {}
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "permissions": [
+      {
+        "contents": "read",
+        "issues": "write"
+      }
+    ],
+    "with": {
+      "create_issue_on_fail": true,
+      "issue_mentions": [
+        "claude"
+      ]
+    },
+    "without": [
+      "integrations",
+      "prompt"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pushes to `main` and on pull requests, and that opens a GitHub issue mentioning Claude when tests fail. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on pull requests. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "uses the deprecated `integrations` input",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "issue_mentions: claude",
+          "to": "integrations: claude"
+        }
+      ]
+    },
+    {
+      "why": "runs on pushes to every branch",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  push:\n    branches: [main]\n",
+          "to": "  push:\n"
+        }
+      ]
+    },
+    {
+      "why": "drops the pull_request trigger",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  pull_request:\n",
+          "to": ""
+        }
+      ]
+    },
+    {
+      "why": "leaves out `issues: write`",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  issues: write\n",
+          "to": ""
+        }
+      ]
+    }
+  ]
+}

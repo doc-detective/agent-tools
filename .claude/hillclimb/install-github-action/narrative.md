@@ -3,6 +3,7 @@
 | 0 | baseline | 0.079 | 0.095 | 0.303 | 1.000 | 23 | $8.16 | $8.16 |
 | 1 (kept) | Tell the user to commit and push, and start a local server before the action | 0.921 | 0.968 | 0.970 | 1.000 | 25 | $9.02 | $17.18 |
 | 2 (not kept) | Name each setup step by its command in the report | 0.889 | 0.937 | 1.000 | 1.000 | 28 | $8.90 | $26.08 |
+| 1c | Round 1 on 8 added train cases | - | - | 1.000 (new 8) | 1.000 (new 8) | 25 | $2.13 | $28.21 |
 
 The baseline runs `/doc-detective-install-github-action` as the skill stands at 3.2.0, on 32 cases at 3 reps. All 96 sessions finished, at 23 seconds each. Sessions cost $7.79 and the judge about $0.37.
 
@@ -23,3 +24,7 @@ Five runs still fail. On train, one `dev-server` report didn't say the workflow 
 Round 2 targeted the last train failure, the `dev-server` report that didn't name `npm run dev`. The report now names each step that runs before the action by its command. Train reached 1.000, but held-out `complete` moved 0.921 to 0.889 (-0.032 ±0.077), inside the noise. That was one run each of `ios-macos` and `nvmrc-node20`, so the round isn't kept, and the skill stays at round 1.
 
 The climb stops here. With train at 1.000, no train failure is left to diagnose, and the held-out failures can't steer a round without leaking the test set. Further rounds need new train cases first, written the way the held-out ones were.
+
+To give the climb more train signal, eight train cases were added after round 2, written without seeing any scores: a YAML config in a subfolder, issue creation alone, a monthly cron asked for in words, an app served by `npm start` on :8080, a Python-served static site, a request in prose with no flags, an existing CI workflow to leave alone, and an interactive schedule request that must ask first. The grader also stopped counting Doc Detective's own results files against `no_harm`, which fixes the `run-locally-route` miss. Row 1c is the round 1 skill on the new cases, at 3 reps.
+
+All 24 runs passed every metric. The round 1 skill handles setups it wasn't written against, such as `npm start` on another port and a Python server, so the new cases give no failure to diagnose either. The climb stays at round 1. It's a plateau now, not just an empty train set.

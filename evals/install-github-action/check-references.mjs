@@ -74,6 +74,17 @@ assert.deepEqual(lintless(minimal), []);
 assert.match(lintless(minimal.replace('pull_request', 'pull-request')).join(), /isn't a GitHub Actions event/);
 assert.match(lintless(`${minimal}        with:\n          issue_mentions: [claude]\n`).join(), /must be a string/);
 assert.match(lintless(`${minimal}        with:\n          prompt: hi\n`).join(), /deprecated/);
+// A session that runs the tests locally leaves Doc Detective's results; they aren't its edits.
+{
+  const c = { id: 'results-output', files: { 'README.md': '# Docs\n' }, expected: {} };
+  const ws = makeWorkspace(c, {
+    'results.json': '{}',
+    'testResults-1764000000000.json': JSON.stringify({ summary: {}, specs: [] }),
+    '.doc-detective/runs/1/step.png': 'x',
+    'notes.md': '# Notes\n',
+  });
+  try { assert.deepEqual(collect(c, ws).changed, [{ path: 'notes.md', status: 'added' }]); } finally { removeWorkspace(ws); }
+}
 
 const cases = await loadCases();
 let bad = 0, i = 0;

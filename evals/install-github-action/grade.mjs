@@ -76,8 +76,14 @@ export function makeWorkspace(c, overlay = {}) {
   } catch (e) { removeWorkspace(ws); throw e; }
 }
 
-// A session that runs Doc Detective anyway leaves run files; they aren't the session's edits.
+// A session that runs Doc Detective anyway leaves run files and a results file; they aren't the
+// session's edits. As in evals/test/grade.mjs, a results file is JSON with `specs` and `summary`,
+// or a results-named JSON, since a run that stops early writes one without specs.
 const SKIP_DIRS = new Set(['.git', 'node_modules', '.npm-global', '.doc-detective']);
+const isResults = (p, text) => {
+  if (/(^|\/)(?:test)?results[\w.-]*\.json$/i.test(p)) return true;
+  try { const j = JSON.parse(text); return Array.isArray(j?.specs) && !!j?.summary; } catch { return false; }
+};
 
 /** Files the session modified, deleted, or added as { path, status }, and every file's text afterwards. */
 export function collect(c, ws) {
@@ -88,7 +94,7 @@ export function collect(c, ws) {
     else if (nl(now) !== nl(text)) changed.push({ path: p, status: 'modified' });
   }
   for (const p of walk(ws, (rel, n) => n.isDirectory() && SKIP_DIRS.has(n.name)))
-    if (!(p in c.files)) changed.push({ path: p, status: 'added' });
+    if (!(p in c.files) && !isResults(p, readOr(join(ws, p), ''))) changed.push({ path: p, status: 'added' });
   const files = { ...c.files };
   for (const x of changed) {
     if (x.status === 'deleted') delete files[x.path];

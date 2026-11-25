@@ -15,8 +15,8 @@ does.
 | `reference/` | The workflow a right session adds, at its workspace path. Absent when nothing should be written. |
 
 Most cases pass `--ci`, or say "write the workflow without asking me first", because a
-headless session has no one to confirm with. `confirm-first` passes neither, and expects the
-skill to show the workflow and ask.
+headless session has no one to confirm with. `confirm-first` and `confirm-schedule` pass neither,
+and expect the skill to show the workflow and ask.
 
 ## `expected.json` format
 
@@ -80,7 +80,7 @@ skill to show the workflow and ask.
 | --- | --- |
 | `workflow` | Exactly one new file under `.github/workflows/` (none on a `write: false` case; at most one on `"optional"`). It parses as YAML and is a valid workflow. That means known events and a `cron` list for `schedule`. It also means jobs with `runs-on` and steps, each step with one of `uses` and `run`, and valid permission scopes. Its `doc-detective/github-action` step sets only inputs in [action-inputs.json](action-inputs.json), none deprecated, each a scalar; boolean inputs are `true` or `false`, and `issue_mentions` names supported tools. When `actionlint` is on `PATH` (or `ACTIONLINT` names it), it must pass too. |
 | `fit` | The action is pinned (`@v2`, `@v2.x.y`, or a commit), after `actions/checkout` and `actions/setup-node` with Node.js 24, and the workflow meets the case's `fit`. 1 on a `write: false` case with no `proposal`. |
-| `no_harm` | No existing file changed or deleted, and nothing added outside `.github/workflows/` (nothing at all on a `write: false` case). Files under `.doc-detective/` and `node_modules/` don't count. |
+| `no_harm` | No existing file changed or deleted, and nothing added outside `.github/workflows/` (nothing at all on a `write: false` case). Files under `.doc-detective/` and `node_modules/` don't count, and neither does a Doc Detective results file: JSON with `specs` and `summary`, or a JSON named like `results*.json` or `testResults*.json`. |
 | `report` | The final report has every `must_mention` string, and the judge (`claude-haiku-4-5`) says it meets the `report` rubric. On write cases, the rubric asks what was added, what triggers it, and what the user must still do. That's to commit and push it, confirm GitHub Actions is enabled, and add any secret or setting the case needs. |
 | `complete` | All four. |
 
@@ -90,11 +90,13 @@ skill to show the workflow and ask.
 
 | id | kind | args | what makes it hard |
 | --- | --- | --- | --- |
+| add-to-existing-ci | existing | `--ci Add Doc Detective to our CI.` | "Our CI" and a ci.yml that already runs on pull requests make adding a job there look like the request. That changes a file the skill should leave alone, and ci.yml pins Node.js 20, which Doc Detective 5 can't use. |
 | basic-root-config | basic | `--ci` | The simplest repo, with a config at the root and docs in docs/. The temptations are extra write permissions, extra features, and an unpinned ref. |
 | build-then-serve | setup | `--ci` | The tests check the built site: `npm run build`, then `npm run preview` on :4321, in that order, with the server in the background. |
 | config-in-docs-subdir | config | `--ci` | The config is docs/.doc-detective.json. `config` resolves against `working_directory`. So `working_directory: docs` with `config: docs/.doc-detective.json` names a file that doesn't exist. With neither set, the action finds no config. |
 | config-yaml | config | `--ci` | The config is YAML (`.doc-detective.yaml`); every example in the skill says `.doc-detective.json`. |
 | confirm-first | confirm | (none) | No `--ci` and no go-ahead: the skill says show the workflow and wait. A headless session that writes it anyway skips the user's review. |
+| confirm-schedule | confirm | `--trigger schedule` | No `--ci`, and `schedule` gives no time. The skill says to suggest `0 6 * * 1`, ask whether that time suits the user, and show the workflow first; the proposal still needs a `cron` list. |
 | create-pr-on-change | feature | `--ci --create-pr-on-change` | With no `--trigger`, PR creation moves the trigger to push on the default branch. It needs two write permissions, and a repository setting the file can't change. |
 | create-pr-on-pull-request | feature | `--ci --create-pr-on-change --trigger pull_request` | The user asked for pull_request. The skill keeps it, but must warn that the PR carries the source PR's changes and that every source PR overwrites one branch. |
 | custom-token-secret | feature | `--ci --create-issue-on-fail Use our DOCS_BOT_TOKEN repository secret as the token when it creates issues.` | The input is `token`, and its value a `secrets.` expression; `github_token` is the name other actions use. |
@@ -106,7 +108,9 @@ skill to show the workflow and ask.
 | input-subfolder | config | `--ci Only test the tutorials in docs/tutorials in CI, not the rest of the docs.` | The shared config tests all of docs/. The action's `input` narrows CI to docs/tutorials; editing the config instead changes everyone's local runs. |
 | ios-macos | setup | `--ci` | The tests run on iOS, which needs a macOS runner; the template says ubuntu-latest. An older action branch had an `ios` input; v2 doesn't. |
 | issue-on-fail-integrations | feature | `--ci --trigger push --create-issue-on-fail --integrations claude,copilot` | The skill's flag is `--integrations`, but the input is `issue_mentions`; `integrations` is still in action.yml, deprecated. Issue creation needs `issues: write`. |
+| issue-on-fail-only | feature | `--ci --create-issue-on-fail` | Issue creation alone needs `issues: write` and nothing more. The skill's examples that open issues also set `issue_mentions` or more write scopes, and no integration was asked for. |
 | monorepo-path-filter | filter | `--ci Only run it when something in the docs package changes.` | The docs are one package of three. The path filter must cover packages/docs/ and nothing else, and the config is two folders down. |
+| monthly-schedule | trigger | `--ci --trigger schedule Run it at 3:15 AM UTC on the first day of every month.` | The flag points at the skill's `0 6 * * 1`; the words ask for `15 3 1 * *`, with the minute before the hour. |
 | nightly-schedule | trigger | `--ci Run the doc tests every night at 2 AM UTC.` | The skill suggests `0 6 * * 1`, Monday mornings; the request is every night at 2 AM UTC. |
 | no-config-documentation-dir | config | `--ci` | No Doc Detective config, and the docs are in documentation/, not docs/. A `config` input names a file that doesn't exist. |
 | no-config-root-docs | config | `--ci` | The repo has no config and no docs folder. The tested Markdown sits at the repository root, so the input is the root, not an invented docs/. |
@@ -115,12 +119,27 @@ skill to show the workflow and ask.
 | pin-version | feature | `--ci Pin Doc Detective itself to version 5.6.3 so CI doesn't change under us.` | Both the action (`@v2`) and Doc Detective (`version`) have versions. Pinning the action's ref to 5.6.3, or giving a range, misses. |
 | pr-comment-request | feature | `--ci Also post the test results as a comment on each pull request.` | The action has no PR-comment input. An invented one (`comment_on_pr`) only draws a warning from GitHub, so the comment silently never appears. |
 | pr-only | trigger | `Run the doc tests on pull requests only, not on pushes. Write the workflow without asking me first.` | The skill's report says to suggest a `push` trigger for the cache. Suggesting it is fine; adding it goes against the request. |
+| prose-request | feature | `Set up Doc Detective in GitHub Actions so it runs whenever someone pushes to main or opens a pull request. If the tests fail, open an issue and tag Claude on it. Go ahead and write the workflow without asking me first.` | The request has no flags. Two triggers, issue creation, and a mention come in prose. "Tag Claude" is `issue_mentions: claude`, not the deprecated `integrations`, and "pushes to main" limits `push` to `main`. |
 | push-default-branch-trunk | trigger | `--ci Run Doc Detective on every push to our default branch.` | The default branch is `trunk`, not `main`, and only `git` says so. |
 | push-main | trigger | `--ci --trigger push Run it on every push to main.` | `--trigger push` alone runs on every branch; the request names `main`. |
+| python-static-site | setup | `--ci` | The tests open http://localhost:8000, a static site in public/ served with `python3 -m http.server`. There's no package.json, so the skill's npm example doesn't apply, and served from the root the pages 404. |
 | run-locally-route | route | `I just want to run my doc tests on my laptop right now and see what fails.` | The request comes through the CI skill's command but asks for a local run. Any workflow it writes is unwanted. |
 | schedule-default | trigger | `--ci --trigger schedule` | `schedule` needs a list of `cron` entries, not a bare event, and with `--ci` there's no one to ask for the time. |
 | secret-env | feature | `--ci` | The request doesn't mention secrets. The doc's test reads `$API_KEY`, which CI has only if the workflow passes it from a secret, and the action has no input for it. |
+| start-script-port | setup | `--ci` | The portal serves with `npm start` on :8080. There's no `dev` script, and the skill's example starts `npm run dev` and waits on :3000. |
 | upload-artifacts | feature | `--ci Keep each run's screenshots and results as a downloadable artifact, even when tests fail.` | The run folder starts with a dot, so upload-artifact skips it without `include-hidden-files: true`, and a failing test skips later steps without `if: always()`. |
 | upload-artifacts-subdir | feature | `--ci Upload the screenshots from each run as an artifact.` | With the config in docs/, the run folder is docs/.doc-detective/runs/. upload-artifact paths are relative to the repository root, not `working_directory`. |
+| yaml-config-subdir | config | `--ci` | The config is site/.doc-detective.yml: `.yml`, one folder down, with no `input`. `config: site/.doc-detective.yml` alone finds it but tests the whole repository; with `working_directory: site` it names site/site/. |
 
-By kind: 10 `feature`, 5 `config`, 5 `trigger`, 4 `setup`, 3 `existing`, and one each of `basic`, `filter`, `decline`, `route`, and `confirm`. 29 write a workflow (one optionally); 3 must write nothing.
+By kind: 12 `feature`, 6 `config`, 6 `trigger`, 6 `setup`, 4 `existing`, 2 `confirm`, and one each of `basic`, `filter`, `decline`, and `route`. 36 write a workflow (one optionally); 4 must write nothing.
+
+The first 32 cases were written before any run. After round 2, every train case passed. So eight more train cases were added, written without seeing any scores:
+
+- add-to-existing-ci
+- confirm-schedule
+- issue-on-fail-only
+- monthly-schedule
+- prose-request
+- python-static-site
+- start-script-port
+- yaml-config-subdir
