@@ -38,8 +38,9 @@ const WIN = process.platform === 'win32';
 /**
  * A model session's environment: toolEnv's PATH with a pinned `doc-detective` first, and an
  * npm prefix of the workspace's own, so a global install stays in the workspace. Without the
- * pin, a bare `doc-detective` (or `npx doc-detective`, which takes a PATH bin first) runs
- * whatever global install the machine has, not the version the grade reruns with.
+ * pin, a bare `doc-detective` runs whatever global install the machine has, not the version
+ * the grade reruns with. `npx doc-detective` takes a local install first, then this PATH bin;
+ * no case workspace has a local install.
  */
 export function sessionEnv(ws) {
   const bin = join(tmpdir(), `dd-eval-bin-${DD_VERSION}`);
