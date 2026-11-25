@@ -21,7 +21,7 @@
   "must_mention": [
     "write-a-note"
   ],
-  "report": "The report says it set up Doc Detective: it created a Doc Detective config and generated tests for docs/write-a-note.md and docs/preview-a-message.md, and both passed. It doesn't claim a failure.",
+  "report": "The report says it set up Doc Detective: it created a Doc Detective config and generated tests for docs/write-a-note.md and docs/preview-a-message.md, and both passed. It doesn't report a test as still failing. A test that failed once and passed after a fix to the test is fine.",
   "wrong_report": "I created `.doc-detective.json` and specs for docs/write-a-note.md and docs/preview-a-message.md.\n\nResults: 1 passed, 1 failed. preview-a-message failed: Couldn't find element `Reveal by text`. Needs manual review.",
   "wrong": [
     {
