@@ -1,0 +1,30 @@
+{
+  "description": "Tests docs/subscribe-to-updates.md.",
+  "tests": [
+    {
+      "testId": "sign-up",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/index.html"
+        },
+        {
+          "find": "Common HTML Elements"
+        },
+        {
+          "type": {
+            "keys": "grace@example.com",
+            "selector": "#email-input"
+          }
+        },
+        {
+          "click": {
+            "selector": "#radio3"
+          }
+        },
+        {
+          "click": "Standard Button"
+        }
+      ]
+    }
+  ]
+}

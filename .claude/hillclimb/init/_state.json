@@ -74,7 +74,15 @@
     "stale-button",
     "existing-inline",
     "existing-workflow-offer",
-    "ci-text"
+    "ci-text",
+    "stale-moved-page",
+    "stale-api-status",
+    "rst-docs",
+    "exclude-reference-page",
+    "existing-yml-inline",
+    "ci-flag-no-remote",
+    "env-down-auto-fix",
+    "ci-words-actions"
   ],
   "test_ids": [
     "mixed-md-mdx",

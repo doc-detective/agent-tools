@@ -1,0 +1,50 @@
+{
+  "kind": "layout",
+  "hard": "The docs are reStructuredText for Sphinx, with `#.` auto-numbered steps and a `README.rst`, so there's no Markdown at all. The prompt asks to \"set up CI\" without naming GitHub Actions or Doc Detective's action.",
+  "args": "Then set up CI so the docs tests run on every pull request.",
+  "ci": "asked",
+  "procedures": [
+    {
+      "doc": "docs/write-a-note.rst",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    },
+    {
+      "doc": "docs/preview-a-message.rst",
+      "match": [
+        "click-shorthand",
+        "reveal by text"
+      ]
+    }
+  ],
+  "must_mention": [
+    "preview-a-message"
+  ],
+  "report": "The report says it created a Doc Detective config and generated tests for the reStructuredText pages docs/write-a-note.rst and docs/preview-a-message.rst, and both passed.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/write-a-note-spec.json` tests docs/write-a-note.rst; `doc-detective-tests/preview-a-message-spec.json` tests docs/preview-a-message.rst.\n\nResults: 2 passed, 0 failed.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "doesn't write the CI workflow it was asked for",
+      "fails": "ci",
+      "delete": [
+        ".github/workflows/doc-detective.yml"
+      ]
+    },
+    {
+      "why": "tests only one of the two pages",
+      "fails": "tests",
+      "delete": [
+        "doc-detective-tests/write-a-note-spec.json"
+      ]
+    },
+    {
+      "why": "sets up CI with a hand-written npx job instead of the Doc Detective GitHub Action",
+      "fails": "ci",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Docs tests\n\non:\n  pull_request:\n\njobs:\n  docs:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - run: npx doc-detective\n"
+      }
+    }
+  ]
+}

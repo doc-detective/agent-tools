@@ -1,0 +1,25 @@
+{
+  "description": "Tests docs/guides/add-a-task.md.",
+  "tests": [
+    {
+      "testId": "type-a-task",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/type-echo.html"
+        },
+        {
+          "type": {
+            "keys": "buy milk",
+            "selector": "#type-input"
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo",
+            "elementText": "buy milk"
+          }
+        }
+      ]
+    }
+  ]
+}

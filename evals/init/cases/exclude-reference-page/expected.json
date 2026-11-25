@@ -1,0 +1,95 @@
+{
+  "kind": "exclude",
+  "hard": "docs/reference/pages.md sits in the docs folder, is hand-written, and lists four page URLs, so it looks testable. It's a lookup table with no steps; checking its links isn't a procedure test. The one guide beside it is.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/guides/add-a-task.md",
+      "match": [
+        "type-echo",
+        "buy milk"
+      ]
+    }
+  ],
+  "exclude": [
+    {
+      "doc": "docs/reference/pages.md",
+      "match": [
+        "find-regex"
+      ]
+    },
+    {
+      "doc": "docs/reference/pages.md",
+      "match": [
+        "multi-tab"
+      ]
+    },
+    {
+      "doc": "docs/reference/pages.md",
+      "match": [
+        "drag-drop-test"
+      ]
+    }
+  ],
+  "must_mention": [
+    "add-a-task"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for docs/guides/add-a-task.md, which passed. It doesn't say it tested docs/reference/pages.md or its links.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/add-a-task-spec.json` tests docs/guides/add-a-task.md; `doc-detective-tests/pages-spec.json` checks each address in docs/reference/pages.md.\n\nResults: 2 passed, 0 failed. Every link in the page reference answers.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "checks the reference page's links",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/pages-spec.json": {
+          "description": "Tests docs/reference/pages.md.",
+          "tests": [
+            {
+              "testId": "page-reference-links",
+              "steps": [
+                {
+                  "checkLink": "http://localhost:8092/type-echo.html"
+                },
+                {
+                  "checkLink": "http://localhost:8092/find-regex.html"
+                },
+                {
+                  "checkLink": "http://localhost:8092/multi-tab.html"
+                },
+                {
+                  "checkLink": "http://localhost:8092/drag-drop-test.html"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "why": "opens one page from the reference table",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/pages-spec.json": {
+          "description": "Tests docs/reference/pages.md.",
+          "tests": [
+            {
+              "testId": "open-tabs",
+              "steps": [
+                {
+                  "goTo": "http://localhost:8092/multi-tab.html"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "why": "writes a CI workflow nobody asked for",
+      "fails": "ci",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Doc Detective\n\non:\n  pull_request:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "description": "Tests docs/look-up-an-order.md.",
+  "tests": [
+    {
+      "testId": "look-up-an-order",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/orders?id=A-1042",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "id": "A-1042"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
