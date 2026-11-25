@@ -1,0 +1,11 @@
+{
+  "name": "widget-site",
+  "private": true,
+  "scripts": {
+    "build": "astro build",
+    "preview": "astro preview --port 4321"
+  },
+  "devDependencies": {
+    "astro": "^5.0.0"
+  }
+}

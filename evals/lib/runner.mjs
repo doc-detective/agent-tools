@@ -1,26 +1,13 @@
-// Shared harness for the hillclimb eval runners. An eval's run-eval.mjs supplies the hooks
-// (loadEvalModules, loadCases, runCase, gradeCase, perfFrom) and calls runEval(hooks); this
-// file owns the CLI, resume, the harness-sha gate, retries, ceilings, and the output files.
+// The hillclimb runner harness, shared: CLI, resume, harness-sha gate, backoff, wall-clock
+// ceiling, served-model check, crash-safe rows. An eval's run-eval.mjs supplies the hooks
+// and calls runEval(). The test, init, and
+// install-github-action evals use it; routing, spec-generation, and inline keep their own
+// copies so their approved harness shas stay valid.
 //
-// Structural properties this encodes (so you don't have to remember them):
-//   - parameterized by --variant / --model / --reps (no hardcoded A/B pair)
-//   - rep-aware filenames + resume (traces/<id>_rep<k>.json)
-//   - reads _state.json, never writes it (loop state belongs to the orchestrator) - 
-//     the ONE exception is --approve-harness recording `harness_sha` (see below)
-//   - refuses to run when the harness (this file + _state.json.harness_paths) has
-//     changed since the sha a human last approved with --approve-harness, so a
-//     round that edits the runner cannot execute unreviewed under a standing
-//     session allowlist
-//   - pairwise graders judge against frozen baseline/ref/<id>.* on disk
-//   - writes rows as cases complete (crash-safe)
-//   - jittered exponential backoff on transient 429/overloaded/5xx errors
-//   - hard per-case wall-clock ceiling (--timeout-s; stream keepalives don't reset it)
-//   - served-model assertion (response model must match --model; documented alias->snapshot
-//     shapes tolerated: 'foo-latest'/'foo-0'/'foo' -> 'foo-20250101' / 'foo@20250101' / 'foo-2025-01-01')
-//   - failed attempts land in errors.jsonl with a failure class and, when the call
-//     completed, the billed model/usage (never in results.jsonl)
-//   - row ids, trace filenames, and frozen refs share one path-safe id
-//     (original id kept in meta.original_id when sanitization changed it)
+//   node evals/<eval>/run-eval.mjs --flow .claude/hillclimb/<eval> --variant baseline --model claude-sonnet-5-5
+//
+// Hooks: { runnerFile, loadEvalModules, loadCases, runCase, gradeCase, perfFrom }.
+// runnerFile (the eval's run-eval.mjs) is hashed with this file by the harness gate.
 
 import { createHash } from 'node:crypto';
 import { closeSync, constants as FS, existsSync, fstatSync, ftruncateSync, lstatSync, mkdirSync, openSync, readFileSync, realpathSync, writeFileSync, writeSync } from 'node:fs';
@@ -131,6 +118,9 @@ function mkdirNoFollow(dir) {
 // the same list so a suffixed ref never gets an extensionless shadow.
 const REF_EXTS = ['', '.html', '.txt', '.json'];
 
+// Set by runEval().
+let H;
+
 // --- harness (you usually won't need to touch below this line) --------------
 
 function parseArgs(argv) {
@@ -196,21 +186,21 @@ function usage() {
 // grants the runner command (scope it to this exact command line, not a
 // prefix). Installed dependencies beyond the lockfile are outside the digest.
 function checkHarness(statePath, st, approve) {
-  const self = fileURLToPath(import.meta.url);
-  // The eval's own run-eval.mjs, which holds its hooks, is harness too.
-  const entry = resolve(process.argv[1]);
+  // This file and the eval's runner are both always hashed.
+  const runner = resolve(H.runnerFile);
+  const own = [fileURLToPath(import.meta.url), runner];
   const listed = Array.isArray(st.harness_paths) ? st.harness_paths.map(String) : [];
-  const lockfiles = [...new Set([dirname(self), process.cwd()].flatMap(d =>
+  const lockfiles = [...new Set([dirname(runner), process.cwd()].flatMap(d =>
     ['package-lock.json', 'bun.lock', 'bun.lockb', 'yarn.lock', 'pnpm-lock.yaml'].map(f => join(d, f))))]
     .filter(f => existsSync(f));
-  const paths = [...new Set([self, entry, ...lockfiles, ...listed.map(p => resolve(p))])].sort();
+  const paths = [...new Set([...own, ...lockfiles, ...listed.map(p => resolve(p))])].sort();
   const h = createHash('sha256');
   const hashed = [];
   for (const p of paths) {
     let buf;
     try { buf = readFileSync(p); }
     catch (e) {
-      if (p === self || p === entry) throw e;
+      if (own.includes(p)) throw e;
       eprint(`warning: harness path '${relative(process.cwd(), p)}' not readable (${e?.code || 'error'}) - skipped`);
       continue;
     }
@@ -300,7 +290,7 @@ function pathSafeId(id) {
   return `${cleaned.slice(0, 120)}-${createHash('sha256').update(raw).digest('hex').slice(0, 8)}`;
 }
 
-async function main({ loadEvalModules, loadCases, runCase, gradeCase, perfFrom }) {
+async function main() {
   const args = parseArgs(process.argv.slice(2));
   // lstat("link/") follows the final symlink, so a trailing separator on
   // --flow would blind every leaf isSymlink check below - strip it first.
@@ -358,7 +348,7 @@ async function main({ loadEvalModules, loadCases, runCase, gradeCase, perfFrom }
     catch { eprint(`${statePath} exists but is not valid JSON - fix it before spending a pass`); process.exit(2); }
   }
   checkHarness(statePath, st, args.approveHarness);
-  await loadEvalModules();
+  await H.loadEvalModules();
   const ctx = { ...args, state: st };
 
   // Resume: which (id, rep) pairs already have a row?
@@ -370,7 +360,7 @@ async function main({ loadEvalModules, loadCases, runCase, gradeCase, perfFrom }
   }
   // Rows key on the path-safe id (see pathSafeId), so resume must too.
 
-  const cases = await loadCases();
+  const cases = await H.loadCases();
   // Validate the id space before spending anything: duplicate path-safe ids - 
   // including case-insensitive twins, which macOS/Windows filesystems collapse - 
   // would silently overwrite traces and frozen refs; and a _state.json split id
@@ -434,7 +424,7 @@ async function main({ loadEvalModules, loadCases, runCase, gradeCase, perfFrom }
         // so a hung judge stream can't hold the slot either.
         const { run, g, latency_s } = await withTimeout((async () => {
           let tAttempt = t0;
-          const run = await withBackoff(() => { tAttempt = Date.now(); return runCase(c, { ...ctx, deadline }); },
+          const run = await withBackoff(() => { tAttempt = Date.now(); return H.runCase(c, { ...ctx, deadline }); },
             appRetry, deadline);
           lastRun = run;
           // latency_s = the final app attempt only; backoff sleeps, failed
@@ -470,7 +460,7 @@ async function main({ loadEvalModules, loadCases, runCase, gradeCase, perfFrom }
               catch (e) { if (e?.code !== 'ENOENT') throw e; }
             }
           }
-          const g = await withBackoff(() => gradeCase(c, run, ref, ctx), judgeRetry, deadline);
+          const g = await withBackoff(() => H.gradeCase(c, run, ref, ctx), judgeRetry, deadline);
           return { run, g, latency_s };
         })(), args.timeoutS, `${c.id} rep${rep}`);
         const row = {
@@ -489,7 +479,7 @@ async function main({ loadEvalModules, loadCases, runCase, gradeCase, perfFrom }
           status: run.status ?? (run.stop_reason === 'max_tokens' ? 'truncated' : 'ok'),
           judge_model: g.judge_model ?? run.judge_model,
           judge_usage: g.judge_usage ?? run.judge_usage,
-          latency_s, ...perfFrom(run),
+          latency_s, ...H.perfFrom(run),
           grade: g.grade, explanation: g.explanation,
         };
         // The trace lands before the row: resume reruns a case with no row, so a failed trace
@@ -562,9 +552,12 @@ async function main({ loadEvalModules, loadCases, runCase, gradeCase, perfFrom }
 // results.jsonl, an lstat that fails, an error from loadCases) and exits 2 like
 // the preflight refusals. After they start, only a failed errors.jsonl append
 // gets here; rows may already be on disk, so say that and exit 1.
-export const runEval = hooks => main(hooks).catch(e => {
-  const m = String(e?.message || e);
-  if (workersStarted) { eprint('stopped mid-run (rows already written are kept; re-run to resume): ' + m); process.exit(1); }
-  eprint(m.startsWith('refusing to ') ? m : 'refusing to run: ' + m);
-  process.exit(2);
-});
+export function runEval(hooks) {
+  H = hooks;
+  main().catch(e => {
+    const m = String(e?.message || e);
+    if (workersStarted) { eprint('stopped mid-run (rows already written are kept; re-run to resume): ' + m); process.exit(1); }
+    eprint(m.startsWith('refusing to ') ? m : 'refusing to run: ' + m);
+    process.exit(2);
+  });
+}

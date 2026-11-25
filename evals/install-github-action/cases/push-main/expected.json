@@ -1,0 +1,48 @@
+{
+  "kind": "trigger",
+  "args": "--ci --trigger push Run it on every push to main.",
+  "hard": "`--trigger push` alone runs on every branch; the request names `main`.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "push": {
+        "branches": [
+          "main"
+        ]
+      }
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pushes to `main`. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on pull requests. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "runs on pushes to every branch",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  push:\n    branches: [main]\n",
+          "to": "  push:\n"
+        }
+      ]
+    },
+    {
+      "why": "runs on pull requests instead",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  push:\n    branches: [main]\n",
+          "to": "  pull_request:\n"
+        }
+      ]
+    }
+  ]
+}

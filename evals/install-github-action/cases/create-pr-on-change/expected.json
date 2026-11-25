@@ -1,0 +1,57 @@
+{
+  "kind": "feature",
+  "args": "--ci --create-pr-on-change",
+  "hard": "With no `--trigger`, PR creation moves the trigger to push on the default branch, needs two write permissions, and needs a repository setting the file can't change.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "push": {
+        "branches": [
+          "main"
+        ]
+      }
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "permissions": [
+      {
+        "contents": "write",
+        "pull-requests": "write"
+      }
+    ],
+    "with": {
+      "create_pr_on_change": true
+    }
+  },
+  "must_mention": [
+    "create and approve pull requests"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pushes to `main` and opens a pull request when files change. It tells the user to turn on **Allow GitHub Actions to create and approve pull requests** in the repository's Actions settings. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on pushes to `main` and opens a pull request when files change. Commit and push it, and check that GitHub Actions is enabled.",
+  "wrong": [
+    {
+      "why": "opens PRs from pull_request runs",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  push:\n    branches: [main]\n",
+          "to": "  pull_request:\n"
+        }
+      ]
+    },
+    {
+      "why": "leaves out `pull-requests: write`",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  pull-requests: write\n",
+          "to": ""
+        }
+      ]
+    }
+  ]
+}

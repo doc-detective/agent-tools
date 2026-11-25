@@ -1,0 +1,60 @@
+{
+  "kind": "feature",
+  "args": "--ci --create-issue-on-fail Use our DOCS_BOT_TOKEN repository secret as the token when it creates issues.",
+  "hard": "The input is `token`, and its value a `secrets.` expression; `github_token` is the name other actions use.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "permissions": [
+      {
+        "contents": "read",
+        "issues": "write"
+      },
+      {
+        "contents": "read"
+      }
+    ],
+    "with": {
+      "create_issue_on_fail": true,
+      "token": "${{ secrets.DOCS_BOT_TOKEN }}"
+    }
+  },
+  "must_mention": [
+    "DOCS_BOT_TOKEN"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests and opens an issue when tests fail, using the `DOCS_BOT_TOKEN` secret. It tells the user the `DOCS_BOT_TOKEN` repository secret must exist and be able to create issues. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "passes the token as `github_token`, which the action doesn't read",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "token: ",
+          "to": "github_token: "
+        }
+      ]
+    },
+    {
+      "why": "passes the secret's name, not its value",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "token: ${{ secrets.DOCS_BOT_TOKEN }}",
+          "to": "token: DOCS_BOT_TOKEN"
+        }
+      ]
+    }
+  ]
+}

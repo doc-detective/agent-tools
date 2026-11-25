@@ -1,0 +1,55 @@
+{
+  "kind": "feature",
+  "args": "--ci",
+  "hard": "The request doesn't mention secrets. The doc's test reads `$API_KEY`, which CI has only if the workflow passes it from a secret, and the action has no input for it.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "env": {
+      "API_KEY": "API_KEY"
+    }
+  },
+  "must_mention": [
+    "API_KEY"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests and passes `API_KEY` from a repository secret, because the tests read `$API_KEY`. It tells the user to add an `API_KEY` secret to the repository. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "doesn't pass the secret",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "    env:\n      API_KEY: ${{ secrets.API_KEY }}\n",
+          "to": ""
+        }
+      ]
+    },
+    {
+      "why": "passes the secret as an input the action doesn't have",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "    env:\n      API_KEY: ${{ secrets.API_KEY }}\n",
+          "to": ""
+        },
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "config: .doc-detective.json",
+          "to": "config: .doc-detective.json\n          api_key: ${{ secrets.API_KEY }}"
+        }
+      ]
+    }
+  ]
+}
