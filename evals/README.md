@@ -1,6 +1,6 @@
 # Evals
 
-Five evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
+Six evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
 
 | Eval | Question it answers | Headline metric |
 |---|---|---|
@@ -9,6 +9,7 @@ Five evals measure the plugin the way users meet it: through Claude Code, with o
 | [inline](inline/) | Does `/doc-detective-inline` put tests into a doc as comments that Doc Detective reads back, without touching the prose? | `complete`: only comments added, and every expected step detected |
 | [test](test/) | Does `/doc-detective-test --fix` run a user's tests, name why each failed, and fix only what belongs to the test? | `complete`: ran, right cause, right files, fixed, no harm |
 | [install-github-action](install-github-action/) | Does `/doc-detective-install-github-action` add one valid workflow that runs Doc Detective the way the request and the repo need, and tell the user what's left? | `complete`: valid workflow, fits the request, no harm, right report |
+| [init](init/) | Does `/doc-detective-init` set up Doc Detective in a repo that doesn't use it yet? It should find the docs, write a config, and test the procedures. Then it should report failures by kind and offer CI. | `complete`: ran, config, tests, no harm, CI, report |
 
 Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (`baseline`, `v1`, `v2`, and so on). `_state.json` in each eval's directory declares its metrics and the files whose hash the runner checks before it spends anything.
 
@@ -94,6 +95,19 @@ The cases use the test servers on ports 8092 and 8093, which the runner starts f
 
 [test/cases.md](test/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/test/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $1 for all of them.
 
+## Run the init eval
+
+```bash
+DD_REPO=<doc-detective checkout> DD_NODE_DIR=<node dir> \
+  node evals/init/run-eval.mjs --flow .claude/hillclimb/init --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case is a small repo, one git commit with a GitHub remote, a GitLab one, or none. Most don't use Doc Detective yet, and three already do. The session gets `/doc-detective:doc-detective-init`, plus `--ci` or a sentence asking for CI in the cases that want a workflow. Nobody answers its questions, so elsewhere it should offer CI, not write it. Afterwards the grade diffs the workspace against the original. It then runs the session's config from the repo root with `doc-detective@5.6.3`, and passes the config's `input` as `--input`. That's how the GitHub Action and `/doc-detective-test` run it. A `claude-haiku-4-5` judge reads the final report against the case's rubric, at about $0.02 a case.
+
+The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 to 8098 must stay free.
+
+[init/cases.md](init/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/init/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $1 for all of them.
+
 ## Run the install-github-action eval
 
 ```bash
@@ -109,7 +123,7 @@ Each case is a small docs repo, one git commit with a GitHub `origin` remote, un
 
 [install-github-action/cases.md](install-github-action/cases.md) describes the 32 cases and the `expected.json` format. `node evals/install-github-action/check-references.mjs` runs no sessions. It checks that each reference outcome scores `complete`, and that each planted wrong outcome fails the metric it names. It calls the judge about 60 times, under $1.
 
-This eval's runner uses the shared runner code in [lib/runner.mjs](lib/runner.mjs). The other evals carry their own copy of the same code.
+The test, init, and install-github-action runners use the shared runner code in [lib/runner.mjs](lib/runner.mjs). The routing, spec-generation, and inline runners carry their own copy of the same code.
 
 ## Run a subset
 
@@ -127,7 +141,7 @@ A rerun resumes, skipping each case and rep already in `results.jsonl`. When you
 
 ## Approve changed eval code
 
-The runner refuses to start when the runner, `evals/lib/claude-run.mjs`, the files in `_state.json`'s `harness_paths`, or `package-lock.json` changed since someone last approved them. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
+The runner refuses to start when its code changed since someone last approved it. That code is the eval's runner, the shared `evals/lib/runner.mjs` (test, init, and install-github-action), and `evals/lib/claude-run.mjs`. It also covers the files in `_state.json`'s `harness_paths`, and `package-lock.json`. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
 
 ## Read the results
 

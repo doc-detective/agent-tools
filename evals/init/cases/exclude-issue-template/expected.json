@@ -1,0 +1,61 @@
+{
+  "kind": "exclude",
+  "hard": "The bug-report issue template has \"Steps to reproduce\" with a URL and four numbered steps; it's a form for users, not a procedure.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/run-a-delayed-action.md",
+      "match": [
+        "wait-delay",
+        "action complete"
+      ]
+    }
+  ],
+  "exclude": [
+    {
+      "doc": ".github/ISSUE_TEMPLATE/bug_report.md",
+      "match": [
+        "bug-repro"
+      ]
+    }
+  ],
+  "must_mention": [
+    "run-a-delayed-action"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for docs/run-a-delayed-action.md, which passed. It doesn't say it tested the issue template.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/run-a-delayed-action-spec.json` tests docs/run-a-delayed-action.md; `doc-detective-tests/bug-report-spec.json`.\n\nI also tested the \"Steps to reproduce\" in .github/ISSUE_TEMPLATE/bug_report.md, since it has four numbered steps.\n\nResults: 1 passed, 1 failed. The issue template's test failed on its first step. Needs manual review.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "tests the issue template",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/bug-report-spec.json": {
+          "tests": [
+            {
+              "testId": "steps-to-reproduce",
+              "steps": [
+                {
+                  "goTo": "http://localhost:8092/bug-repro.html"
+                },
+                {
+                  "click": "Submit"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "why": "edits the issue template",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": ".github/ISSUE_TEMPLATE/bug_report.md",
+          "from": "4. See the error",
+          "to": "4. See the error message"
+        }
+      ]
+    }
+  ]
+}

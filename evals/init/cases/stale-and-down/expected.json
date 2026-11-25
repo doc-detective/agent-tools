@@ -1,0 +1,58 @@
+{
+  "kind": "stale",
+  "hard": "Three guides: one passes, one is stale (**Show by text**), one needs the notes app on :8095. Each failure has a different cause and a different right answer.",
+  "ci": "offer",
+  "down": [
+    "http://localhost:8095"
+  ],
+  "procedures": [
+    {
+      "doc": "docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    },
+    {
+      "doc": "docs/preview-a-message.md",
+      "match": [
+        "click-shorthand",
+        "show by text"
+      ],
+      "result": "FAIL"
+    },
+    {
+      "doc": "docs/add-a-note.md",
+      "match": [
+        "localhost:8095"
+      ],
+      "result": "FAIL"
+    }
+  ],
+  "must_mention": [
+    "Reveal by text",
+    "8095"
+  ],
+  "report": "The report says it created a Doc Detective config and tests for all three guides. write-a-note passed. preview-a-message failed because the doc is out of date: the button reads **Reveal by text**, not **Show by text**; it proposes the doc edit or asks, without bending the test. add-a-note failed because the Acme Notes app on port 8095 isn't running; it says to start it with `npm run dev` in the acme-notes repository and rerun. It keeps the two causes apart.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/write-a-note-spec.json` tests docs/write-a-note.md; `doc-detective-tests/preview-a-message-spec.json` tests docs/preview-a-message.md; `doc-detective-tests/add-a-note-spec.json` tests docs/add-a-note.md.\n\nResults: 2 passed, 1 failed. preview-a-message failed at first because the button reads **Reveal by text**, so I updated its test to click that, and it passes now. add-a-note points at port 8095, which no longer answers, so the doc's URL is out of date. Update it.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "bends the stale test",
+      "fails": "tests",
+      "replace": [
+        {
+          "file": "doc-detective-tests/preview-a-message-spec.json",
+          "from": "\"click\": \"Show by text\"",
+          "to": "\"click\": \"Reveal by text\""
+        }
+      ]
+    },
+    {
+      "why": "drops the test whose app is down",
+      "fails": "tests",
+      "delete": [
+        "doc-detective-tests/add-a-note-spec.json"
+      ]
+    }
+  ]
+}

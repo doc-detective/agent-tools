@@ -1,8 +1,8 @@
 // The hillclimb runner harness, shared: CLI, resume, harness-sha gate, backoff, wall-clock
 // ceiling, served-model check, crash-safe rows. An eval's run-eval.mjs supplies the hooks
-// and calls runEval(). This is the scaffold evals/test/run-eval.mjs carries inline; that
-// eval (and routing, spec-generation, inline) keep their copies so their approved harness
-// shas stay valid.
+// and calls runEval(). The test, init, and
+// install-github-action evals use it; routing, spec-generation, and inline keep their own
+// copies so their approved harness shas stay valid.
 //
 //   node evals/<eval>/run-eval.mjs --flow .claude/hillclimb/<eval> --variant baseline --model claude-sonnet-5-5
 //

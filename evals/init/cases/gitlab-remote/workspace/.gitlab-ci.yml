@@ -1,0 +1,8 @@
+stages:
+  - test
+
+unit:
+  stage: test
+  image: node:22
+  script:
+    - node --test

@@ -1,0 +1,40 @@
+{
+  "kind": "ci",
+  "hard": "With `--ci`, the skill installs the GitHub Action without asking. The workflow must use doc-detective/github-action and point at the new config.",
+  "args": "--ci",
+  "ci": "asked",
+  "procedures": [
+    {
+      "doc": "docs/preview-a-message.md",
+      "match": [
+        "click-shorthand",
+        "reveal by text"
+      ]
+    }
+  ],
+  "must_mention": [
+    "doc-detective.yml"
+  ],
+  "report": "The report says it created a Doc Detective config and a test for docs/preview-a-message.md, which passed.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/preview-a-message-spec.json` tests docs/preview-a-message.md.\n\nResults: 1 passed, 0 failed.\n\nI drafted `.github/workflows/doc-detective.yml` but didn't write it. Confirm and I'll add it.",
+  "wrong": [
+    {
+      "why": "only offers the workflow",
+      "fails": "ci",
+      "delete": [
+        ".github/workflows/doc-detective.yml"
+      ]
+    },
+    {
+      "why": "writes a workflow that doesn't run Doc Detective",
+      "fails": "ci",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n",
+          "to": "      - run: npx doc-detective\n"
+        }
+      ]
+    }
+  ]
+}

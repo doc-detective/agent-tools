@@ -1,0 +1,45 @@
+{
+  "kind": "layout",
+  "hard": "A Docusaurus site under `website/`: the guide is in `website/docs`, next to an intro page and a blog post that have no procedures.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "website/docs/run-a-delayed-action.md",
+      "match": [
+        "wait-delay",
+        "action complete"
+      ]
+    }
+  ],
+  "must_mention": [
+    "run-a-delayed-action"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for website/docs/run-a-delayed-action.md, the one guide with steps, and that it passed.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/run-a-delayed-action-spec.json` tests website/docs/run-a-delayed-action.md.\n\nResults: 0 passed, 1 failed. run-a-delayed-action failed: Couldn't find `Action complete!`. Needs manual review.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "writes the config inside the tests folder, where a plain run doesn't find it",
+      "fails": "config",
+      "delete": [
+        ".doc-detective.json"
+      ],
+      "write": {
+        "doc-detective-tests/.doc-detective.json": {
+          "input": ".",
+          "detectSteps": false
+        }
+      }
+    },
+    {
+      "why": "edits the guide's front matter",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "website/docs/run-a-delayed-action.md",
+          "from": "sidebar_position: 2",
+          "to": "sidebar_position: 2\ntested: true"
+        }
+      ]
+    }
+  ]
+}

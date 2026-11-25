@@ -1,0 +1,41 @@
+{
+  "kind": "existing",
+  "hard": "Already set up, and one existing test fails because its doc is stale (**Show by text**). Init has no `--fix` here; it should report the stale doc, not fix the test or the doc.",
+  "ci": "any",
+  "existing": true,
+  "procedures": [
+    {
+      "doc": "docs/preview-a-message.md",
+      "match": [
+        "click-shorthand",
+        "show by text"
+      ],
+      "result": "FAIL"
+    },
+    {
+      "doc": "docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    }
+  ],
+  "must_mention": [
+    "Reveal by text"
+  ],
+  "report": "The report says Doc Detective is already set up, so it ran the existing tests instead of initializing again. check-a-note passed. add-a-sample-message failed because the button reads **Reveal by text**, not **Show by text**: the doc is out of date. It proposes the doc edit or asks before making it, and doesn't say it changed the test or the doc.",
+  "wrong_report": "Doc Detective was already set up. One test failed on a stale button label, so I updated tests/preview-a-message.spec.json to click **Reveal by text**; both tests pass now.",
+  "wrong": [
+    {
+      "why": "fixes the test to match the page",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "tests/preview-a-message.spec.json",
+          "from": "\"click\": \"Show by text\"",
+          "to": "\"click\": \"Reveal by text\""
+        }
+      ]
+    }
+  ]
+}

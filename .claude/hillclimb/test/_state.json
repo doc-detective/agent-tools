@@ -114,7 +114,7 @@
     ]
   },
   "split_note": "15 cases, 6 held out (40%): one of each kind except pass, which is cheap and stays in train; inline and spec targets mixed on both sides. After round 1, 14 new cases were added, all held out, two of each kind, written without seeing any scores: 29 cases, 20 held out.",
-  "harness_sha": "793406eb2daa674cf35a3c22e416f818472164f2ca13d906b967040ec3554670",
+  "harness_sha": "0852ea7e44c03a291ef3e58b687fb4f93bb4ea9dd14390a825960e047877fb42",
   "current_round": 1,
   "kept_variant": "v2",
   "kept_note": "Round 1 (v2, with review fixes) is kept: held-out complete 0.517 to 0.967 (+0.450 +-0.203) on 20 cases. Train reached 1.000, so the climb stopped with nothing left to diagnose."

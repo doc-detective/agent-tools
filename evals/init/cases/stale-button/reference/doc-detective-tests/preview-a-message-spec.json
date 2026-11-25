@@ -1,0 +1,19 @@
+{
+  "description": "Tests docs/preview-a-message.md.",
+  "tests": [
+    {
+      "testId": "add-a-sample-message",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/click-shorthand.html"
+        },
+        {
+          "click": "Show by text"
+        },
+        {
+          "find": "Text click landed"
+        }
+      ]
+    }
+  ]
+}

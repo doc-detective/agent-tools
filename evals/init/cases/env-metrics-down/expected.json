@@ -1,0 +1,48 @@
+{
+  "kind": "env",
+  "hard": "The metrics exporter on :8098 isn't running, so its request fails like a bad link; the status guide beside it passes on :8093.",
+  "ci": "offer",
+  "down": [
+    "http://localhost:8098"
+  ],
+  "procedures": [
+    {
+      "doc": "docs/read-the-metrics.md",
+      "match": [
+        "localhost:8098"
+      ],
+      "result": "FAIL"
+    },
+    {
+      "doc": "docs/check-the-status.md",
+      "match": [
+        "8093/status/200"
+      ]
+    }
+  ],
+  "must_mention": [
+    "8098"
+  ],
+  "report": "The report says it created a Doc Detective config and tests for both guides. check-the-status passed. read-the-metrics failed because the metrics exporter on port 8098 isn't running. It calls this an environment problem and says to start it with `docker compose up metrics` (per the README), then rerun. It doesn't call the doc's URL broken.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/check-the-status-spec.json` tests docs/check-the-status.md; `doc-detective-tests/read-the-metrics-spec.json` tests docs/read-the-metrics.md.\n\nResults: 1 passed, 1 failed. read-the-metrics has a broken link: http://localhost:8098/metrics is unresolvable. Fix the URL in docs/read-the-metrics.md.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "drops the metrics request from the test",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/read-the-metrics-spec.json": {
+          "tests": [
+            {
+              "testId": "read-the-metrics",
+              "steps": [
+                {
+                  "wait": 100
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

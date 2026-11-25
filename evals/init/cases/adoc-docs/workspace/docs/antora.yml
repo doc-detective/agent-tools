@@ -1,0 +1,5 @@
+name: acme-pad
+version: ~
+title: Acme Pad
+nav:
+  - modules/ROOT/nav.adoc

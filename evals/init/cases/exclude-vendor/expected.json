@@ -1,0 +1,46 @@
+{
+  "kind": "exclude",
+  "hard": "A vendored library in `vendor/chartlib` brings its own getting-started guide with numbered steps; it belongs to the library, not this project.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/check-the-status.md",
+      "match": [
+        "8093/status/200"
+      ]
+    }
+  ],
+  "exclude": [
+    {
+      "doc": "vendor/chartlib/docs/getting-started.md",
+      "match": [
+        "chartlib"
+      ]
+    }
+  ],
+  "must_mention": [
+    "check-the-status"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for docs/check-the-status.md, which passed. It doesn't say it tested the vendored chartlib docs.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/check-the-status-spec.json` tests docs/check-the-status.md; `doc-detective-tests/getting-started-spec.json`.\n\nI also tested vendor/chartlib/docs/getting-started.md.\n\nResults: 2 passed, 0 failed, including the vendored chartlib guide.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "tests the vendored guide",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/getting-started-spec.json": {
+          "tests": [
+            {
+              "testId": "getting-started",
+              "steps": [
+                {
+                  "goTo": "http://localhost:8092/chartlib/demo.html"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

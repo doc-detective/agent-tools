@@ -1,0 +1,5 @@
+{
+  "input": "doc-detective-tests",
+  "outputDir": ".doc-detective/results",
+  "detectSteps": false
+}

@@ -1,0 +1,67 @@
+{
+  "kind": "exclude",
+  "hard": "docs/api/ holds a TypeDoc reference generated from source, with request URLs in it; it has no steps and is rewritten on every build. The guide beside it is the procedure.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/guides/create-an-order.md",
+      "match": [
+        "8093/api/orders",
+        "w-100"
+      ]
+    }
+  ],
+  "exclude": [
+    {
+      "doc": "docs/api/orders-client.md",
+      "match": [
+        "/api/v1/orders"
+      ]
+    }
+  ],
+  "must_mention": [
+    "create-an-order"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for docs/guides/create-an-order.md, which passed. It doesn't say it tested the generated API reference.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/create-an-order-spec.json` tests docs/guides/create-an-order.md; `doc-detective-tests/orders-client-spec.json`.\n\nI also tested the generated reference, docs/api/orders-client.md.\n\nResults: 2 passed, 0 failed, including that reference.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "tests the generated reference",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/orders-client-spec.json": {
+          "tests": [
+            {
+              "testId": "orders-client",
+              "steps": [
+                {
+                  "httpRequest": {
+                    "url": "http://localhost:8093/api/v1/orders",
+                    "method": "post",
+                    "request": {
+                      "body": {
+                        "sku": "W-1",
+                        "quantity": 1
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "why": "adds a test comment to the generated reference",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "docs/api/orders-client.md",
+          "from": "# Class: OrdersClient",
+          "to": "# Class: OrdersClient\n\nTested by Doc Detective."
+        }
+      ]
+    }
+  ]
+}
