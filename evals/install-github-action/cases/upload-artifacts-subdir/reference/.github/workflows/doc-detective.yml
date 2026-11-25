@@ -1,0 +1,26 @@
+name: Doc Detective
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  doc-detective:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
+        with:
+          working_directory: docs
+          config: .doc-detective.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: doc-detective-run
+          path: docs/.doc-detective/runs/
+          include-hidden-files: true

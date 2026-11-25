@@ -1,0 +1,50 @@
+{
+  "kind": "feature",
+  "args": "--ci --no-exit-on-fail",
+  "hard": "`continue-on-error` also turns the check green, and hides that the step failed; the action has its own `exit_on_fail` input.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "with": {
+      "exit_on_fail": false
+    }
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests and doesn't fail the check when tests fail. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "uses continue-on-error instead of exit_on_fail",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n          exit_on_fail: false\n",
+          "to": "      - uses: doc-detective/github-action@v2\n        continue-on-error: true\n        with:\n          config: .doc-detective.json\n"
+        }
+      ]
+    },
+    {
+      "why": "gives exit_on_fail a value that isn't a boolean",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "exit_on_fail: false",
+          "to": "exit_on_fail: \"no\""
+        }
+      ]
+    }
+  ]
+}

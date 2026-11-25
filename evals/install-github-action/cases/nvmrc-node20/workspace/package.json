@@ -1,0 +1,10 @@
+{
+  "name": "widget-site",
+  "private": true,
+  "engines": {
+    "node": "20.x"
+  },
+  "scripts": {
+    "build": "eleventy"
+  }
+}

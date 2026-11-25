@@ -1,0 +1,87 @@
+{
+  "source": "doc-detective/github-action action.yml at 6230ca8e35c1f374e3cd817b2ecdf5c199d48b11 (main, 2026-11-22). Its action.yml matches v2.2.1, which `v2` points to.",
+  "inputs": {
+    "version": {
+      "default": "5"
+    },
+    "working_directory": {
+      "default": "."
+    },
+    "cache": {
+      "default": "true"
+    },
+    "android": {
+      "default": "auto"
+    },
+    "config": {
+      "default": null
+    },
+    "input": {
+      "default": null
+    },
+    "create_pr_on_change": {
+      "default": "false"
+    },
+    "pr_branch": {
+      "default": "doc-detective-changes"
+    },
+    "pr_paths": {
+      "default": ""
+    },
+    "pr_title": {
+      "default": "Doc Detective Changes"
+    },
+    "pr_body": {
+      "default": "A Doc Detective run ($RUN_URL) updated files.\n\nDISCLAIMER: This pull request doesn't reflect whether Doc Detective tests passed or failed, only that files in the repository changed. Review the changes to make sure they're accurate.\n"
+    },
+    "pr_labels": {
+      "default": "doc-detective"
+    },
+    "pr_assignees": {
+      "default": ""
+    },
+    "pr_reviewers": {
+      "default": ""
+    },
+    "exit_on_fail": {
+      "default": "true"
+    },
+    "create_issue_on_fail": {
+      "default": "false"
+    },
+    "issue_title": {
+      "default": "Doc Detective Failure"
+    },
+    "issue_body": {
+      "default": "A Doc Detective run ($RUN_URL) failed:\n\n$SUMMARY"
+    },
+    "issue_labels": {
+      "default": "doc-detective"
+    },
+    "issue_assignees": {
+      "default": ""
+    },
+    "issue_mentions": {
+      "default": ""
+    },
+    "issue_prompt": {
+      "default": null
+    },
+    "integrations": {
+      "default": null,
+      "deprecated": "Deprecated: use `issue_mentions`."
+    },
+    "prompt": {
+      "default": null,
+      "deprecated": "Deprecated: use `issue_prompt`."
+    },
+    "token": {
+      "default": "${{ github.token }}"
+    }
+  },
+  "outputs": [
+    "results",
+    "issue_url",
+    "pull_request_url"
+  ]
+}

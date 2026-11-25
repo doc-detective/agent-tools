@@ -1,0 +1,53 @@
+{
+  "kind": "feature",
+  "args": "--ci Keep each run's screenshots and results as a downloadable artifact, even when tests fail.",
+  "hard": "The run folder starts with a dot, so upload-artifact skips it without `include-hidden-files: true`, and a failing test skips later steps without `if: always()`.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "artifact": {
+      "path": [
+        ".doc-detective/runs",
+        ".doc-detective"
+      ]
+    }
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests and uploads the run folder (screenshots and results) as an artifact even when tests fail. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "uploads without include-hidden-files, so nothing is kept",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "          include-hidden-files: true\n",
+          "to": ""
+        }
+      ]
+    },
+    {
+      "why": "skips the upload when a test fails",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "        if: always()\n",
+          "to": ""
+        }
+      ]
+    }
+  ]
+}

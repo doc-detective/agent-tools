@@ -5,6 +5,7 @@
 //   node evals/init/run-eval.mjs --flow .claude/hillclimb/init --variant baseline --model claude-sonnet-5-5 --reps 3
 
 import { join } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { runEval } from '../lib/runner.mjs';
 
 // The eval's modules load only after the harness check approves them: importing a module
@@ -67,4 +68,4 @@ function perfFrom(run) {
   return { tool_calls: run.tool_calls, turns: run.num_turns, dd_runs: run.facts.dd_runs, files_changed: run.facts.changed.length, cc_cost_usd: run.cc_cost_usd };
 }
 
-runEval({ loadEvalModules, loadCases, runCase, gradeCase, perfFrom });
+runEval({ runnerFile: fileURLToPath(import.meta.url), loadEvalModules, loadCases, runCase, gradeCase, perfFrom });

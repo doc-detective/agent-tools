@@ -1,0 +1,38 @@
+{
+  "kind": "trigger",
+  "args": "--ci Run Doc Detective on every push to our default branch.",
+  "hard": "The default branch is `trunk`, not `main`, and only `git` says so.",
+  "write": true,
+  "branch": "trunk",
+  "fit": {
+    "triggers": {
+      "push": {
+        "branches": [
+          "trunk"
+        ]
+      }
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pushes to `trunk`. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on pushes to `main`. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "assumes the default branch is main",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "branches: [trunk]",
+          "to": "branches: [main]"
+        }
+      ]
+    }
+  ]
+}
