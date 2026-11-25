@@ -1,6 +1,6 @@
 # Fix Failing Tests
 
-Use this file to fix a test that failed because the test is wrong or a field is invalid. [Fix failing tests](../SKILL.md#fix-failing-tests) in `SKILL.md` says how to tell each kind of failure apart. A fix changes only the test. Don't apply a fix from this file when the doc is out of date, the environment is down, or a test skipped by design. Report those failures as that section says. A test changed to pass in those cases stops catching the problem it found.
+Use this file to fix a test that failed because the test is wrong or a field is invalid. [Fix failing tests](../SKILL.md#fix-failing-tests) in `SKILL.md` says how to tell each kind of failure apart. A fix changes only the test. Don't apply a fix from this file when the doc is out of date, the environment is down, or the test skipped by design. Report those failures as that section says. A test changed to pass in those cases stops catching the problem it found.
 
 ## Fix Tool
 
