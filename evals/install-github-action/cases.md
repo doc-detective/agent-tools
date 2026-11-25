@@ -133,4 +133,13 @@ and expect the skill to show the workflow and ask.
 
 By kind: 12 `feature`, 6 `config`, 6 `trigger`, 6 `setup`, 4 `existing`, 2 `confirm`, and one each of `basic`, `filter`, `decline`, and `route`. 36 write a workflow (one optionally); 4 must write nothing.
 
-The first 32 cases were written before any run. After round 2, every train case passed. So eight more train cases were added, written without seeing any scores. They are add-to-existing-ci, confirm-schedule, issue-on-fail-only, monthly-schedule, prose-request, python-static-site, start-script-port, and yaml-config-subdir.
+The first 32 cases were written before any run. After round 2, every train case passed. So eight more train cases were added, written without seeing any scores:
+
+- add-to-existing-ci
+- confirm-schedule
+- issue-on-fail-only
+- monthly-schedule
+- prose-request
+- python-static-site
+- start-script-port
+- yaml-config-subdir
