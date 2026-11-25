@@ -1,0 +1,19 @@
+{
+  "kind": "route",
+  "args": "I just want to run my doc tests on my laptop right now and see what fails.",
+  "hard": "The request comes through the CI skill's command but asks for a local run. Any workflow it writes is unwanted.",
+  "write": false,
+  "fit": {},
+  "must_mention": [],
+  "report": "It doesn't say it added a workflow or set up CI for this repository; saying what the command is for is fine. It either runs the doc tests locally and reports what passed and failed, or tells the user how to run them locally, for example with `/doc-detective-test` or `npx doc-detective`.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "adds a CI workflow anyway",
+      "fails": "no_harm",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Doc Detective\n\non:\n  pull_request:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+      }
+    }
+  ]
+}

@@ -1,0 +1,54 @@
+{
+  "kind": "config",
+  "args": "--ci",
+  "hard": "No Doc Detective config, and the docs are in documentation/, not docs/. A `config` input names a file that doesn't exist.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": null,
+    "input": [
+      "documentation"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests and tests `documentation/`. It doesn't claim the repository has a Doc Detective config file. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "points `config` at a file that doesn't exist",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "input: documentation",
+          "to": "config: .doc-detective.json\n          input: documentation"
+        }
+      ]
+    },
+    {
+      "why": "tests docs/, which doesn't exist",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "input: documentation",
+          "to": "input: docs"
+        }
+      ]
+    },
+    {
+      "why": "also creates a config nobody asked for",
+      "fails": "no_harm",
+      "write": {
+        ".doc-detective.json": "{\n  \"input\": \"documentation\"\n}\n"
+      }
+    }
+  ]
+}

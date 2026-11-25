@@ -1,0 +1,25 @@
+name: Doc Detective
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  doc-detective:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm install
+      - run: npm run build
+      - name: Serve the built site
+        run: |
+          npm run preview &
+          npx --yes wait-on http://localhost:4321
+      - uses: doc-detective/github-action@v2
+        with:
+          config: .doc-detective.json

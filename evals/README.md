@@ -1,6 +1,6 @@
 # Evals
 
-Three evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
+Five evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
 
 | Eval | Question it answers | Headline metric |
 |---|---|---|
@@ -8,6 +8,7 @@ Three evals measure the plugin the way users meet it: through Claude Code, with 
 | [spec-generation](spec-generation/) | Does `/doc-detective-generate` turn a doc into a spec that runs and covers the doc? | `complete`: the spec passes and has every expected step |
 | [inline](inline/) | Does `/doc-detective-inline` put tests into a doc as comments that Doc Detective reads back, without touching the prose? | `complete`: only comments added, and every expected step detected |
 | [test](test/) | Does `/doc-detective-test --fix` run a user's tests, name why each failed, and fix only what belongs to the test? | `complete`: ran, right cause, right files, fixed, no harm |
+| [install-github-action](install-github-action/) | Does `/doc-detective-install-github-action` add one valid workflow that runs Doc Detective the way the request and the repo need, and tell the user what's left? | `complete`: valid workflow, fits the request, no harm, right report |
 
 Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (`baseline`, `v1`, `v2`, and so on). `_state.json` in each eval's directory declares its metrics and the files whose hash the runner checks before it spends anything.
 
@@ -92,6 +93,23 @@ Each case is a small docs repo, one git commit, with one planted defect or condi
 The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 to 8099 must stay free: the environment cases need nothing there.
 
 [test/cases.md](test/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/test/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $1 for all of them.
+
+## Run the install-github-action eval
+
+```bash
+node evals/install-github-action/run-eval.mjs --flow .claude/hillclimb/install-github-action --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case is a small docs repo, one git commit with a GitHub `origin` remote, unless the case is about another host. The session gets `/doc-detective:doc-detective-install-github-action <args>`, usually with `--ci` or a request to write without asking, since no one is there to confirm. Doc Detective never runs. The grade reads the workspace and the final report:
+
+- `workflow`: one new file under `.github/workflows/` that parses and is a valid workflow. The `doc-detective/github-action` step sets only inputs that `action.yml` has, none deprecated, with values of the right shape. [action-inputs.json](install-github-action/action-inputs.json) holds that list, from the commit its `source` names. When `actionlint` is on `PATH`, or `ACTIONLINT` names it, it must pass too.
+- `fit`: the workflow does what the case asks for this repo. It checks the triggers, path filters, and the config and input the action resolves. It also checks permissions, inputs, setup steps, secrets, artifacts, the runner, a pinned action ref, and Node.js 24.
+- `no_harm`: no existing file changed, and nothing added outside `.github/workflows/`.
+- `report`: the report has the case's `must_mention` strings, and a `claude-haiku-4-5` judge agrees it meets the case's rubric. The rubric asks what was added, what triggers it, and what the user must still do.
+
+[install-github-action/cases.md](install-github-action/cases.md) describes the 32 cases and the `expected.json` format. `node evals/install-github-action/check-references.mjs` runs no sessions. It checks that each reference outcome scores `complete`, and that each planted wrong outcome fails the metric it names. It calls the judge about 60 times, under $1.
+
+This eval's runner uses the shared runner code in [lib/runner.mjs](lib/runner.mjs). The other evals carry their own copy of the same code.
 
 ## Run a subset
 

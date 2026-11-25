@@ -1,0 +1,57 @@
+{
+  "kind": "filter",
+  "args": "--ci Only run it when something in the docs package changes.",
+  "hard": "The docs are one package of three. The path filter must cover packages/docs/ and nothing else, and the config is two folders down.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": "packages/docs/.doc-detective.json",
+    "input": [
+      "packages/docs/content"
+    ],
+    "paths": {
+      "match": [
+        "packages/docs/content/install.md",
+        "packages/docs/.doc-detective.json"
+      ],
+      "skip": [
+        "packages/api/src/index.ts",
+        "packages/web/src/app.tsx"
+      ]
+    }
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests that change files under `packages/docs/`, using `packages/docs/.doc-detective.json`. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "runs on every pull request",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  pull_request:\n    paths:\n      - 'packages/docs/**'\n",
+          "to": "  pull_request:\n"
+        }
+      ]
+    },
+    {
+      "why": "filters on docs/, which the docs package isn't in",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "'packages/docs/**'",
+          "to": "'docs/**'"
+        }
+      ]
+    }
+  ]
+}

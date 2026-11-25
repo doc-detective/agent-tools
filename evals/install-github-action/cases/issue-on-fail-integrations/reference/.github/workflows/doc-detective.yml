@@ -1,0 +1,23 @@
+name: Doc Detective
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  doc-detective:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - uses: doc-detective/github-action@v2
+        with:
+          config: .doc-detective.json
+          create_issue_on_fail: true
+          issue_mentions: claude,copilot

@@ -1,0 +1,57 @@
+{
+  "kind": "setup",
+  "args": "--ci",
+  "hard": "The tests check the built site: `npm run build`, then `npm run preview` on :4321, in that order, with the server in the background.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "steps_before": [
+      [
+        "\\bnpm (?:ci|install|i)\\b"
+      ],
+      [
+        "npm run build\\b"
+      ],
+      [
+        "npm run preview\\b.*&\\s*$",
+        "nohup\\s+npm run preview"
+      ],
+      [
+        "wait-on",
+        "\\bcurl\\b",
+        "\\bwget\\b",
+        "\\bsleep\\b",
+        "\\buntil\\b",
+        "\\btimeout\\b",
+        "nc -z"
+      ]
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that builds the site and serves it with `npm run preview` before Doc Detective runs on pull requests. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "serves without building first",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "      - run: npm run build\n",
+          "to": ""
+        }
+      ]
+    }
+  ]
+}

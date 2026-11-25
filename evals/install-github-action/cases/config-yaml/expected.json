@@ -1,0 +1,36 @@
+{
+  "kind": "config",
+  "args": "--ci",
+  "hard": "The config is YAML (`.doc-detective.yaml`); every example in the skill says `.doc-detective.json`.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.yaml",
+    "input": [
+      "content"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests with `.doc-detective.yaml`. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "names `.doc-detective.json`, which doesn't exist",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "config: .doc-detective.yaml",
+          "to": "config: .doc-detective.json"
+        }
+      ]
+    }
+  ]
+}
