@@ -22,6 +22,7 @@
 
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join, relative } from 'node:path';
+import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { spawn, execFileSync } from 'node:child_process';
 import { isDeepStrictEqual } from 'node:util';
@@ -33,6 +34,23 @@ import { toolEnv } from '../spec-generation/grade.mjs';
 export const DD_VERSION = '5.6.3';
 
 const WIN = process.platform === 'win32';
+
+/**
+ * A model session's environment: toolEnv's PATH with a pinned `doc-detective` first, and an
+ * npm prefix of the workspace's own, so a global install stays in the workspace. Without the
+ * pin, a bare `doc-detective` runs whatever global install the machine has, not the version
+ * the grade reruns with. `npx doc-detective` takes a local install first, then this PATH bin;
+ * no case workspace has a local install.
+ */
+export function sessionEnv(ws) {
+  const bin = join(tmpdir(), `dd-eval-bin-${DD_VERSION}`);
+  mkdirSync(bin, { recursive: true });
+  writeFileSync(join(bin, 'doc-detective'), `#!/bin/sh\nexec npx --yes doc-detective@${DD_VERSION} "$@"\n`, { mode: 0o755 });
+  writeFileSync(join(bin, 'doc-detective.cmd'), `@npx --yes doc-detective@${DD_VERSION} %*\r\n`);
+  const env = toolEnv();
+  const path = [bin, env.PATH].join(WIN ? ';' : ':');
+  return { ...env, PATH: path, Path: path, npm_config_prefix: join(ws, '.npm-global') };
+}
 const EVAL_DIR = dirname(fileURLToPath(import.meta.url));
 const CASES = join(EVAL_DIR, 'cases');
 export const JUDGE_MODEL = 'claude-haiku-4-5';
