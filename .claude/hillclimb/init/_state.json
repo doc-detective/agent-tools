@@ -130,5 +130,5 @@
     ]
   },
   "split_note": "30 cases, 20 held out (67%), written before any session ran. Train has the plain layout, README-only HTTP, and CLI cases, two exclusion traps (CHANGELOG, issue template), one down service, one stale doc, one existing setup, one existing workflow, and CI asked in words. Every kind has at least two held-out cases, and the held-out side has the harder variants: MDX, monorepo, Docusaurus, AsciiDoc, the other four exclusion traps, three down services, three stale docs, the YAML and stale existing setups, --ci, CI beside an existing workflow, and both non-GitHub remotes.",
-  "harness_sha": "8a009a54a9501f9e2c44049816c8a53ad2d9828d603bc44435e0289042bc483a"
+  "harness_sha": "090f0cbc9a3d2d00c73ea7dc9d4a8fc490feaf1caa5303a65b04dab06603c095"
 }
