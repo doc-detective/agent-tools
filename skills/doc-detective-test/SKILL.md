@@ -31,7 +31,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright. 
 | Option | Default | Description |
 |--------|---------|-------------|
 | `--fix` | `false` | Enable fix loop for failing tests |
-| `--auto-fix` | `false` | Apply all fixes without confirmation |
+| `--auto-fix` | `false` | Apply test fixes without confirmation. A doc edit still needs the user's approval |
 | `--fix-threshold <n>` | `80` | Confidence threshold (0–100) for auto-applying fixes |
 | `--max-fix-attempts <n>` | `3` | Maximum fix iterations per failing test |
 | `--inject` | `false` | Inject passing tests into source file after completion |
