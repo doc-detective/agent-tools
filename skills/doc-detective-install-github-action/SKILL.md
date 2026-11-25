@@ -164,7 +164,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: npm ci
+      - run: npm ci   # the project's own install command, such as pnpm install
       - name: Start the app
         run: |
           npm run dev &
