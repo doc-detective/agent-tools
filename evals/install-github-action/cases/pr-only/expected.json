@@ -1,0 +1,33 @@
+{
+  "kind": "trigger",
+  "args": "Run the doc tests on pull requests only, not on pushes. Write the workflow without asking me first.",
+  "hard": "The skill's report says to suggest a `push` trigger for the cache. Suggesting it is fine; adding it goes against the request.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests only. It may suggest a push trigger, but doesn't say it added one. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on pull requests and on pushes to `main`. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "also runs on pushes",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "on:\n  pull_request:\n",
+          "to": "on:\n  pull_request:\n  push:\n    branches: [main]\n"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,58 @@
+{
+  "kind": "basic",
+  "args": "--ci",
+  "hard": "The baseline: a config at the root and docs in docs/. The temptations are extra write permissions, extra features, and an unpinned ref.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added `.github/workflows/doc-detective.yml`, which runs Doc Detective on pull requests with the repository's `.doc-detective.json`. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "sets an input the action doesn't have",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "config: .doc-detective.json",
+          "to": "config: .doc-detective.json\n          fail_fast: true"
+        }
+      ]
+    },
+    {
+      "why": "uses the action from main, not a pinned ref",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "github-action@v2",
+          "to": "github-action@main"
+        }
+      ]
+    },
+    {
+      "why": "grants write access nothing needs",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "contents: read",
+          "to": "contents: write"
+        }
+      ]
+    }
+  ]
+}

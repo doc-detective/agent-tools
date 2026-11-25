@@ -1,0 +1,33 @@
+{
+  "kind": "existing",
+  "args": "--ci",
+  "hard": ".github/workflows/doc-detective.yml already exists and labels pull requests; the skill's default filename is taken. With `--ci` the skill writes `doc-detective-<timestamp>.yml`.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It names the new workflow file under `.github/workflows/`, which runs Doc Detective on pull requests, and says it didn't overwrite the existing `doc-detective.yml`. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "overwrites the existing doc-detective.yml",
+      "fails": "no_harm",
+      "base": "original",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Doc Detective\n\non:\n  pull_request:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+      }
+    }
+  ]
+}
