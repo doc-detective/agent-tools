@@ -43,6 +43,7 @@
     "evals/test/grade.mjs",
     "evals/spec-generation/grade.mjs"
   ],
+  "harness_note": "harness_paths lists every module the grader loads, including transitive ones: grade.mjs imports makeWorkspace from evals/test/grade.mjs, which imports toolEnv from evals/spec-generation/grade.mjs. An edit there can change grading, so it invalidates the sha.",
   "prices": {
     "claude-sonnet-5-5": {
       "in": 2,
