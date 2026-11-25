@@ -1101,21 +1101,23 @@ Keep credentials in environment variables, set in the shell or loaded with `load
 
 The relative `directory` resolves against `tests/`, so this writes `.auth/auth.json` at the project root. `overwrite` replaces the file on every run, so the session stays fresh.
 
-In each later test, open the site, load the state, and open the page again so the app reads the session. Point `directory` at the same folder the sign-in spec wrote to. This test sits in another folder of the same depth, such as `docs/`:
+In each later test, open the site, load the state, and open the page again so the app reads the session. Then check that the reader is signed in. Point `directory` at the same folder the sign-in spec wrote to. This test sits in another folder of the same depth, such as `docs/`:
 
 ```json
 {
   "steps": [
     { "goTo": "https://app.example.com" },
     { "loadState": { "path": "auth.json", "directory": "../.auth" } },
-    { "goTo": "https://app.example.com/billing" }
+    { "goTo": "https://app.example.com/billing" },
+    { "find": "Sign out" }
   ]
 }
 ```
 
 - Both actions fail when no site is open, so put a `goTo` first.
 - One file holds one site. For docs that span sites, save one file per site.
-- `loadState` fails when the file has no cookies or `localStorage` for the open site, so a test can't run signed out without anyone noticing.
+- `loadState` skips expired cookies. It fails when the file has no unexpired cookies or `localStorage` for the open site.
+- `loadState` can't tell whether the server still accepts the session, because a session can expire or be revoked on the server. After the second `goTo`, add a `find` for text that only a signed-in reader sees and that's always visible, not hidden in a closed menu. Take that text from the app's UI or its docs. `Sign out` is only an example. If this `find` fails, the saved session is no longer valid, so run the sign-in spec again.
 - `sessionStorage` isn't saved. An app that keeps its session there needs a sign-in in each test.
 - The file holds live session tokens. Add its folder, such as `.auth/`, to `.gitignore`, and leave it out of uploaded CI artifacts.
 - The file uses Playwright's `storageState` format, so a file Playwright wrote works with `loadState`.
@@ -1136,7 +1138,7 @@ A string ending in `.txt` names the file, and the cookie takes the file's name. 
 { "loadCookie": "session_token.txt" }
 ```
 
-Any other string is a cookie name, and the cookie moves through the environment variable of that name. To give the file a different name, use the object form with `name` and `path`.
+Any other string is a cookie name, and the cookie moves through the environment variable of that name. To give the file a different name, use the object form with `name` and `path`. `loadCookie` fails when the saved cookie has expired, so save it again with `saveCookie` before the test that loads it.
 
 ---
 
