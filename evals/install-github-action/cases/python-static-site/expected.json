@@ -1,0 +1,71 @@
+{
+  "kind": "setup",
+  "args": "--ci",
+  "hard": "The tests open http://localhost:8000, a static site in public/ served with Python. There's no package.json: the skill's example installs with npm and starts `npm run dev`, and served from the repository root the pages 404.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "steps_before": [
+      [
+        "python3? -m http\\.server\\b[^\\n]*(?:--directory|-d)[ =]+\\.?/?public/?(?:\\s[^\\n]*)?&\\)?\\s*$",
+        "cd \\.?/?public/?\\b[^\\n]*&&[^\\n]*python3? -m http\\.server\\b[^\\n]*&\\)?\\s*$",
+        "cd \\.?/?public/?\\s*\\n[\\s\\S]*python3? -m http\\.server\\b[^\\n]*&\\s*$"
+      ],
+      [
+        "wait-on[^\\n]*\\b8000\\b",
+        "\\bcurl\\b[^\\n]*:8000\\b",
+        "\\bwget\\b[^\\n]*:8000\\b",
+        "nc -z[^\\n]*\\b8000\\b"
+      ]
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that serves the `public/` folder with Python's `http.server` on port 8000 before Doc Detective runs on pull requests, because the doc tests open http://localhost:8000. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs `npm ci` and `npm run dev`, then Doc Detective, on every pull request. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "copies the skill's example: `npm ci`, then `npm run dev` and a wait on :3000",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "      - name: Serve the site\n        run: |\n          python3 -m http.server 8000 --directory public &\n          npx --yes wait-on http://localhost:8000\n",
+          "to": "      - run: npm ci\n      - name: Start the app\n        run: |\n          npm run dev &\n          npx --yes wait-on http://localhost:3000\n"
+        }
+      ]
+    },
+    {
+      "why": "serves the repository root, so the pages 404",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "python3 -m http.server 8000 --directory public &",
+          "to": "python3 -m http.server 8000 &"
+        }
+      ]
+    },
+    {
+      "why": "serves the site in the foreground, so the job hangs",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "--directory public &",
+          "to": "--directory public"
+        }
+      ]
+    }
+  ]
+}

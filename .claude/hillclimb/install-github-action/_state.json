@@ -65,7 +65,15 @@
     "create-pr-on-change",
     "issue-on-fail-integrations",
     "gitlab-decline",
-    "confirm-first"
+    "confirm-first",
+    "yaml-config-subdir",
+    "issue-on-fail-only",
+    "monthly-schedule",
+    "start-script-port",
+    "python-static-site",
+    "prose-request",
+    "add-to-existing-ci",
+    "confirm-schedule"
   ],
   "test_ids": [
     "no-config-documentation-dir",
