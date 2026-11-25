@@ -121,5 +121,5 @@
     ]
   },
   "split_note": "32 cases written before any run, 21 held out (66%). Train holds the single basic, decline, and confirm cases and one or two cases of each larger kind. The held-out side holds the rest, including the single route and filter cases and the optional-write case.",
-  "harness_sha": "1ff2d3243a9ca127a3f74fa5c1b27fbb5d2bd81475f292db7d8edf27d76144b1"
+  "harness_sha": "151e95ad6543a4137aa8c8d82f8f70932603c0bd741bf8bf46826d5220c6e4e5"
 }
