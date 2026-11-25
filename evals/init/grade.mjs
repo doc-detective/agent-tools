@@ -11,9 +11,9 @@
 //   tests     in that run, each procedure the case names has a test with the expected result
 //             (PASS, or FAIL for a stale doc or a service that's down), no test comes from a
 //             file the case excludes, and no other test fails
-//   no_harm   doc prose unchanged; nothing added but a root config, spec files, and (when the
-//             prompt asks for CI) a workflow; no other file changed, except lines added to
-//             .gitignore; in an `existing` case, nothing changed at all
+//   no_harm   doc prose unchanged; nothing added but a root config, spec files, a .gitignore,
+//             and (when the prompt asks for CI) a workflow; no other file changed, except lines
+//             added to .gitignore; in an `existing` case, nothing changed at all
 //   ci        when the prompt asks for CI, a new workflow uses doc-detective/github-action;
 //             otherwise nothing under .github/ changed
 //   report    the final report names each must_mention string, and an LLM judge agrees it
@@ -191,7 +191,8 @@ export async function gradeRun(c, facts, judgeFn = judge) {
     const p = x.path, now = facts.files[p];
     if (e.existing) harm.push(`${p} ${x.status}`);
     else if (x.status === 'added') {
-      if (!(CONFIGS.includes(p) || isSpec(now) || (e.ci === 'asked' && WORKFLOW.test(p)))) harm.push(`${p} added`);
+      // The skill's config guidance says to gitignore `.doc-detective/`, so a new `.gitignore` is fine.
+      if (!(CONFIGS.includes(p) || p === '.gitignore' || isSpec(now) || (e.ci === 'asked' && WORKFLOW.test(p)))) harm.push(`${p} added`);
     } else if (x.status === 'modified' && /\.mdx?$/i.test(p)) {
       if (prose(now) !== prose(c.files[p])) harm.push(`prose of ${p} edited`);
     } else if (!(x.status === 'modified' && p === '.gitignore' && keepsLines(c.files[p], now))) harm.push(`${p} ${x.status}`);

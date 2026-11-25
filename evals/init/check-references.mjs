@@ -15,7 +15,7 @@ import { createHash } from 'node:crypto';
 import { loadCases, makeWorkspace, checkDown, collect, runConfig, gradeRun, judge, removeWorkspace } from './grade.mjs';
 import { ensureServers } from '../spec-generation/grade.mjs';
 
-const dd = { name: 'Bash', input: { command: 'npx doc-detective@5 --input doc-detective-tests/ --output .doc-detective/results/results.json' } };
+const dd = { name: 'Bash', input: { command: 'npx doc-detective@5.6.3 --input doc-detective-tests/ --output .doc-detective/results/results.json' } };
 
 const memo = (map, key, fn) => { if (!map.has(key)) map.set(key, fn()); return map.get(key); };
 const runs = new Map(), verdicts = new Map();

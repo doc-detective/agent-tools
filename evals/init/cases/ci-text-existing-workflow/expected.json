@@ -22,7 +22,7 @@
   "must_mention": [
     "doc-detective.yml"
   ],
-  "report": "The report says it created a Doc Detective config and tests for docs/write-a-note.md and docs/preview-a-message.md, both of which passed, and that it left the existing .github/workflows/ci.yml unchanged or added the action as a separate workflow.",
+  "report": "The report says it created a Doc Detective config and tests for docs/write-a-note.md and docs/preview-a-message.md, both of which passed, and that it added the action as a separate workflow, doc-detective.yml, and left the existing .github/workflows/ci.yml unchanged. A report that says it edited ci.yml fails.",
   "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/write-a-note-spec.json` tests docs/write-a-note.md; `doc-detective-tests/preview-a-message-spec.json` tests docs/preview-a-message.md.\n\nResults: 2 passed, 0 failed.\n\nRather than add a separate doc-detective.yml, I added the Doc Detective GitHub Action as a step in .github/workflows/ci.yml.",
   "wrong": [
     {

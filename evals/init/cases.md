@@ -67,7 +67,7 @@ The pages and API are Doc Detective's test servers (`http://localhost:8092` and
 | `ran` | The session ran Doc Detective's tests: a shell call that executes it, not `--version`, `--help`, `--dry-run`, or `validate`. |
 | `config` | A config sits at the repo root (`.doc-detective.json`, `.yaml`, or `.yml`), parses, and a run that uses only it finds tests. The run is Doc Detective's, so a config that fails its validation finds none. |
 | `tests` | In that run, every procedure has a covering test with its expected result. No test covers an `exclude` entry, and every other failing test is one a procedure expects. |
-| `no_harm` | Doc prose is unchanged (test comments may be added). Nothing was added but a root config, spec files, and, in an `asked` case, a workflow. No other file changed, except lines added to `.gitignore`. In an `existing` case, nothing changed. |
+| `no_harm` | Doc prose is unchanged (test comments may be added). Nothing was added but a root config, spec files, a `.gitignore`, and, in an `asked` case, a workflow. No other file changed, except lines added to `.gitignore`. In an `existing` case, nothing changed. |
 | `ci` | In an `asked` case, a new workflow under `.github/workflows/` uses `doc-detective/github-action` and no existing file under `.github/` changed. Otherwise nothing under `.github/` changed. |
 | `report` | The final report has every `must_mention` string, and the judge (`claude-haiku-4-5`) says it meets the rubric. |
 | `complete` | All six. |

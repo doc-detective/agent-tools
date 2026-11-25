@@ -53,6 +53,7 @@
     "evals/test/grade.mjs",
     "evals/spec-generation/grade.mjs"
   ],
+  "harness_note": "harness_paths lists every module the grader loads, including transitive ones: grade.mjs imports from evals/test/grade.mjs and evals/spec-generation/grade.mjs. A change to either can change grading, so it also needs the init harness approved again.",
   "prices": {
     "claude-sonnet-5-5": {
       "in": 2,
