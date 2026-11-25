@@ -96,7 +96,7 @@ Set the inputs and permissions from the project and the options:
 | `--create-issue-on-fail` | Set `create_issue_on_fail: true`, add `issues: write` permission |
 | `--integrations` provided | Set the `issue_mentions` input to the comma-separated list. Don't use the deprecated `integrations` input. |
 | `--trigger schedule` | Use cron syntax; suggest `cron: '0 6 * * 1'` (Monday 6 AM UTC) and prompt for customization unless `--ci` |
-| The tests need a local server | Before the action, add steps that install the project's dependencies, start the server in the background, and wait until its URL answers. A server started in the foreground never returns, so the job hangs. See the example below. |
+| The tests need a local server | Before the action, add steps that install the project's dependencies with its own package manager, start the server in the background, and wait until its URL answers. A server started in the foreground never returns, so the job hangs. See the example below. |
 
 Create `.github/workflows/` when it doesn't exist, and write the file there.
 
