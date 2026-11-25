@@ -2,9 +2,9 @@
 
 Each case in `cases/<id>/` is a small docs repo, one git commit on `main` with an `origin`
 remote on GitHub, unless the case sets `branch` or `remote`. The session gets
-`/doc-detective:doc-detective-install-github-action <args>` and should add one workflow that
-runs Doc Detective the way the request and the repo need, touch nothing else, and tell the
-user what's left to do. The session doesn't need to run Doc Detective, and the grade never
+`/doc-detective:doc-detective-install-github-action <args>`. It should add one workflow that
+runs Doc Detective the way the request and the repo need. It should touch nothing else, and
+tell the user what's left to do. The session doesn't need to run Doc Detective, and the grade never
 does.
 
 | File | Purpose |
@@ -63,7 +63,7 @@ skill to show the workflow and ask.
 - `fit`: what the workflow must do. Every key is optional.
   - `triggers`: the events it must have. `push` and `pull_request` can require `branches`; `schedule` can require cron fields by name (`minute`, `hour`, `dom`, `month`, `dow`), and `{}` takes any cron. Events outside `triggers`, `allow_triggers`, and `workflow_dispatch` fail.
   - `paths`: every `push` or `pull_request` trigger must run for each `match` file and skip each `skip` file, by its `paths` or `paths-ignore` filters.
-  - `config` and `input`: the Doc Detective config the action resolves (`working_directory` joined with `config`, or the `.doc-detective.*` it finds there; `null` for none), and the paths it may test (the action's `input`, else the config's `input`, else `working_directory`). A `config`, `input`, or `working_directory` that names a missing path fails.
+  - `config` and `input`: the Doc Detective config the action resolves, and the paths it may test. The config is `working_directory` joined with `config`, or the `.doc-detective.*` it finds there, or `null` for none. The paths are the action's `input`, else the config's `input`, else `working_directory`. A `config`, `input`, or `working_directory` that names a missing path fails.
   - `permissions`: the accepted token permission sets, matched exactly at the job or workflow level. The default is `[{ "contents": "read" }]`.
   - `with` and `without`: action inputs that must have these values (a list means a comma-separated set), and inputs that must be absent.
   - `steps_before`: for each entry, some step before the action whose `run` (or `uses`) matches one of its regexes.
@@ -78,10 +78,10 @@ skill to show the workflow and ask.
 
 | Metric | 1 when |
 | --- | --- |
-| `workflow` | Exactly one new file under `.github/workflows/` (none on a `write: false` case; at most one on `"optional"`). It parses as YAML and is a valid workflow: known events, a `cron` list for `schedule`, jobs with `runs-on` and steps, each step with one of `uses` and `run`, valid permission scopes. Its `doc-detective/github-action` step sets only inputs in [action-inputs.json](action-inputs.json), none deprecated, each a scalar; boolean inputs are `true` or `false`, and `issue_mentions` names supported tools. When `actionlint` is on `PATH` (or `ACTIONLINT` names it), it must pass too. |
+| `workflow` | Exactly one new file under `.github/workflows/` (none on a `write: false` case; at most one on `"optional"`). It parses as YAML and is a valid workflow. That means known events and a `cron` list for `schedule`. It also means jobs with `runs-on` and steps, each step with one of `uses` and `run`, and valid permission scopes. Its `doc-detective/github-action` step sets only inputs in [action-inputs.json](action-inputs.json), none deprecated, each a scalar; boolean inputs are `true` or `false`, and `issue_mentions` names supported tools. When `actionlint` is on `PATH` (or `ACTIONLINT` names it), it must pass too. |
 | `fit` | The action is pinned (`@v2`, `@v2.x.y`, or a commit), after `actions/checkout` and `actions/setup-node` with Node.js 24, and the workflow meets the case's `fit`. 1 on a `write: false` case with no `proposal`. |
 | `no_harm` | No existing file changed or deleted, and nothing added outside `.github/workflows/` (nothing at all on a `write: false` case). Files under `.doc-detective/` and `node_modules/` don't count. |
-| `report` | The final report has every `must_mention` string, and the judge (`claude-haiku-4-5`) says it meets the `report` rubric. On write cases, the rubric asks what was added, what triggers it, and what the user must still do: commit and push it, confirm GitHub Actions is enabled, and any secret or setting the case needs. |
+| `report` | The final report has every `must_mention` string, and the judge (`claude-haiku-4-5`) says it meets the `report` rubric. On write cases, the rubric asks what was added, what triggers it, and what the user must still do. That's to commit and push it, confirm GitHub Actions is enabled, and add any secret or setting the case needs. |
 | `complete` | All four. |
 
 [action-inputs.json](action-inputs.json) is the inputs list of `doc-detective/github-action`'s `action.yml` at commit `6230ca8e35c1f374e3cd817b2ecdf5c199d48b11` (main, 2026-11-22). Its `action.yml` matches `v2.2.1`, which `v2` points to. Update it, and its `source` line, when the action's inputs change.
@@ -90,12 +90,12 @@ skill to show the workflow and ask.
 
 | id | kind | args | what makes it hard |
 | --- | --- | --- | --- |
-| basic-root-config | basic | `--ci` | The baseline: a config at the root and docs in docs/. The temptations are extra write permissions, extra features, and an unpinned ref. |
+| basic-root-config | basic | `--ci` | The simplest repo, with a config at the root and docs in docs/. The temptations are extra write permissions, extra features, and an unpinned ref. |
 | build-then-serve | setup | `--ci` | The tests check the built site: `npm run build`, then `npm run preview` on :4321, in that order, with the server in the background. |
-| config-in-docs-subdir | config | `--ci` | The config is docs/.doc-detective.json. `config` resolves against `working_directory`, so `working_directory: docs` with `config: docs/.doc-detective.json` names a file that doesn't exist, and with neither the action finds no config. |
+| config-in-docs-subdir | config | `--ci` | The config is docs/.doc-detective.json. `config` resolves against `working_directory`. So `working_directory: docs` with `config: docs/.doc-detective.json` names a file that doesn't exist. With neither set, the action finds no config. |
 | config-yaml | config | `--ci` | The config is YAML (`.doc-detective.yaml`); every example in the skill says `.doc-detective.json`. |
 | confirm-first | confirm | (none) | No `--ci` and no go-ahead: the skill says show the workflow and wait. A headless session that writes it anyway skips the user's review. |
-| create-pr-on-change | feature | `--ci --create-pr-on-change` | With no `--trigger`, PR creation moves the trigger to push on the default branch, needs two write permissions, and needs a repository setting the file can't change. |
+| create-pr-on-change | feature | `--ci --create-pr-on-change` | With no `--trigger`, PR creation moves the trigger to push on the default branch. It needs two write permissions, and a repository setting the file can't change. |
 | create-pr-on-pull-request | feature | `--ci --create-pr-on-change --trigger pull_request` | The user asked for pull_request. The skill keeps it, but must warn that the PR carries the source PR's changes and that every source PR overwrites one branch. |
 | custom-token-secret | feature | `--ci --create-issue-on-fail Use our DOCS_BOT_TOKEN repository secret as the token when it creates issues.` | The input is `token`, and its value a `secrets.` expression; `github_token` is the name other actions use. |
 | dev-server | setup | `--ci` | The doc tests open http://localhost:5173, which answers only after `npm run dev`. The skill's template has no setup step, and `npm run dev` in the foreground never returns. |
@@ -109,10 +109,10 @@ skill to show the workflow and ask.
 | monorepo-path-filter | filter | `--ci Only run it when something in the docs package changes.` | The docs are one package of three. The path filter must cover packages/docs/ and nothing else, and the config is two folders down. |
 | nightly-schedule | trigger | `--ci Run the doc tests every night at 2 AM UTC.` | The skill suggests `0 6 * * 1`, Monday mornings; the request is every night at 2 AM UTC. |
 | no-config-documentation-dir | config | `--ci` | No Doc Detective config, and the docs are in documentation/, not docs/. A `config` input names a file that doesn't exist. |
-| no-config-root-docs | config | `--ci` | No config and no docs folder: the tested Markdown sits at the repository root, so the input is the root, not an invented docs/. |
+| no-config-root-docs | config | `--ci` | The repo has no config and no docs folder. The tested Markdown sits at the repository root, so the input is the root, not an invented docs/. |
 | no-exit-on-fail | feature | `--ci --no-exit-on-fail` | `continue-on-error` also turns the check green, and hides that the step failed; the action has its own `exit_on_fail` input. |
 | nvmrc-node20 | setup | `--ci` | The repo pins Node.js 20 in .nvmrc for its site build. Doc Detective 5 needs Node.js 24, so reusing `node-version-file: .nvmrc` breaks the run. |
-| pin-version | feature | `--ci Pin Doc Detective itself to version 5.6.3 so CI doesn't change under us.` | Two things have versions: the action (`@v2`) and Doc Detective (`version`). Pinning the action's ref to 5.6.3, or giving a range, misses. |
+| pin-version | feature | `--ci Pin Doc Detective itself to version 5.6.3 so CI doesn't change under us.` | Both the action (`@v2`) and Doc Detective (`version`) have versions. Pinning the action's ref to 5.6.3, or giving a range, misses. |
 | pr-comment-request | feature | `--ci Also post the test results as a comment on each pull request.` | The action has no PR-comment input. An invented one (`comment_on_pr`) only draws a warning from GitHub, so the comment silently never appears. |
 | pr-only | trigger | `Run the doc tests on pull requests only, not on pushes. Write the workflow without asking me first.` | The skill's report says to suggest a `push` trigger for the cache. Suggesting it is fine; adding it goes against the request. |
 | push-default-branch-trunk | trigger | `--ci Run Doc Detective on every push to our default branch.` | The default branch is `trunk`, not `main`, and only `git` says so. |

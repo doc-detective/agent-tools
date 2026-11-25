@@ -103,13 +103,13 @@ node evals/install-github-action/run-eval.mjs --flow .claude/hillclimb/install-g
 Each case is a small docs repo, one git commit with a GitHub `origin` remote, unless the case is about another host. The session gets `/doc-detective:doc-detective-install-github-action <args>`, usually with `--ci` or a request to write without asking, since no one is there to confirm. Doc Detective never runs. The grade reads the workspace and the final report:
 
 - `workflow`: one new file under `.github/workflows/` that parses and is a valid workflow. The `doc-detective/github-action` step sets only inputs that `action.yml` has, none deprecated, with values of the right shape. [action-inputs.json](install-github-action/action-inputs.json) holds that list, from the commit its `source` names. When `actionlint` is on `PATH`, or `ACTIONLINT` names it, it must pass too.
-- `fit`: the workflow does what the case asks for this repo. That covers triggers, path filters, the config and input it resolves, permissions, inputs, setup steps, secrets, artifacts, the runner, a pinned action ref, and Node.js 24.
+- `fit`: the workflow does what the case asks for this repo. It checks the triggers, path filters, and the config and input the action resolves. It also checks permissions, inputs, setup steps, secrets, artifacts, the runner, a pinned action ref, and Node.js 24.
 - `no_harm`: no existing file changed, and nothing added outside `.github/workflows/`.
-- `report`: the report has the case's `must_mention` strings, and a `claude-haiku-4-5` judge agrees it meets the case's rubric: what was added, what triggers it, and what the user must still do.
+- `report`: the report has the case's `must_mention` strings, and a `claude-haiku-4-5` judge agrees it meets the case's rubric. The rubric asks what was added, what triggers it, and what the user must still do.
 
 [install-github-action/cases.md](install-github-action/cases.md) describes the 32 cases and the `expected.json` format. `node evals/install-github-action/check-references.mjs` runs no sessions. It checks that each reference outcome scores `complete`, and that each planted wrong outcome fails the metric it names. It calls the judge about 60 times, under $1.
 
-This eval's runner uses the shared harness in [lib/runner.mjs](lib/runner.mjs). The other evals carry their own copy of the same code.
+This eval's runner uses the shared runner code in [lib/runner.mjs](lib/runner.mjs). The other evals carry their own copy of the same code.
 
 ## Run a subset
 
