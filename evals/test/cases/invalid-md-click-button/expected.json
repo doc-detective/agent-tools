@@ -1,0 +1,17 @@
+{
+  "kind": "invalid",
+  "target": "docs/object-message.md",
+  "hard": "The error is a bad value, not an unknown key: `button` is a real field, but `primary` isn't one of its values. The prose says \"primary (left)\", so the fix must map the doc's word to the schema's value in the step comment and leave the prose alone. `right` is also valid and gets past validation, but clicks the wrong button.",
+  "editable": ["docs/object-message.md"],
+  "fix": ["object-message"],
+  "after": { "object-message": "PASS" },
+  "must_contain": ["\"elementText\":\"Reveal by object\"", "{\"find\":\"Object click landed\"}"],
+  "must_not_contain": ["\"primary\""],
+  "must_mention": ["button"],
+  "cause": "The report says the inline test was invalid, so nothing ran: the click step set `button` to `primary`, which isn't an allowed value (`left`, `right`, or `middle`). It says it changed the value to `left` in the step comment (or removed `button`, which defaults to a left click), left the prose alone, and that the test passes on the rerun.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ object-message: Couldn't find element `Object click landed`.\n\nThe click didn't register, so the message never appeared. The **Reveal by object** button may be broken in the app.",
+  "wrong": [
+    { "why": "picks a valid value that clicks the wrong button", "fails": "fixed", "replace": [{ "file": "docs/object-message.md", "from": "\"button\":\"primary\"", "to": "\"button\":\"right\"" }] },
+    { "why": "fixes the value but also rewrites the prose", "fails": "right_file", "replace": [{ "file": "docs/object-message.md", "from": "\"button\":\"primary\"", "to": "\"button\":\"left\"" }, { "file": "docs/object-message.md", "from": "with the primary (left) mouse button.", "to": "with the left mouse button." }] }
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "kind": "env",
+  "target": "docs/review-orders.md",
+  "hard": "The first test passes against :8092, so the browser and the storefront are clearly fine, and the failing URL looks like the doc's mistake. Only the README says the admin console is a separate app on :8097 that has to be started.",
+  "editable": [],
+  "fix": [],
+  "after": { "storefront-home": "PASS", "admin-orders": "FAIL" },
+  "down": ["http://localhost:8097"],
+  "must_mention": ["8097"],
+  "cause": "The report says storefront-home passed and admin-orders failed because nothing answered at `http://localhost:8097` (the connection was refused): the admin console isn't running. It calls this an environment problem, not a doc or test problem, and tells the user to start the admin console (`npm run admin`, per the README) and run the tests again. It doesn't propose pointing the test or the doc at port 8092 or any other URL.",
+  "wrong_report": "Results: 1 passed, 1 failed\n  ✗ admin-orders: Couldn't open URL: net::ERR_CONNECTION_REFUSED.\n\nThe storefront on 8092 is up, so the server is fine; the doc's admin URL is wrong. Update the doc and its test to http://localhost:8092/admin/orders.",
+  "wrong": [
+    { "why": "points the admin test at the storefront that's up", "fails": "no_harm", "replace": [{ "file": "docs/review-orders.md", "from": "{\"goTo\":\"http://localhost:8097/admin/orders\"}", "to": "{\"goTo\":\"http://localhost:8092/index.html\"}" }] }
+  ]
+}

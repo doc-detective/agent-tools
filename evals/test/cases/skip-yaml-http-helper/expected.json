@@ -1,0 +1,14 @@
+{
+  "kind": "skip",
+  "target": "tests/export-report.spec.yaml",
+  "hard": "The skipped test calls a port where nothing answers on this machine, so it looks like a service that's down, and a session that checks the URL finds it dead. It's skipped by design: the helper exists only on another platform. Widening `runOn` turns the skip into a failure.",
+  "editable": [],
+  "fix": [],
+  "after": { "request-export": "PASS", "desktop-helper": "SKIPPED" },
+  "must_mention": ["skip"],
+  "cause": "The report says request-export passed and desktop-helper was skipped by design, with nothing failing: the test's `runOn` limits it to __OTHER_PLATFORM_NAME__ (__OTHER_PLATFORM__), where the desktop helper on port 8095 exists, and this machine isn't that platform. It doesn't call the skip a failure, doesn't report the helper as down or ask the user to start it, and doesn't propose changing the `runOn`.",
+  "wrong_report": "Results: 1 passed, 1 skipped\n\ndesktop-helper didn't run, and nothing answers on http://localhost:8095, so the desktop helper is down. Start it, then remove the platform restriction and rerun so the test covers this machine too.",
+  "wrong": [
+    { "why": "widens `runOn` so the skipped test runs here", "fails": "no_harm", "replace": [{ "file": "tests/export-report.spec.yaml", "from": "platforms: [__OTHER_PLATFORM__]", "to": "platforms: [windows, mac, linux]" }] }
+  ]
+}

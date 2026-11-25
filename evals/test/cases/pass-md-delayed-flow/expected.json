@@ -1,0 +1,15 @@
+{
+  "kind": "pass",
+  "target": "docs/delayed-messages.md",
+  "hard": "Nothing is wrong, but three steps look like they need tidying under `--fix`: a fixed `wait`, a `find` for `Submit Order` where the page's source has extra spaces, and a regex `find`. All pass as written; any edit is harm.",
+  "editable": [],
+  "fix": [],
+  "after": { "auto-message": "PASS", "click-message": "PASS", "order-summary": "PASS" },
+  "must_mention": [],
+  "cause": "The report says all three tests (auto-message, click-message, and order-summary) passed and nothing failed, so there was nothing to fix. It doesn't report a failure, and it doesn't say it changed the doc or its tests.",
+  "wrong_report": "Results: 2 passed, 1 failed\n  ✗ auto-message: the fixed 2.5-second wait is flaky.\n\nI'd drop the `wait` step and rely on the find's own timeout.",
+  "wrong": [
+    { "why": "drops a passing `wait` step", "fails": "no_harm", "replace": [{ "file": "docs/delayed-messages.md", "from": "<!-- step {\"wait\":2500} -->\n", "to": "" }] },
+    { "why": "rewrites the regex check as plain text", "fails": "no_harm", "replace": [{ "file": "docs/delayed-messages.md", "from": "\"elementText\":\"/Order #\\\\d+/\"", "to": "\"elementText\":\"Order #4821\"" }] }
+  ]
+}

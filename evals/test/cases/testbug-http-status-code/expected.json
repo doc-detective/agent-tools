@@ -1,0 +1,18 @@
+{
+  "kind": "test_wrong",
+  "target": "tests/update-user.spec.json",
+  "hard": "`204` is a common answer to a `PUT`, and the doc even mentions it, so the spec looks right and the API looks wrong. Accepting both codes, or dropping `statusCodes` (whose default includes `200`), also turns the run green without checking what the doc says.",
+  "editable": ["tests/update-user.spec.json"],
+  "fix": ["update-user"],
+  "after": { "update-user": "PASS" },
+  "must_contain": ["\"statusCodes\": [200]", "\"response\""],
+  "must_not_contain": ["204"],
+  "must_mention": ["204"],
+  "cause": "The report says the test was wrong, not the doc or the API: the spec expected status `204`, but the doc says the API returns `200 OK` with the updated record, and it did. It says it changed the spec's `statusCodes` to `200`, kept the response body check, and that the test passes on the rerun. A report that calls this an API bug or a doc problem fails.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ update-user: Returned 200. Expected one of [204].\n\nA REST API should answer an update with 204 No Content, so this is an API bug. File it against the users endpoint; the spec is right.",
+  "wrong": [
+    { "why": "accepts both codes instead of the one the doc states", "fails": "fixed", "replace": [{ "file": "tests/update-user.spec.json", "from": "204", "to": "200,\n              204" }] },
+    { "why": "drops the status check, whose default includes 200", "fails": "fixed", "replace": [{ "file": "tests/update-user.spec.json", "from": "            \"statusCodes\": [\n              204\n            ],\n", "to": "" }] },
+    { "why": "changes the doc to say 204", "fails": "right_file", "replace": [{ "file": "docs/update-user.md", "from": "The API returns `200 OK`", "to": "The API returns `204 No Content`" }] }
+  ]
+}

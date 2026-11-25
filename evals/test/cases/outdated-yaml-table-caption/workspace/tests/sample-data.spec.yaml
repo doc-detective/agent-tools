@@ -1,0 +1,9 @@
+description: Tests the procedure in docs/sample-data.md.
+tests:
+  - testId: sample-data-table
+    steps:
+      - goTo: http://localhost:8092/index.html
+      - find: Common HTML Elements
+      - click: Tables
+      - find: Sample Data Table
+      - find: Jane Smith
