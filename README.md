@@ -474,10 +474,10 @@ Takes a well-formed test specification and injects test steps as inline comments
 
 Installs a Doc Detective GitHub Actions workflow for automated documentation testing in CI:
 
-1. Detects project context (config files, docs directory, existing workflows).
-2. Generates a workflow YAML with configurable triggers and optional features.
+1. Detects project context (config files, docs directory, existing workflows, and how the project serves any `localhost` URL the tests open, such as a `dev`, `start`, or `preview` script in `package.json`).
+2. Generates a workflow YAML with configurable triggers and optional features. When the tests need a local server, the workflow installs the project's dependencies with its own package manager. It starts the server in the background and waits for the server's URL before it runs the tests.
 3. Writes the workflow to `.github/workflows/doc-detective.yml`.
-4. Reports manual steps needed (e.g., enabling Actions permissions).
+4. Reports the manual steps that apply, starting with committing the workflow and pushing it to GitHub. The workflow doesn't run until it's on GitHub. Other steps include enabling Actions permissions for PR creation.
 
 | Option | Default | Description |
 |--------|---------|-------------|
