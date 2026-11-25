@@ -123,7 +123,7 @@ A rerun resumes, skipping each case and rep already in `results.jsonl`. When you
 
 ## Approve changed eval code
 
-The runner refuses to start when the runner, the shared runner code in `evals/lib/runner.mjs` (test and init), `evals/lib/claude-run.mjs`, the files in `_state.json`'s `harness_paths`, or `package-lock.json` changed since someone last approved them. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
+The runner refuses to start when its code changed since someone last approved it. That code is the eval's runner, the shared `evals/lib/runner.mjs` (test and init), and `evals/lib/claude-run.mjs`. It also covers the files in `_state.json`'s `harness_paths`, and `package-lock.json`. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
 
 ## Read the results
 
