@@ -1064,21 +1064,79 @@ Load environment variables from a .env file.
 { "loadVariables": "config/doc-detective-test.env" }
 ```
 
+### saveState / loadState
+
+Sign in once and reuse the session in later tests. `saveState` writes the open site's cookies and `localStorage` to a JSON file, and `loadState` puts them back. When a procedure starts on a page behind a sign-in, use these actions rather than signing in again in every test.
+
+Both actions take a path ending in `.json`, or an object with `path` and an optional `directory`. A relative `directory` resolves against the spec file. Without `directory`, the file goes in `outputDir`. `saveState` also takes `overwrite`, which defaults to `false`, so saving over an existing file fails unless you set it to `true`.
+
+Put the sign-in in its own spec file. In the Doc Detective config file, not in a spec, list that file in `beforeAll`. `beforeAll` specs finish before the rest of the run starts, so the state file exists before any test needs it:
+
+```json
+{
+  "input": "docs",
+  "beforeAll": "tests/sign-in.spec.json",
+  "loadVariables": ".env"
+}
+```
+
+Keep credentials in environment variables, set in the shell or loaded with `loadVariables`, never in the spec. The sign-in spec in `tests/sign-in.spec.json`:
+
+```json
+{
+  "tests": [
+    {
+      "testId": "sign-in",
+      "steps": [
+        { "goTo": "https://app.example.com/login" },
+        { "find": { "selector": "#user", "click": true, "type": "$APP_USER" } },
+        { "find": { "selector": "#password", "click": true, "type": ["$APP_PASSWORD", "$ENTER$"] } },
+        { "find": "Dashboard" },
+        { "saveState": { "path": "auth.json", "directory": "../.auth", "overwrite": true } }
+      ]
+    }
+  ]
+}
+```
+
+The relative `directory` resolves against `tests/`, so this writes `.auth/auth.json` at the project root. `overwrite` replaces the file on every run, so the session stays fresh.
+
+In each later test, open the site, load the state, and open the page again so the app reads the session. Point `directory` at the same folder the sign-in spec wrote to. This test sits in another folder of the same depth, such as `docs/`:
+
+```json
+{
+  "steps": [
+    { "goTo": "https://app.example.com" },
+    { "loadState": { "path": "auth.json", "directory": "../.auth" } },
+    { "goTo": "https://app.example.com/billing" }
+  ]
+}
+```
+
+- Both actions fail when no site is open, so put a `goTo` first.
+- One file holds one site. For docs that span sites, save one file per site.
+- `loadState` fails when the file has no cookies or `localStorage` for the open site, so a test can't run signed out without anyone noticing.
+- `sessionStorage` isn't saved. An app that keeps its session there needs a sign-in in each test.
+- The file holds live session tokens. Add its folder, such as `.auth/`, to `.gitignore`, and leave it out of uploaded CI artifacts.
+- The file uses Playwright's `storageState` format, so a file Playwright wrote works with `loadState`.
+
+**Outputs:** `path`, plus `cookies` and `localStorage`, the number of each that the step saved or loaded.
+
 ### saveCookie / loadCookie
 
-Manage browser cookies for session persistence.
+Move one named cookie through a file or an environment variable. To reuse a whole sign-in, use `saveState` and `loadState` instead.
 
-Save cookies:
-
-```json
-{ "saveCookie": "session-cookies.json" }
-```
-
-Load cookies:
+A string ending in `.txt` names the file, and the cookie takes the file's name. This pair saves the `session_token` cookie to `session_token.txt` in `outputDir` and loads it back:
 
 ```json
-{ "loadCookie": "session-cookies.json" }
+{ "saveCookie": "session_token.txt" }
 ```
+
+```json
+{ "loadCookie": "session_token.txt" }
+```
+
+Any other string is a cookie name, and the cookie moves through the environment variable of that name. To give the file a different name, use the object form with `name` and `path`.
 
 ---
 
