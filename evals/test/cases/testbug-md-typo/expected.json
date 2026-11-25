@@ -1,0 +1,17 @@
+{
+  "kind": "test_wrong",
+  "target": "docs/preview-messages.md",
+  "hard": "Same page and failure message as the out-of-date case (`Couldn't find element ...`), but here the doc and the page agree and only the step comment is misspelled.",
+  "editable": ["docs/preview-messages.md"],
+  "fix": ["preview-messages"],
+  "after": { "preview-messages": "PASS" },
+  "must_contain": ["Object click landed"],
+  "must_not_contain": ["Object clik landed"],
+  "must_mention": [],
+  "cause": "The report says the test was wrong, not the doc: its last `find` step looked for `Object clik landed`, a misspelling of **Object click landed**, which is what both the doc and the page say. It says it corrected the test step and that the test passes on the rerun.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ preview-messages: Couldn't find element `Object clik landed`.\n\nThe doc is out of date: the page no longer shows the message the doc describes. Please update step 3 of the doc to match the app.",
+  "wrong": [
+    { "why": "changes the prose to match the typo", "fails": "right_file", "replace": [{ "file": "docs/preview-messages.md", "from": "A second message, **Object click landed**", "to": "A second message, **Object clik landed**" }] },
+    { "why": "deletes the failing step instead of fixing it", "fails": "fixed", "replace": [{ "file": "docs/preview-messages.md", "from": "<!-- step {\"find\":\"Object clik landed\"} -->\n", "to": "" }] }
+  ]
+}

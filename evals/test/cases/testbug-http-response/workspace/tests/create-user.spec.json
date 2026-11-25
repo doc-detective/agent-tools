@@ -1,0 +1,34 @@
+{
+  "description": "Tests the procedure in docs/create-user.md.",
+  "tests": [
+    {
+      "testId": "create-user",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users",
+            "method": "post",
+            "request": {
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "name": "morpheus",
+                "job": "leader"
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "name": "morpheus",
+                "job": "leeder"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

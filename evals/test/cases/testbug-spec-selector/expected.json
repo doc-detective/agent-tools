@@ -1,0 +1,17 @@
+{
+  "kind": "test_wrong",
+  "target": "tests/live-preview.spec.json",
+  "hard": "The doc never names a selector, so the fix needs the page's real one (`#type-input`), read from the page or the failure screenshot. Dropping the `type` step also turns the run green on paper, but the `find` then fails.",
+  "editable": ["tests/live-preview.spec.json"],
+  "fix": ["live-preview"],
+  "after": { "live-preview": "PASS" },
+  "must_contain": ["Hello, Doc Detective", "\"type\""],
+  "must_not_contain": ["#type-field"],
+  "must_mention": [],
+  "cause": "The report says the test was wrong, not the doc: the `type` step used the selector `#type-field`, which doesn't exist on the page, so it couldn't find the **Type here:** field. It says it changed the selector to the field the doc describes (for example `#type-input`) and that the test passes on the rerun.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ live-preview: Couldn't find element `#type-field`.\n\nThe live preview page seems to be down or slow to load, so the field never appeared. Start the demo app and run the tests again.",
+  "wrong": [
+    { "why": "drops the failing step", "fails": "fixed", "write": { "tests/live-preview.spec.json": { "tests": [{ "testId": "live-preview", "steps": [{ "goTo": "http://localhost:8092/type-echo.html" }, { "find": "Type here:" }] }] } } },
+    { "why": "edits the doc", "fails": "right_file", "replace": [{ "file": "docs/live-preview.md", "from": "2. Click the **Type here:** field.", "to": "2. Click the field with ID `type-field`." }] }
+  ]
+}

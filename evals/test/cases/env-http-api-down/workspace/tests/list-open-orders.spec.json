@@ -1,0 +1,24 @@
+{
+  "description": "Tests the procedure in docs/list-open-orders.md.",
+  "tests": [
+    {
+      "testId": "list-open-orders",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8096/api/orders?status=open",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "status": "open"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

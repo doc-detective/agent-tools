@@ -1,0 +1,40 @@
+{
+  "description": "Tests docs/notifications.md.",
+  "tests": [
+    {
+      "testId": "reveal-by-selector",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/click-shorthand.html"
+        },
+        {
+          "click": {
+            "selector": "#reveal-selector"
+          }
+        },
+        {
+          "find": "Selector click landed"
+        }
+      ]
+    },
+    {
+      "testId": "open-orders-feed",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8096/api/orders?status=open",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "status": "open"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
