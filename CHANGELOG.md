@@ -1,3 +1,9 @@
+## [3.3.0](https://github.com/doc-detective/agent-tools/compare/v3.2.0...v3.3.0) (2026-11-25)
+
+### Features
+
+* **skills:** install-github-action says to push, and starts a local server ([#123](https://github.com/doc-detective/agent-tools/issues/123)) ([36a2755](https://github.com/doc-detective/agent-tools/commit/36a2755ef6b007defde031eeae40704d51d8692c))
+
 ## [3.2.0](https://github.com/doc-detective/agent-tools/compare/v3.1.0...v3.2.0) (2026-11-25)
 
 ### Features
