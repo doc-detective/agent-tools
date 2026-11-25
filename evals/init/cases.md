@@ -117,7 +117,7 @@ After round 1, every train case passed under the fixed grader, so the climb had 
 
 | id | kind | ci | what makes it hard |
 | --- | --- | --- | --- |
-| stale-moved-page | stale | offer | The note guide still sends readers to `/echo.html`, which returns 404; the README's release notes say Echo Pad moved to `/type-echo.html`. The stale part is a URL, not a label, and pointing the test at the new address is the obvious fix that hides the stale doc. |
+| stale-moved-page | stale | offer | The note guide still sends readers to `/echo.html`, which returns 404; the README's release notes say Echo Pad moved to `/type-echo.html`. The stale part is a URL, not a label. Pointing the test at the new address is the obvious fix, and it hides the stale doc. |
 | stale-api-status | stale | silent | An API guide says creating an order returns `201 Created`; the API returns `200 OK` with the right body. `--skip-fix-loop` means nothing gets fixed, and loosening `statusCodes` hides the stale doc. The remote is GitLab. |
 | rst-docs | layout | asked | Sphinx docs in reStructuredText, with `#.` steps, a `README.rst`, and no Markdown. The prompt asks to "set up CI" without naming GitHub Actions or the action. |
 | exclude-reference-page | exclude | offer | docs/reference/pages.md is a hand-written lookup table of four page URLs beside one guide. It has no steps, so checking its links isn't a procedure test. |
