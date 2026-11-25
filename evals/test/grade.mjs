@@ -154,9 +154,10 @@ export const testText = (path, t) => (/\.mdx?$/i.test(path) ? (t.match(COMMENT) 
 // --- the session's tool calls ----------------------------------------------------
 
 // `doc-detective` as the command a segment executes: bare, by path, or through npx, npm exec,
-// bunx, or a dlx, after optional `(`, `&`, or VAR=value prefixes; or the Docker image under
-// `docker run`. An argument (`echo doc-detective`, `cat .doc-detective.json`) doesn't match.
-const DD_CMD = /^[(&\s]*(?:\w+=\S*\s+)*(?:(?:npx(?:\.cmd)?|bunx|npm\s+exec|(?:pnpm|yarn)\s+dlx)(?:\s+-\S+)*\s+(?:--\s+)?)?(?:\S*[/\\])?doc-detective(?:@\S+)?(?=[\s)]|$)/;
+// bunx, or a dlx, after optional `(`, `&`, VAR=value, `time`, or `timeout <n>` prefixes; or the
+// Docker image under `docker run`. An argument (`echo doc-detective`, `cat .doc-detective.json`)
+// doesn't match.
+const DD_CMD = /^[(&\s]*(?:\w+=\S*\s+)*(?:(?:time|timeout\s+\S+)\s+)*(?:(?:npx(?:\.cmd)?|bunx|npm\s+exec|(?:pnpm|yarn)\s+dlx)(?:\s+-\S+)*\s+(?:--\s+)?)?(?:\S*[/\\])?doc-detective(?:@\S+)?(?=[\s)]|$)/;
 // `docker run` flags that take no value; any other flag without `=` takes the next token.
 const DOCKER_BOOL = new Set(['--rm', '-d', '--detach', '-i', '--interactive', '-t', '--tty', '-it', '-ti', '--init', '--privileged', '-P', '--publish-all', '-q', '--quiet']);
 // Whether `docker run` runs the Doc Detective image: the image is the first token that isn't a flag or a flag's value.
