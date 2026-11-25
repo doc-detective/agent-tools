@@ -8,7 +8,7 @@ The evals measure the plugin the way users meet it: through Claude Code, with on
 | [spec-generation](spec-generation/) | Does `/doc-detective-generate` turn a doc into a spec that runs and covers the doc? | `complete`: the spec passes and has every expected step |
 | [inline](inline/) | Does `/doc-detective-inline` put tests into a doc as comments that Doc Detective reads back, without touching the prose? | `complete`: only comments added, and every expected step detected |
 | [test](test/) | Does `/doc-detective-test --fix` run a user's tests, name why each failed, and fix only what belongs to the test? | `complete`: ran, right cause, right files, fixed, no harm |
-| [init](init/) | Does `/doc-detective-init` set up Doc Detective in a repo that doesn't use it: find the docs, write a config, test the procedures, report failures by kind, and offer CI? | `complete`: ran, config, tests, no harm, CI, report |
+| [init](init/) | Does `/doc-detective-init` set up Doc Detective in a repo that doesn't use it yet? It should find the docs, write a config, and test the procedures. Then it should report failures by kind and offer CI. | `complete`: ran, config, tests, no harm, CI, report |
 
 Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (`baseline`, `v1`, `v2`, and so on). `_state.json` in each eval's directory declares its metrics and the files whose hash the runner checks before it spends anything.
 
@@ -101,7 +101,7 @@ DD_REPO=<doc-detective checkout> DD_NODE_DIR=<node dir> \
   node evals/init/run-eval.mjs --flow .claude/hillclimb/init --variant baseline --model claude-sonnet-5-5 --reps 3
 ```
 
-Each case is a small repo, one git commit with a GitHub remote (or a GitLab one, or none), that doesn't use Doc Detective yet; three already do. The session gets `/doc-detective:doc-detective-init`, plus `--ci` or a sentence asking for CI in the cases that want a workflow. Nobody answers its questions, so elsewhere it should offer CI, not write it. Afterwards the grade diffs the workspace against the original and runs the tests the session's config finds, from the repo root with no `--input`, with `doc-detective@5.6.3`. A `claude-haiku-4-5` judge reads the final report against the case's rubric, at about $0.02 a case.
+Each case is a small repo, one git commit with a GitHub remote, a GitLab one, or none. Most don't use Doc Detective yet, and three already do. The session gets `/doc-detective:doc-detective-init`, plus `--ci` or a sentence asking for CI in the cases that want a workflow. Nobody answers its questions, so elsewhere it should offer CI, not write it. Afterwards the grade diffs the workspace against the original. It then runs the tests the session's config finds, from the repo root with no `--input`, with `doc-detective@5.6.3`. A `claude-haiku-4-5` judge reads the final report against the case's rubric, at about $0.02 a case.
 
 The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 to 8098 must stay free.
 
@@ -123,7 +123,7 @@ A rerun resumes, skipping each case and rep already in `results.jsonl`. When you
 
 ## Approve changed eval code
 
-The runner refuses to start when the runner, the shared harness `evals/lib/runner.mjs` (test and init), `evals/lib/claude-run.mjs`, the files in `_state.json`'s `harness_paths`, or `package-lock.json` changed since someone last approved them. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
+The runner refuses to start when the runner, the shared runner code in `evals/lib/runner.mjs` (test and init), `evals/lib/claude-run.mjs`, the files in `_state.json`'s `harness_paths`, or `package-lock.json` changed since someone last approved them. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
 
 ## Read the results
 
