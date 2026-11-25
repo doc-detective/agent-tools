@@ -1,0 +1,29 @@
+{
+  "kind": "ci",
+  "hard": "A git repository with no remote at all, so it isn't a GitHub repository yet. The report shouldn't offer the GitHub Action.",
+  "remote": "none",
+  "ci": "silent",
+  "procedures": [
+    {
+      "doc": "docs/fill-in-the-profile-form.md",
+      "match": [
+        "index.html",
+        "ada lovelace"
+      ]
+    }
+  ],
+  "must_mention": [
+    "fill-in-the-profile-form"
+  ],
+  "report": "The report says it created a Doc Detective config and a test for docs/fill-in-the-profile-form.md, which passed.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/fill-in-the-profile-form-spec.json` tests docs/fill-in-the-profile-form.md.\n\nResults: 1 passed, 0 failed.\n\nWant me to add the Doc Detective GitHub Action workflow too?",
+  "wrong": [
+    {
+      "why": "writes a CI workflow nobody asked for",
+      "fails": "ci",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Doc Detective\n\non:\n  pull_request:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+      }
+    }
+  ]
+}

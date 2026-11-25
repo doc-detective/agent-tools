@@ -1,0 +1,9 @@
+= Write a quick note
+
+Echo Pad shows what you type as you type it, so you can check a note before you save it.
+
+== Check a note
+
+. Go to http://localhost:8092/type-echo.html.
+. In the *Type here* field, type `draft note`.
+. Check that *draft note* appears under the field.

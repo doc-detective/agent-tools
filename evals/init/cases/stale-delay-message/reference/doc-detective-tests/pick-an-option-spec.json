@@ -1,0 +1,19 @@
+{
+  "description": "Tests docs/pick-an-option.md.",
+  "tests": [
+    {
+      "testId": "pick-an-option",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/multiple-matches.html"
+        },
+        {
+          "click": "Second"
+        },
+        {
+          "find": "Second clicked"
+        }
+      ]
+    }
+  ]
+}

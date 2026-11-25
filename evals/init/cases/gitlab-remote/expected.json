@@ -1,0 +1,40 @@
+{
+  "kind": "ci",
+  "hard": "The remote is GitLab and there's a `.gitlab-ci.yml`. The skill offers the GitHub Action only in a GitHub repository, so the report shouldn't mention it, and the GitLab pipeline stays as it is.",
+  "remote": "gitlab",
+  "ci": "silent",
+  "procedures": [
+    {
+      "doc": "docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    }
+  ],
+  "must_mention": [
+    "write-a-note"
+  ],
+  "report": "The report says it created a Doc Detective config and a test for docs/write-a-note.md, which passed. It doesn't say it changed .gitlab-ci.yml.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/write-a-note-spec.json` tests docs/write-a-note.md.\n\nResults: 1 passed, 0 failed.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "adds a Doc Detective job to the GitLab pipeline",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": ".gitlab-ci.yml",
+          "from": "    - node --test\n",
+          "to": "    - node --test\n    - npx doc-detective\n"
+        }
+      ]
+    },
+    {
+      "why": "writes a CI workflow nobody asked for",
+      "fails": "ci",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Doc Detective\n\non:\n  pull_request:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+      }
+    }
+  ]
+}

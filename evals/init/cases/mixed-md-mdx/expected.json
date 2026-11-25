@@ -1,0 +1,46 @@
+{
+  "kind": "layout",
+  "hard": "One guide is Markdown and one is MDX with an import and a JSX component; the MDX file is easy to skip or to treat as code.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/guides/fill-in-the-profile-form.md",
+      "match": [
+        "index.html",
+        "ada lovelace"
+      ]
+    },
+    {
+      "doc": "docs/tutorials/pick-an-option.mdx",
+      "match": [
+        "multiple-matches",
+        "second clicked"
+      ]
+    }
+  ],
+  "must_mention": [
+    "pick-an-option"
+  ],
+  "report": "The report says it created a Doc Detective config and generated tests for both guides, the Markdown profile-form guide and the MDX pick-an-option tutorial, and both passed.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/fill-in-the-profile-form-spec.json` tests docs/guides/fill-in-the-profile-form.md.\n\nDoc Detective doesn't read MDX, so I skipped docs/tutorials/pick-an-option.mdx.\n\nResults: 1 passed, 0 failed.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "skips the MDX tutorial",
+      "fails": "tests",
+      "delete": [
+        "doc-detective-tests/pick-an-option-spec.json"
+      ]
+    },
+    {
+      "why": "adds a component import to the MDX guide",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "docs/tutorials/pick-an-option.mdx",
+          "from": "import { Callout } from '../../src/components/Callout';",
+          "to": "import { Callout } from '../../src/components/Callout';\nimport { Test } from 'doc-detective';"
+        }
+      ]
+    }
+  ]
+}

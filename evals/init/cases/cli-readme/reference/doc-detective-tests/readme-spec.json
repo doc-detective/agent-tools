@@ -1,0 +1,28 @@
+{
+  "description": "Tests README.md.",
+  "tests": [
+    {
+      "testId": "try-it",
+      "steps": [
+        {
+          "runShell": {
+            "command": "node scripts/greet.js Ada",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "Hello, Ada!"
+          }
+        },
+        {
+          "runShell": {
+            "command": "node scripts/greet.js",
+            "exitCodes": [
+              0
+            ],
+            "stdio": "Hello, world!"
+          }
+        }
+      ]
+    }
+  ]
+}

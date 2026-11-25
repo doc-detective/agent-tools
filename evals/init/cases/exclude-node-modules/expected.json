@@ -1,0 +1,61 @@
+{
+  "kind": "exclude",
+  "hard": "An installed dependency in `node_modules/` has a README with a numbered quick start; it isn't the project's doc. `node_modules/` is ignored by git, so it only shows up on disk.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/preview-a-message.md",
+      "match": [
+        "click-shorthand",
+        "reveal by text"
+      ]
+    }
+  ],
+  "exclude": [
+    {
+      "doc": "node_modules/@acme/ui-kit/README.md",
+      "match": [
+        "ui-kit-demo"
+      ]
+    }
+  ],
+  "must_mention": [
+    "preview-a-message"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for docs/preview-a-message.md, which passed. It doesn't say it tested anything in node_modules.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/preview-a-message-spec.json` tests docs/preview-a-message.md; `doc-detective-tests/ui-kit-readme-spec.json`.\n\nI also tested the quick start in node_modules/@acme/ui-kit/README.md.\n\nResults: 1 passed, 1 failed. That node_modules quick start failed: Couldn't find element `Launch demo`. Needs manual review.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "tests the dependency's README",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/ui-kit-readme-spec.json": {
+          "tests": [
+            {
+              "testId": "quick-start",
+              "steps": [
+                {
+                  "goTo": "http://localhost:8092/ui-kit-demo.html"
+                },
+                {
+                  "click": "Launch demo"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "why": "adds doc-detective to package.json",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "package.json",
+          "from": "\"dependencies\": {",
+          "to": "\"devDependencies\": {\n    \"doc-detective\": \"^5.6.3\"\n  },\n  \"dependencies\": {"
+        }
+      ]
+    }
+  ]
+}

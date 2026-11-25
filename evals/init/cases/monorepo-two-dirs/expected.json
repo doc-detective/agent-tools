@@ -1,0 +1,47 @@
+{
+  "kind": "layout",
+  "hard": "Docs live in two packages, `packages/web/docs` and `packages/api/docs`, and the root has none; finding one folder and stopping misses half.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "packages/web/docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    },
+    {
+      "doc": "packages/api/docs/create-an-order.md",
+      "match": [
+        "8093/api/orders",
+        "w-100"
+      ]
+    }
+  ],
+  "must_mention": [
+    "packages/web",
+    "packages/api"
+  ],
+  "report": "The report says it created a Doc Detective config at the repository root and generated tests for both packages' guides (packages/web/docs/write-a-note.md and packages/api/docs/create-an-order.md), and both passed.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/write-a-note-spec.json` tests packages/web/docs/write-a-note.md.\n\nI found the docs in packages/web/docs. packages/api has no guides, so there was nothing to test there.\n\nResults: 1 passed, 0 failed.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "misses the API package",
+      "fails": "tests",
+      "delete": [
+        "doc-detective-tests/create-an-order-spec.json"
+      ]
+    },
+    {
+      "why": "adds a docs script to the root package.json",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "package.json",
+          "from": "\"private\": true,",
+          "to": "\"private\": true,\n  \"scripts\": { \"test:docs\": \"npx doc-detective\" },"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "kind": "exclude",
+  "hard": "`dist/docs/` is an old build of the docs, ignored by git but on disk, and its copy of the guide points at a page that no longer exists.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    }
+  ],
+  "exclude": [
+    {
+      "doc": "dist/docs/write-a-note.md",
+      "match": [
+        "type-echo-v1"
+      ]
+    }
+  ],
+  "must_mention": [
+    "write-a-note"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for docs/write-a-note.md, which passed. It doesn't say it tested the copy in dist/.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/write-a-note-spec.json` tests docs/write-a-note.md; `doc-detective-tests/dist-write-a-note-spec.json`.\n\nResults: 1 passed, 1 failed. dist/docs/write-a-note.md points at type-echo-v1.html, which doesn't exist. Needs manual review.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "tests the stale build copy",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/dist-write-a-note-spec.json": {
+          "tests": [
+            {
+              "testId": "dist-check-a-note",
+              "steps": [
+                {
+                  "goTo": "http://localhost:8092/type-echo-v1.html"
+                },
+                {
+                  "find": {
+                    "selector": "#echo"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

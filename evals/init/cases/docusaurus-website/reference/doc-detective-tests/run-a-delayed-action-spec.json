@@ -1,0 +1,19 @@
+{
+  "description": "Tests website/docs/run-a-delayed-action.md.",
+  "tests": [
+    {
+      "testId": "trigger-the-action",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/wait-delay.html"
+        },
+        {
+          "click": "Trigger delayed action"
+        },
+        {
+          "find": "Action complete!"
+        }
+      ]
+    }
+  ]
+}
