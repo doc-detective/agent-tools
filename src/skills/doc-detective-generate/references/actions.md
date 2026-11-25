@@ -598,6 +598,64 @@ Perform HTTP requests for API testing.
 
 The object form is strict: `headers`, `body`, `responseHeaders`, or `responseBody` at the top level fails validation.
 
+### mockRequest
+
+Answer the browser's own requests with a fixed response. The request never reaches the server. Use it to keep changing data, such as a date or a balance, out of screenshots. You can also use it to show how a page handles an error response. `httpRequest` sends a request from Doc Detective; `mockRequest` answers requests that the page sends.
+
+Put the `mockRequest` step before the `goTo` step, so the page's first request already gets the fixed response. The mock lasts until the test ends.
+
+**JSON body for every request to a path**:
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "mockRequest": {
+            "url": "**/api/invoices*",
+            "response": { "body": { "next": "2026-12-03" } }
+          }
+        },
+        { "goTo": "https://example.com/billing" },
+        { "screenshot": "billing.png" }
+      ]
+    }
+  ]
+}
+```
+
+**Error response for one method**:
+
+```json
+{
+  "mockRequest": {
+    "url": "**/api/orders",
+    "method": "POST",
+    "response": {
+      "statusCode": 503,
+      "headers": { "content-type": "text/plain" },
+      "body": "Service unavailable"
+    }
+  }
+}
+```
+
+**Options:**
+- `url` (required): Glob for the request URLs to answer. `*` matches any characters. A pattern that starts with `http` matches the whole URL, such as `https://api.example.com/user`. Any other pattern matches the URL's path, such as `**/api/invoices*`.
+- `method`: `"GET"` | `"POST"` | `"PUT"` | `"PATCH"` | `"DELETE"` | `"HEAD"` | `"OPTIONS"`. Omit it to answer every method.
+- `response`: The response to send. Omit it to send an empty `200` response.
+  - `statusCode`: Integer from 100 to 599 (default `200`)
+  - `headers`: Header names and string values
+  - `body`: A string, sent as is, or an object or array, sent as JSON
+  - `bodyPath`: File to send as the body, relative to the spec file. Binary files work too.
+
+Set `body` or `bodyPath`, not both: setting both fails validation. A `bodyPath` that Doc Detective can't read fails the step.
+
+A later `mockRequest` with the same `url` and `method` replaces the earlier one. A mock with a different `url` or `method` runs alongside it. The step's `outputs.matched` is the number of requests already answered for that `url` and `method` by the mocks it replaced, so it's `0` for the first mock. To keep the count, set the step's `variables`, such as `"variables": { "INVOICE_CALLS": "$$matched" }`.
+
+`mockRequest` runs in Chrome only, because it needs WebDriver BiDi. In Firefox and Safari, the step reports `SKIPPED` and the page loads its live data. When a later step checks the mocked data, add `"runOn": [{ "browsers": ["chrome"] }]` to the test, beside `steps`. The test then runs only in Chrome, so that check can't fail in other browsers.
+
 ---
 
 ## Shell & Code Execution
