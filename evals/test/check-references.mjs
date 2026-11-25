@@ -13,7 +13,11 @@
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { loadCases, makeWorkspace, checkDown, collect, rerun, gradeRun, judge, removeWorkspace, isDDRun, isEdit, reranAfterEdit, prose } from './grade.mjs';
+import { loadCases, makeWorkspace, checkDown, collect, rerun, gradeRun, judge, removeWorkspace, isDDRun, isEdit, reranAfterEdit, prose, sessionEnv, DD_VERSION } from './grade.mjs';
+import { execFileSync } from 'node:child_process';
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join as pjoin } from 'node:path';
 import { ensureServers } from '../spec-generation/grade.mjs';
 
 const dd = c => ({ name: 'Bash', input: { command: `npx doc-detective@5 --input ${c.target} --output results.json` } });
@@ -92,6 +96,15 @@ for (const [cmd, want] of [
   ['docker run --rm -it -e CI=1 -w /app docdetective/docdetective:latest --input x', true],
   ['npx doc-detective@5 --input docs/x.md \\\n  --dry-run', false],
 ]) assert.equal(isDDRun(bash(cmd)), want, cmd);
+
+// A session's bare `doc-detective` is the pinned version, not a global install the machine has.
+{
+  const ws = mkdtempSync(pjoin(tmpdir(), 'dd-path-'));
+  try {
+    const out = execFileSync(process.platform === 'win32' ? 'doc-detective.cmd' : 'doc-detective', ['--version'], { cwd: ws, env: sessionEnv(ws), shell: process.platform === 'win32', encoding: 'utf8' });
+    assert.equal(out.trim().split(/\r?\n/).pop(), DD_VERSION, 'session PATH resolves doc-detective to the pinned version');
+  } finally { rmSync(ws, { recursive: true, force: true }); }
+}
 assert.equal(isEdit(bash('node skills/doc-detective-test/scripts/fix-tests.js r.json --spec s.json')), true);
 assert.equal(isEdit(bash('node skills/doc-detective-test/scripts/fix-tests.js r.json --dry-run')), false);
 // A run counts after an edit only when it comes later, within one command too.

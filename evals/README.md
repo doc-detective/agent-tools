@@ -93,6 +93,8 @@ Each case is a small docs repo, one git commit, with one planted defect or condi
 
 The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 to 8099 must stay free: the environment cases need nothing there.
 
+In the test and init evals, a session's `PATH` starts with a `doc-detective` that runs `doc-detective@5.6.3`, the version the grade reruns with. A bare `doc-detective` or `npx doc-detective` in a session then runs that version, not a global install on the machine.
+
 [test/cases.md](test/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/test/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $1 for all of them.
 
 ## Run the init eval

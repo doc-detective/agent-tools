@@ -13,11 +13,11 @@ import { runEval } from '../lib/runner.mjs';
 
 // The eval's modules load only after checkHarness approves them (see main): importing a
 // module runs its top-level code, and grade.mjs and claude-run.mjs are harness paths.
-let runClaude, buildPlugin, removeWorkspace, loadTestCases, makeWorkspace, checkDown, collect, gradeRun, ensureServers, toolEnv;
+let runClaude, buildPlugin, removeWorkspace, loadTestCases, makeWorkspace, checkDown, collect, gradeRun, ensureServers, sessionEnv;
 async function loadEvalModules() {
   ({ runClaude, buildPlugin, removeWorkspace } = await import('../lib/claude-run.mjs'));
-  ({ loadCases: loadTestCases, makeWorkspace, checkDown, collect, gradeRun } = await import('./grade.mjs'));
-  ({ ensureServers, toolEnv } = await import('../spec-generation/grade.mjs'));
+  ({ loadCases: loadTestCases, makeWorkspace, checkDown, collect, gradeRun, sessionEnv } = await import('./grade.mjs'));
+  ({ ensureServers } = await import('../spec-generation/grade.mjs'));
 }
 
 // --- run (hooks) --------------------------------------------------------------------
@@ -42,8 +42,8 @@ async function runCase(c, ctx) {
   let run;
   try {
     try {
-      // Doc Detective's Node first on PATH; an npm prefix of its own, so a global install stays in the workspace.
-      const env = { ...toolEnv(), npm_config_prefix: join(ws, '.npm-global') };
+      // The pinned Doc Detective and its Node first on PATH; an npm prefix of the workspace's own.
+      const env = sessionEnv(ws);
       run = await runClaude({ prompt: c.prompt, cwd: ws, model: ctx.model, env });
       // A session that ended without a final result is incomplete, not a scored attempt.
       if (run.result_subtype === 'no_result')
