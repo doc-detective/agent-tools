@@ -1,0 +1,11 @@
+{
+  "name": "widget",
+  "private": true,
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "vite build"
+  },
+  "devDependencies": {
+    "vite": "^7.0.0"
+  }
+}

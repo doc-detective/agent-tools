@@ -1,0 +1,42 @@
+{
+  "kind": "feature",
+  "args": "--ci Upload the screenshots from each run as an artifact.",
+  "hard": "With the config in docs/, the run folder is docs/.doc-detective/runs/. upload-artifact paths are relative to the repository root, not `working_directory`.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": "docs/.doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "artifact": {
+      "path": [
+        "docs/.doc-detective/runs",
+        "docs/.doc-detective"
+      ]
+    }
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests from `docs/` and uploads the run's screenshots as an artifact. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "uploads the root .doc-detective/, which this run doesn't write",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "path: docs/.doc-detective/runs/",
+          "to": "path: .doc-detective/runs/"
+        }
+      ]
+    }
+  ]
+}

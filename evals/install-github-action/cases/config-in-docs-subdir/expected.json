@@ -1,0 +1,47 @@
+{
+  "kind": "config",
+  "args": "--ci",
+  "hard": "The config is docs/.doc-detective.json. `config` resolves against `working_directory`, so `working_directory: docs` with `config: docs/.doc-detective.json` names a file that doesn't exist, and with neither the action finds no config.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": "docs/.doc-detective.json",
+    "input": [
+      "docs/guides"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests from `docs/` with `docs/.doc-detective.json`. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "repeats docs/ in `config`, so it resolves to docs/docs/",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "config: .doc-detective.json",
+          "to": "config: docs/.doc-detective.json"
+        }
+      ]
+    },
+    {
+      "why": "drops `working_directory`, so no config is found",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "          working_directory: docs\n",
+          "to": ""
+        }
+      ]
+    }
+  ]
+}

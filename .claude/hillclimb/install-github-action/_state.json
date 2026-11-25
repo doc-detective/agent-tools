@@ -1,0 +1,116 @@
+{
+  "flow": "install-github-action",
+  "model": "claude-sonnet-5-5",
+  "metrics": [
+    {
+      "id": "complete",
+      "label": "Complete",
+      "kind": "binary"
+    },
+    {
+      "id": "workflow",
+      "label": "Valid workflow",
+      "kind": "binary"
+    },
+    {
+      "id": "fit",
+      "label": "Fits the request",
+      "kind": "binary"
+    },
+    {
+      "id": "no_harm",
+      "label": "No harm",
+      "kind": "binary"
+    },
+    {
+      "id": "report",
+      "label": "Report",
+      "kind": "binary"
+    }
+  ],
+  "perf_fields": [
+    "latency_s",
+    "tool_calls",
+    "turns",
+    "files_changed",
+    "usage"
+  ],
+  "harness_paths": [
+    "evals/lib/claude-run.mjs",
+    "evals/lib/judge.mjs",
+    "evals/install-github-action/grade.mjs",
+    "evals/install-github-action/action-inputs.json",
+    "evals/test/grade.mjs",
+    "evals/spec-generation/grade.mjs"
+  ],
+  "prices": {
+    "claude-sonnet-5-5": {
+      "in": 2,
+      "out": 10
+    },
+    "claude-haiku-4-5": {
+      "in": 1,
+      "out": 5
+    }
+  },
+  "train_ids": [
+    "basic-root-config",
+    "config-in-docs-subdir",
+    "dev-server",
+    "pr-only",
+    "nightly-schedule",
+    "existing-docs-workflow",
+    "upload-artifacts",
+    "create-pr-on-change",
+    "issue-on-fail-integrations",
+    "gitlab-decline",
+    "confirm-first"
+  ],
+  "test_ids": [
+    "no-config-documentation-dir",
+    "no-config-root-docs",
+    "config-yaml",
+    "input-subfolder",
+    "build-then-serve",
+    "ios-macos",
+    "nvmrc-node20",
+    "push-main",
+    "push-default-branch-trunk",
+    "schedule-default",
+    "monorepo-path-filter",
+    "existing-dd-yml-ci",
+    "existing-dd-yml-ask",
+    "pr-comment-request",
+    "upload-artifacts-subdir",
+    "pin-version",
+    "no-exit-on-fail",
+    "create-pr-on-pull-request",
+    "custom-token-secret",
+    "secret-env",
+    "run-locally-route"
+  ],
+  "reps": 3,
+  "goal": {
+    "target": "complete",
+    "direction": "higher",
+    "hold": [
+      "no_harm",
+      "workflow"
+    ]
+  },
+  "scope": {
+    "will_change": [
+      "SKILL.md body of doc-detective-install-github-action",
+      "its references/"
+    ],
+    "off_limits": [
+      "frontmatter descriptions",
+      "scripts",
+      "hooks",
+      "build.js",
+      "evals/"
+    ]
+  },
+  "split_note": "32 cases written before any run, 21 held out (66%). Train holds the single basic, decline, and confirm cases and one or two cases of each larger kind. The held-out side holds the rest, including the single route and filter cases and the optional-write case.",
+  "harness_sha": "1ff2d3243a9ca127a3f74fa5c1b27fbb5d2bd81475f292db7d8edf27d76144b1"
+}
