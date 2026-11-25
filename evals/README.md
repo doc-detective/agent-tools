@@ -101,7 +101,7 @@ DD_REPO=<doc-detective checkout> DD_NODE_DIR=<node dir> \
   node evals/init/run-eval.mjs --flow .claude/hillclimb/init --variant baseline --model claude-sonnet-5-5 --reps 3
 ```
 
-Each case is a small repo, one git commit with a GitHub remote, a GitLab one, or none. Most don't use Doc Detective yet, and three already do. The session gets `/doc-detective:doc-detective-init`, plus `--ci` or a sentence asking for CI in the cases that want a workflow. Nobody answers its questions, so elsewhere it should offer CI, not write it. Afterwards the grade diffs the workspace against the original. It then runs the tests the session's config finds, from the repo root with no `--input`, with `doc-detective@5.6.3`. A `claude-haiku-4-5` judge reads the final report against the case's rubric, at about $0.02 a case.
+Each case is a small repo, one git commit with a GitHub remote, a GitLab one, or none. Most don't use Doc Detective yet, and three already do. The session gets `/doc-detective:doc-detective-init`, plus `--ci` or a sentence asking for CI in the cases that want a workflow. Nobody answers its questions, so elsewhere it should offer CI, not write it. Afterwards the grade diffs the workspace against the original. It then runs the session's config from the repo root with `doc-detective@5.6.3`, and passes the config's `input` as `--input`. That's how the GitHub Action and `/doc-detective-test` run it. A `claude-haiku-4-5` judge reads the final report against the case's rubric, at about $0.02 a case.
 
 The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 to 8098 must stay free.
 

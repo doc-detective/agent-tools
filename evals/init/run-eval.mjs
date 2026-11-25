@@ -60,6 +60,7 @@ async function runCase(c, ctx) {
   }
 }
 
+// The runner also passes `ref` and `ctx`. Init grades each run on its own, with no pairwise reference.
 async function gradeCase(c, run) { return gradeRun(c, run.facts); }
 
 function perfFrom(run) {
