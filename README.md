@@ -423,7 +423,8 @@ Initializes Doc Detective in your repository by:
 3. Creating tests for identified procedures
 4. Running tests
 5. Trying to fix any failing test that doesn't match its doc, with confidence-based suggestions
-6. Reporting each test's result, and flagging any doc that no longer matches the product, with a proposed edit
+6. In a repository with a `github.com` remote, offering to add the Doc Detective GitHub Action. If your request asks for CI, or you pass `--ci`, it adds the action without asking.
+7. Reporting each test's result, and flagging any doc that no longer matches the product, with a proposed edit
 
 ### Convert Documentation to Tests
 
