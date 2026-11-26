@@ -1,0 +1,11 @@
+{
+  "input": [
+    "docs"
+  ],
+  "recursive": "true",
+  "concurrentRunners": 0,
+  "fileTypes": [
+    "md"
+  ],
+  "retries": 20
+}

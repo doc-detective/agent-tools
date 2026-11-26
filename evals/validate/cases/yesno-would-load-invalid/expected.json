@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/checkout.spec.json",
+  "args": "Would tests/checkout.spec.json load, yes or no?",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[1]: a step can only have one action."
+  ],
+  "hard": "Asked as a yes-or-no question. One step holds two actions."
+}

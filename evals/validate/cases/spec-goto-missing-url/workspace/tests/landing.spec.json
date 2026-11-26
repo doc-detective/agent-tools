@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "testId": "landing",
+      "steps": [
+        {
+          "goTo": {
+            "timeout": 10000
+          }
+        },
+        {
+          "find": "Elements"
+        }
+      ]
+    }
+  ]
+}

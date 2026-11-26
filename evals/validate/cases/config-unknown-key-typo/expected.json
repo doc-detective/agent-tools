@@ -1,0 +1,10 @@
+{
+  "kind": "config",
+  "input": ".doc-detective.json",
+  "args": "--config .doc-detective.json",
+  "verdict": "invalid",
+  "errors": [
+    "unknown key `inputs`. Did you mean `input`?"
+  ],
+  "hard": "`inputs` for `input`: one letter off, easy to read past."
+}

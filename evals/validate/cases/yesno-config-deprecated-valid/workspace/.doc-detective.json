@@ -1,0 +1,10 @@
+{
+  "input": [
+    "docs"
+  ],
+  "beforeAny": [
+    "tests/setup.spec.json"
+  ],
+  "debug": "stepThrough",
+  "logLevel": "info"
+}

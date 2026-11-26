@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/start.spec.json",
+  "args": "tests/start.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[0].goTo: must match pattern \"^(https?://|/(?!/)|\\$[A-Za-z0-9_]+)\"."
+  ],
+  "hard": "`localhost:8092` looks like a URL, but `goTo` needs a scheme, a leading slash, or a variable."
+}

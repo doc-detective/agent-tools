@@ -1,0 +1,27 @@
+{
+  "tests": [
+    {
+      "testId": "quick",
+      "steps": [
+        {
+          "goTo": "$BASE_URL"
+        },
+        {
+          "find": "Elements"
+        },
+        {
+          "wait": 500
+        },
+        {
+          "runShell": "echo ready"
+        },
+        {
+          "checkLink": "http://localhost:8092"
+        },
+        {
+          "screenshot": true
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/draft.spec.json",
+  "args": "tests/draft.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps: must NOT have fewer than 1 items."
+  ],
+  "hard": "A test with an empty `steps` array."
+}

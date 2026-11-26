@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "testId": "elements",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "find": "Elements",
+          "timeout": 5000
+        }
+      ]
+    }
+  ]
+}

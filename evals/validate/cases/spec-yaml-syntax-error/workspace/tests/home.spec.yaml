@@ -1,0 +1,5 @@
+tests:
+  - testId: home
+    steps:
+      - goTo: http://localhost:8092
+     - find: Elements

@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/elements.spec.json",
+  "args": "tests/elements.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[1]: unknown key `timeout`."
+  ],
+  "hard": "`timeout` beside a shorthand `find` looks fine, but a step has no `timeout` key; it belongs inside the action object."
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/landing.spec.json",
+  "args": "tests/landing.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[0].goTo: missing required key 'url'."
+  ],
+  "hard": "A `goTo` object with a timeout and no URL."
+}

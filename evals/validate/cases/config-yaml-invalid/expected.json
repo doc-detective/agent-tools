@@ -1,0 +1,10 @@
+{
+  "kind": "config",
+  "input": "doc-detective.yml",
+  "args": "--config doc-detective.yml",
+  "verdict": "invalid",
+  "errors": [
+    "recursive: must be boolean (got \"yes please\")."
+  ],
+  "hard": "A YAML config named `doc-detective.yml`. `exitOnFail: \"false\"` looks wrong but passes; `recursive: yes please` doesn't."
+}

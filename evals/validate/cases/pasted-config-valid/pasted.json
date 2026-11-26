@@ -1,0 +1,9 @@
+{
+  "input": [
+    "docs",
+    "README.md"
+  ],
+  "output": ".doc-detective/results.json",
+  "logLevel": "error",
+  "exitOnFail": false
+}

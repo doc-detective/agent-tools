@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "testId": "users",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8092/api/users",
+            "method": "GET",
+            "statusCodes": [
+              200
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}
