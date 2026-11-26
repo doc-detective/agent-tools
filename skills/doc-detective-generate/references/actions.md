@@ -950,7 +950,7 @@ Doc Detective catches a reused `name` before the run starts when a recording by 
 Automatic recording is on by default. Doc Detective records a full video of every context that drives a browser, native app, or device, from before its first step to after its last. Turn it off with `autoRecord: false` at the config, spec, or test level, or `--no-auto-record`, which sets only the config level.
 
 - **Precedence:** test > spec > config.
-- **Engine:** chosen per context. Headless Chrome records with the `browser` engine; headed browsers and native apps record with `ffmpeg`. A headless Chrome context with its own `record` step isn't recorded automatically. See the run-time behavior reference (`doc-detective-test/references/behavior.md`, "Automatic recording") for every case.
+- **Engine:** chosen per context. Chrome, headed or headless, records with the `browser` engine; other browsers and native apps record with `ffmpeg`. A Chrome context with its own `record` step isn't recorded automatically. To capture the whole screen in Chrome, author a `record` step with `engine: "ffmpeg"`. That step replaces the automatic recording and is subject to the host checks in the behavior reference ("Host checks and headless limits"). See the run-time behavior reference (`doc-detective-test/references/behavior.md`, "Automatic recording") for every case.
 - **Path:** `<output>/.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/recordings/<contextId>.mp4`. The same context maps to the same path in every run, for run-over-run comparison.
 - **Stopping:** An untargeted `stopRecord` never stops the automatic recording. Doc Detective finalizes it at the end of the context.
 

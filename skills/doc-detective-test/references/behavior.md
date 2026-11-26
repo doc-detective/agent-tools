@@ -419,8 +419,8 @@ Sources: docs/actions/screenshot.mdx, src/core/tests/saveScreenshot.ts, docs/tes
 
 ### Host checks and headless limits
 
-- Once per run, Doc Detective checks FFmpeg runs, plus: a signed-in desktop (Windows), Screen Recording permission for the launching app (macOS), a working `DISPLAY` or installed Xvfb (Linux). A failed check SKIPs the `record` steps it covers: ``Skipped: there's no display to capture. To record, install Xvfb or set DISPLAY, and rerun.``
-- Headless Firefox and Safari `record` steps are SKIPPED; set `headless: false`. While `autoRecord` is on, headless Firefox runs headed when the host can capture, so its `record` steps record. Linux with no display runs headed contexts on Xvfb.
+- Once per run, Doc Detective checks FFmpeg runs. For `ffmpeg` recordings only, it also checks: a signed-in desktop (Windows), Screen Recording permission for the launching app (macOS), a working `DISPLAY` or installed Xvfb (Linux). A failed check SKIPs the `record` steps it covers: ``Skipped: there's no display to capture. To record, install Xvfb or set DISPLAY, and rerun.`` The desktop, permission, and display checks never skip a Chrome recording that uses the `browser` engine.
+- Headless Firefox and Safari `record` steps are SKIPPED; set `headless: false`. While `autoRecord` is on, headless Firefox runs headed when the host can capture, so its `record` steps record. On Linux with no display, a headed context that records with `ffmpeg` runs on Xvfb. Headed Chrome with no `ffmpeg` recording runs headless instead and logs ``Retrying as headless.``. That isn't a failure: the `browser` engine still records the tab.
 
 ### Automatic recording
 
@@ -428,9 +428,10 @@ Sources: docs/actions/screenshot.mdx, src/core/tests/saveScreenshot.ts, docs/tes
 
   | Context | Recorded by |
   |---|---|
-  | Headless Chrome (default) | `browser` engine |
-  | Headless Chrome with its own `record` step | Not automatically; the step wins |
-  | Headed Chrome, Firefox, Safari | `ffmpeg` |
+  | Headless Chrome (default) | `browser` engine (the tab) |
+  | Headed Chrome | `browser` engine (the Chrome window, not the whole screen). On Linux with no display, Chrome runs headless and the engine records the tab |
+  | Any Chrome context with its own `record` step | Not automatically; the step wins |
+  | Headed Firefox, Safari | `ffmpeg` |
   | Headless Firefox | Run headed + `ffmpeg` if the host can capture; else not recorded |
   | Native app (Windows, macOS) | `ffmpeg`, scoped to the first app window |
   | Android/iOS app or mobile web | The device |
@@ -439,7 +440,7 @@ Sources: docs/actions/screenshot.mdx, src/core/tests/saveScreenshot.ts, docs/tes
 - Saved at `<runDir>/specs/<specId>/tests/<testId>/contexts/<contextId>/recordings/<contextId>.mp4`. Reported in the context's `autoRecording` field (`result`, `recordingPath` relative to `runDir`, and more), not in `steps`.
 - Unset (default): what the host can't record is left out with one warning (``Warning: Not recording automatically: ...``); a recording that can't start is SKIPPED. `true`: what the host can't record is SKIPPED; a failed start FAILs the context and SKIPs its steps.
 - Opt out: `autoRecord: false` at config, spec, or test, or `--no-auto-record`.
-- On Linux each runner records its own Xvfb display. On Windows and macOS, concurrent `ffmpeg` auto-recordings overlap on the shared display, with a warning.
+- On Linux each runner's `ffmpeg` auto-recording captures its own Xvfb display. On Windows and macOS, concurrent `ffmpeg` auto-recordings overlap on the shared display, with a warning.
 - An untargeted `stopRecord` never stops the automatic recording. Checkpoints don't apply to it.
 
 ### `overwrite` modes
