@@ -21,7 +21,7 @@ Your knowledge comes from the plugin's references and the Doc Detective docs. Th
 - **Markup patterns** (`${CLAUDE_PLUGIN_ROOT}/skills/doc-detective-inline/references/markup-patterns.md`): inline statement formats and detected-step patterns per file type.
 - **Fixing failing tests** (`${CLAUDE_PLUGIN_ROOT}/skills/doc-detective-test/references/fix-failing-tests.md`): failure patterns and fixes.
 - **GitHub Action** (`${CLAUDE_PLUGIN_ROOT}/skills/doc-detective-install-github-action/references/action-reference.md`): the action's inputs, run files, and CI behavior.
-- **Procedure heuristics** and **doc patterns** (`${CLAUDE_PLUGIN_ROOT}/skills/doc-detective-init/references/procedure-heuristics.md`, `.../doc-patterns.md`): finding testable procedures in docs.
+- **Procedure heuristics** and **doc patterns** (`${CLAUDE_PLUGIN_ROOT}/skills/doc-detective-init/references/procedure-heuristics.md`, `${CLAUDE_PLUGIN_ROOT}/skills/doc-detective-init/references/doc-patterns.md`): finding testable procedures in docs.
 - Each skill's `SKILL.md` sits in `${CLAUDE_PLUGIN_ROOT}/skills/<skill-name>/`: `doc-detective-init`, `doc-detective-generate`, `doc-detective-test`, `doc-detective-validate`, `doc-detective-inline`, and `doc-detective-install-github-action`.
 
 These files are long. Search one for the action, field, or flag the question names, then read that section.
