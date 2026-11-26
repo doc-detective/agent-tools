@@ -1,0 +1,55 @@
+{
+  "kind": "feature",
+  "args": "--ci Pin Doc Detective itself to version 5.6.3 so CI doesn't change under us.",
+  "hard": "Two things have versions: the action (`@v2`) and Doc Detective (`version`). Pinning the action's ref to 5.6.3, or giving a range, misses.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "with": {
+      "version": "5.6.3"
+    }
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective 5.6.3 on pull requests, pinned through the action's `version` input. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "pins a range, not the version",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "version: '5.6.3'",
+          "to": "version: '^5.6.3'"
+        }
+      ]
+    },
+    {
+      "why": "pins the action's ref instead of Doc Detective",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "          version: '5.6.3'\n",
+          "to": ""
+        },
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "github-action@v2",
+          "to": "github-action@v5.6.3"
+        }
+      ]
+    }
+  ]
+}

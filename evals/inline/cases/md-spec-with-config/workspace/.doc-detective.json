@@ -1,0 +1,21 @@
+{
+  "input": "docs",
+  "fileTypes": [
+    {
+      "name": "markdown",
+      "extends": "markdown",
+      "markup": [
+        {
+          "name": "headOverTo",
+          "regex": ["\\b[Hh]ead\\s+over\\s+to\\s+\\[[^\\]]+\\]\\((https?://[^)]+)\\)"],
+          "actions": ["goTo"]
+        },
+        {
+          "name": "pressOrTap",
+          "regex": ["\\b(?:[Pp]ress|[Tt]ap\\s+on)\\s+\\*\\*([^*]+)\\*\\*"],
+          "actions": ["click"]
+        }
+      ]
+    }
+  ]
+}

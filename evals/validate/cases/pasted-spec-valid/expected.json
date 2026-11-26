@@ -1,0 +1,8 @@
+{
+  "kind": "spec",
+  "pasted": "pasted.json",
+  "args": "Validate this spec:\n\n```json\n{{pasted}}```",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "A valid spec pasted in the prompt."
+}

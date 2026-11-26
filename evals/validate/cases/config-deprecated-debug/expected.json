@@ -1,0 +1,8 @@
+{
+  "kind": "config",
+  "input": ".doc-detective.json",
+  "args": "--config .doc-detective.json",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "Deprecated keys (`debug`, `beforeAny`) that still validate. A report that fails them from memory is wrong."
+}

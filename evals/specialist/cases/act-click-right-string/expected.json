@@ -1,0 +1,42 @@
+{
+  "category": "syntax",
+  "question": "On http://localhost:8092/click-shorthand.html I need to right-click the \"Reveal by selector\" button to open its context menu. I'd like to keep it short: is a `find` for the button followed by `{ \"click\": \"right\" }` the right way to do it?",
+  "facts": [
+    {
+      "text": "A `click` string always names the element to click, so `{\"click\": \"right\"}` looks for an element whose text is \"right\" instead of right-clicking the button.",
+      "sources": ["docs/fern/pages/docs/actions/click.mdx", "src/common/src/schemas/src_schemas/click_v3.schema.json"]
+    },
+    {
+      "text": "To right-click, use the `click` object format with a locator and `button: \"right\"` (such as `{\"click\": {\"elementText\": \"Reveal by selector\", \"button\": \"right\"}}`), or a `find` step whose `click` is `\"right\"`, where the string names the mouse button.",
+      "sources": ["docs/fern/pages/docs/actions/click.mdx", "docs/fern/pages/docs/actions/find.mdx", "src/common/src/schemas/src_schemas/click_v3.schema.json", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`{\"click\": \"right\"}` right-clicks the element that the previous `find` step located.",
+    "The `click` action can't choose the mouse button, so right-clicking needs a `runBrowserScript` or other workaround."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that right-clicks the \"Reveal by selector\" button",
+      "setup": [{ "goTo": "http://localhost:8092/click-shorthand.html" }],
+      "require": [{ "click": ["\"right\""], "find": ["\"right\""] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "uses the click string as a button name",
+      "fails": "snippets_run",
+      "replace": [
+        {
+          "from": "        {\n          \"click\": {\n            \"elementText\": \"Reveal by selector\",\n            \"button\": \"right\"\n          }\n        },",
+          "to": "        { \"find\": \"Reveal by selector\" },\n        { \"click\": \"right\" },"
+        }
+      ]
+    },
+    {
+      "why": "says the string form right-clicks the found element",
+      "fails": "no_invention",
+      "answer": "Yes. After a `find` locates the button, `{\"click\": \"right\"}` right-clicks that element:\n\n```json\n{\n  \"tests\": [\n    {\n      \"steps\": [\n        { \"goTo\": \"http://localhost:8092/click-shorthand.html\" },\n        { \"find\": \"Reveal by selector\" },\n        { \"click\": \"right\" }\n      ]\n    }\n  ]\n}\n```\n"
+    }
+  ]
+}

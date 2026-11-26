@@ -1,0 +1,49 @@
+{
+  "kind": "env",
+  "hard": "The message-preview guide passes on :8092, so the browser and server look fine and the admin console's :8097 URL looks wrong. The README says the console is a separate app to start.",
+  "ci": "offer",
+  "down": [
+    "http://localhost:8097"
+  ],
+  "procedures": [
+    {
+      "doc": "docs/admin/invite-a-teammate.md",
+      "match": [
+        "localhost:8097"
+      ],
+      "result": "FAIL"
+    },
+    {
+      "doc": "docs/preview-a-message.md",
+      "match": [
+        "click-shorthand",
+        "reveal by text"
+      ]
+    }
+  ],
+  "must_mention": [
+    "8097"
+  ],
+  "report": "The report says it created a Doc Detective config and tests for both guides. preview-a-message passed. invite-a-teammate failed because the admin console on port 8097 isn't running. It calls this an environment problem and says to start the console with `npm run admin` in the acme-admin repository (per the README), then rerun. It doesn't propose changing the URL.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/preview-a-message-spec.json` tests docs/preview-a-message.md; `doc-detective-tests/invite-a-teammate-spec.json` tests docs/admin/invite-a-teammate.md.\n\nResults: 1 passed, 1 failed. invite-a-teammate uses port 8097, but the app runs on 8092, so the doc's URL is wrong. Change it to http://localhost:8092/admin/users.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "drops the admin test",
+      "fails": "tests",
+      "delete": [
+        "doc-detective-tests/invite-a-teammate-spec.json"
+      ]
+    },
+    {
+      "why": "rewrites the doc's URL",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "docs/admin/invite-a-teammate.md",
+          "from": "http://localhost:8097/admin/users",
+          "to": "http://localhost:8092/admin/users"
+        }
+      ]
+    }
+  ]
+}

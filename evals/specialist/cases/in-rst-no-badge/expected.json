@@ -1,0 +1,36 @@
+{
+  "category": "false_premise",
+  "question": "Our Sphinx docs are reStructuredText. The install page opens its inline test with `.. test {\"testId\": \"install-guide\", \"badge\": true}`, and `.doc-detective.json` has `\"verification\": {\"write\": true}`. The test passes every run, but no \"Last verified\" badge or date ever appears in `install.rst`, and Doc Detective prints no warning. Is there an RST-specific badge setting I'm missing?",
+  "facts": [
+    {
+      "text": "No setting turns it on: Doc Detective doesn't write verification results into `.rst` files. In an RST file, `badge: true`, `verified-by` entries, and `meta` statements have no effect, `verification.write` leaves the file unchanged, and it skips the file without a warning.",
+      "sources": ["docs/fern/pages/docs/input-formats/rst.mdx", "docs/fern/pages/docs/test-docs/last-verified-on.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json", "adrs/01211-built-in-restructuredtext-file-type.md"]
+    },
+    {
+      "text": "To record when the RST test passed, name its `testId` in a `verified-by` entry (`tool: doc-detective`, `check: install-guide`) on a page in a format Doc Detective writes to, such as a Markdown page's front matter; a passing run dates that page.",
+      "sources": ["docs/fern/pages/docs/test-docs/last-verified-on.mdx", "docs/fern/pages/docs/input-formats/rst.mdx"]
+    }
+  ],
+  "must_not": [
+    "Add a `meta` statement or a `verified-by` field to the `.rst` file to get the date written there.",
+    "Badges need `--verification true` on the command line; the config setting isn't enough.",
+    "Adding `rst` to `fileTypes`, or a custom RST file type, makes Doc Detective write the badge."
+  ],
+  "wrong": [
+    {
+      "why": "says a meta statement works in RST",
+      "fails": "no_invention",
+      "answer": "`badge: true` doesn't work in RST, but a `meta` statement does. Add `.. meta {\"verified-by\":[{\"tool\":\"doc-detective\",\"check\":\"install-guide\"}]}` above the procedure, and Doc Detective fills in the date on the next passing run."
+    },
+    {
+      "why": "a flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "answer": "Doc Detective doesn't write badges into `.rst` files unless you ask for it. Run `npx doc-detective --verification true --verify-rst`."
+    },
+    {
+      "why": "misses the workaround",
+      "fails": "correct",
+      "answer": "Doc Detective doesn't write verification results into `.rst` files, so `badge: true` and `verification.write` do nothing there. There's no setting to change that."
+    }
+  ]
+}

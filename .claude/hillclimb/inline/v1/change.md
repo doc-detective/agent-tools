@@ -1,0 +1,5 @@
+# Round 1: check the injected file with a dry run
+
+Diagnosed from the baseline's failing train runs only. Of 8 failing or misplaced train runs, 2 (`adoc-gen-api-key`) injected an `httpRequest` step with a field Doc Detective rejects. One used `"response": {"statusCode": 201}`, and the other put `variables` inside `httpRequest`. One rejected step stops every test in the file, so the dry run found nothing and both runs scored 0. The skill says to validate a spec it builds, but it never checks the doc after injection. The other train failures are a step left out (`md-gen-open-record-new-tab`, 2) and an MDX run that tested the wrong thing. One reStructuredText step comment was indented into a block, and one `httpRequest` was placed at line 3.
+
+The change adds a "Check the injected file" section. After writing, the session runs `npx doc-detective@5 --dry-run --input <source-file>`. On exit `2` it fixes the field stderr names and runs again. On exit `0` it checks that the plan holds every injected test and step. "Done when" now requires that check.

@@ -1,0 +1,31 @@
+= Create an API key
+
+You need an API key to call the reporting API.
+
+== Create the key
+
+// (test {"testId":"create-api-key"})
+Send a `POST` request to `https://api.example.com/v1/keys` with your token:
+
+[source,bash]
+----
+curl -X POST https://api.example.com/v1/keys \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{"name":"ci"}'
+----
+// (step {"httpRequest":{"url":"https://api.example.com/v1/keys","method":"post","request":{"headers":{"Authorization":"Bearer $TOKEN"},"body":{"name":"ci"}},"response":{"required":["key"]},"statusCodes":[201]},"variables":{"KEY":"$$response.body.key"}})
+
+The response has status `201` and holds the new key in its `key` field.
+
+== Check the key
+
+List your reports with the new key:
+
+[source,bash]
+----
+curl https://api.example.com/v1/reports -H "X-Api-Key: $KEY"
+----
+// (step {"httpRequest":{"url":"https://api.example.com/v1/reports","method":"get","request":{"headers":{"X-Api-Key":"$KEY"}},"statusCodes":[200]}})
+// (test end)
+
+The request returns status `200`.

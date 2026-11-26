@@ -1,0 +1,57 @@
+{
+  "kind": "exclude",
+  "hard": "CHANGELOG.md has numbered upgrade steps with a link, so it looks procedure-heavy; it records history and shouldn't be tested. With step detection on, its link is tested too.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    }
+  ],
+  "exclude": [
+    {
+      "doc": "CHANGELOG.md",
+      "match": [
+        "legacy-settings"
+      ]
+    }
+  ],
+  "must_mention": [
+    "write-a-note"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for docs/write-a-note.md, which passed. It doesn't say it tested CHANGELOG.md.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/write-a-note-spec.json` tests docs/write-a-note.md; `doc-detective-tests/changelog-spec.json`.\n\nResults: 1 passed, 1 failed. changelog failed: Couldn't open http://localhost:8092/legacy-settings.html. The upgrade steps in CHANGELOG.md need manual review.\n\nThis is a GitHub repository. Do you want me to add the Doc Detective GitHub Action, so these tests run on every pull request?",
+  "wrong": [
+    {
+      "why": "generates a test for the changelog",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/changelog-spec.json": {
+          "tests": [
+            {
+              "testId": "upgrade-steps",
+              "steps": [
+                {
+                  "goTo": "http://localhost:8092/legacy-settings.html"
+                },
+                {
+                  "click": "Export settings"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "why": "writes an empty config, so a run scans every Markdown file with step detection on",
+      "fails": "tests",
+      "write": {
+        ".doc-detective.json": {}
+      }
+    }
+  ]
+}

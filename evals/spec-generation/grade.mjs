@@ -268,6 +268,18 @@ function has(text, m) {
 }
 
 /**
+ * `fields` maps a dotted path inside the action's value, such as `request.body.role`, to a
+ * case-sensitive regex the value there must match. A string is tested as is, anything else
+ * as JSON, and a missing path fails.
+ */
+function fieldsMatch(fields, payload) {
+  return Object.entries(fields ?? {}).every(([path, re]) => {
+    const v = path.split('.').reduce((o, k) => (o != null && typeof o === 'object' ? o[k] : undefined), payload);
+    return v !== undefined && new RegExp(re).test(typeof v === 'string' ? v : JSON.stringify(v));
+  });
+}
+
+/**
  * Maximum one-to-one matching between expected entries and generated steps.
  * An entry with `may_share` can live in a step another entry already claims,
  * so it only needs some step that matches.
@@ -278,7 +290,7 @@ export function coverage(expected, steps) {
     const types = [].concat(e.stepType ?? e.action);
     const all = [].concat(e.match ?? []).map(norm);
     const any = [].concat(e.match_any ?? []).map(norm);
-    return steps.flatMap((s, k) => types.includes(actionOf(s)) && all.every(m => has(texts[k], m)) && (!any.length || any.some(m => has(texts[k], m))) ? [k] : []);
+    return steps.flatMap((s, k) => types.includes(actionOf(s)) && all.every(m => has(texts[k], m)) && (!any.length || any.some(m => has(texts[k], m))) && fieldsMatch(e.fields, s?.[actionOf(s)]) ? [k] : []);
   });
   // Kuhn's augmenting paths, in document order, so earlier entries keep their claim.
   const owner = new Map();

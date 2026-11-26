@@ -1,0 +1,28 @@
+{
+  "description": "Tests docs/create-an-invoice.md.",
+  "tests": [
+    {
+      "testId": "create-an-invoice",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8096/api/invoices",
+            "method": "post",
+            "request": {
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "customer": "C-42",
+                "amount": 1200
+              }
+            },
+            "statusCodes": [
+              201
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

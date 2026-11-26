@@ -2,7 +2,7 @@
 name: doc-detective-inline
 description: 'Put Doc Detective tests into documentation source files as inline comments, either from an existing spec or by writing the tests for that doc first. Previews by default and writes only with --apply. To get a standalone spec file instead, use doc-detective-generate. To run the tests, use doc-detective-test.'
 metadata:
-  version: '3.0.0'
+  version: '3.4.1'
   organization: Doc Detective
   date: November 2026
   abstract: Inject Doc Detective test specifications into documentation source files as inline comments, next to the content each step tests. Supports Markdown, MDX, HTML, AsciiDoc, reStructuredText, and XML/DITA.
@@ -31,7 +31,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright.
 - `--syntax <format>`: Force the comment syntax: `json`, `yaml`, or `xml`.
 - `--config <path>`: Path to a Doc Detective config file.
 
-Without a spec file, build one for the source file first, as `/doc-detective-generate` describes, and validate it. Then inject that spec.
+Without a spec file, build one for the source file first, as `/doc-detective-generate` describes, and validate it. Then inject that spec. Test every result the doc states, not only its actions. A sentence that says what the reader sees is a `find` step. That holds even for text the reader just typed, such as a note that appears as they type it.
 
 ## Guardrails
 
@@ -92,8 +92,8 @@ Place each test on its own, so the search starts again at line 1 for each test.
 
 A step's **match value** is the text to look for:
 - A string step value, such as `goTo: "https://..."` or `click: "Submit"`, is the match value.
-- For an object with a `keys` field, such as `type: {keys: "text"}`, the `keys` value is the match value.
-- A number or an object without `keys`, such as `wait: 2000` or `httpRequest: {...}`, has no match value. Only the pattern rule applies.
+- For an object, the match value is its `keys`, `url`, or `elementText` field, checked in that order. Examples are `type: {keys: "text"}`, `httpRequest: {url: "https://..."}`, and `checkLink: {url: "https://..."}`. A request's step then follows the text or code block that names its URL, not the response the doc describes after it.
+- A number, or an object with none of those fields, has no match value. An example is `wait: 2000`. Only the pattern rule applies.
 
 Search from the line after the previous step's comment, or from line 1 for the first step. Use the first rule that finds a line:
 
@@ -102,7 +102,7 @@ Search from the line after the previous step's comment, or from line 1 for the f
 3. **Pattern match:** A line matches the action's content pattern in the table below.
 4. **No match:** Use the line after the previous step's comment, or line 1 for the first step. Mark the step with the TODO comment.
 
-Insert the step comment right after the line the rule selects, and keep that line's indentation. When several lines in that search range satisfy a rule, select the earliest one.
+Insert the step comment right after the line the rule selects, and keep that line's indentation. If that line sits inside a code block, insert the comment after the block's closing line instead. A comment inside the block becomes code. When several lines in that search range satisfy a rule, select the earliest one.
 
 | Action | Matches Line Containing |
 |--------|------------------------|
@@ -164,8 +164,23 @@ Point the config `input` at the docs directory, and Doc Detective finds the inje
 
 Injected `test` and `step` comments always run, whatever `detectSteps` says. `detectSteps` (default `true`) only controls the steps Doc Detective infers from prose, such as links, bold text, and code blocks. For a suite of explicit inline tests, set `detectSteps: false` so the page's own code fences and bold text don't become extra steps. MDX needs no extra config: the built-in `markdown` file type covers `.mdx` and reads `{/* … */}` markers.
 
+## Check the injected file
+
+After you write the file, run Doc Detective's dry run on it. It runs nothing, and it prints the tests it found in the file:
+
+```bash
+npx doc-detective@5 --dry-run --input <source-file>
+```
+
+When the user passed `--config <path>`, add `--config <path>` to the dry run too, so the config's markup patterns and settings apply.
+
+- **Exit `2` with `Invalid test specifications`** means Doc Detective rejected a step, and stderr names the field, such as ``httpRequest.response: unknown key `statusCode`.`` One rejected step stops every test in the file. Fix that field in the step's comment, and run the dry run again.
+- **Exit `0`** prints the plan. Check that it holds every test and step you injected. A missing step means its comment isn't where Doc Detective reads it, or its syntax is wrong for the file type.
+- **In preview mode,** don't write the source file. Write the injected result to a scratch folder outside the repository, with the same file name, and run the dry run there. When a test spans an include, copy its partials too. Keep their paths relative to the page, so the dry run resolves them.
+
 ## Done when
 
+- The dry run on the injected file exits `0`, and its plan holds every injected test and step.
 - Each step has a comment, and each comment the placement rules didn't match has the TODO comment after it. A test kept out of an MDX file for the `*/` rule is the exception. It stays whole in a standalone spec, and the file has no partial copy.
 - `test` and `test end` comments wrap each test.
 - Each step comment uses the syntax for its file type, or the `--syntax` override.

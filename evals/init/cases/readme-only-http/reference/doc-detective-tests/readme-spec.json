@@ -1,0 +1,53 @@
+{
+  "description": "Tests README.md.",
+  "tests": [
+    {
+      "testId": "create-an-order",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/orders",
+            "method": "post",
+            "request": {
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "sku": "W-100",
+                "quantity": 2
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "sku": "W-100",
+                "quantity": 2
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "testId": "list-users",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users?page=2",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "page": "2"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

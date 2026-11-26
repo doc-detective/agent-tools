@@ -1,0 +1,30 @@
+{
+  "description": "Tests docs/fill-in-the-profile-form.md.",
+  "tests": [
+    {
+      "testId": "fill-in-the-form",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/index.html"
+        },
+        {
+          "find": "Common HTML Elements"
+        },
+        {
+          "type": {
+            "keys": "Ada Lovelace",
+            "selector": "#text-input"
+          }
+        },
+        {
+          "click": {
+            "selector": "#checkbox2"
+          }
+        },
+        {
+          "click": "Standard Button"
+        }
+      ]
+    }
+  ]
+}

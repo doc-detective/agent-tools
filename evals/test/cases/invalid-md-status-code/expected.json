@@ -1,0 +1,17 @@
+{
+  "kind": "invalid",
+  "target": "docs/list-users.md",
+  "hard": "The invalid field sits in an inline step comment, not a spec file, so the skill's spec-validation path doesn't apply directly, and the fix must touch the comment without touching the prose around it.",
+  "editable": ["docs/list-users.md"],
+  "fix": ["list-users"],
+  "after": { "list-users": "PASS" },
+  "must_contain": ["\"page\":\"2\"}}"],
+  "must_not_contain": ["\"statusCode\""],
+  "must_mention": ["statusCode"],
+  "cause": "The report says the inline test was invalid, so nothing ran: the `httpRequest` step used `statusCode`, which isn't a field; the field is `statusCodes`. It says it renamed the field in the step comment and that the test passes on the rerun.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ list-users: Request to http://localhost:8093/api/users?page=2 returned 404.\n\nThe `statusCode` check failed because the users endpoint moved. Update the doc's URL.",
+  "wrong": [
+    { "why": "fixes the field but also rewrites the prose", "fails": "right_file", "replace": [{ "file": "docs/list-users.md", "from": "\"statusCode\":[200]", "to": "\"statusCodes\":[200]" }, { "file": "docs/list-users.md", "from": "returns HTTP status `200 OK`", "to": "returns status `200`" }] },
+    { "why": "drops the response check along with the bad field", "fails": "fixed", "replace": [{ "file": "docs/list-users.md", "from": ",\"statusCode\":[200],\"response\":{\"body\":{\"page\":\"2\"}}", "to": "" }] }
+  ]
+}

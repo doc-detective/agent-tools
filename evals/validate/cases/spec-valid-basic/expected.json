@@ -1,0 +1,8 @@
+{
+  "kind": "spec",
+  "input": "tests/login.spec.json",
+  "args": "tests/login.spec.json",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "A plain valid spec. The verdict must be a pass, with no field reported."
+}

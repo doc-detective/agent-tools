@@ -1,0 +1,61 @@
+{
+  "kind": "feature",
+  "args": "--ci --trigger push --create-issue-on-fail --integrations claude,copilot",
+  "hard": "The skill's flag is `--integrations`, but the input is `issue_mentions`; `integrations` is still in action.yml, deprecated. Issue creation needs `issues: write`.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "push": {}
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "permissions": [
+      {
+        "contents": "read",
+        "issues": "write"
+      }
+    ],
+    "with": {
+      "create_issue_on_fail": true,
+      "issue_mentions": [
+        "claude",
+        "copilot"
+      ]
+    },
+    "without": [
+      "integrations",
+      "prompt"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pushes and opens an issue when tests fail, mentioning Claude and Copilot in it. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on pushes to `main` and opens an issue when tests fail. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "uses the deprecated `integrations` input",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "issue_mentions: claude,copilot",
+          "to": "integrations: claude,copilot"
+        }
+      ]
+    },
+    {
+      "why": "leaves out `issues: write`",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  issues: write\n",
+          "to": ""
+        }
+      ]
+    }
+  ]
+}

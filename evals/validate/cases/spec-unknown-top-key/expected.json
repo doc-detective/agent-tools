@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/about.spec.json",
+  "args": "tests/about.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "unknown key `logLevel`."
+  ],
+  "hard": "A config key (`logLevel`) at the top of a spec. The error has no path, only the key."
+}

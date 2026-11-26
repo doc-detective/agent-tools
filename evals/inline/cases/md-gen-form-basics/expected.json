@@ -1,0 +1,15 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "index.html", "note": "Fill in the form, step 1: go to the form page."},
+    {"stepType": "find", "match": "Common HTML Elements", "note": "Step 1: the title reads Common HTML Elements."},
+    {"stepType": "type", "match": "Ada Lovelace", "note": "Step 2: enter Ada Lovelace in the Text Input field."},
+    {"stepType": "click", "match_any": ["checkbox2", "option 2"], "note": "Step 3: select the Option 2 checkbox (not the radio button of the same name)."},
+    {"stepType": "click", "match": "Standard Button", "note": "Step 4: click Standard Button."},
+    {"stepType": "goTo", "match": "type-echo.html", "note": "Check the echo, step 1: open the echo page."},
+    {"stepType": "type", "match": "draft note", "note": "Step 2: type draft note in the Type here field."},
+    {"stepType": "find", "match": "draft note", "note": "Step 2: draft note shows under the field too."}
+  ],
+  "must_not": [
+    "Clicking a checkbox or radio button the note says to leave alone."
+  ]
+}

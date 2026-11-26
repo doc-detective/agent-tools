@@ -1,0 +1,48 @@
+{
+  "category": "false_premise",
+  "question": "One step in my Doc Detective test runs an optional cleanup script, `{\"runShell\": {\"command\": \"node scripts/cleanup.js\"}, \"onFail\": [{\"continue\": true}]}`, and the script exits 1 when there's nothing to clean. I added the `onFail` continue so that exit 1 wouldn't fail the test. The later steps do run now, but the test still reports FAIL and the CLI still exits 1. Isn't `continue` supposed to ignore the failure? How do I make exit code 1 count as OK for that step?",
+  "facts": [
+    {
+      "text": "Routing handlers such as `onFail` with `continue` only control whether later steps run; they never change a result, so the step stays FAIL and the test still rolls up to FAIL (and the run exits 1).",
+      "sources": ["docs/fern/pages/docs/tests/overview.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    },
+    {
+      "text": "To accept exit code 1, set `exitCodes` on the `runShell` step to include it, such as `\"exitCodes\": [0, 1]`; `exitCodes` defaults to `[0]`. Then the step passes.",
+      "sources": ["docs/fern/pages/docs/actions/runShell.mdx", "src/common/src/schemas/src_schemas/runShell_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "An `onFail` handler with `continue: true` turns the failed step into a pass, or makes the test pass.",
+    "Adding a custom assertion such as `$$outputs.exitCode <= 1` (or any `assertions` entry) makes the failed step pass."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that runs the cleanup script and accepts exit code 1",
+      "setup": [
+        { "runShell": { "command": "node -e \"require('fs').mkdirSync('scripts',{recursive:true});require('fs').writeFileSync('scripts/cleanup.js','process.exit(1)')\"" } }
+      ],
+      "require": [{ "runShell": ["cleanup.js", "exitCodes"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "says continue makes the step pass",
+      "fails": "no_invention",
+      "answer": "`onFail` with `continue: true` marks the failed step as passed and moves on, so the test passes. If the test still shows FAIL, another step is failing. Look for a second FAIL in the results."
+    },
+    {
+      "why": "lists the wrong exit code",
+      "fails": "snippets_run",
+      "replace": [
+        { "from": "\"exitCodes\": [0, 1]\n", "to": "\"exitCodes\": [0, 2]\n" }
+      ]
+    },
+    {
+      "why": "misses that routing keeps FAIL",
+      "fails": "correct",
+      "replace": [
+        { "from": "Routing handlers such as `onFail` control flow, not the verdict. `continue` lets the later steps run, but the step stays FAIL, so the test still rolls up to FAIL and the run exits 1.", "to": "Routing handlers such as `onFail` are one way to handle this." }
+      ]
+    }
+  ]
+}

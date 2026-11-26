@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/search.spec.json",
+  "args": "tests/search.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[1].type.inputDelay: must be number (got \"fast\")."
+  ],
+  "hard": "A string where a number goes, deep in a step object."
+}

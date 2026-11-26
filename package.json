@@ -1,6 +1,6 @@
 {
   "name": "agent-tools",
-  "version": "3.0.0",
+  "version": "3.4.1",
   "private": true,
   "repository": "github:doc-detective/agent-tools",
   "engines": {
@@ -35,6 +35,7 @@
     "doc-detective-common": "^5.0.0",
     "husky": "^9.1.7",
     "mocha": "^12.0.3",
-    "semantic-release": "^25.0.9"
+    "semantic-release": "^25.0.9",
+    "yaml": "^2.9.1"
   }
 }

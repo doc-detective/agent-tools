@@ -1,0 +1,50 @@
+{
+  "category": "false_premise",
+  "question": "We tag our Doc Detective steps with our own fields so a dashboard can route failures, for example `{\"stepId\": \"check-node\", \"runShell\": {\"command\": \"node --version\"}, \"owner\": \"docs-team\"}`. v4 ran these fine. v5 refuses: \"Error: Invalid test specifications, so nothing ran:\" followed by \"tests[0].steps[0]: unknown key `owner`.\" What's the config option that turns off strict key checking, so v5 ignores extra keys like v4 did?",
+  "facts": [
+    {
+      "text": "There's no option to ignore unknown keys: in v5 a key Doc Detective doesn't recognize on a spec or step makes the spec invalid, and the run exits 2 before any test runs.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/docs/tests/overview.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    },
+    {
+      "text": "The metadata has to move out of the step, for example into the step's `description` (or the `stepId`), or into a file outside the spec.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    },
+    {
+      "text": "`--no-exit-on-fail` (or `exitOnFail: false`) doesn't accept the keys; it skips the invalid specs with a warning and runs the valid ones.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "A config key or flag (such as `strict: false` or `allowUnknownKeys`) makes v5 ignore unknown keys.",
+    "`--no-exit-on-fail` or `exitOnFail: false` makes the steps with extra keys run.",
+    "Prefixing a custom key, such as `x-owner` or `_owner`, makes it valid."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that runs `node --version` with the owner kept in a valid field",
+      "require": [{ "runShell": ["node --version", "docs-team"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "invents a strict-mode switch",
+      "fails": "no_invention",
+      "answer": "Set `\"strict\": false` in your config. v5 then ignores unknown keys the way v4 did:\n\n```json\n{ \"strict\": false }\n```\n"
+    },
+    {
+      "why": "prefixes the key",
+      "fails": "snippets_valid",
+      "replace": [
+        { "from": "\"description\": \"owner: docs-team\",", "to": "\"x-owner\": \"docs-team\"," }
+      ]
+    },
+    {
+      "why": "says --no-exit-on-fail runs the tagged steps",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "`--no-exit-on-fail`, or `\"exitOnFail\": false`, doesn't accept the extra keys either. It skips each invalid spec with a warning and runs the valid ones, so the tagged steps still don't run.", "to": "Until you finish, pass `--no-exit-on-fail`, or set `\"exitOnFail\": false`. Doc Detective then drops the unknown keys with a warning and runs the tagged steps as before." }
+      ]
+    }
+  ]
+}

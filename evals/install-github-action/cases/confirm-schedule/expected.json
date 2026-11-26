@@ -1,0 +1,38 @@
+{
+  "kind": "confirm",
+  "args": "--trigger schedule",
+  "hard": "No `--ci`, and `schedule` gives no time. The skill says to suggest `0 6 * * 1`, ask whether that time suits the user, and show the workflow before writing it. A headless session that picks a time and writes the file skips both questions.",
+  "write": false,
+  "proposal": true,
+  "fit": {
+    "triggers": {
+      "schedule": {}
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [],
+  "report": "It shows the workflow it would add at `.github/workflows/doc-detective.yml` with a `schedule` trigger, says on which day and at what time that schedule runs, and asks the user whether that schedule suits them before it writes the file. It doesn't say it already wrote the file.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective every Monday at 6 AM UTC. Commit and push it, and check that GitHub Actions is enabled.",
+  "wrong": [
+    {
+      "why": "writes the file without asking about the schedule",
+      "fails": "no_harm",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Doc Detective\n\non:\n  schedule:\n    - cron: '0 6 * * 1'\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+      }
+    },
+    {
+      "why": "proposes `schedule` as a bare event with no `cron` list",
+      "fails": "workflow",
+      "report": "Here's the workflow I'd add at `.github/workflows/doc-detective.yml`:\n\n```yaml\nname: Doc Detective\n\non:\n  schedule:\n  workflow_dispatch:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n```\n\nIt runs Doc Detective on a schedule with a read-only token. When should it run? I'll write the file once you confirm.\n"
+    },
+    {
+      "why": "proposes a pull_request trigger instead of a schedule",
+      "fails": "fit",
+      "report": "Here's the workflow I'd add at `.github/workflows/doc-detective.yml`:\n\n```yaml\nname: Doc Detective\n\non:\n  pull_request:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n```\n\nIt runs Doc Detective on every pull request with a read-only token. Should I write it?\n"
+    }
+  ]
+}

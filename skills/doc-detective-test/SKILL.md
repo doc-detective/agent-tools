@@ -2,7 +2,7 @@
 name: doc-detective-test
 description: 'Run Doc Detective tests to check that documented procedures still work as written, from a doc file, an existing spec, or docs with inline tests, and optionally fix failing tests. Use for test my docs, verify these steps, or run-and-fix requests. To write a spec without running it, use doc-detective-generate. Not for Playwright, unit, or app end-to-end tests, or for testing Doc Detective itself.'
 metadata:
-  version: '3.0.0'
+  version: '3.4.1'
   organization: Doc Detective
   date: November 2026
   abstract: Convert documentation procedures into executable Doc Detective test specifications, run them, fix failures, and verify the documentation matches actual behavior.
@@ -48,7 +48,7 @@ For documentation and web UI testing, use Doc Detective rather than Playwright. 
 
 ## Guardrails
 
-- **Run only a spec that passed `/doc-detective-validate`.** An invalid spec produces no usable results. When validation fails, report `Error: generated spec failed validation: <errors>`.
+- **Run only a spec that passed `/doc-detective-validate`.** An invalid spec produces no usable results. When validation fails, report `Error: generated spec failed validation: <errors>`. With `--fix`, fix the field the error names, and validate again.
 - **Report results as the results file records them.** Record each test's `specs[].tests[].result` as written: `PASS`, `WARNING`, `SKIPPED`, or `FAIL`. Don't infer results from the exit code alone. The user acts on these results, so a count that's wrong sends them to the wrong docs.
 - **Never copy a masked value into a spec.** A `***NAME***` value in the results is a masked variable that the step ran with. Keep the spec's `$NAME` reference. The masked text isn't the real value, so a spec that contains it tests the wrong input.
 - **Below the threshold, ask before you apply a fix.** Without `--auto-fix`, show any fix whose confidence is below `--fix-threshold`, with its score, and apply it only when the user approves. A fix changes what the test checks, and a wrong fix can hide a real documentation problem.
@@ -86,7 +86,7 @@ The exit code tells you whether the results file is worth reading:
 
 - `0`: No test failed, and at least one passed or warned.
 - `1`: At least one test failed. This is a normal outcome, not a crash. The results file is written.
-- `2`: Nothing valid was tested, or the CLI couldn't proceed. Report the error from stderr, and stop without fixing or injecting. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason.
+- `2`: Nothing valid was tested, or the CLI couldn't proceed. Report the error from stderr. With `--fix` and an invalid field, fix it as [Fix failing tests](#fix-failing-tests) describes. Otherwise stop without fixing or injecting. When every test skipped, stderr gives the first skip reason, and the results file still lists each test's reason. Report those skips as skips, not failures.
 
 Take each failure reason from `resultDescription` on the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`. Steps after a failure in the same context report `SKIPPED`. The screenshot of a failed step, in the run folder that the results' `runDir` names, shows what the page looked like.
 
@@ -100,9 +100,19 @@ Take each failure reason from `resultDescription` on the steps in `specs[].tests
 
 Fix tests only when the user set `--fix`. Without it, report each failing test with its failure reason.
 
+`--fix` repairs tests, not docs or the environment. Before you change anything, decide where each failure belongs:
+
+- **The test is wrong.** The test disagrees with its own doc. Examples are a typo, a wrong selector, a host or port the doc doesn't name, and an expected value the doc contradicts. Fix the test so it checks what the doc says. A value the doc doesn't state, such as a status code, is different. When the response breaks it, the product may be failing, so report it.
+- **The doc is out of date.** The doc and its test agree, and the page doesn't. The product changed, or it regressed. Don't edit the doc or the test, even when a one-word change would make it pass. A test bent to match the page stops catching the stale doc. Report what the doc says, what the page shows, and the doc edit you propose, and ask before you make it, even with `--auto-fix`.
+- **The environment is down.** A connection to the host and port the doc names is refused, or the server doesn't answer. Don't edit anything, and don't point the test at another host or port. Report which service is down, and how to start it when the repo's README or config says so.
+- **A test skipped by design.** A `runOn` that excludes this platform skips the test. That's not a failure, so don't change `runOn`.
+- **An invalid field.** Doc Detective exits `2` and names the field. Fix that field in the test, validate the spec again, and run it.
+
+When one run has failures of different kinds, handle each one by its kind.
+
 The bundled fix tool analyzes a results file and proposes fixes with confidence scores: `node skills/doc-detective-test/scripts/fix-tests.js <results-file> --spec <spec-file> --dry-run`. It reads and writes JSON specs only, so apply a fix to a YAML spec by hand. Read [references/fix-failing-tests.md](references/fix-failing-tests.md) for its options, failure patterns, and confidence scoring.
 
-For each failing test, try fixes until the test passes or you reach `--max-fix-attempts`:
+For each test that failed because the test is wrong or has an invalid field, try fixes until the test passes or you reach `--max-fix-attempts`. Handle the other kinds as the list above says:
 
 - Analyze the failure, and propose a fix with a confidence score from 0 to 100. The score is how sure you are that the fix resolves the failure.
 - With `--auto-fix`, or with confidence at or above `--fix-threshold`, apply the fix to the spec. Otherwise follow the guardrail above. A fix the user declines still counts as an attempt.

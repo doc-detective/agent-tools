@@ -1,0 +1,36 @@
+{
+  "category": "compare",
+  "question": "Our DITA-OT pipeline strips processing instructions, so our DITA topics carry inline Doc Detective steps in `<data>` elements to stay valid DITA, like this:\n\n```xml\n<step><cmd>Open the API reference.</cmd>\n  <info><data name=\"step\">{\"checkLink\": \"https://docs.example.com/api\"}</data></info>\n</step>\n```\n\nThat worked in Doc Detective 4. Since we upgraded to 5, those steps silently don't run. What changed, and how do I write them now without processing instructions?",
+  "facts": [
+    {
+      "text": "Doc Detective 5 no longer reads the `<data name=\"step\">{...}</data>` form.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    },
+    {
+      "text": "Use a `<data name=\"doc-detective\">` element with the whole statement, keyword included, in its `value` attribute, such as `<data name=\"doc-detective\" value=\"step checkLink='https://docs.example.com/api'\"/>`.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx", "docs/fern/pages/docs/input-formats/dita.mdx"]
+    }
+  ],
+  "must_not": [
+    "Doc Detective reads inline tests in DITA only from `<?doc-detective ?>` processing instructions.",
+    "The statement goes in the element's text, as `<data name=\"doc-detective\">step {...}</data>`.",
+    "The element is named after the statement, as `<data name=\"doc-detective-step\" value=\"...\"/>`."
+  ],
+  "wrong": [
+    {
+      "why": "puts the statement in the element text",
+      "fails": "no_invention",
+      "answer": "Version 5 renamed the element. Write `<data name=\"doc-detective\">step {\"checkLink\": \"https://docs.example.com/api\"}</data>`, with the statement as the element's text."
+    },
+    {
+      "why": "says only processing instructions work",
+      "fails": "no_invention",
+      "answer": "Doc Detective 5 reads DITA inline tests only from processing instructions, such as `<?doc-detective step {\"checkLink\": \"https://docs.example.com/api\"} ?>`. Configure DITA-OT to keep them."
+    },
+    {
+      "why": "misses the cause",
+      "fails": "correct",
+      "answer": "Check that your topics are in a folder you pass to `--input`, and that `processDitaMaps` is on."
+    }
+  ]
+}

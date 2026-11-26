@@ -1,0 +1,1 @@
+{"prompt_id":"act-runshell-windows-shell","rep":0,"failure_class":"timeout","error":"act-runshell-windows-shell rep0: exceeded 1800s wall-clock ceiling","retries":0,"judge_retries":0,"model":"claude-sonnet-5-5","usage":{"input_tokens":6,"output_tokens":1837,"cache_read_input_tokens":113304,"cache_creation_input_tokens":8683},"latency_s":1800.002}

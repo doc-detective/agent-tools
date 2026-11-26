@@ -1,0 +1,12 @@
+{
+  "source": "doc-detective@5.6.3 --help, and --help for each of its commands and install assets. The --no- forms of --auto-screenshot and --auto-record are commander booleans.",
+  "flags": [
+    "--agent", "--allow-unsafe", "--auto-record", "--auto-screenshot", "--browser-fallback", "--cache-dir",
+    "--concurrent-runners", "--config", "--debug", "--device-type", "--dry-run", "--exit-on-fail", "--force",
+    "--help", "--include-env", "--input", "--json", "--log-level", "--logLevel", "--no-auto-record",
+    "--no-auto-screenshot", "--no-auto-update", "--no-color", "--no-env-file", "--no-exit-on-fail", "--no-hints",
+    "--no-input", "--no-telemetry", "--os-version", "--output", "--output-dir", "--plain", "--quiet", "--reporters",
+    "--reset-snapshot", "--scope", "--shell", "--spec", "--stdio", "--test", "--verbose", "--verification",
+    "--version", "--yes"
+  ]
+}

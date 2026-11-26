@@ -1,0 +1,54 @@
+{
+  "kind": "ci",
+  "hard": "The prompt asks for GitHub Actions in plain words, without `--ci` or the action's name. The repo has a `package.json` and a `.gitignore`, which invite an npm script or a hand-written `npx doc-detective` job instead of the Doc Detective GitHub Action.",
+  "args": "I want these tests to run in GitHub Actions on every push.",
+  "ci": "asked",
+  "procedures": [
+    {
+      "doc": "docs/subscribe-to-updates.md",
+      "match": [
+        "index.html",
+        "grace@example.com"
+      ]
+    }
+  ],
+  "must_mention": [
+    "subscribe-to-updates"
+  ],
+  "report": "The report says it created a Doc Detective config and a test for docs/subscribe-to-updates.md, which passed. It says the workflow it added uses the Doc Detective GitHub Action.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/subscribe-to-updates-spec.json` tests docs/subscribe-to-updates.md.\n\nResults: 1 passed, 0 failed (sign-up).\n\nI added `.github/workflows/doc-detective.yml`, a GitHub Actions workflow whose one step runs `npx doc-detective` on every push.",
+  "wrong": [
+    {
+      "why": "doesn't write the workflow it was asked for",
+      "fails": "ci",
+      "delete": [
+        ".github/workflows/doc-detective.yml"
+      ]
+    },
+    {
+      "why": "runs Doc Detective from a hand-written npx step instead of the action",
+      "fails": "ci",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Docs\n\non:\n  push:\n\njobs:\n  docs:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - run: npx doc-detective\n"
+      }
+    },
+    {
+      "why": "adds an npm script for the docs tests",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "package.json",
+          "from": "\"test\": \"node --test\"",
+          "to": "\"test\": \"node --test\",\n    \"test:docs\": \"npx doc-detective\""
+        }
+      ]
+    },
+    {
+      "why": "replaces the `.gitignore` instead of adding to it",
+      "fails": "no_harm",
+      "write": {
+        ".gitignore": ".doc-detective/\n"
+      }
+    }
+  ]
+}

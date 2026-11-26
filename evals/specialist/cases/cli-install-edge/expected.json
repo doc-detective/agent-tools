@@ -1,0 +1,49 @@
+{
+  "category": "false_premise",
+  "question": "I'm baking Doc Detective 5 into a Docker image for our docs CI, and we test on Microsoft Edge. The Dockerfile line `RUN npx doc-detective install browsers edge --cache-dir /opt/dd-cache --yes` fails with `error: command-argument value 'edge' is invalid for argument 'names'. Allowed choices are chrome, firefox, chromedriver, geckodriver.` How do I get Edge into the image, and how do I make sure the test runs later use what's in /opt/dd-cache?",
+  "facts": [
+    {
+      "text": "Doc Detective doesn't run tests in Edge: `install browsers` takes only `chrome`, `firefox`, `chromedriver`, and `geckodriver`, and a spec or context that names `edge` as its browser is invalid in v5. Use Chrome.",
+      "sources": ["docs/fern/pages/reference/cli/install.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/context_v3.schema.json"]
+    },
+    {
+      "text": "Install Chrome into that cache with `npx doc-detective install browsers chrome --cache-dir /opt/dd-cache --yes`, or `install all` to add the runtime packages too.",
+      "sources": ["docs/fern/pages/reference/cli/install.mdx"]
+    },
+    {
+      "text": "Test runs must read the same cache, for example `ENV DOC_DETECTIVE_CACHE_DIR=/opt/dd-cache` in the image, `--cache-dir` on each run, or `cacheDir` in config; `--cache-dir` beats `DOC_DETECTIVE_CACHE_DIR`, which beats config `cacheDir`.",
+      "sources": ["docs/fern/pages/reference/cli/install.mdx", "docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`install browsers` accepts Edge under another name, such as `msedge` or `edge-stable`, or through an option.",
+    "A context or `startSurface` with `edge` as the browser runs the tests in Edge.",
+    "`DOC_DETECTIVE_CACHE_DIR` beats `--cache-dir`."
+  ],
+  "wrong": [
+    {
+      "why": "a browser flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "For the browser alone, use `npx doc-detective install browsers chrome --cache-dir /opt/dd-cache --yes`.", "to": "To get Edge, use `npx doc-detective install browsers --browser edge --cache-dir /opt/dd-cache --yes`." }
+      ]
+    },
+    {
+      "why": "Edge under another name",
+      "fails": "no_invention",
+      "answer": "The asset name is `msedge`, not `edge`:\n\n```dockerfile\nRUN npx doc-detective install browsers msedge --cache-dir /opt/dd-cache --yes\nENV DOC_DETECTIVE_CACHE_DIR=/opt/dd-cache\n```\n\nThen name `edge` in your contexts' `browsers`."
+    },
+    {
+      "why": "env var beats the flag",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "The first one set wins, in this order: `--cache-dir`, then `DOC_DETECTIVE_CACHE_DIR`, then `cacheDir` in the project config, then `cacheDir` in your user config.", "to": "`DOC_DETECTIVE_CACHE_DIR` wins over everything, including `--cache-dir`, so set it once in the image." }
+      ]
+    },
+    {
+      "why": "no cache wiring for runs",
+      "fails": "correct",
+      "answer": "Doc Detective has no Edge support. `install browsers` takes only `chrome`, `firefox`, `chromedriver`, and `geckodriver`, and Doc Detective 5 rejects `edge` as a browser. Install Chrome:\n\n```dockerfile\nRUN npx doc-detective install browsers chrome --yes\n```"
+    }
+  ]
+}

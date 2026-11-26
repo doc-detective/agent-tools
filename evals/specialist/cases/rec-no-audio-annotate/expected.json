@@ -1,0 +1,53 @@
+{
+  "category": "false_premise",
+  "question": "I'm making a tutorial video of our login page (http://localhost:8092/enhanced-elements.html) with Doc Detective's `record` step. How do I turn on audio so a voice-over explaining the username field (`#username-input`) and then the submit button (`#submit-button`) ends up in the MP4? Show me the spec.",
+  "facts": [
+    {
+      "text": "Doc Detective recordings are video only, with no audio track; the `record` step has no option that captures sound.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/test-docs/record-video-guide.mdx",
+        "src/common/src/schemas/src_schemas/record_v3.schema.json"
+      ]
+    },
+    {
+      "text": "To narrate in the video, use `annotate` steps inside the recording span; their annotations stay up across steps and navigation until cleared, so they appear in the recording.",
+      "sources": [
+        "docs/fern/pages/docs/test-docs/narrate-recordings.mdx",
+        "docs/fern/pages/docs/actions/annotate.mdx"
+      ]
+    }
+  ],
+  "must_not": [
+    "The `record` step has an option (such as `audio`, `microphone`, `captureAudio`, or `voiceover`) that records sound into the video.",
+    "Annotations on a `screenshot` step (`screenshot.annotations`) appear in the recording."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that records the page and annotates #username-input during the recording",
+      "setup": [{ "goTo": "http://localhost:8092/enhanced-elements.html" }],
+      "require": [
+        { "record": [] },
+        { "annotate": ["#username-input"] },
+        { "stopRecord": [] }
+      ]
+    }
+  },
+  "wrong": [
+    {
+      "why": "an audio field on record",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{ \"record\": \"login-tutorial.mp4\" }", "to": "{ \"record\": { \"path\": \"login-tutorial.mp4\", \"audio\": true } }" }]
+    },
+    {
+      "why": "clicks an element the page lacks",
+      "fails": "snippets_run",
+      "replace": [{ "from": "{ \"click\": \"#username-input\" }", "to": "{ \"click\": \"#login-username\" }" }]
+    },
+    {
+      "why": "claims an audio option",
+      "fails": "no_invention",
+      "answer": "Set `audio: true` in the object form of `record`, and Doc Detective captures the system microphone into the MP4 alongside the video. Speak your voice-over while the test runs, or add `annotations` to a `screenshot` step to show captions in the video."
+    }
+  ]
+}

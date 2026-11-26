@@ -1,0 +1,33 @@
+{
+  "kind": "trigger",
+  "args": "--ci --trigger schedule",
+  "hard": "`schedule` needs a list of `cron` entries, not a bare event, and with `--ci` there's no one to ask for the time.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "schedule": {}
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on a schedule and says when it runs. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "leaves `schedule` without a cron",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  schedule:\n    - cron: '0 6 * * 1'\n",
+          "to": "  schedule:\n"
+        }
+      ]
+    }
+  ]
+}

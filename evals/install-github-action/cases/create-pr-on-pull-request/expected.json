@@ -1,0 +1,42 @@
+{
+  "kind": "feature",
+  "args": "--ci --create-pr-on-change --trigger pull_request",
+  "hard": "The user asked for pull_request. The skill keeps it, but must warn that the PR carries the source PR's changes and that every source PR overwrites one branch.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "permissions": [
+      {
+        "contents": "write",
+        "pull-requests": "write"
+      }
+    ],
+    "with": {
+      "create_pr_on_change": true
+    }
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests and opens a pull request when files change. It warns that on `pull_request` the pull request it opens also carries the source pull request's changes, and that every source pull request overwrites the same branch. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on pull requests and opens a pull request with any changed files. Commit and push it, and check that GitHub Actions is enabled.",
+  "wrong": [
+    {
+      "why": "gates PR creation on push events the workflow never gets",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "create_pr_on_change: true",
+          "to": "create_pr_on_change: ${{ github.event_name == 'push' }}"
+        }
+      ]
+    }
+  ]
+}

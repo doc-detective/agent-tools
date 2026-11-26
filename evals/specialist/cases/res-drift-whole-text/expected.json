@@ -1,0 +1,44 @@
+{
+  "category": "error",
+  "question": "My test opens http://localhost:8092/ and then runs `{\"click\": \"Standard\"}`. It fails with \"Couldn't find element `Standard`.\" The step's `resultCode` is `drift` and its `resultHint` is \"Closest matches: `Standard Button`, `Buttons Standard Button`.\" But the button on that page literally says \"Standard Button\", so the word is right there. Is the page just loading too slowly? Should I raise the timeout to 30 seconds?",
+  "facts": [
+    {
+      "text": "A plain string target matches an element's whole text, not a substring, so \"Standard\" doesn't match a button whose text is \"Standard Button\".",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "docs/fern/pages/docs/actions/click.mdx", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    },
+    {
+      "text": "`resultCode: drift` means no element matched but similar elements exist on the page (listed in `outputs.nearMatches` and the `resultHint`), so the target text is wrong, not the timing.",
+      "sources": ["docs/fern/pages/docs/troubleshoot/overview.mdx", "docs/fern/pages/docs/actions/find.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    },
+    {
+      "text": "The fix is to target the full text, `\"click\": \"Standard Button\"`, or to wrap a substring in slashes as a regular expression, such as `\"/Standard/\"`; raising the timeout doesn't help.",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "docs/fern/pages/docs/actions/click.mdx"]
+    }
+  ],
+  "must_not": [
+    "Raising the step's `timeout` (or adding a `wait`) fixes the failure.",
+    "Doc Detective matches text as a substring or with `contains`, so \"Standard\" should have matched.",
+    "`drift` means the page or network was slow, or it's an environment problem."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that clicks \"Standard Button\"",
+      "setup": [{ "goTo": "http://localhost:8092/" }],
+      "require": [{ "click": ["Standard Button"], "find": ["Standard Button", "\"click\":"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "pins a guessed id the button doesn't have",
+      "fails": "snippets_run",
+      "replace": [
+        { "from": "{ \"click\": \"Standard Button\" }", "to": "{ \"click\": { \"elementText\": \"Standard Button\", \"elementId\": \"standard-button\" } }" }
+      ]
+    },
+    {
+      "why": "blames the timing",
+      "fails": "no_invention",
+      "answer": "Yes, `drift` means the page was still loading when the step gave up. Raise the timeout:\n\n```json\n{ \"click\": { \"elementText\": \"Standard Button\", \"timeout\": 30000 } }\n```\n"
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+description: Tests the procedures in docs/export-report.md.
+tests:
+  - testId: request-export
+    steps:
+      - httpRequest:
+          url: http://localhost:8093/api/reports?format=csv
+          method: get
+          statusCodes: [200]
+          response:
+            body:
+              format: csv
+  - testId: desktop-helper
+    runOn:
+      - platforms: [__OTHER_PLATFORM__]
+    steps:
+      - httpRequest:
+          url: http://localhost:8095/api/inbox
+          method: post
+          request:
+            body:
+              report: usage.csv
+          statusCodes: [200]

@@ -1,0 +1,53 @@
+{
+  "kind": "layout",
+  "hard": "The plain case: two how-tos in `docs/` against the local pages, beside an overview with no procedure.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    },
+    {
+      "doc": "docs/preview-a-message.md",
+      "match": [
+        "click-shorthand",
+        "reveal by text"
+      ]
+    }
+  ],
+  "must_mention": [
+    "write-a-note"
+  ],
+  "report": "The report says it set up Doc Detective: it created a Doc Detective config and generated tests for docs/write-a-note.md and docs/preview-a-message.md, and both passed. It doesn't report a test as still failing. A test that failed once and passed after a fix to the test is fine.",
+  "wrong_report": "I created `.doc-detective.json` and specs for docs/write-a-note.md and docs/preview-a-message.md.\n\nResults: 1 passed, 1 failed. preview-a-message failed: Couldn't find element `Reveal by text`. Needs manual review.",
+  "wrong": [
+    {
+      "why": "points the config at the docs, where there are no tests",
+      "fails": "config",
+      "write": {
+        ".doc-detective.json": {
+          "input": "docs",
+          "outputDir": ".doc-detective/results",
+          "detectSteps": false
+        }
+      }
+    },
+    {
+      "why": "writes a CI workflow nobody asked for",
+      "fails": "ci",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Doc Detective\n\non:\n  pull_request:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+      }
+    },
+    {
+      "why": "tests only one of the two procedures",
+      "fails": "tests",
+      "delete": [
+        "doc-detective-tests/preview-a-message-spec.json"
+      ]
+    }
+  ]
+}

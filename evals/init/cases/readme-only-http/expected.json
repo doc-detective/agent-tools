@@ -1,0 +1,76 @@
+{
+  "kind": "layout",
+  "hard": "No docs folder: the only doc is the README, and its procedures are API calls, not pages.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "README.md (create an order)",
+      "match": [
+        "8093/api/orders",
+        "w-100"
+      ]
+    },
+    {
+      "doc": "README.md (list users)",
+      "match": [
+        "8093/api/users"
+      ]
+    }
+  ],
+  "must_mention": [
+    "README"
+  ],
+  "report": "The report says it set up Doc Detective with the config `.doc-detective.json` and generated API tests for the README's two requests (creating an order and listing users), and both passed.",
+  "wrong_report": "The only documentation is README.md, and it describes an API rather than a UI, so there are no procedures for Doc Detective to test. I didn't create a config.",
+  "wrong": [
+    {
+      "why": "tests the order request only",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/readme-spec.json": {
+          "tests": [
+            {
+              "testId": "create-an-order",
+              "steps": [
+                {
+                  "httpRequest": {
+                    "url": "http://localhost:8093/api/orders",
+                    "method": "post",
+                    "request": {
+                      "headers": {
+                        "Content-Type": "application/json"
+                      },
+                      "body": {
+                        "sku": "W-100",
+                        "quantity": 2
+                      }
+                    },
+                    "statusCodes": [
+                      200
+                    ],
+                    "response": {
+                      "body": {
+                        "sku": "W-100",
+                        "quantity": 2
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "why": "writes a config Doc Detective rejects",
+      "fails": "config",
+      "write": {
+        ".doc-detective.json": {
+          "input": "doc-detective-tests",
+          "detectSteps": "no"
+        }
+      }
+    }
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "description": "Tests docs/list-users.md.",
+  "tests": [
+    {
+      "testId": "list-users",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users?page=2",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "page": "2"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

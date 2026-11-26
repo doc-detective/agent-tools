@@ -1,0 +1,44 @@
+{
+  "kind": "layout",
+  "hard": "The procedure is shell commands with documented output, not a page or an API; the test has to run `node` and check what it prints.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "README.md",
+      "match": [
+        "greet.js",
+        "hello, ada"
+      ]
+    }
+  ],
+  "must_mention": [
+    "greet"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test that runs the README's `node scripts/greet.js` commands and checks their output, and that it passed.",
+  "wrong_report": "The README's greet commands are shell commands, and Doc Detective tests web pages, so there is nothing to test here. I didn't create a config.",
+  "wrong": [
+    {
+      "why": "checks only that the command exits, not what it prints",
+      "fails": "tests",
+      "write": {
+        "doc-detective-tests/readme-spec.json": {
+          "tests": [
+            {
+              "testId": "try-it",
+              "steps": [
+                {
+                  "runShell": {
+                    "command": "node scripts/greet.js Ada",
+                    "exitCodes": [
+                      0
+                    ]
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}

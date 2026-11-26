@@ -1,0 +1,82 @@
+{
+  "kind": "existing",
+  "hard": "The config is `.doc-detective.yml` (the `.yml` spelling, with a comment), and the tests are split: one guide carries inline tests, the other has a YAML spec in tests/. The setup has no `.doc-detective.json` and no JSON spec, so a check for either misses it, and a guide without inline comments looks untested.",
+  "ci": "any",
+  "existing": true,
+  "procedures": [
+    {
+      "doc": "docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    },
+    {
+      "doc": "docs/run-a-delayed-action.md",
+      "match": [
+        "wait-delay",
+        "action complete"
+      ]
+    }
+  ],
+  "must_mention": [
+    ".doc-detective.yml"
+  ],
+  "report": "The report says Doc Detective is already set up (`.doc-detective.yml`, with inline tests in docs/ and a YAML spec in tests/), so it didn't initialize it again and didn't change any files. It ran the existing tests: check-a-note and trigger-the-action both passed.",
+  "wrong_report": "I found `.doc-detective.yml`, but there was no `.doc-detective.json` and docs/run-a-delayed-action.md had no inline test, so I set up Doc Detective.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/run-a-delayed-action-spec.json` tests docs/run-a-delayed-action.md.\n\nResults: 2 passed, 0 failed (check-a-note, trigger-the-action).",
+  "wrong": [
+    {
+      "why": "writes a JSON config beside the YAML one",
+      "fails": "no_harm",
+      "write": {
+        ".doc-detective.json": {
+          "input": [
+            "docs",
+            "tests"
+          ],
+          "outputDir": ".doc-detective/results",
+          "detectSteps": false
+        }
+      }
+    },
+    {
+      "why": "converts the YAML spec to JSON",
+      "fails": "no_harm",
+      "delete": [
+        "tests/run-a-delayed-action.spec.yaml"
+      ],
+      "write": {
+        "tests/run-a-delayed-action.spec.json": {
+          "description": "Tests docs/run-a-delayed-action.md.",
+          "tests": [
+            {
+              "testId": "trigger-the-action",
+              "steps": [
+                {
+                  "goTo": "http://localhost:8092/wait-delay.html"
+                },
+                {
+                  "click": "Trigger delayed action"
+                },
+                {
+                  "find": "Action complete!"
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "why": "adds inline tests to the guide that has a spec",
+      "fails": "no_harm",
+      "replace": [
+        {
+          "file": "docs/run-a-delayed-action.md",
+          "from": "## Trigger the action\n",
+          "to": "## Trigger the action\n\n<!-- test {\"testId\":\"trigger-the-action-inline\"} -->\n<!-- step {\"goTo\":\"http://localhost:8092/wait-delay.html\"} -->\n<!-- test end -->\n"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "kind": "ci",
+  "hard": "The prompt asks for the workflow in words, without `--ci`. The install skill wants confirmation before it writes, but the user already asked.",
+  "args": "Also add the Doc Detective GitHub Action so these tests run on every pull request.",
+  "ci": "asked",
+  "procedures": [
+    {
+      "doc": "docs/run-a-delayed-action.md",
+      "match": [
+        "wait-delay",
+        "action complete"
+      ]
+    }
+  ],
+  "must_mention": [
+    "doc-detective.yml"
+  ],
+  "report": "The report says it created a Doc Detective config and a test for docs/run-a-delayed-action.md, which passed.",
+  "wrong_report": "I set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/run-a-delayed-action-spec.json` tests docs/run-a-delayed-action.md.\n\nResults: 1 passed, 0 failed.\n\nHere is the workflow I'd save as `.github/workflows/doc-detective.yml`. Confirm and I'll write it.",
+  "wrong": [
+    {
+      "why": "doesn't write the workflow it was asked for",
+      "fails": "ci",
+      "delete": [
+        ".github/workflows/doc-detective.yml"
+      ]
+    }
+  ]
+}

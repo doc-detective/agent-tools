@@ -1,0 +1,35 @@
+{
+  "category": "concept",
+  "question": "I ran `npx doc-detective --no-auto-screenshot`, but one spec still writes PNGs under `.doc-detective/runs/.../screenshots/`. Its test sets `\"autoScreenshot\": true`. Also, before I added the flag, that test's `runShell` step and its explicit `screenshot` step never got an automatic screenshot, but a `find` step that failed did. Is something broken?",
+  "facts": [
+    {
+      "text": "`--no-auto-screenshot` sets the config level, and a test's (or spec's) `autoScreenshot: true` overrides the config, so that test still gets automatic screenshots.",
+      "sources": ["docs/fern/pages/docs/test-docs/automatic-screenshots.mdx", "src/common/src/schemas/src_schemas/test_v3.schema.json"]
+    },
+    {
+      "text": "Steps that drive no UI, such as `runShell`, get no automatic screenshot, and neither does a step with its own `screenshot`.",
+      "sources": ["docs/fern/pages/docs/test-docs/automatic-screenshots.mdx", "docs/fern/pages/docs/actions/screenshot.mdx"]
+    },
+    {
+      "text": "A failed step still gets an automatic screenshot, because the failure state is useful for debugging.",
+      "sources": ["docs/fern/pages/docs/test-docs/automatic-screenshots.mdx", "docs/fern/pages/docs/actions/screenshot.mdx"]
+    }
+  ],
+  "must_not": [
+    "`--no-auto-screenshot` overrides `autoScreenshot` set in a spec or test.",
+    "Automatic screenshots follow every step, including `runShell`.",
+    "Failed steps don't get automatic screenshots."
+  ],
+  "wrong": [
+    {
+      "why": "says the flag beats the test setting",
+      "fails": "no_invention",
+      "answer": "That's a bug. `--no-auto-screenshot` turns automatic screenshots off everywhere, including tests that set `autoScreenshot: true`, because CLI flags always win. Automatic screenshots also normally follow every step, so a missing `runShell` screenshot means the capture failed. Delete `.doc-detective/runs/` and rerun."
+    },
+    {
+      "why": "misses the failed-step rule",
+      "fails": "correct",
+      "answer": "The flag sets the config level, and the test's `autoScreenshot: true` overrides it, so that test keeps capturing. `runShell` drives no UI, and a step with its own `screenshot` already makes an image, so neither gets an automatic one."
+    }
+  ]
+}

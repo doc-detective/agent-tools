@@ -1,0 +1,10 @@
+{
+  "steps": [
+    {"stepType": "httpRequest", "match": "/api/orders", "match_any": ["status=open", "\"status\":\"open\""], "note": "List open orders: GET /api/orders with status=open."},
+    {"stepType": "httpRequest", "match": ["/api/orders/7/cancel", "duplicate"], "note": "Cancel order 7: POST the reason to /api/orders/7/cancel."},
+    {"stepType": "httpRequest", "match": "/api/receipts/7", "note": "Get the receipt: GET /api/receipts/7 returns 200."}
+  ],
+  "must_not": [
+    "Putting a step comment inside <CodeGroup> between its fences, or inside a fence."
+  ]
+}

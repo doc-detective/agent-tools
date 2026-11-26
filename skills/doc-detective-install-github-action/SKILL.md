@@ -2,7 +2,7 @@
 name: doc-detective-install-github-action
 description: 'Add a GitHub Actions workflow that runs Doc Detective documentation tests in CI on pull requests, pushes, or a schedule. Use only for running Doc Detective in GitHub Actions. Not for other CI systems, general GitHub workflows, or editing the workflows of the Doc Detective repositories themselves. To set up Doc Detective in a project first, use doc-detective-init.'
 metadata:
-  version: '3.0.0'
+  version: '3.4.1'
   organization: Doc Detective
   date: November 2026
   abstract: Install and configure the Doc Detective GitHub Action workflow for automated documentation testing in CI. Detects project context, creates workflow file, and configures action inputs including PR creation, issue creation, and integrations.
@@ -56,6 +56,7 @@ The workflow must point at the project's real config and docs:
 - Look for an existing Doc Detective config (`.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`), and record its path.
 - Note any existing `doc-detective*.yml` files in `.github/workflows/`, so the new file doesn't conflict with them.
 - Find the docs directory. Use the config's `input` field when there is one. Otherwise, look for common directories such as `docs/`, `documentation/`, `content/`, or `wiki/`. When none exists, use `.`.
+- Find what the tests need running. When the tests open a `localhost` URL, find how the project serves it, such as a `dev`, `start`, or `preview` script in `package.json`. The CI runner starts with nothing running.
 
 ## Build the workflow
 
@@ -94,6 +95,7 @@ Set the inputs and permissions from the project and the options:
 | `--create-issue-on-fail` | Set `create_issue_on_fail: true`, add `issues: write` permission |
 | `--integrations` provided | Set the `issue_mentions` input to the comma-separated list. Don't use the deprecated `integrations` input. |
 | `--trigger schedule` | Use cron syntax; suggest `cron: '0 6 * * 1'` (Monday 6 AM UTC) and prompt for customization unless `--ci` |
+| The tests need a local server | Before the action, add steps that install the project's dependencies with its own package manager. Then start the server in the background, and wait until a page the tests open answers a GET request, with a time limit. A server started in the foreground never returns, so the job hangs. See the example below. |
 
 Create `.github/workflows/` when it doesn't exist, and write the file there.
 
@@ -101,6 +103,7 @@ Create `.github/workflows/` when it doesn't exist, and write the file there.
 
 Give the path of the workflow file and a summary of the configured features. Then list the manual steps that apply:
 
+- Always: Commit the workflow file and push it to GitHub. The workflow doesn't run until it's on GitHub.
 - With `--create-pr-on-change` and the default `GITHUB_TOKEN`: In the repository's **Settings** > **Actions** > **General**, select **Allow GitHub Actions to create and approve pull requests**. In an organization, an owner must allow it at the organization level first. Without this setting, the default token can't open the PR. The action never approves pull requests.
 - With `--create-pr-on-change` and a custom `token`: That setting doesn't apply; the token's own permissions do. The action pushes the branch with the checkout's credentials, so give `actions/checkout` the same token as its `token` input.
 - With `--create-pr-on-change`: Each run force-pushes one branch, `doc-detective-changes` by default, and updates its open PR. Nobody should commit to that branch by hand, and a branch protection rule that blocks force-pushes to it stops the PR. By default, the PR also commits every changed file, including images that `screenshot` steps save, which can show unreleased UI or customer data. Suggest setting `pr_paths` to the folders the PR should update.
@@ -116,7 +119,7 @@ Give the path of the workflow file and a summary of the configured features. The
 - The workflow file exists at `.github/workflows/doc-detective.yml`, or at the name the user chose.
 - The `permissions:` block grants exactly what the enabled features require.
 - PR creation, issue creation, and integrations match the user's choices.
-- The user has the list of manual steps that apply.
+- The user has the list of manual steps that apply, starting with committing and pushing the workflow.
 
 ## Examples
 
@@ -139,6 +142,33 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 24
+      - uses: doc-detective/github-action@v2
+```
+
+### With a local server
+
+```yaml
+name: Doc Detective
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  doc-detective:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci   # the project's own install command, such as pnpm install
+      - name: Start the app
+        run: |
+          npm run dev &
+          npx --yes wait-on --timeout 60000 http-get://localhost:3000
       - uses: doc-detective/github-action@v2
 ```
 

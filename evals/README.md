@@ -1,11 +1,17 @@
 # Evals
 
-Two evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
+Eight evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
 
 | Eval | Question it answers | Headline metric |
 |---|---|---|
 | [routing](routing/) | Does a request reach the one skill or agent that owns it? | `correct`: the case's preferred route fired |
 | [spec-generation](spec-generation/) | Does `/doc-detective-generate` turn a doc into a spec that runs and covers the doc? | `complete`: the spec passes and has every expected step |
+| [inline](inline/) | Does `/doc-detective-inline` put tests into a doc as comments that Doc Detective reads back, without touching the prose? | `complete`: only comments added, and every expected step detected |
+| [test](test/) | Does `/doc-detective-test --fix` run a user's tests, name why each failed, and fix only what belongs to the test? | `complete`: ran, right cause, right files, fixed, no harm |
+| [install-github-action](install-github-action/) | Does `/doc-detective-install-github-action` add one valid workflow that runs Doc Detective the way the request and the repo need, and tell the user what's left? | `complete`: valid workflow, fits the request, no harm, right report |
+| [init](init/) | Does `/doc-detective-init` set up Doc Detective in a repo that doesn't use it yet? It should find the docs, write a config, and test the procedures. Then it should report failures by kind and offer CI. | `complete`: ran, config, tests, no harm, CI, report |
+| [specialist](specialist/) | Does the `doc-detective-specialist` agent answer a hard Doc Detective question correctly, with snippets that validate and run, and without inventing features? | `complete`: valid snippets, working snippets, correct, nothing invented |
+| [validate](validate/) | Does `/doc-detective-validate` give the right verdict on a spec or config, name every invalid field, and never pass an invalid file? | `complete`: right verdict, every field, no false pass, no harm |
 
 Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (`baseline`, `v1`, `v2`, and so on). `_state.json` in each eval's directory declares its metrics and the files whose hash the runner checks before it spends anything.
 
@@ -53,6 +59,112 @@ There are three slices:
 
 [spec-generation/cases.md](spec-generation/cases.md), [spec-generation/cases-manni.md](spec-generation/cases-manni.md), and [spec-generation/cases-dd-docs.md](spec-generation/cases-dd-docs.md) describe every case. Each case's `reference.spec.json` passes and covers every expected step, so it scores `complete`. When the reference has more than one step, its first step alone scores 0. Check that with `node evals/spec-generation/check-references.mjs`, which takes the same environment and `EVAL_ONLY` as the eval.
 
+## Run the inline eval
+
+```bash
+DD_NODE_DIR=<node dir> node evals/inline/run-eval.mjs --flow .claude/hillclimb/inline --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+The eval code is approved. Pass `--approve-harness` only after you change a file in its `harness_paths`, and review the change first. See [Approve changed eval code](#approve-changed-eval-code).
+
+Each case runs `/doc-detective:doc-detective-inline [tests/<name>.spec.json] docs/<name>.<ext> --apply` in a fresh workspace. A `spec` case hands the session a spec to inject; a `gen` case hands it only the doc, so it writes the tests first. [inline/cases.md](inline/cases.md) lists the 38 cases: Markdown, MDX, HTML, AsciiDoc, reStructuredText, and DITA.
+
+The grade runs no browser and no model. It reads the doc as the session left it:
+
+- `comment_only`: a line diff against the original adds only comments in the file's syntax and blank lines, none inside a code block. Any deleted or reworded line fails it.
+- `coverage`: `doc-detective@5.6.0 --dry-run` on the doc, alone in a scratch folder with the case's own `.doc-detective.json` (if any) and `detectSteps: false`, so only inline statements count. For a `spec` case, the share of the spec's steps found in order, by action and values, in the detected test with the same `testId`. For a `gen` case, spec-generation's matcher against `expected.json`, over the steps inside `test` markers. An invalid step makes the dry run exit `2` and detect nothing, as it would stop a real run.
+- `complete`: `comment_only` and `coverage` of 1.
+- `placement`: the share of added step comments that sit in or just after the paragraph holding their text. A step's text is a string value, or its `keys`, `url`, or `elementText`, and only steps whose text is in the doc count. It isn't part of `complete`.
+- `detected`: the dry run found at least one step.
+
+`node evals/inline/check-references.mjs` checks the grader for free, with no model calls. It takes `DD_NODE_DIR` and `EVAL_ONLY`, and checks four things per case:
+
+- Each `reference.<ext>` scores `complete` with full `placement`.
+- The unchanged doc, and the doc with one bogus step, score 0.
+- The reference with one prose line edited fails `comment_only`.
+- The reference with its comments moved to the top of the file loses `placement`.
+
+## Run the test eval
+
+```bash
+DD_REPO=<doc-detective checkout> DD_NODE_DIR=<node dir> \
+  node evals/test/run-eval.mjs --flow .claude/hillclimb/test --variant baseline --model claude-sonnet-5-5
+```
+
+Each case is a small docs repo, one git commit, with one planted defect or condition. It might be a doc that's out of date, a test that's wrong, or an invalid spec field. It might be a service that's down, a test that skips by design, everything passing, or two failures with different causes. The session gets `/doc-detective:doc-detective-test <target> --fix`. Afterwards the grade diffs the workspace against the original and reruns the target with `doc-detective@5.6.3`, what `doc-detective@5` resolves to now. A `claude-haiku-4-5` judge reads the final report against the case's rubric, so the eval bills that model too, at about $0.02 a case.
+
+The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 to 8099 must stay free: the environment cases need nothing there.
+
+In the test and init evals, a session's `PATH` starts with a `doc-detective` that runs `doc-detective@5.6.3`, the version the grade reruns with. A bare `doc-detective` in a session then runs that version, not a global install on the machine. So does `npx doc-detective` in a workspace with no local Doc Detective install, which is every case.
+
+[test/cases.md](test/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/test/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $1 for all of them.
+
+## Run the init eval
+
+```bash
+DD_REPO=<doc-detective checkout> DD_NODE_DIR=<node dir> \
+  node evals/init/run-eval.mjs --flow .claude/hillclimb/init --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case is a small repo, one git commit with a GitHub remote, a GitLab one, or none. Most don't use Doc Detective yet, and three already do. The session gets `/doc-detective:doc-detective-init`, plus `--ci` or a sentence asking for CI in the cases that want a workflow. Nobody answers its questions, so elsewhere it should offer CI, not write it. Afterwards the grade diffs the workspace against the original. It then runs the session's config from the repo root with `doc-detective@5.6.3`, and passes the config's `input` as `--input`. That's how the GitHub Action and `/doc-detective-test` run it. A `claude-haiku-4-5` judge reads the final report against the case's rubric, at about $0.02 a case.
+
+The cases use the test servers on ports 8092 and 8093, which the runner starts from `DD_REPO` when they aren't up. Ports 8095 to 8098 must stay free.
+
+[init/cases.md](init/cases.md) describes every case, the `expected.json` format, and the metrics. Check that every reference outcome scores `complete`, and that the planted wrong outcomes don't, with `node evals/init/check-references.mjs`. It runs no sessions, but it calls the judge for two reports per case, about $1 for all of them.
+
+## Run the install-github-action eval
+
+```bash
+node evals/install-github-action/run-eval.mjs --flow .claude/hillclimb/install-github-action --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case is a small docs repo, one git commit with a GitHub `origin` remote, unless the case is about another host. The session gets `/doc-detective:doc-detective-install-github-action <args>`, usually with `--ci` or a request to write without asking, since no one is there to confirm. Doc Detective never runs. The grade reads the workspace and the final report:
+
+- `workflow`: one new file under `.github/workflows/` that parses and is a valid workflow. The `doc-detective/github-action` step sets only inputs that `action.yml` has, none deprecated, with values of the right shape. [action-inputs.json](install-github-action/action-inputs.json) holds that list, from the commit its `source` names. When `actionlint` is on `PATH`, or `ACTIONLINT` names it, it must pass too.
+- `fit`: the workflow does what the case asks for this repo. It checks the triggers, path filters, and the config and input the action resolves. It also checks permissions, inputs, setup steps, secrets, artifacts, the runner, a pinned action ref, and Node.js 24.
+- `no_harm`: no existing file changed, and nothing added outside `.github/workflows/`.
+- `report`: the report has the case's `must_mention` strings, and a `claude-haiku-4-5` judge agrees it meets the case's rubric. The rubric asks what was added, what triggers it, and what the user must still do.
+
+[install-github-action/cases.md](install-github-action/cases.md) describes the 32 cases and the `expected.json` format. `node evals/install-github-action/check-references.mjs` runs no sessions. It checks that each reference outcome scores `complete`, and that each planted wrong outcome fails the metric it names. It calls the judge about 60 times, under $1.
+
+## Run the validate eval
+
+```bash
+DD_NODE_DIR=<node dir> \
+  node evals/validate/run-eval.mjs --flow .claude/hillclimb/validate --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case is a Doc Detective spec or config: a file in a small docs repo, one git commit, or JSON pasted into the prompt. The session gets `/doc-detective:doc-detective-validate <args>`: a path, `--config <path>`, or a question in words. As in the test and init evals, a bare `doc-detective` in the session runs `doc-detective@5.6.3`. The skill's `npx doc-detective@5` resolves to the same version. The grade reads the final report and the workspace, and the judge reads only what the rules can't settle:
+
+- `verdict`: the report's last `Validation PASSED` or `Validation FAILED` is the right one. With neither, a `claude-haiku-4-5` judge reads the verdict from the report.
+- `fields`: the report names the field of every error the validator gives, by `tests[0].steps[1]`, `tests.0.steps.1`, or `/tests/0/steps/1`. When it gives other field paths, the judge decides whether it reports any of them as an error.
+- `no_false_pass`: on an invalid input, the report never says it passes.
+- `no_harm`: no file changed or added, except a file the prompt asked to fix.
+
+Each case's verdict and error lines come from `doc-detective@5.6.3 validate` itself. [validate/cases.md](validate/cases.md) describes the 34 cases and the `expected.json` format. `node evals/validate/check-references.mjs` runs no sessions. It reruns the validator on every case and fails one whose `expected.json` no longer matches. It also checks that each reference report scores `complete`, and that planted wrong reports fail the metric they target. It calls the judge about 30 times, under $1.
+
+
+## Run the specialist eval
+
+```bash
+node evals/specialist/run-eval.mjs --flow .claude/hillclimb/specialist --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case is one question. The session runs as the agent itself, with `--agent doc-detective:doc-detective-specialist`, in an empty folder, so routing doesn't enter. [The routing eval](routing/) measures whether a question reaches the agent; this one measures whether the answer is right. The questions are hard on purpose. Each turns on an edge case that a plausible answer from general knowledge gets wrong. It might be a precedence rule, a v5 change, a skip path, or a feature that doesn't exist. Every fact comes from Doc Detective's docs and schemas on `main`, and each case names its sources.
+
+The grade reads the final answer:
+
+- `snippets_valid`: every Doc Detective snippet validates against `doc-detective-common@5.6.3` in the v3 shape. That covers fenced JSON and YAML specs, tests, steps, contexts, and configs, and fenced doc blocks with inline statements. A step only valid in the v2 shape, with an `action` field, fails. The grade installs that package once, outside the repo.
+- `snippets_run`: when the case marks a snippet runnable, it runs with `doc-detective@5.6.3` and must pass. It runs against the test servers on ports 8092 and 8093, or the shell.
+- `correct`: a `claude-haiku-4-5` judge agrees the answer states the case's facts.
+- `no_invention`: no `doc-detective` command in the answer uses a flag 5.6.3 lacks. The judge also agrees the answer makes none of the case's forbidden claims. A flag the question names doesn't count, since an answer may quote it to say it doesn't exist.
+
+The judge runs twice per answer, at about $0.01 a run. The test servers must be up, or `DD_REPO` must name a doc-detective checkout to start them from.
+
+[specialist/cases.md](specialist/cases.md) describes the 60 cases, the `expected.json` format, and the metrics. `node evals/specialist/check-references.mjs` runs no sessions. It checks that each reference answer scores `complete`. It also checks that each wrong answer fails the metric it names, such as a v2-shape step or an invented flag. It calls the judge about 230 times, about $1.50. `NO_JUDGE=1` skips the judged checks for free, which helps while you write cases.
+
+The test, init, install-github-action, validate, and specialist runners use the shared runner code in [lib/runner.mjs](lib/runner.mjs). The routing, spec-generation, and inline runners carry their own copy of the same code.
+
 ## Run a subset
 
 `EVAL_ONLY` takes a comma-separated list of case ids, for a pilot or a trimmed slice:
@@ -61,7 +173,7 @@ There are three slices:
 EVAL_ONLY=init-plain,neg-playwright node evals/routing/run-eval.mjs --flow .claude/hillclimb/routing --variant baseline --model claude-sonnet-5-5
 ```
 
-Spec-generation case ids carry their slice: `web-01-home-page-tour`, `manni-cite-ci`, `dd-docs-runshell`.
+Spec-generation case ids carry their slice: `web-01-home-page-tour`, `manni-cite-ci`, `dd-docs-runshell`. Inline case ids carry the format and kind: `md-spec-sample`, `rst-gen-cli`.
 
 ## Stop a run
 
@@ -69,7 +181,7 @@ A rerun resumes, skipping each case and rep already in `results.jsonl`. When you
 
 ## Approve changed eval code
 
-The runner refuses to start when the runner, `evals/lib/claude-run.mjs`, the files in `_state.json`'s `harness_paths`, or `package-lock.json` changed since someone last approved them. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
+The runner refuses to start when its code changed since someone last approved it. That code is the eval's runner, the shared `evals/lib/runner.mjs` (test, init, install-github-action, validate, and specialist), and `evals/lib/claude-run.mjs`. It also covers the files in `_state.json`'s `harness_paths`, and `package-lock.json`. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
 
 ## Read the results
 

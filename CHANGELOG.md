@@ -1,3 +1,39 @@
+## [3.4.1](https://github.com/doc-detective/agent-tools/compare/v3.4.0...v3.4.1) (2026-11-26)
+
+### Bug Fixes
+
+* **evals:** add eight train cases to the init eval ([#129](https://github.com/doc-detective/agent-tools/issues/129)) ([93d7db3](https://github.com/doc-detective/agent-tools/commit/93d7db32e275272404f76faccc191d814b6f2953))
+
+## [3.4.0](https://github.com/doc-detective/agent-tools/compare/v3.3.0...v3.4.0) (2026-11-26)
+
+### Features
+
+* **skills:** init reports a stale doc, installs CI when asked, names each test ([#124](https://github.com/doc-detective/agent-tools/issues/124)) ([a8c9b4a](https://github.com/doc-detective/agent-tools/commit/a8c9b4adccb606208b2cf594a01e70ed711ac427))
+
+### Bug Fixes
+
+* **evals:** add eight train cases to the GitHub Action eval ([#127](https://github.com/doc-detective/agent-tools/issues/127)) ([b32493b](https://github.com/doc-detective/agent-tools/commit/b32493b9e7e2e0da8ef6ed1047c3578381a56522))
+* **evals:** run the pinned Doc Detective for a session's bare doc-detective ([#131](https://github.com/doc-detective/agent-tools/issues/131)) ([d85e3e0](https://github.com/doc-detective/agent-tools/commit/d85e3e0b58143891a8366965d450b01a6783f498))
+
+## [3.3.0](https://github.com/doc-detective/agent-tools/compare/v3.2.0...v3.3.0) (2026-11-25)
+
+### Features
+
+* **skills:** install-github-action says to push, and starts a local server ([#123](https://github.com/doc-detective/agent-tools/issues/123)) ([36a2755](https://github.com/doc-detective/agent-tools/commit/36a2755ef6b007defde031eeae40704d51d8692c))
+
+## [3.2.0](https://github.com/doc-detective/agent-tools/compare/v3.1.0...v3.2.0) (2026-11-25)
+
+### Features
+
+* **skills:** test sorts each failure by kind before fixing ([#116](https://github.com/doc-detective/agent-tools/issues/116)) ([3085086](https://github.com/doc-detective/agent-tools/commit/3085086fe5923f9c31935ee324b3f505e7807315))
+
+## [3.1.0](https://github.com/doc-detective/agent-tools/compare/v3.0.0...v3.1.0) (2026-11-24)
+
+### Features
+
+* **skills:** inline checks with a dry run and tests stated results ([#112](https://github.com/doc-detective/agent-tools/issues/112)) ([0b0d831](https://github.com/doc-detective/agent-tools/commit/0b0d8316bb7ba9899405778402ea29f08d26a4b0))
+* **skills:** inline places requests after the text naming their URL ([#113](https://github.com/doc-detective/agent-tools/issues/113)) ([0fffed6](https://github.com/doc-detective/agent-tools/commit/0fffed6089a99fa8bf5daabfde04868ba0933514))
+
 ## [3.0.0](https://github.com/doc-detective/agent-tools/compare/v2.1.4...v3.0.0) (2026-11-23)
 
 ### ⚠ BREAKING CHANGES

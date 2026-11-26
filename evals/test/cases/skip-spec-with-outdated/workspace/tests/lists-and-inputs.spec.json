@@ -1,0 +1,46 @@
+{
+  "description": "Tests the procedures in docs/lists-and-inputs.md.",
+  "tests": [
+    {
+      "testId": "ordered-list",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/index.html"
+        },
+        {
+          "find": "Ordered List"
+        },
+        {
+          "find": "Step one"
+        }
+      ]
+    },
+    {
+      "testId": "other-platform-input",
+      "runOn": [
+        {
+          "platforms": [
+            "__OTHER_PLATFORM__"
+          ],
+          "browsers": [
+            {
+              "name": "chrome",
+              "headless": true
+            }
+          ]
+        }
+      ],
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/index.html"
+        },
+        {
+          "type": {
+            "keys": "Hello from __OTHER_PLATFORM_NAME__",
+            "selector": "#text-input"
+          }
+        }
+      ]
+    }
+  ]
+}

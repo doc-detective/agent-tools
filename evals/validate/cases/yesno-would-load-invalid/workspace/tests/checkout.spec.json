@@ -1,0 +1,16 @@
+{
+  "tests": [
+    {
+      "testId": "checkout",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/checkout"
+        },
+        {
+          "find": "Pay now",
+          "click": "Pay now"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+{
+  "input": [
+    "docs"
+  ],
+  "debug": true,
+  "beforeAny": "tests/setup.spec.json"
+}

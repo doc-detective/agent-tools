@@ -1,0 +1,7 @@
+{
+  "input": [
+    "docs"
+  ],
+  "logLevel": "warn",
+  "output": "test-results/results.json"
+}

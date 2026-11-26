@@ -1,0 +1,28 @@
+{
+  "steps": [
+    {
+      "stepType": [
+        "runShell",
+        "runCode"
+      ],
+      "match": "pip install example-cli",
+      "note": "Install the CLI."
+    },
+    {
+      "stepType": [
+        "runShell",
+        "runCode"
+      ],
+      "match": "example-cli --version",
+      "note": "Check the version."
+    },
+    {
+      "stepType": [
+        "runShell",
+        "runCode"
+      ],
+      "match": "example-cli login",
+      "note": "Sign in."
+    }
+  ]
+}

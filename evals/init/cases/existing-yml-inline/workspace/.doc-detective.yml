@@ -1,0 +1,6 @@
+# Doc Detective runs the inline tests in docs/ and the specs in tests/.
+input:
+  - docs
+  - tests
+outputDir: .doc-detective/results
+detectSteps: false

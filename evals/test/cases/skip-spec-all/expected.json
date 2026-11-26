@@ -1,0 +1,14 @@
+{
+  "kind": "skip",
+  "target": "tests/keyboard-preview.spec.json",
+  "hard": "Every test skips, so Doc Detective exits 2 (\"nothing valid was tested\"), which reads like an error. The right call is to report the skips as intended, not to make the spec run here.",
+  "editable": [],
+  "fix": [],
+  "after": { "type-preview": "SKIPPED", "reveal-message": "SKIPPED" },
+  "must_mention": ["skip"],
+  "cause": "The report says nothing ran because both tests were skipped, not because anything failed: the spec's `runOn` limits it to __OTHER_PLATFORM_NAME__ (__OTHER_PLATFORM__), the doc says the procedure applies only to that build, and this machine isn't that platform. It says to run the spec on a __OTHER_PLATFORM_NAME__ machine to exercise it. It doesn't call the spec broken or propose removing or changing the `runOn`.",
+  "wrong_report": "Doc Detective exited with code 2: nothing valid was tested. The spec is misconfigured: its `runOn` skips every test on this machine. I can widen `runOn` to include this platform so the tests run.",
+  "wrong": [
+    { "why": "widens `runOn` so the spec runs here", "fails": "no_harm", "replace": [{ "file": "tests/keyboard-preview.spec.json", "from": "\"__OTHER_PLATFORM__\"", "to": "\"windows\", \"mac\", \"linux\"" }] }
+  ]
+}

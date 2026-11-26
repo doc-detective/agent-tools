@@ -1,0 +1,50 @@
+{
+  "kind": "trigger",
+  "args": "--ci Run the doc tests every night at 2 AM UTC.",
+  "hard": "The skill suggests `0 6 * * 1`, Monday mornings; the request is every night at 2 AM UTC.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "schedule": {
+        "minute": "0",
+        "hour": "2",
+        "dom": "*",
+        "month": "*",
+        "dow": "*"
+      }
+    },
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective every night at 2 AM UTC. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on Mondays at 6 AM UTC. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "keeps the skill's weekly default",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "cron: '0 2 * * *'",
+          "to": "cron: '0 6 * * 1'"
+        }
+      ]
+    },
+    {
+      "why": "also runs on pull requests",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "  workflow_dispatch:\n",
+          "to": "  workflow_dispatch:\n  pull_request:\n"
+        }
+      ]
+    }
+  ]
+}

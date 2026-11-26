@@ -1,0 +1,20 @@
+{
+  "steps": [
+    {
+      "stepType": [
+        "httpRequest",
+        "runShell"
+      ],
+      "match": "api.example.com/v1/keys",
+      "note": "POST to create the key."
+    },
+    {
+      "stepType": [
+        "httpRequest",
+        "runShell"
+      ],
+      "match": "api.example.com/v1/reports",
+      "note": "List reports with the new key."
+    }
+  ]
+}

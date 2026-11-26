@@ -1,0 +1,36 @@
+{
+  "category": "concept",
+  "question": "We're moving our docs from Doc Detective 4 to 5. Our contributor guide teaches authors how to write tests, so it's full of ```` ```markdown ```` fenced blocks with sample `<!-- test ... -->` and `<!-- step ... -->` comments, plus ```` ```json ```` blocks of sample config. In v4 we had to wrap every one of those samples in `<!-- test ignore start -->` and `<!-- test ignore end -->`, or the sample tests ran and the JSON blocks turned into unsafe `runCode` steps. Do we still need all those wrappers in v5?",
+  "facts": [
+    {
+      "text": "No for the samples: Doc Detective 5 parses each file and doesn't read statements inside code blocks or inline code, so a sample test in a fenced block isn't run and doesn't need an ignore block.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/docs/tests/inline.mdx", "docs/fern/pages/docs/input-formats/overview.mdx", "adrs/01158-move-the-built-ins-to-selectors.md"]
+    },
+    {
+      "text": "A ```` ```json ```` block no longer becomes a `runCode` step; only blocks tagged `bash`, `python`, `py`, `javascript`, or `js` do.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/docs/input-formats/overview.mdx", "docs/fern/pages/docs/input-formats/markdown.mdx"]
+    }
+  ],
+  "must_not": [
+    "Statements inside fenced code blocks still run in Doc Detective 5, so the ignore wrappers are still needed.",
+    "A ```` ```json ```` code block becomes an unsafe `runCode` step.",
+    "Each sample fence needs `testIgnore` in its info string to keep its statements from running."
+  ],
+  "wrong": [
+    {
+      "why": "says samples still run",
+      "fails": "no_invention",
+      "answer": "Yes. Doc Detective 5 still reads `<!-- step -->` comments wherever they appear, code blocks included, so keep each sample inside `<!-- test ignore start -->` and `<!-- test ignore end -->`. The JSON blocks are now plain text, so they no longer become `runCode` steps."
+    },
+    {
+      "why": "a flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "answer": "You can drop the wrappers. Doc Detective 5 doesn't read statements inside code blocks, so sample tests don't run, and JSON blocks no longer become `runCode` steps. To be safe during the move, run `npx doc-detective --input docs --ignore-code-blocks` once and compare the results."
+    },
+    {
+      "why": "misses the JSON change",
+      "fails": "correct",
+      "answer": "You can drop the wrappers around the Markdown samples. Doc Detective 5 parses each file and doesn't read statements inside code blocks, so a sample test stays a sample."
+    }
+  ]
+}

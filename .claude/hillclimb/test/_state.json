@@ -1,0 +1,121 @@
+{
+  "flow": "test",
+  "model": "claude-sonnet-5-5",
+  "metrics": [
+    {
+      "id": "complete",
+      "label": "Complete",
+      "kind": "binary"
+    },
+    {
+      "id": "ran",
+      "label": "Ran DD",
+      "kind": "binary"
+    },
+    {
+      "id": "cause",
+      "label": "Right cause",
+      "kind": "binary"
+    },
+    {
+      "id": "right_file",
+      "label": "Right file",
+      "kind": "binary"
+    },
+    {
+      "id": "fixed",
+      "label": "Fixed",
+      "kind": "binary"
+    },
+    {
+      "id": "no_harm",
+      "label": "No harm",
+      "kind": "binary"
+    }
+  ],
+  "perf_fields": [
+    "latency_s",
+    "tool_calls",
+    "turns",
+    "dd_runs",
+    "files_changed",
+    "usage"
+  ],
+  "harness_paths": [
+    "evals/lib/claude-run.mjs",
+    "evals/test/grade.mjs",
+    "evals/test/doc-detective.config.json",
+    "evals/spec-generation/grade.mjs"
+  ],
+  "prices": {
+    "claude-sonnet-5-5": {
+      "in": 2,
+      "out": 10
+    },
+    "claude-haiku-4-5": {
+      "in": 1,
+      "out": 5
+    }
+  },
+  "train_ids": [
+    "outdated-md",
+    "testbug-spec-selector",
+    "testbug-http-response",
+    "invalid-spec-find-text",
+    "env-md-server-down",
+    "skip-spec-all",
+    "pass-md-form",
+    "pass-http",
+    "two-md-typo-and-outdated"
+  ],
+  "test_ids": [
+    "outdated-spec",
+    "testbug-md-typo",
+    "invalid-md-status-code",
+    "env-http-api-down",
+    "skip-md-other-platform",
+    "two-spec-selector-and-env",
+    "outdated-md-modal-close",
+    "outdated-yaml-table-caption",
+    "testbug-http-status-code",
+    "testbug-md-type-keys",
+    "invalid-spec-request-data",
+    "invalid-md-click-button",
+    "env-md-admin-down",
+    "env-spec-checklink-down",
+    "skip-spec-with-outdated",
+    "skip-yaml-http-helper",
+    "pass-spec-snapshot-warning",
+    "pass-md-delayed-flow",
+    "two-spec-case-and-outdated",
+    "two-md-invalid-then-env"
+  ],
+  "reps": 3,
+  "goal": {
+    "target": "complete",
+    "direction": "higher",
+    "hold": [
+      "no_harm",
+      "right_file"
+    ]
+  },
+  "scope": {
+    "will_change": [
+      "SKILL.md body of doc-detective-test",
+      "its references/",
+      "src/skills/_shared/"
+    ],
+    "off_limits": [
+      "frontmatter descriptions",
+      "scripts",
+      "hooks",
+      "build.js",
+      "evals/"
+    ]
+  },
+  "split_note": "15 cases, 6 held out (40%): one of each kind except pass, which is cheap and stays in train; inline and spec targets mixed on both sides. After round 1, 14 new cases were added, all held out, two of each kind, written without seeing any scores: 29 cases, 20 held out.",
+  "harness_sha": "0852ea7e44c03a291ef3e58b687fb4f93bb4ea9dd14390a825960e047877fb42",
+  "current_round": 1,
+  "kept_variant": "v2",
+  "kept_note": "Round 1 (v2, with review fixes) is kept: held-out complete 0.517 to 0.967 (+0.450 +-0.203) on 20 cases. Train reached 1.000, so the climb stopped with nothing left to diagnose."
+}

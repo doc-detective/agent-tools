@@ -2,7 +2,7 @@
 name: doc-detective-init
 description: 'Set up Doc Detective in a repository that does not use it yet. Finds the docs, writes a config, generates and runs the first tests, fixes failures, and offers CI. Use for adopting, initializing, or getting started with Doc Detective in a project. If the project already has Doc Detective, use doc-detective-test to run tests or doc-detective-generate to add a spec. Not for developing Doc Detective or this plugin.'
 metadata:
-  version: '3.0.0'
+  version: '3.4.1'
   organization: Doc Detective
   date: November 2026
   abstract: Initialize Doc Detective in a repository with documentation detection, config generation, test creation, and iterative fix loop. Supports interactive and CI modes.
@@ -100,6 +100,8 @@ The exit code says what to do next:
 
 Skip fixes with `--skip-fix-loop`. Otherwise, give each failing test up to three fix attempts.
 
+Fix only a test that doesn't match its doc. When the test follows the doc and the product no longer does, the doc is out of date. A button was renamed, or a page moved. Don't change the test or the doc to make it pass. Report the test as failing, say the doc is out of date, and propose the doc edit, or ask before you make it. A test changed to pass hides the stale doc it exists to catch.
+
 In the results file, find the steps in `specs[].tests[].contexts[].steps[]` whose `result` is `FAIL`, and read each one's `resultDescription`. Propose a fix and rate your confidence from 0 to 100: 80 or more means you found the exact alternative, and below 50 is a best guess. Apply it when the rating meets `--fix-threshold`. Otherwise show it, and ask the user whether to apply it, skip it, or edit it by hand.
 
 Run the test again after each fix. Move on when it passes.
@@ -108,11 +110,15 @@ Run the test again after each fix. Move on when it passes.
 
 Offer the GitHub Action only in an initialized GitHub repository: `.git` exists as a file or directory, and a remote URL references `github.com`. In any other repository, or with `--dry-run`, say nothing about it.
 
-Without `--ci`, ask the user whether they want the Doc Detective GitHub Action, and skip it if they decline. With `--ci`, install it without asking. Run `/doc-detective-install-github-action` with matching flags:
+Without `--ci`, ask the user whether they want the Doc Detective GitHub Action, and skip it if they decline. With `--ci`, or when the user's request already asks for the action or for CI, install it without asking. Run `/doc-detective-install-github-action` with matching flags:
 
-- Pass `--ci` when init runs with `--ci`.
+- Pass `--ci` when init runs with `--ci`, or when the request asked for the action. The user has already said yes.
 - Don't pass `--exit-on-fail`. It's deprecated, because failing the check is now the default.
 - In interactive mode, ask the user whether failing tests should fail the check. Pass `--no-exit-on-fail` only when they say no.
+
+## Report
+
+Name each test that ran by its ID, with its result. For each failure, say whether the test or the doc needs the change. When Doc Detective was already set up, say so, and say which existing tests ran.
 
 ## Done when
 

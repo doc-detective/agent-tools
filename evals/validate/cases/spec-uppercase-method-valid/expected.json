@@ -1,0 +1,8 @@
+{
+  "kind": "spec",
+  "input": "tests/users.spec.json",
+  "args": "tests/users.spec.json",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "`\"method\": \"GET\"` looks like it breaks the lowercase enum, but the validator accepts it."
+}

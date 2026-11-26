@@ -1,0 +1,28 @@
+{
+  "description": "Tests the procedure in docs/live-preview.md.",
+  "tests": [
+    {
+      "testId": "live-preview",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/type-echo.html"
+        },
+        {
+          "find": "Type here:"
+        },
+        {
+          "type": {
+            "keys": "Hello, Doc Detective",
+            "selector": "#type-input"
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo",
+            "elementText": "Hello, Doc Detective"
+          }
+        }
+      ]
+    }
+  ]
+}

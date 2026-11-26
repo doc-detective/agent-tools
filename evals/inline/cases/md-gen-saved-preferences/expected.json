@@ -1,0 +1,12 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "cookies/set/theme/dark", "note": "Before you begin: the prerequisite must run first, in the same browser session, or /cookies is empty and the find FAILs."},
+    {"stepType": "find", "match": "Cookie set", "note": "Before you begin: the page confirms with Cookie set."},
+    {"stepType": "goTo", "match": "8092/cookies", "note": "Step 1: open the preferences page (after the prerequisite)."},
+    {"stepType": "find", "match": "theme=dark", "note": "Step 2: theme=dark is listed."}
+  ],
+  "must_not": [
+    "Putting the prerequisite in a separate test from the /cookies check (each test gets a fresh browser session, so the cookie would not carry over).",
+    "A step to clear cookies."
+  ]
+}

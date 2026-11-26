@@ -1,0 +1,68 @@
+{
+  "kind": "existing",
+  "hard": "Doc Detective is already set up: a config and inline tests in the docs. Init should notice, run the existing tests, and change nothing: no second config, no new specs.",
+  "ci": "any",
+  "existing": true,
+  "procedures": [
+    {
+      "doc": "docs/write-a-note.md",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    },
+    {
+      "doc": "docs/preview-a-message.md",
+      "match": [
+        "click-shorthand",
+        "reveal by text"
+      ]
+    }
+  ],
+  "must_mention": [
+    "already"
+  ],
+  "report": "The report says Doc Detective is already set up in this repository (it has `.doc-detective.json` and inline tests in docs/), so it didn't initialize it again or change any files. It ran the existing tests: both (check-a-note and add-a-sample-message) passed.",
+  "wrong_report": "The docs already have a few inline tests, but no specs, so I initialized Doc Detective.\n\nI set up Doc Detective in this repository.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/write-a-note-spec.json` tests docs/write-a-note.md; `doc-detective-tests/preview-a-message-spec.json` tests docs/preview-a-message.md.\n\nResults: 2 passed, 0 failed.",
+  "wrong": [
+    {
+      "why": "initializes again beside the existing tests",
+      "fails": "no_harm",
+      "write": {
+        "doc-detective-tests/write-a-note-spec.json": {
+          "description": "Tests docs/write-a-note.md.",
+          "tests": [
+            {
+              "testId": "check-a-note",
+              "steps": [
+                {
+                  "goTo": "http://localhost:8092/type-echo.html"
+                },
+                {
+                  "type": {
+                    "keys": "draft note",
+                    "selector": "#type-input"
+                  }
+                },
+                {
+                  "find": {
+                    "selector": "#echo",
+                    "elementText": "draft note"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        ".doc-detective.json": {
+          "input": [
+            "docs",
+            "doc-detective-tests"
+          ],
+          "outputDir": ".doc-detective/results",
+          "detectSteps": false
+        }
+      }
+    }
+  ]
+}

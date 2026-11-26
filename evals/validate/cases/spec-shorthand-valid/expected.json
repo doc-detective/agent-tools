@@ -1,0 +1,8 @@
+{
+  "kind": "spec",
+  "input": "tests/quick.spec.json",
+  "args": "tests/quick.spec.json",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "Shorthand forms that look too short to be right: a `$BASE_URL` goTo, a bare number for `wait`, `true` for `screenshot`. All valid."
+}

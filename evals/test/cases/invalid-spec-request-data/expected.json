@@ -1,0 +1,17 @@
+{
+  "kind": "invalid",
+  "target": "tests/place-order.spec.json",
+  "hard": "The bad key is nested inside `httpRequest.request`, where `data` looks right to anyone who has used an HTTP client. Nothing runs, so there's no response to read. Deleting the key gets past validation, but then the order is never sent and the response check fails.",
+  "editable": ["tests/place-order.spec.json"],
+  "fix": ["place-order"],
+  "after": { "place-order": "PASS" },
+  "must_contain": ["\"request\"", "\"response\": {\"body\": {\"item\": \"notebook\""],
+  "must_not_contain": ["\"data\""],
+  "must_mention": ["data"],
+  "cause": "The report says the spec was invalid, so nothing ran: inside the `httpRequest` step's `request` object, the order was under a `data` key, which `request` doesn't accept. It says it renamed `data` to `body`, kept the response check, and that the test passes on the rerun. A report that treats this as a failed request, a server problem, or a doc problem fails.",
+  "wrong_report": "Results: 0 passed, 1 failed\n  ✗ place-order: Request to http://localhost:8093/api/orders failed.\n\nThe Orders endpoint didn't accept the order, so the API may be down. Start it and run the tests again.",
+  "wrong": [
+    { "why": "deletes the bad key, so no order is sent", "fails": "fixed", "replace": [{ "file": "tests/place-order.spec.json", "from": "              },\n              \"data\": {\n                \"item\": \"notebook\",\n                \"quantity\": 2\n              }\n", "to": "              }\n" }] },
+    { "why": "drops the request body and the response check", "fails": "fixed", "write": { "tests/place-order.spec.json": { "tests": [{ "testId": "place-order", "steps": [{ "httpRequest": { "url": "http://localhost:8093/api/orders", "method": "post", "statusCodes": [200] } }] }] } } }
+  ]
+}

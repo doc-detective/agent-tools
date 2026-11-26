@@ -1,0 +1,10 @@
+{
+  "kind": "config",
+  "input": ".doc-detective.json",
+  "args": "--config .doc-detective.json",
+  "verdict": "invalid",
+  "errors": [
+    "logLevel: must be one of silent, error, warning, info, debug (got \"warn\")."
+  ],
+  "hard": "`logLevel: \"warn\"` looks right but the enum is `warning`."
+}

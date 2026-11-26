@@ -1,0 +1,146 @@
+{
+  "flow": "specialist",
+  "model": "claude-sonnet-5-5",
+  "metrics": [
+    {
+      "id": "complete",
+      "label": "Complete",
+      "kind": "binary"
+    },
+    {
+      "id": "snippets_valid",
+      "label": "Snippets valid",
+      "kind": "binary"
+    },
+    {
+      "id": "snippets_run",
+      "label": "Snippets run",
+      "kind": "binary"
+    },
+    {
+      "id": "correct",
+      "label": "Correct",
+      "kind": "binary"
+    },
+    {
+      "id": "no_invention",
+      "label": "No invention",
+      "kind": "binary"
+    }
+  ],
+  "perf_fields": [
+    "latency_s",
+    "tool_calls",
+    "turns",
+    "refs_read",
+    "web_fetches",
+    "usage"
+  ],
+  "harness_paths": [
+    "evals/lib/claude-run.mjs",
+    "evals/lib/judge.mjs",
+    "evals/specialist/grade.mjs",
+    "evals/specialist/cli-flags.json",
+    "evals/test/grade.mjs",
+    "evals/spec-generation/grade.mjs"
+  ],
+  "harness_note": "harness_paths lists every module the grader loads, including transitive ones: grade.mjs imports rerun and DD_VERSION from evals/test/grade.mjs, which imports toolEnv from evals/spec-generation/grade.mjs, and run-eval.mjs imports ensureServers from the latter. An edit there can change grading, so it invalidates the sha.",
+  "prices": {
+    "claude-sonnet-5-5": {
+      "in": 2,
+      "out": 10
+    },
+    "claude-haiku-4-5": {
+      "in": 1,
+      "out": 5
+    }
+  },
+  "train_ids": [
+    "act-background-ready",
+    "act-browser-fallback",
+    "act-click-right-string",
+    "act-http-extra-fields",
+    "act-retries-vs-retry",
+    "act-timeout-zero",
+    "cli-config-relative-paths",
+    "cli-deprecated-pipeline",
+    "cli-false-retries-flag",
+    "cli-plain-config-output",
+    "cli-test-filter",
+    "in-asciidoc-indented-statement",
+    "in-asciidoc-testignore",
+    "in-detectsteps-test-override",
+    "in-mdx-html-comment",
+    "in-v5-code-sample-statements",
+    "rec-hosted-autorecord",
+    "rec-no-audio-annotate",
+    "rec-refresh-vs-verify",
+    "rec-stale-no-baselines",
+    "res-all-skipped-exit-2",
+    "res-compare-playwright-webkit",
+    "res-routing-continue-verdict",
+    "res-v5-message-grep",
+    "shot-annotate-in-recording",
+    "shot-hosted-autoscreenshot",
+    "shot-no-highlight-type",
+    "shot-overwrite-false-skipped",
+    "shot-redact-all-inline",
+    "shot-size-mismatch"
+  ],
+  "test_ids": [
+    "act-assert-steps-ref",
+    "act-elementtext-substring",
+    "act-hover-moveto",
+    "act-if-env-var",
+    "act-runshell-windows-shell",
+    "act-statuscodes-defaults",
+    "cli-empty-reporters",
+    "cli-env-config-merge",
+    "cli-install-edge",
+    "cli-invalid-spec-skip",
+    "cli-output-folder",
+    "cli-validate-precommit",
+    "in-dita-data-element",
+    "in-ignore-reset-by-test-end",
+    "in-include-outside-cwd",
+    "in-rst-no-badge",
+    "in-rst-statement-as-prose",
+    "rec-explicit-replaces-auto",
+    "rec-firefox-browser-engine",
+    "rec-no-auto-record-flag",
+    "rec-video-size-outputs",
+    "res-docs-as-tests-detected",
+    "res-drift-whole-text",
+    "res-false-ignore-unknown-keys",
+    "res-false-output-folder",
+    "shot-annotation-target-timeout",
+    "shot-autoscreenshot-optout",
+    "shot-crop-fixed-header",
+    "shot-defaults-cascade",
+    "shot-live-blur-redaction"
+  ],
+  "reps": 3,
+  "goal": {
+    "target": "complete",
+    "direction": "higher",
+    "hold": [
+      "no_invention",
+      "snippets_valid"
+    ]
+  },
+  "scope": {
+    "will_change": [
+      "src/agents/doc-detective-specialist.md body",
+      "the skill references it reads"
+    ],
+    "off_limits": [
+      "frontmatter descriptions",
+      "scripts",
+      "hooks",
+      "build.js",
+      "evals/"
+    ]
+  },
+  "split_note": "60 cases written before any session ran, 30 held out (50%). Six areas, each split about evenly: screenshots and annotations (11), actions and contexts (12), the CLI and config (11), inline and detected tests (10), recording (8), and results, v5 changes, and comparisons (8). Cases that test the same fact sit on one side: both hosted-run overrides (ADR 01196) and both retries cases are in train; both --no-auto-* overrides and both --output folder cases are held out. Every category and every area has train and held-out cases, and runnable cases are on both sides.",
+  "harness_sha": "185e6138246a2da743da26cc516b87dc1725ab9e312004dab8ab01de3ca352a4"
+}

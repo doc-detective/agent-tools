@@ -1,0 +1,53 @@
+{
+  "description": "Tests docs/users-api.md.",
+  "tests": [
+    {
+      "testId": "list-users",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users?page=2",
+            "method": "get",
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "page": "2"
+              }
+            }
+          }
+        }
+      ]
+    },
+    {
+      "testId": "create-user",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8093/api/users",
+            "method": "post",
+            "request": {
+              "headers": {
+                "Content-Type": "application/json"
+              },
+              "body": {
+                "name": "morpheus",
+                "job": "leader"
+              }
+            },
+            "statusCodes": [
+              200
+            ],
+            "response": {
+              "body": {
+                "name": "morpheus",
+                "job": "leader"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

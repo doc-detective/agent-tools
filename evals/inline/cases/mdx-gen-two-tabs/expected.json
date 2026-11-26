@@ -1,0 +1,15 @@
+{
+  "steps": [
+    {"stepType": "goTo", "match": "multi-tab.html", "note": "Open the list: go to the list page."},
+    {"stepType": "find", "match": "MULTI-TAB HOME", "note": "Open the list: the heading reads MULTI-TAB HOME."},
+    {"stepType": "click", "match": "Open child in new tab", "note": "Open a record: click Open child in new tab."},
+    {"stepType": "find", "match": "PAGE linked", "fields": {"surface.tab": "^(-1|1|.*(linked|[Cc]hild).*)$"}, "note": "Open a record: the new tab shows PAGE linked."},
+    {"stepType": "type", "match": "call back Friday", "fields": {"surface.tab": "^(-1|1|.*(linked|[Cc]hild).*)$"}, "note": "Add a note: enter call back Friday in the Echo input field, in the new tab."},
+    {"stepType": "find", "match": "call back Friday", "fields": {"surface.tab": "^(-1|1|.*(linked|[Cc]hild).*)$"}, "note": "Add a note: the note appears next to the field."},
+    {"stepType": "find", "match": "MULTI-TAB HOME", "fields": {"surface.tab": "^0$"}, "note": "Return to the list: the first tab still shows MULTI-TAB HOME."}
+  ],
+  "must_not": [
+    "Opening the record with a plain goTo to multi-tab-child.html instead of clicking the link.",
+    "Testing the Note's reload behavior; the page doesn't save notes, so there's nothing to check."
+  ]
+}

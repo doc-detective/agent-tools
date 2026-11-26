@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "testId": "archive-project",
+      "steps": [
+        {
+          "goTo": "https://app.example.com/projects"
+        },
+        {
+          "click": "Roadmap"
+        },
+        {
+          "click": "Archive"
+        },
+        {
+          "find": "Archived"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "spec",
+  "input": "package.json",
+  "args": "package.json",
+  "verdict": "invalid",
+  "errors": [],
+  "hard": "Valid JSON that isn't a spec. The validator finds no tests in it; it must not pass."
+}

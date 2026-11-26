@@ -1,0 +1,51 @@
+{
+  "category": "error",
+  "question": "After upgrading to Doc Detective 5, our nightly job runs nothing at all. It prints:\n\n```\nError: Invalid test specifications, so nothing ran:\ndocs\\checkout.spec.json\ntests[0].steps[0]: unknown key `asertions`. Did you mean `assertions`?\nFix them, or skip them with `--no-exit-on-fail` or `exitOnFail: false`.\n```\n\nWe have about 40 spec files, and v4 just skipped the bad ones. Can I add `--no-exit-on-fail` so the other specs run tonight? And how do I find every broken spec at once instead of fixing them one run at a time?",
+  "facts": [
+    {
+      "text": "In v5 one invalid spec, including one with an unknown key such as `asertions`, stops the whole run before any test runs, and it exits 2.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/reference/cli.mdx", "adrs/01199-reject-invalid-specs-from-runtests-by-default.md"]
+    },
+    {
+      "text": "`--no-exit-on-fail` (or `exitOnFail: false`) skips invalid specs with a warning and runs the valid ones, but it also makes failed, empty, and all-skipped runs exit 0, so while it's set the job no longer fails when a test fails.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "`npx doc-detective validate docs` (the `validate` command) checks every spec file and inline test without running them, names each file and problem, and exits 1 if any is invalid.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    },
+    {
+      "text": "The fix for this spec is renaming the step's `asertions` key to `assertions`.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`--no-exit-on-fail` only skips invalid specs, and the job still fails when a test fails.",
+    "Doc Detective 5 skips invalid specs by default and runs the rest.",
+    "Unknown keys in a step are ignored."
+  ],
+  "wrong": [
+    {
+      "why": "says the flag only skips invalid specs",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "It also turns failed, empty, and all-skipped runs into exit code `0`. While it's set, a failing test no longer fails the job, so treat it as a one-night workaround.", "to": "It only affects invalid specs. A failing test still exits `1`, so the job keeps its gate." }
+      ]
+    },
+    {
+      "why": "a skip-invalid flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective --input docs --no-exit-on-fail", "to": "npx doc-detective --input docs --skip-invalid" }
+      ]
+    },
+    {
+      "why": "no way to list every invalid spec",
+      "fails": "correct",
+      "replace": [
+        { "from": "To find every invalid spec at once, check them without running anything:\n\n```bash\nnpx doc-detective validate docs\n```\n\n`validate` checks every spec file and inline test, prints each invalid file with its problems, and exits `1` if any test is invalid. Add `--json` for one document with a `files` list.\n\n", "to": "" },
+        { "from": "Then run `validate` again, and drop `--no-exit-on-fail` once it exits `0`.", "to": "Then fix the next spec the run names, and drop `--no-exit-on-fail` once the run stops reporting invalid specs." }
+      ]
+    }
+  ]
+}

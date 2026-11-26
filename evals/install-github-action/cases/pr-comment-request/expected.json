@@ -1,0 +1,45 @@
+{
+  "kind": "feature",
+  "args": "--ci Also post the test results as a comment on each pull request.",
+  "hard": "The action has no PR-comment input. An invented one (`comment_on_pr`) only draws a warning from GitHub, so the comment silently never appears.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": ".doc-detective.json",
+    "input": [
+      "docs"
+    ],
+    "permissions": [
+      {
+        "contents": "read"
+      },
+      {
+        "contents": "read",
+        "pull-requests": "write"
+      }
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says the Doc Detective action has no input that posts results as a pull request comment. If it added its own comment step (for example `actions/github-script` reading the action's `results` output), it says that step, not the action, posts the comment and that it needs `pull-requests: write`. It never says the action itself posts the comment. It says what it added under `.github/workflows/` and when it runs. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs on pull requests and posts the results as a PR comment through the action's `comment_on_pr` input. Commit and push it, and check that GitHub Actions is enabled.",
+  "wrong": [
+    {
+      "why": "invents a `comment_on_pr` input",
+      "fails": "workflow",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "config: .doc-detective.json",
+          "to": "config: .doc-detective.json\n          comment_on_pr: true"
+        }
+      ]
+    }
+  ]
+}

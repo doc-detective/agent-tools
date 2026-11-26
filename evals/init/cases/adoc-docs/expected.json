@@ -1,0 +1,28 @@
+{
+  "kind": "layout",
+  "hard": "The docs are AsciiDoc in an Antora layout (`docs/modules/ROOT/pages`), with no Markdown at all besides the README.",
+  "ci": "offer",
+  "procedures": [
+    {
+      "doc": "docs/modules/ROOT/pages/write-a-note.adoc",
+      "match": [
+        "type-echo",
+        "draft note"
+      ]
+    }
+  ],
+  "must_mention": [
+    "write-a-note"
+  ],
+  "report": "The report says it created a Doc Detective config and generated a test for the AsciiDoc page write-a-note.adoc, and that it passed.",
+  "wrong_report": "I found write-a-note.adoc, but Doc Detective only tests Markdown, so I skipped it. There are no tests yet, and I didn't create a config.",
+  "wrong": [
+    {
+      "why": "tests nothing",
+      "fails": "config",
+      "delete": [
+        "doc-detective-tests/write-a-note-spec.json"
+      ]
+    }
+  ]
+}

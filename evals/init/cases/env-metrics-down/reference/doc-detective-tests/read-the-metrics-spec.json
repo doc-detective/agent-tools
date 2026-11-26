@@ -1,0 +1,19 @@
+{
+  "description": "Tests docs/read-the-metrics.md.",
+  "tests": [
+    {
+      "testId": "read-the-metrics",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8098/metrics",
+            "method": "get",
+            "statusCodes": [
+              200
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

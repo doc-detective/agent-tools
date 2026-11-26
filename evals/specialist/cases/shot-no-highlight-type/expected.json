@@ -1,0 +1,47 @@
+{
+  "category": "false_premise",
+  "question": "How do I put a yellow, semi-transparent `highlight` annotation over the Standard Button on http://localhost:8092/ in a screenshot, with an arrow pointing at it from the same annotation object? Something like `{\"highlight\": \"Standard Button\", \"arrow\": true, \"style\": {\"fill\": \"#FDE04780\"}}`.",
+  "facts": [
+    {
+      "text": "There's no `highlight` annotation type; the types are `outline`, `arrow`, `badge`, `callout`, `blur`, and `text`.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json"]
+    },
+    {
+      "text": "Each annotation names exactly one type, so the box and the arrow go in two separate annotation objects in the same `annotations` list.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json"]
+    },
+    {
+      "text": "`style` has no fill property; mark the button with an `outline` styled through fields such as `color`, `strokeWidth`, and `opacity`.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`highlight` is an annotation type.",
+    "One annotation object can name two types, such as an outline and an `arrow`.",
+    "An annotation's `style` accepts a `fill` property."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that outlines the Standard Button and points an arrow at it in one screenshot",
+      "setup": [{ "goTo": "http://localhost:8092/" }],
+      "require": [{ "screenshot": ["outline", "arrow", "Standard Button"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "outlines an element the page lacks",
+      "fails": "snippets_run",
+      "replace": [{ "from": "{ \"outline\": \"Standard Button\",", "to": "{ \"outline\": \"Standard Button Missing\"," }]
+    },
+    {
+      "why": "the invented highlight type",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{ \"outline\": \"Standard Button\",", "to": "{ \"highlight\": \"Standard Button\"," }]
+    },
+    {
+      "why": "accepts the premise",
+      "fails": "no_invention",
+      "answer": "Use the `highlight` type with a `fill` in `style`, and set `arrow` in the same object:\n\n```json\n{ \"screenshot\": { \"path\": \"standard-button.png\", \"annotations\": [{ \"highlight\": \"Standard Button\", \"arrow\": \"Standard Button\", \"style\": { \"fill\": \"#FDE04780\" } }] } }\n```"
+    }
+  ]
+}

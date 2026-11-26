@@ -1,0 +1,36 @@
+{
+  "kind": "config",
+  "args": "--ci",
+  "hard": "No config and no docs folder: the tested Markdown sits at the repository root, so the input is the root, not an invented docs/.",
+  "write": true,
+  "fit": {
+    "triggers": {
+      "pull_request": {}
+    },
+    "allow_triggers": [
+      "push"
+    ],
+    "config": null,
+    "input": [
+      "."
+    ]
+  },
+  "must_mention": [
+    ".github/workflows/"
+  ],
+  "report": "It says it added a workflow under `.github/workflows/` that runs Doc Detective on pull requests over the repository root, where the Markdown with tests is. It doesn't claim the repository has a docs folder or a Doc Detective config. It tells the user the workflow takes effect once the file is committed and pushed to GitHub, and to confirm that GitHub Actions is enabled for the repository.",
+  "wrong_report": "Added `.github/workflows/doc-detective.yml`. It runs Doc Detective on every push to any branch. You're all set: there's nothing else to do.",
+  "wrong": [
+    {
+      "why": "tests docs/, which doesn't exist",
+      "fails": "fit",
+      "replace": [
+        {
+          "file": ".github/workflows/doc-detective.yml",
+          "from": "      - uses: doc-detective/github-action@v2\n",
+          "to": "      - uses: doc-detective/github-action@v2\n        with:\n          input: docs\n"
+        }
+      ]
+    }
+  ]
+}

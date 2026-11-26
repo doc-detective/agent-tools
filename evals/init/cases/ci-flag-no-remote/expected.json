@@ -1,0 +1,37 @@
+{
+  "kind": "ci",
+  "hard": "`--ci` tells the skill to install the GitHub Action without asking, but the repository has no remote, so it isn't a GitHub repository and the action is out of scope. Writing the workflow follows the flag; explaining why it was skipped still mentions the action.",
+  "args": "--ci",
+  "remote": "none",
+  "ci": "silent",
+  "procedures": [
+    {
+      "doc": "docs/run-a-delayed-action.md",
+      "match": [
+        "wait-delay",
+        "action complete"
+      ]
+    }
+  ],
+  "must_mention": [
+    "run-a-delayed-action"
+  ],
+  "report": "The report says it created a Doc Detective config and a test for docs/run-a-delayed-action.md, which passed. It doesn't mention the GitHub Action, and it doesn't ask the user a question.",
+  "wrong_report": "I set up Doc Detective in this repository, with `--ci` defaults and no prompts.\n\n- Config: `.doc-detective.json`, which runs the specs in `doc-detective-tests/` and writes results to `.doc-detective/results/`.\n- Specs: `doc-detective-tests/run-a-delayed-action-spec.json` tests docs/run-a-delayed-action.md.\n\nResults: 1 passed, 0 failed (trigger-the-action).\n\n`--ci` installs the Doc Detective GitHub Action, but this repository has no GitHub remote, so I skipped it. Add a GitHub remote and run `/doc-detective-install-github-action` to set it up.",
+  "wrong": [
+    {
+      "why": "installs the GitHub Action because of `--ci`",
+      "fails": "ci",
+      "write": {
+        ".github/workflows/doc-detective.yml": "name: Doc Detective\n\non:\n  pull_request:\n\npermissions:\n  contents: read\n\njobs:\n  doc-detective:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 24\n      - uses: doc-detective/github-action@v2\n        with:\n          config: .doc-detective.json\n"
+      }
+    },
+    {
+      "why": "writes no spec, so the config finds no tests",
+      "fails": "config",
+      "delete": [
+        "doc-detective-tests/run-a-delayed-action-spec.json"
+      ]
+    }
+  ]
+}

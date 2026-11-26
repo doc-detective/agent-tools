@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/home.spec.yaml",
+  "args": "tests/home.spec.yaml",
+  "verdict": "invalid",
+  "errors": [
+    "It isn't valid JSON or YAML."
+  ],
+  "hard": "A YAML spec whose last step is indented wrong. No field to name."
+}

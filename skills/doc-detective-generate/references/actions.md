@@ -27,6 +27,8 @@ With options:
 ```
 
 **Options:**
+- `origin`: Protocol and domain joined to a `url` that starts with `/`, such as `"https://my-app.com"`. Overrides `origin` in the config for this step.
+- `params`: Object of query parameters appended to the resolved URL, merged over config `originParams`. Step keys win, and a key already in `url` is replaced. Values take `$VAR` substitution.
 - `waitUntil`: Object, not a string such as `"networkidle"`. All fields are optional. The network and DOM checks run on every `goTo`, even without `waitUntil`, using the defaults below.
   - `networkIdleTime`: Milliseconds with no new network requests (default `500`, `0` for no wait)
   - `domIdleTime`: Milliseconds with no DOM changes (default `1000`, `0` for no wait)
@@ -945,10 +947,10 @@ Doc Detective catches a reused `name` before the run starts when a recording by 
 
 #### Auto-record every context
 
-Set `autoRecord: true` at the config, spec, or test level, or pass `--auto-record` on the CLI. Doc Detective then records a full video of every browser-based test context, alongside any explicit `record` steps. Pass `--no-auto-record` to override a config file that enables it.
+Automatic recording is on by default. Doc Detective records a full video of every context that drives a browser, native app, or device, from before its first step to after its last. Turn it off with `autoRecord: false` at the config, spec, or test level, or `--no-auto-record`, which sets only the config level.
 
 - **Precedence:** test > spec > config.
-- **Engine:** always `ffmpeg`. The recording wraps the whole context.
+- **Engine:** chosen per context. Headless Chrome records with the `browser` engine; headed browsers and native apps record with `ffmpeg`. A headless Chrome context with its own `record` step isn't recorded automatically. See the run-time behavior reference (`doc-detective-test/references/behavior.md`, "Automatic recording") for every case.
 - **Path:** `<output>/.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/recordings/<contextId>.mp4`. The same context maps to the same path in every run, for run-over-run comparison.
 - **Stopping:** An untargeted `stopRecord` never stops the automatic recording. Doc Detective finalizes it at the end of the context.
 

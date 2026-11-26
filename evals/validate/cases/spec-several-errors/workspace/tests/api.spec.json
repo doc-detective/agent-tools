@@ -1,0 +1,31 @@
+{
+  "tests": [
+    {
+      "testId": "orders-api",
+      "steps": [
+        {
+          "httpRequest": {
+            "url": "http://localhost:8092/api/orders",
+            "method": "FETCH"
+          }
+        },
+        {
+          "find": {
+            "selector": "#total",
+            "timeout": "soon"
+          }
+        },
+        {
+          "goTo": "http://localhost:8092",
+          "waitFor": "load"
+        },
+        {
+          "runShell": {
+            "command": "echo done",
+            "exitCodes": "0"
+          }
+        }
+      ]
+    }
+  ]
+}

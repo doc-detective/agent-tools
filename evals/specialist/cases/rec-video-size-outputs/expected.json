@@ -1,0 +1,59 @@
+{
+  "category": "syntax",
+  "question": "My spec runs in the default context (headless Chrome, default 1200x800 viewport). It records a short flow on http://localhost:8092/ (it finds \"Standard Button\") with a `record` step. After `stopRecord`, I want a later step to fail unless the saved MP4 is exactly 1200x800 pixels. How do I get the video's dimensions and check them?",
+  "facts": [
+    {
+      "text": "`stopRecord` exposes the saved video's metadata in its outputs, including `$$recordingPath`, `$$width`, and `$$height` (also `$$format`, `$$duration`, `$$fps`), and the step's `variables` object captures them for later steps.",
+      "sources": [
+        "docs/fern/pages/docs/actions/stopRecord.mdx",
+        "src/common/src/schemas/src_schemas/stopRecord_v3.schema.json",
+        "src/common/src/schemas/src_schemas/step_v3.schema.json"
+      ]
+    },
+    {
+      "text": "A headless Chrome (`browser` engine) recording matches the viewport's width but is usually a little shorter than the viewport, because Chrome's tab-sharing bar shortens the page while it records, so an exact 800-pixel height check fails; check the width and a height no taller than the viewport.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "adrs/01197-size-a-browser-recording-by-its-steady-frames.md"
+      ]
+    },
+    {
+      "text": "When the captured frames have more than one size, Doc Detective sizes the video to the frame size that covers the most of the recording's time, not the first frame's size.",
+      "sources": [
+        "adrs/01197-size-a-browser-recording-by-its-steady-frames.md"
+      ]
+    }
+  ],
+  "must_not": [
+    "A headless Chrome recording is always exactly the viewport's size, 1200x800.",
+    "The `record` step has an option, such as `width`, `height`, `size`, or `resolution`, that sets the video's dimensions."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that records the page and reads the video's width and height from stopRecord into a later step",
+      "setup": [{ "goTo": "http://localhost:8092/" }],
+      "require": [
+        { "record": [] },
+        { "stopRecord": ["$$width", "$$height"] },
+        { "runShell": [] }
+      ]
+    }
+  },
+  "wrong": [
+    {
+      "why": "asserts the exact viewport height",
+      "fails": "snippets_run",
+      "replace": [{ "from": "if (w !== 1200 || h > 800) process.exit(1)", "to": "if (w !== 1200 || h !== 800) process.exit(1)" }]
+    },
+    {
+      "why": "a variables block on the wrong step",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"stopRecord\": true,\n          \"variables\": {", "to": "\"stopRecord\": {\n            \"name\": \"flow\",\n            \"variables\": {" }, { "from": "            \"VIDEO_HEIGHT\": \"$$height\"\n          }\n        },", "to": "            \"VIDEO_HEIGHT\": \"$$height\"\n          }\n        }},"}]
+    },
+    {
+      "why": "claims the video is the exact viewport size",
+      "fails": "no_invention",
+      "answer": "Headless Chrome records exactly the viewport, so the video is always 1200x800. Add `\"verify\": { \"resolution\": { \"width\": 1200, \"height\": 800 } }` to the record step, or set `width` and `height` on the record step to force the size, and the stopRecord step fails if the size is off."
+    }
+  ]
+}

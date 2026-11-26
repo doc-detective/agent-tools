@@ -1,0 +1,16 @@
+{
+  "detectSteps": false,
+  "runOn": [
+    {
+      "browsers": [
+        {
+          "name": "chrome",
+          "headless": true
+        }
+      ]
+    }
+  ],
+  "telemetry": {
+    "send": false
+  }
+}

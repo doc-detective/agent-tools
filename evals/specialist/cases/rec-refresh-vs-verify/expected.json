@@ -1,0 +1,52 @@
+{
+  "category": "compare",
+  "question": "For our committed product demo video I want two things: the MP4 replaced only when the UI actually changed, not on every run, and CI to go red if a capture comes out all black. My plan is `\"overwrite\": \"true\"` plus `\"checkpoints\": false` on the record step so runs stay fast, and I'll count on checkpoints elsewhere to flag a black video. Which record options actually do what I want?",
+  "facts": [
+    {
+      "text": "`overwrite: \"true\"` re-records and replaces the file every run; `overwrite: \"aboveVariation\"` replaces it only when the span meaningfully changed (checkpoint drift beyond `maxVariation`, an added, removed, or edited step, or a missing file).",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/test-docs/video-visual-regression.mdx",
+        "src/common/src/schemas/src_schemas/record_v3.schema.json"
+      ]
+    },
+    {
+      "text": "`aboveVariation` requires checkpoints, turns them on, and overrides an explicit `checkpoints: false`.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "src/common/src/schemas/src_schemas/record_v3.schema.json"
+      ]
+    },
+    {
+      "text": "Checkpoint drift only returns WARNING, which doesn't fail the build; a violated `verify` guard such as `notBlack` (black frames covering 95% or more of the video) fails the `stopRecord` step.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/test-docs/video-visual-regression.mdx",
+        "src/common/src/schemas/src_schemas/record_v3.schema.json"
+      ]
+    }
+  ],
+  "must_not": [
+    "Checkpoint drift, or a black frame caught by checkpoints, fails the `stopRecord` step or the build.",
+    "`checkpoints: false` turns checkpoints off when `overwrite` is `\"aboveVariation\"`.",
+    "`overwrite: \"true\"` replaces the file only when the recording changed."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "an overwrite value the schema lacks",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"overwrite\": \"aboveVariation\",\n", "to": "\"overwrite\": \"onChange\",\n" }]
+    },
+    {
+      "why": "says checkpoint drift fails the build",
+      "fails": "no_invention",
+      "answer": "Keep `overwrite: \"true\"`, which only rewrites the file when the new capture differs. Turn `checkpoints` on: when a frame drifts past `maxVariation`, such as a black frame, the `stopRecord` step fails and CI goes red. `checkpoints: false` with `aboveVariation` keeps checkpoints off for speed."
+    },
+    {
+      "why": "misses that aboveVariation overrides checkpoints false",
+      "fails": "correct",
+      "replace": [{ "from": "- `aboveVariation` needs checkpoints to judge change, so it turns them on, and it overrides `checkpoints: false`. Leave `checkpoints` out, or pass an object to tune `maxVariation` or `directory`.\n", "to": "" }]
+    }
+  ]
+}

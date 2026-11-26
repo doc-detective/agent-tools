@@ -1,0 +1,41 @@
+{
+  "category": "false_premise",
+  "question": "When our tests run on Doc Detective Online, we don't get the per-step automatic screenshots we get locally, even though our repo's `.doc-detective.json` sets `\"autoScreenshot\": true`. I tried adding `\"autoScreenshot\": true` to each `goTo` step, and now the spec fails validation. How do I get automatic screenshots in hosted runs?",
+  "facts": [
+    {
+      "text": "Hosted runs set `autoScreenshot` (and `autoRecord`) to `false` at the config level, overriding the repository's config, so the config file's `true` has no effect there.",
+      "sources": ["adrs/01196-hosted-runs-turn-automatic-capture-off.md"]
+    },
+    {
+      "text": "A spec or test that sets `autoScreenshot: true` still captures in a hosted run, because a test's setting overrides a spec's, which overrides the config's.",
+      "sources": ["docs/fern/pages/docs/test-docs/automatic-screenshots.mdx", "adrs/01196-hosted-runs-turn-automatic-capture-off.md", "src/common/src/schemas/src_schemas/spec_v3.schema.json", "src/common/src/schemas/src_schemas/test_v3.schema.json"]
+    },
+    {
+      "text": "`autoScreenshot` can't be set on a step; on a step it's an unknown key, so the spec fails validation.",
+      "sources": ["docs/fern/pages/docs/test-docs/automatic-screenshots.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`autoScreenshot` can be set on an individual step.",
+    "Setting `autoScreenshot: true` in the repository's config file turns automatic screenshots on in hosted runs.",
+    "Hosted runs can't take automatic screenshots at all."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "autoScreenshot on a step",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{ \"goTo\": \"https://example.com/login\" }", "to": "{ \"goTo\": \"https://example.com/login\", \"autoScreenshot\": true }" }]
+    },
+    {
+      "why": "points back at the config file",
+      "fails": "no_invention",
+      "answer": "Hosted runs read `autoScreenshot` from your repository config like local runs do, so check that `.doc-detective.json` is at the repository root and sets `\"autoScreenshot\": true`. Then keep `\"autoScreenshot\": true` on the steps you want captured, and pass `--auto-screenshot` in the hosted run's command."
+    },
+    {
+      "why": "no fix for the hosted override",
+      "fails": "correct",
+      "answer": "Remove `autoScreenshot` from the steps; it's only valid on the config, a spec, or a test. Then rerun."
+    }
+  ]
+}

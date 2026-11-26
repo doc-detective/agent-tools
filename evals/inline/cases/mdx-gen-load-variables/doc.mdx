@@ -1,0 +1,52 @@
+---
+title: loadVariables
+description: Load environment variables from a .env file.
+---
+
+
+The `loadVariables` action loads environment variables from a specified `.env` file. This action is useful for accessing sensitive information, such as API keys or other credentials, without hardcoding them into your tests. Variables loaded this way are available for use in subsequent steps within the same test. The step replaces a variable that's already set, because a step sets variables on purpose.
+
+> You can also load globally applicable variables using the `loadVariables` property in the configuration file. This makes them available across all tests. The config-level file only fills variables that aren't already set. A variable set in your shell wins, as it does over a project `.env`. See [Configuration precedence](/reference/reference/cli#configuration-precedence).
+>
+> For comprehensive options, see the [`loadVariables`](/reference/schemas/loadvariables) reference.
+
+Logs and reports show every value a `.env` file loads as `***NAME***`, even if no step uses it. To show a value that isn't secret, list its name in `publicVariables`. See [Keep secrets out of logs, reports, and captures](/docs/ci/secrets).
+
+## Example
+
+Assuming a file named `secrets.env` exists in the same directory as the test file or at the specified path:
+
+```env title="secrets.env"
+API_KEY=your_secret_api_key
+DATA_URL=https://api.example.com/data
+```
+
+You can load these variables using the `loadVariables` action. The `httpRequest` step then uses `$DATA_URL` as the URL and `$API_KEY` in the `Authorization` header:
+
+```json
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "description": "Load environment variables from secrets.env.",
+          "loadVariables": "./secrets.env"
+        },
+        {
+          "description": "Use the loaded URL and API key in an HTTP request.",
+          "httpRequest": {
+            "url": "$DATA_URL",
+            "method": "GET",
+            "request": {
+              "headers": {
+                "Authorization": "Bearer $API_KEY"
+              }
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
+```
+

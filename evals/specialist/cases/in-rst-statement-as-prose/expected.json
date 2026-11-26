@@ -1,0 +1,54 @@
+{
+  "category": "inline",
+  "question": "My Sphinx page's Doc Detective test fails with `Returned 404. Expected one of [200,301,302,307,308]` on a `checkLink` to `http://localhost:8092/\"}`. I never wrote a `checkLink`, and my own `goTo` and `find` steps don't appear in the results at all. Here's the source:\n\n```rst\n.. test {\"testId\": \"standard-button\"}\n\nOpen the `demo page <http://localhost:8092/>`_.\n.. step {\"goTo\": \"http://localhost:8092/\"}\n\nClick **Standard Button**.\n\n.. step {\"find\": {\"selector\": \"button\", \"elementText\": \"Standard Button\",\n\"click\": true}}\n\n.. test end\n```\n\nWhat's going on?",
+  "facts": [
+    {
+      "text": "A reST statement needs a blank line before and after it; the `.. step` line directly under the paragraph is part of that paragraph, not a comment, so Doc Detective doesn't read it as a step.",
+      "sources": ["docs/fern/pages/docs/input-formats/rst.mdx", "docs/fern/pages/docs/tests/inline.mdx"]
+    },
+    {
+      "text": "Because that line is prose, step detection reads its bare URL, trailing `\"}` included, as a link, which produces the failing `checkLink` step.",
+      "sources": ["docs/fern/pages/docs/input-formats/rst.mdx", "docs/fern/pages/docs/input-formats/overview.mdx"]
+    },
+    {
+      "text": "A statement continues onto later lines only when they're indented under it; the unindented `\"click\": true}}` line isn't part of the comment, so the `find` statement's JSON is incomplete and Doc Detective drops it. Indent the continuation line, or put the step on one line.",
+      "sources": ["docs/fern/pages/docs/input-formats/rst.mdx", "docs/fern/pages/docs/tests/inline.mdx"]
+    }
+  ],
+  "must_not": [
+    "A reST statement can't continue onto a second line.",
+    "The 404 means the `goTo` URL is wrong or the server is down.",
+    "reST statements use HTML comments (`<!-- -->`) or `//` comments."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that opens localhost:8092 and clicks \"Standard Button\"",
+      "require": [
+        { "goTo": ["localhost:8092"] },
+        { "find": ["Standard Button", "\"click\":true"], "click": ["Standard Button"] }
+      ]
+    }
+  },
+  "wrong": [
+    {
+      "why": "no blank line before the goTo statement",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "`_.\n\n.. step {\"goTo\"", "to": "`_.\n.. step {\"goTo\"" }]
+    },
+    {
+      "why": "continuation line not indented",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\n   \"click\": true}}", "to": "\n\"click\": true}}" }]
+    },
+    {
+      "why": "a selector the page lacks",
+      "fails": "snippets_run",
+      "replace": [{ "from": "{\"selector\": \"button\",", "to": "{\"selector\": \"#submit\"," }]
+    },
+    {
+      "why": "blames the server",
+      "fails": "no_invention",
+      "answer": "The 404 means the server at `http://localhost:8092/` isn't serving the page. Start your app, then run the test again. The `goTo` and `find` steps run after the link check passes."
+    }
+  ]
+}

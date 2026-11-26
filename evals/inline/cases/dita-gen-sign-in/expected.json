@@ -1,0 +1,24 @@
+{
+  "steps": [
+    {
+      "stepType": "goTo",
+      "match": "https://console.example.com",
+      "note": "Go to the console."
+    },
+    {
+      "stepType": "type",
+      "match": "ada@example.com",
+      "note": "Type the email address."
+    },
+    {
+      "stepType": "click",
+      "match": "Continue",
+      "note": "Click Continue."
+    },
+    {
+      "stepType": "find",
+      "match": "Team overview",
+      "note": "The console shows Team overview."
+    }
+  ]
+}
