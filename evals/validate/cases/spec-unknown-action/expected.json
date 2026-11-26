@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/menu.spec.json",
+  "args": "tests/menu.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[1]: unknown action `hover`."
+  ],
+  "hard": "`hover` reads like an action but isn't one."
+}

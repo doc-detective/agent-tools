@@ -1,0 +1,13 @@
+{
+  "kind": "spec",
+  "input": "tests/profile.spec.json",
+  "args": "Validate tests/profile.spec.json and fix whatever is wrong in it.",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[1]: unknown action `action`."
+  ],
+  "allow_edit": [
+    "tests/profile.spec.json"
+  ],
+  "hard": "The prompt asks for a fix, so editing the spec is allowed. The verdict is on the file as given."
+}

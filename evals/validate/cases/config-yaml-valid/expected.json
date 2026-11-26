@@ -1,0 +1,8 @@
+{
+  "kind": "config",
+  "input": ".doc-detective.yaml",
+  "args": "--config .doc-detective.yaml",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "A valid YAML config."
+}

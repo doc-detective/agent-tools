@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "testId": "menu",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "hover": "#menu"
+        },
+        {
+          "find": "Settings"
+        }
+      ]
+    }
+  ]
+}

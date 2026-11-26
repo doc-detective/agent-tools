@@ -1,0 +1,12 @@
+{
+  "kind": "config",
+  "input": ".doc-detective.json",
+  "args": "--config .doc-detective.json",
+  "verdict": "invalid",
+  "errors": [
+    "fileTypes[0]: must be one of markdown, asciidoc, html, dita, rst (got \"md\").",
+    "concurrentRunners: must be >= 1.",
+    "retries: must be <= 10."
+  ],
+  "hard": "Three errors in one config. `recursive: \"true\"` looks wrong but passes, because the validator coerces it."
+}

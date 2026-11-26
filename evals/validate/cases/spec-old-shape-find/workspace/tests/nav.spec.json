@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "testId": "nav",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "action": "find",
+          "selector": "nav a",
+          "matchText": "Docs"
+        },
+        {
+          "action": "saveScreenshot",
+          "path": "nav.png"
+        }
+      ]
+    }
+  ]
+}

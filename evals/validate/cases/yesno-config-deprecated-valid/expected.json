@@ -1,0 +1,8 @@
+{
+  "kind": "config",
+  "input": ".doc-detective.json",
+  "args": "Would Doc Detective accept our .doc-detective.json as it is? Yes or no.",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "A yes-or-no question about a config that uses deprecated keys. The answer is yes."
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "spec",
+  "input": "tests/fixtures/users.json",
+  "args": "tests/fixtures/users.json",
+  "verdict": "invalid",
+  "errors": [],
+  "hard": "A test-data JSON file under `tests/`. Not a spec, so it must not pass."
+}

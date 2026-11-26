@@ -1,0 +1,11 @@
+{
+  "kind": "spec",
+  "input": "tests/nav.spec.json",
+  "args": "tests/nav.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[1]: unknown action `action`.",
+    "tests[0].steps[2]: unknown action `action`."
+  ],
+  "hard": "The old action shape on two of three steps, one of them an old action name too."
+}

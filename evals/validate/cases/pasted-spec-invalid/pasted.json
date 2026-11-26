@@ -1,0 +1,14 @@
+{
+  "tests": [
+    {
+      "steps": [
+        {
+          "navigate": "http://localhost:8092"
+        },
+        {
+          "find": "Elements"
+        }
+      ]
+    }
+  ]
+}

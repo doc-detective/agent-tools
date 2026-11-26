@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "testId": "search",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "type": {
+            "keys": "widgets",
+            "inputDelay": "fast"
+          }
+        },
+        {
+          "find": "Results"
+        }
+      ]
+    }
+  ]
+}

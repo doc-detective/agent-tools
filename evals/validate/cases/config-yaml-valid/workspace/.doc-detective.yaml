@@ -1,0 +1,5 @@
+input:
+  - docs
+recursive: true
+logLevel: info
+retries: 2

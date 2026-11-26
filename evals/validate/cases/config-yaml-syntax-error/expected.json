@@ -1,0 +1,8 @@
+{
+  "kind": "config",
+  "input": ".doc-detective.yml",
+  "args": "--config .doc-detective.yml",
+  "verdict": "invalid",
+  "errors": [],
+  "hard": "A YAML config with a syntax error. No field to name; the verdict is that it doesn't load."
+}
