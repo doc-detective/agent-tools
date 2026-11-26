@@ -142,5 +142,5 @@
     ]
   },
   "split_note": "60 cases written before any session ran, 30 held out (50%). Six areas, each split about evenly: screenshots and annotations (11), actions and contexts (12), the CLI and config (11), inline and detected tests (10), recording (8), and results, v5 changes, and comparisons (8). Cases that test the same fact sit on one side: both hosted-run overrides (ADR 01196) and both retries cases are in train; both --no-auto-* overrides and both --output folder cases are held out. Every category and every area has train and held-out cases, and runnable cases are on both sides.",
-  "harness_sha": "f238fed2eb914d6c79bdc4c21df8ccd7b3efc507328fdbedefca33bda9d008b0"
+  "harness_sha": "185e6138246a2da743da26cc516b87dc1725ab9e312004dab8ab01de3ca352a4"
 }
