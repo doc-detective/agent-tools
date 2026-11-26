@@ -1,3 +1,9 @@
+## [3.4.1](https://github.com/doc-detective/agent-tools/compare/v3.4.0...v3.4.1) (2026-11-26)
+
+### Bug Fixes
+
+* **evals:** add eight train cases to the init eval ([#129](https://github.com/doc-detective/agent-tools/issues/129)) ([93d7db3](https://github.com/doc-detective/agent-tools/commit/93d7db32e275272404f76faccc191d814b6f2953))
+
 ## [3.4.0](https://github.com/doc-detective/agent-tools/compare/v3.3.0...v3.4.0) (2026-11-26)
 
 ### Features
