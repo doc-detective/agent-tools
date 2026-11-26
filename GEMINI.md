@@ -83,5 +83,6 @@ For complete documentation, read these files:
 - Actions reference: `skills/doc-detective-generate/references/actions.md`
 - Configuration guidance: `skills/doc-detective-init/references/config-guidance.md`
 - Procedure heuristics: `skills/doc-detective-init/references/procedure-heuristics.md`
+- Audit coverage: `skills/doc-detective-init/references/audit-coverage.md`
 - Markup patterns: `skills/doc-detective-inline/references/markup-patterns.md`
 - Doc Detective docs: https://docs.doc-detective.com

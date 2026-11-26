@@ -45,9 +45,9 @@ Leave the repository with working Doc Detective test coverage for its documented
 
 Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`. See [references/doc-patterns.md](references/doc-patterns.md) for detection patterns.
 
-Tests are worth generating only for files that walk a reader through a task. Read each file. Flag it as procedure-heavy when it has three or more numbered steps, or sequential bullet points with action verbs. Such verbs include navigate, click, enter, verify, type, and select. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
+Tests are worth generating only for files that walk a reader through a task. Run `npx doc-detective audit <docs-dir> --json` and flag each file with untested procedure steps as procedure-heavy. For the fields to read and how to tell whether `audit` is available, read [references/audit-coverage.md](references/audit-coverage.md). `audit` finds procedures only in numbered lists, so also flag files with sequential bullet points that use action verbs. Such verbs include navigate, click, enter, verify, type, and select. Without `audit`, read each file and flag it when it has three or more numbered steps or such bullet points. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
 
-Report the file counts, the key directories, and the procedure-heavy files to the user.
+Report the file counts, the key directories, the procedure-heavy files, and the audit's procedure step counts to the user.
 
 ## Configure
 
