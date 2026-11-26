@@ -1,0 +1,47 @@
+{
+  "category": "compare",
+  "question": "A `find` for the \"Standard Button\" on http://localhost:8092/ sometimes fails in CI because the page is slow. I set `\"retries\": 3` in my config so Doc Detective would retry it, but the run still fails on the first miss. What does `retries` actually do, and how do I retry just that step?",
+  "facts": [
+    {
+      "text": "Config `retries` re-runs a whole context on a fresh session, and only when the session is unusable (a dead session, a browser error page, or a page that never left its blank start); it never retries a real failure such as a missing element.",
+      "sources": ["docs/fern/pages/docs/ci/overview.mdx", "docs/fern/pages/reference/schemas/config.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "To retry one step, add an `onFail` handler with a `retry` entry to that step, such as `\"onFail\": [{\"retry\": {\"limit\": 2, \"delay\": 1000}}]`.",
+      "sources": ["docs/fern/pages/docs/tests/overview.mdx", "src/common/src/schemas/src_schemas/routing_v3.schema.json"]
+    },
+    {
+      "text": "`retry.limit` counts re-runs after the first attempt, so `limit: 2` allows up to three runs in total.",
+      "sources": ["docs/fern/pages/docs/tests/overview.mdx", "src/common/src/schemas/src_schemas/routing_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "Config `retries` re-runs a failed step or test whenever it fails.",
+    "`retries` defaults to `0`.",
+    "`retry.limit` is the total number of runs, including the first attempt."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that finds the Standard Button with a step-level retry handler",
+      "setup": [{ "goTo": "http://localhost:8092/" }],
+      "require": [{ "find": ["Standard Button", "\"retry\""] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "uses a config-style retries key on the step",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"onFail\": [\n            { \"retry\": { \"limit\": 2, \"delay\": 1000 } }\n          ]", "to": "\"retries\": 2" }]
+    },
+    {
+      "why": "retries a misspelled element",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"find\": \"Standard Button\",", "to": "\"find\": \"Standard button\"," }]
+    },
+    {
+      "why": "says retries re-runs failed steps",
+      "fails": "no_invention",
+      "answer": "`retries` re-runs any step that fails, up to that many times, so `\"retries\": 3` gives your `find` four attempts. If it still fails on the first miss, your config isn't loading. Check that you pass it with `--config`."
+    }
+  ]
+}

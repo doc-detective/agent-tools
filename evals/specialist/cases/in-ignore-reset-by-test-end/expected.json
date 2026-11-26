@@ -1,0 +1,49 @@
+{
+  "category": "error",
+  "question": "I wrapped the Troubleshooting section of `buttons.md` in `<!-- test ignore start -->` and `<!-- test ignore end -->`, because its links point at internal hosts. The run still fails: a second test I never wrote, `buttons.md~7d7c74ca`, fails with `Returned 404. Expected one of [200,301,302,307,308]` on the support-portal link. The status-page link in the same section is skipped as expected. Here's the page:\n\n```markdown\n<!-- test {\"testId\": \"buttons\"} -->\n\nOpen the [demo page](http://localhost:8092/).\n\n<!-- step {\"goTo\": \"http://localhost:8092/\"} -->\n\nClick the button labeled Standard Button.\n\n<!-- step {\"click\": \"Standard Button\"} -->\n\n<!-- test ignore start -->\n\n## Troubleshooting\n\nIf the button does nothing, check the [internal status page](http://localhost:8092/status/503).\n\n<!-- test end -->\n\nYou can also ask in the [support portal](http://localhost:8092/status/404).\n\n<!-- test ignore end -->\n```\n\nWhy is one link inside the ignore block still checked?",
+  "facts": [
+    {
+      "text": "A `test end` statement also ends the ignore block, so everything after `<!-- test end -->` inside it is read and detected again.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx", "src/common/src/detectTests.ts"]
+    },
+    {
+      "text": "The support-portal link is detected outside any test, so Doc Detective puts its `checkLink` step in a test it creates on its own, with a generated ID; that's the `buttons.md~7d7c74ca` test.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx", "docs/fern/pages/docs/tests/detected.mdx"]
+    },
+    {
+      "text": "The fix is to move `<!-- test end -->` out of the ignore block, such as above `<!-- test ignore start -->`.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx"]
+    }
+  ],
+  "must_not": [
+    "Ignore blocks don't apply to links, so links need `testIgnore` or a custom `markup` definition to be skipped.",
+    "An ignore block can't contain a heading, so the `## Troubleshooting` line ends it.",
+    "The second test comes from the step statements, which run twice."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that opens localhost:8092 and clicks \"Standard Button\"",
+      "require": [
+        { "goTo": ["localhost:8092"] },
+        { "click": ["Standard Button"], "find": ["Standard Button", "\"click\":true"] }
+      ]
+    }
+  },
+  "wrong": [
+    {
+      "why": "clicks a button the page lacks",
+      "fails": "snippets_run",
+      "replace": [{ "from": "<!-- step {\"click\": \"Standard Button\"} -->", "to": "<!-- step {\"click\": \"Fancy Button\"} -->" }]
+    },
+    {
+      "why": "a statement prefix Doc Detective doesn't read",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "<!-- step {\"click\": \"Standard Button\"} -->", "to": "<!-- doc-detective step {\"click\": \"Standard Button\"} -->" }]
+    },
+    {
+      "why": "says ignore blocks skip only statements",
+      "fails": "no_invention",
+      "answer": "Ignore blocks only skip `step` statements, not detected links. To keep a link from being checked, add a custom `markup` definition to your config that excludes `localhost:8092/status` URLs."
+    }
+  ]
+}

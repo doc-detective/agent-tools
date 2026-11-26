@@ -1,0 +1,47 @@
+{
+  "category": "choose",
+  "question": "We record a walkthrough of http://localhost:8092/annotate-blur.html, where `#secret` stands in for an API key, and take `screenshot` steps along the way. Tests run in both Chrome and Firefox. Should I redact `#secret` with a `blur` in each screenshot's `annotations`, or with an `annotate` step? And do the screenshots stay blurred in Firefox?",
+  "facts": [
+    {
+      "text": "Use an `annotate` step to add the `blur`: it stays on the page across steps, so the recording hides `#secret`, while a screenshot's `annotations` blur only that saved image and never appear in the recording.",
+      "sources": ["docs/fern/pages/docs/actions/annotate.mdx", "docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/annotate_v3.schema.json"]
+    },
+    {
+      "text": "A screenshot taken while an `annotate` blur is up is blurred in the saved image in every browser, Firefox included, because Doc Detective blurs those regions in the image itself; if it can't read where the blurs are, the screenshot step fails instead of saving an unblurred image.",
+      "sources": ["docs/fern/pages/docs/actions/annotate.mdx", "adrs/01202-burn-live-annotate-blurs-into-screenshots.md"]
+    },
+    {
+      "text": "Set `transition` `enter` to `none` on the blur, because a blur that fades in leaves the content readable in the recording while it animates.",
+      "sources": ["docs/fern/pages/docs/actions/annotate.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "A `blur` in a screenshot's `annotations` also hides the content in the recording.",
+    "Firefox screenshots taken while an `annotate` blur is up show the content unblurred.",
+    "If Doc Detective can't read where the live blurs are, it saves the screenshot without them."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that blurs `#secret` with an `annotate` step and takes a screenshot",
+      "setup": [{ "goTo": "http://localhost:8092/annotate-blur.html" }],
+      "require": [{ "annotate": ["blur", "#secret"] }, { "screenshot": [] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "blurs an element the page lacks",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"blur\": \"#secret\"", "to": "\"blur\": \"#secret-key\"" }]
+    },
+    {
+      "why": "an enter transition the schema lacks",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"transition\": { \"enter\": \"none\" } }", "to": "\"transition\": { \"enter\": \"instant\" } }" }]
+    },
+    {
+      "why": "picks screenshot annotations and says Firefox leaks",
+      "fails": "no_invention",
+      "answer": "Put the `blur` in each screenshot's `annotations`. Those blurs are drawn on the page for the capture, so the recording picks them up too. Avoid `annotate` blurs if you test in Firefox: Firefox screenshots leave them out, so the saved PNG shows `#secret` unblurred."
+    }
+  ]
+}

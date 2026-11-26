@@ -1,0 +1,41 @@
+{
+  "category": "false_premise",
+  "question": "Our v4 pipeline ran `npx doc-detective --input docs --output ./reports` and then uploaded `reports/testResults-*.json` as an artifact. On Doc Detective 5 that command stops with \"Error: --output is a results file, but './reports' is a folder. Use --output-dir for a folder.\" Which v5 setting turns folder mode back on for `--output`, so the `testResults-*.json` glob keeps working?",
+  "facts": [
+    {
+      "text": "No setting makes `--output` take a folder in v5: `--output` (and the `output` config key) always names the JSON results file, which each run overwrites, and a folder exits 2.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "The simplest fix is a fixed file path, such as `--output reports/results.json`, and uploading that file instead of a glob.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    },
+    {
+      "text": "`--output-dir` (config `outputDir`) sets the folder for the run folder, `.doc-detective/runs/<runId>/testResults.json`, and the other reports; a timestamped `testResults-*.json` file is written only when the `json` reporter runs, which isn't a default reporter.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/docs/ci/reporters-and-artifacts.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "A flag, config key, or option makes `--output` accept a folder again.",
+    "`--output-dir ./reports` on its own writes `reports/testResults-<timestamp>.json`, so the glob keeps working unchanged."
+  ],
+  "wrong": [
+    {
+      "why": "invents a folder-mode flag",
+      "fails": "no_invention",
+      "answer": "Add `--output-mode folder` and v5 treats `--output` as a folder again:\n\n```bash\nnpx doc-detective --input docs --output ./reports --output-mode folder\n```\n"
+    },
+    {
+      "why": "says --output-dir alone keeps the glob",
+      "fails": "no_invention",
+      "answer": "Rename the flag. `--output-dir ./reports` does what `--output ./reports` did in v4: it writes `reports/testResults-<timestamp>.json`, so your glob keeps working.\n\n```bash\nnpx doc-detective --input docs --output-dir ./reports\n```\n"
+    },
+    {
+      "why": "misses that no folder mode exists",
+      "fails": "correct",
+      "replace": [
+        { "from": "No setting turns folder mode back on. In version 5, `--output` and the `output` config key always name the JSON results file. Doc Detective overwrites it on each run, and a folder, or a path ending in a slash, exits `2`.\n\n", "to": "" }
+      ]
+    }
+  ]
+}

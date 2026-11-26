@@ -1,0 +1,40 @@
+{
+  "category": "error",
+  "question": "Our mdBook source keeps a login procedure, with an inline Doc Detective test, in `src/snippets/login.md`. Two chapters, `src/tutorials/a.md` and `src/tutorials/b.md`, pull it in with `{{#include ../snippets/login.md}}`. When I `cd src/tutorials` and run `npx doc-detective --input .`, I get:\n\n```\nWarning: Couldn't include `../snippets/login.md` from /home/me/book/src/tutorials/a.md:3 because /home/me/book/src/snippets/login.md is outside the working directory /home/me/book/src/tutorials. Run Doc Detective from a directory that contains both files.\nWarning: Couldn't include `../snippets/login.md` from /home/me/book/src/tutorials/b.md:3 because /home/me/book/src/snippets/login.md is outside the working directory /home/me/book/src/tutorials. Run Doc Detective from a directory that contains both files.\nWarning: No tests detected.\n```\n\nand the run exits 2. The path is right, the file is there. Why can't it include it, and once it works, how many times will the login test run?",
+  "facts": [
+    {
+      "text": "Every included file must be inside the working directory; `src/snippets/login.md` is above `src/tutorials`, so the include doesn't resolve and the pages have no tests.",
+      "sources": ["docs/fern/pages/docs/input-formats/includes.mdx", "adrs/01212-resolve-includes-during-detection.md"]
+    },
+    {
+      "text": "Run Doc Detective from a folder that contains both files, such as the book's root, and point `--input` at the chapters, as in `npx doc-detective --input src/tutorials`.",
+      "sources": ["docs/fern/pages/docs/input-formats/includes.mdx"]
+    },
+    {
+      "text": "The login test then runs once inside each page that includes it, so twice, and `login.md` doesn't run on its own as a separate spec.",
+      "sources": ["docs/fern/pages/docs/input-formats/includes.mdx", "adrs/01212-resolve-includes-during-detection.md", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "Setting `resolveIncludes: true` in the config fixes the warning.",
+    "Doc Detective doesn't follow mdBook `{{#include}}` directives.",
+    "The login test also runs a third time on its own, from `login.md`."
+  ],
+  "wrong": [
+    {
+      "why": "says resolveIncludes fixes it",
+      "fails": "no_invention",
+      "answer": "Include resolution is off by default. Add `\"resolveIncludes\": true` to `.doc-detective.json`, and Doc Detective follows `../snippets/login.md`. The login test then runs in `a.md` and `b.md`, and once more on its own from `login.md`."
+    },
+    {
+      "why": "a flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "answer": "Doc Detective reads only files inside the working directory, and the snippet is above `src/tutorials`. Allow it with `npx doc-detective --input . --include-root ..`. The login test then runs once in each chapter that includes it, and the snippet doesn't run on its own."
+    },
+    {
+      "why": "misses how often the test runs",
+      "fails": "correct",
+      "answer": "Doc Detective only includes files inside the working directory, and `src/snippets/login.md` is outside `src/tutorials`. Run it from the book's root instead: `npx doc-detective --input src/tutorials`."
+    }
+  ]
+}

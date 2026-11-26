@@ -1,0 +1,54 @@
+{
+  "category": "error",
+  "question": "Our nightly job runs headless Chrome. One test has `{ \"record\": { \"path\": \"media/signup.mp4\", \"checkpoints\": true } }`, and we committed signup.mp4 to the repo. Every night the stopRecord step is a WARNING: `The recording at /home/runner/work/docs/docs/media/signup.mp4 appears stale — 2 checkpoint(s) have no baseline (step added or renamed). Delete it, or set overwrite to \"true\" or \"aboveVariation\", to refresh it.` Nobody has touched the signup page in months, and the job stays green anyway. What's going on, and how do I make the job fail when a recording really is stale?",
+  "facts": [
+    {
+      "text": "Because signup.mp4 already exists and `overwrite` defaults to `\"false\"`, the capture is skipped and only the checkpoints compare; a skipped span never writes or seeds baselines, and with no committed baselines the recording always reports stale.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/actions/stopRecord.mdx",
+        "src/common/src/schemas/src_schemas/record_v3.schema.json"
+      ]
+    },
+    {
+      "text": "Fix it by letting a run record the span so it seeds the baselines (set `overwrite` to `\"aboveVariation\"` or `\"true\"`, or delete the file), and commit the `signup.mp4.checkpoints/` baseline folder alongside the video.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/test-docs/video-visual-regression.mdx",
+        "src/common/src/schemas/src_schemas/record_v3.schema.json"
+      ]
+    },
+    {
+      "text": "Staleness is a WARNING, which never fails the run (exit code 0); to fail CI, act on a `stopRecord` output such as `$$stale` (or `$$changed` with `aboveVariation`) in a later step, for example by capturing it in `variables` and failing a `runShell` step, or on the results file's warning count.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/actions/stopRecord.mdx",
+        "docs/fern/pages/docs/ci/reporters-and-artifacts.mdx",
+        "src/common/src/schemas/src_schemas/config_v3.schema.json"
+      ]
+    }
+  ],
+  "must_not": [
+    "Setting `exitOnFail`, or a flag such as `--fail-on-warning` or `--strict`, makes WARNING results fail the run.",
+    "The warning means the signup page's content changed.",
+    "Doc Detective seeds the missing baselines on its own on a later run while the file exists and `overwrite` stays `\"false\"`."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "an overwrite value the schema lacks",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{ \"record\": { \"path\": \"media/signup.mp4\", \"overwrite\": \"aboveVariation\" } }", "to": "{ \"record\": { \"path\": \"media/signup.mp4\", \"overwrite\": \"onChange\" } }" }]
+    },
+    {
+      "why": "a flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "answer": "The page changed in a way you can't see, such as fonts. Re-record it, and make warnings fail the job:\n\n```bash\nnpx doc-detective --input docs --fail-on-warning\n```\n"
+    },
+    {
+      "why": "misses the missing baselines",
+      "fails": "correct",
+      "answer": "Headless Chrome renders fonts and scrollbars a little differently, so checkpoints drift. Raise `checkpoints.maxVariation` to `0.1`. Staleness is only a WARNING, so to fail the job, capture `$$stale` in `variables` on the `stopRecord` step and exit non-zero from a `runShell` step when it's `true`."
+    }
+  ]
+}

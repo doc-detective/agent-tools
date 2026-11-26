@@ -1,0 +1,51 @@
+{
+  "category": "concept",
+  "question": "Our repo's `.doc-detective.json` has `\"autoRecord\": true`, and local runs give us a video per context. When Doc Detective Online runs the same repo as a hosted run, there are no videos at all. Is recording just not supported in hosted runs? How do I get the videos there?",
+  "facts": [
+    {
+      "text": "Hosted runs set `autoRecord` (and `autoScreenshot`) to `false` at the config level, overriding the value in the repository's config.",
+      "sources": [
+        "adrs/01196-hosted-runs-turn-automatic-capture-off.md",
+        "src/common/src/schemas/src_schemas/config_v3.schema.json"
+      ]
+    },
+    {
+      "text": "Setting `autoRecord: true` in a spec or a test turns automatic recording back on in hosted runs, because the test and spec levels override the config level.",
+      "sources": [
+        "adrs/01196-hosted-runs-turn-automatic-capture-off.md",
+        "docs/fern/pages/docs/test-docs/automatic-recording.mdx",
+        "src/common/src/schemas/src_schemas/spec_v3.schema.json",
+        "src/common/src/schemas/src_schemas/test_v3.schema.json"
+      ]
+    },
+    {
+      "text": "Explicit `record` steps are unaffected and still record in hosted runs.",
+      "sources": [
+        "adrs/01196-hosted-runs-turn-automatic-capture-off.md",
+        "docs/fern/pages/docs/actions/record.mdx"
+      ]
+    }
+  ],
+  "must_not": [
+    "Hosted runs can't record video at all.",
+    "Setting `autoRecord: true` in the repository config, or passing `--auto-record`, turns automatic recording on in hosted runs."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "autoRecord on a step",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{ \"goTo\": \"https://example.com\" },", "to": "{ \"goTo\": \"https://example.com\", \"autoRecord\": true }," }]
+    },
+    {
+      "why": "says hosted runs can't record",
+      "fails": "no_invention",
+      "answer": "Hosted runs execute in a sandbox with no screen-capture support, so Doc Detective Online can't record video. Run the specs locally or in your own CI with `--auto-record` when you need videos."
+    },
+    {
+      "why": "misses the spec and test override",
+      "fails": "correct",
+      "answer": "Doc Detective Online turns automatic recording off for hosted runs. Add `record` and `stopRecord` steps to the tests you want on video."
+    }
+  ]
+}

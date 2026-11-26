@@ -1,0 +1,54 @@
+{
+  "category": "false_premise",
+  "question": "Our GitHub Actions job on ubuntu-latest runs every spec in headless Firefox, and we set `autoRecord: false` in the config to keep runs quick. All our `record` steps come back SKIPPED. The docs say the `browser` engine records without a display, so I added `\"engine\": \"browser\"` to each record step, but they're still SKIPPED. How do I get these Firefox recordings?",
+  "facts": [
+    {
+      "text": "The `browser` engine records only Chrome (a Chrome tab), so a Firefox `record` step with `engine: \"browser\"` is SKIPPED.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/test-docs/record-video-guide.mdx",
+        "src/common/src/schemas/src_schemas/record_v3.schema.json"
+      ]
+    },
+    {
+      "text": "Headless Firefox can't be recorded, so its `record` steps are SKIPPED; to record it, run Firefox headed (`headless: false`) with the `ffmpeg` engine and install Xvfb on the Linux runner, or switch the context to Chrome, which records headless.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/ci/github-action.mdx",
+        "docs/fern/pages/docs/ci/docker-and-headless.mdx",
+        "docs/fern/pages/docs/config/contexts.mdx",
+        "src/common/src/schemas/src_schemas/context_v3.schema.json"
+      ]
+    },
+    {
+      "text": "With `autoRecord` on (the default), Doc Detective runs headless Firefox headed when the host can capture the screen (such as with Xvfb installed), so its `record` steps record; setting `autoRecord: false` keeps Firefox headless.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/test-docs/automatic-recording.mdx",
+        "src/common/src/schemas/src_schemas/config_v3.schema.json"
+      ]
+    }
+  ],
+  "must_not": [
+    "The `browser` engine can record Firefox.",
+    "Headless Firefox can be recorded with no display or Xvfb, through some engine, flag, or config option."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "headless set on the context, not the browser",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"browsers\": [{ \"name\": \"firefox\", \"headless\": false }]", "to": "\"headless\": false,\n      \"browsers\": [\"firefox\"]" }]
+    },
+    {
+      "why": "says the browser engine records Firefox",
+      "fails": "no_invention",
+      "answer": "The `browser` engine records Firefox and Chrome alike, but only when the browser is headed. Keep `\"engine\": \"browser\"` and set `headless: false` on Firefox; the engine captures the Firefox tab without a display, so you don't need Xvfb."
+    },
+    {
+      "why": "misses the autoRecord interaction",
+      "fails": "correct",
+      "replace": [{ "from": "Your `autoRecord: false` matters here. While `autoRecord` is on, which is the default, Doc Detective runs headless Firefox headed when the host can capture the screen, and its `record` steps then record too. With it off, Firefox stays headless.\n\n", "to": "" }]
+    }
+  ]
+}

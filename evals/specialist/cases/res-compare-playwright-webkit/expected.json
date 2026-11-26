@@ -1,0 +1,39 @@
+{
+  "category": "compare",
+  "question": "We're moving our docs smoke tests from Playwright to Doc Detective. In Playwright we ran the `webkit` project on our Windows and Linux CI runners to get Safari-like coverage. In Doc Detective I set `\"runOn\": [{ \"platforms\": [\"windows\", \"linux\"], \"browsers\": \"webkit\" }]`. On the Windows runner the run says \"1 of 1 test passed (1 with warnings)\" and the context's description is \"webkit unavailable; ran on chrome.\" Isn't Doc Detective using Playwright's WebKit build under the hood? How do I get real WebKit coverage, and how do I stop it quietly running Chrome instead?",
+  "facts": [
+    {
+      "text": "Doc Detective doesn't use Playwright or its WebKit build; it drives installed browsers through WebDriver (WebdriverIO and Appium, with drivers such as ChromeDriver, geckodriver, and safaridriver).",
+      "sources": ["package.json", "docs/fern/pages/docs/get-started/installation.mdx", "docs/fern/pages/docs/actions/runBrowserScript.mdx", "docs/fern/pages/docs/config/contexts.mdx"]
+    },
+    {
+      "text": "In Doc Detective `webkit` means Safari, which runs only on macOS (it isn't auto-installed and has no headless mode), so WebKit coverage needs a macOS runner with a `mac` context.",
+      "sources": ["docs/fern/pages/docs/config/contexts.mdx", "docs/fern/pages/docs/tests/overview.mdx", "src/common/src/schemas/src_schemas/context_v3.schema.json"]
+    },
+    {
+      "text": "On Windows the requested browser can't start, and the default `browserFallback: auto` runs the context on another browser (Chrome) and reports WARNING because you named the browser; set `browserFallback` to `explicit` or `off` (in config, with `--browser-fallback`, or on the `runOn` entry) to skip the context instead.",
+      "sources": ["docs/fern/pages/docs/config/contexts.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json", "src/common/src/schemas/src_schemas/context_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "Doc Detective is built on Playwright or bundles Playwright's WebKit build.",
+    "Doc Detective's `webkit` browser runs on Windows or Linux.",
+    "The WARNING means the test failed or tested WebKit with a minor issue."
+  ],
+  "wrong": [
+    {
+      "why": "says Doc Detective runs Playwright's WebKit",
+      "fails": "no_invention",
+      "answer": "Yes. Doc Detective drives browsers through Playwright, so `webkit` is Playwright's WebKit build, the same one you used before. The warning means Playwright's WebKit wasn't downloaded yet. Run `npx playwright install webkit` on the runner, and the context runs WebKit on Windows and Linux."
+    },
+    {
+      "why": "misses the fallback setting",
+      "fails": "correct",
+      "replace": [
+        { "from": "The WARNING comes from browser fallback. Safari can't start on Windows, and the default `browserFallback` is `auto`, so Doc Detective ran the context on Chrome. Because you named the browser yourself, it reports WARNING instead of PASS, so a substituted run never looks clean. To skip the context instead, set `browserFallback` to `explicit` or `off`. Set it in the config, pass `--browser-fallback off`, or put it on the `runOn` entry:", "to": "The WARNING just means the browser changed. Here's a macOS context:" },
+        { "from": ", \"browserFallback\": \"off\" }", "to": " }" },
+        { "from": "With `off`, a `webkit` context that can't start a Safari session reports SKIPPED with the reason, rather than a Chrome run labeled WARNING.", "to": "Keep the Windows context on Chrome, since that's what it runs anyway." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,48 @@
+{
+  "category": "inline",
+  "question": "In my Markdown how-to I want an inline test that opens http://localhost:8092/multiple-matches.html and saves `buttons.png` with every `.multi` button blurred out. I wrote `<!-- step {\"screenshot\": {\"path\": \"buttons.png\", \"annotations\": [{\"blur\": \".multi\", \"all\": true}]}} -->` and the step fails. What's wrong, and what should the inline statements be?",
+  "facts": [
+    {
+      "text": "`all: true` needs an object target, such as `{\"selector\": \".multi\"}`, because a string could be a selector or display text; with the string target the step fails.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json"]
+    },
+    {
+      "text": "Without `all`, a `blur` covers only the first match, so the other buttons stay readable.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "docs/fern/pages/docs/test-docs/annotate-screenshots.mdx"]
+    },
+    {
+      "text": "The inline statements are Markdown comments: a `test` comment opens the test, a `step` comment holds each step (a `goTo` to the page, then the `screenshot`), and `test end` closes it.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx", "docs/fern/pages/docs/input-formats/markdown.mdx"]
+    }
+  ],
+  "must_not": [
+    "`all: true` works with a string target such as `\".multi\"`.",
+    "A `blur` with a plain selector string blurs every matching element."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that opens multiple-matches.html and blurs every `.multi` button with `all`",
+      "require": [
+        { "goTo": ["multiple-matches.html"] },
+        { "screenshot": ["blur", ".multi", "\"all\":true"] }
+      ]
+    }
+  },
+  "wrong": [
+    {
+      "why": "keeps the string target with all",
+      "fails": "snippets_run",
+      "replace": [{ "from": "[{\"blur\": {\"selector\": \".multi\"}, \"all\": true}]", "to": "[{\"blur\": \".multi\", \"all\": true}]" }]
+    },
+    {
+      "why": "a doc-detective prefix the comment syntax lacks",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "<!-- step {\"screenshot\"", "to": "<!-- doc-detective step {\"screenshot\"" }]
+    },
+    {
+      "why": "drops all and claims a selector blurs every match",
+      "fails": "no_invention",
+      "answer": "Remove `all`. A `blur` with a selector string already blurs every element that matches it, so `{\"blur\": \".multi\"}` redacts all three buttons.\n\n```markdown\n<!-- test {\"testId\": \"redacted-buttons\"} -->\n<!-- step {\"goTo\": \"http://localhost:8092/multiple-matches.html\"} -->\n<!-- step {\"screenshot\": {\"path\": \"buttons.png\", \"annotations\": [{\"blur\": \".multi\"}]}} -->\n<!-- test end -->\n```"
+    }
+  ]
+}

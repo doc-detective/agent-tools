@@ -1,0 +1,36 @@
+{
+  "category": "syntax",
+  "question": "We're moving a runbook to AsciiDoc. In CI we'll run Doc Detective with `--allow-unsafe` so the `[source,bash]` listings run as tests. One listing in the middle (`systemctl restart app`) must never run. In Markdown I'd write ```` ```bash testIgnore ````. What's the AsciiDoc equivalent? I tried `[source,bash,role=testIgnore]` and that listing still ran.",
+  "facts": [
+    {
+      "text": "Put `testIgnore` after the language as its own option, `[source,bash,testIgnore]` (or wrap the listing in `// (test ignore start)` and `// (test ignore end)`).",
+      "sources": ["docs/fern/pages/docs/input-formats/asciidoc.mdx", "docs/fern/pages/docs/input-formats/selectors.mdx", "docs/fern/pages/docs/tests/inline.mdx", "src/common/src/fileTypes.ts", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "The other `[source,bash]` listings become `runCode` steps marked unsafe, which run only with `--allow-unsafe` or `allowUnsafeSteps: true`; without it they're skipped.",
+      "sources": ["docs/fern/pages/docs/input-formats/overview.mdx", "docs/fern/pages/docs/input-formats/asciidoc.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "A `role=testIgnore` attribute or a `.testIgnore` role keeps the listing from running.",
+    "AsciiDoc has no way to exclude a single listing, so you have to turn off step detection.",
+    "Unsafe steps run by default."
+  ],
+  "wrong": [
+    {
+      "why": "a role keeps it from running",
+      "fails": "no_invention",
+      "answer": "Use a role instead of a named attribute: `[source.testIgnore,bash]`. Doc Detective reads the `testIgnore` role and skips that listing, while `--allow-unsafe` runs the rest."
+    },
+    {
+      "why": "a flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "answer": "Write the block as `[source,bash,testIgnore]`. The other listings are unsafe `runCode` steps, so run them with `npx doc-detective --allow-unsafe-steps`."
+    },
+    {
+      "why": "misses the unsafe gate",
+      "fails": "correct",
+      "answer": "Write the block as `[source,bash,testIgnore]`, and Doc Detective leaves that listing out."
+    }
+  ]
+}

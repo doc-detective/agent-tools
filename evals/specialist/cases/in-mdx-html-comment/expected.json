@@ -1,0 +1,35 @@
+{
+  "category": "error",
+  "question": "My MDX page's inline test passes, but the results show only 1 step. The `Click **Standard Button**.` line inside my `<Steps>` component never becomes a click. Doc Detective also prints this at the start of the run:\n\n```\n/home/me/site/docs/quickstart.mdx: couldn't parse as MDX (Unexpected character `!` (U+0021) before name, expected a character that can start a name, such as a letter, `$`, or `_` (note: to create a comment in MDX, use `{/* text */}`)). Parsed as Markdown, so content inside JSX components isn't detected.\n```\n\nHere's the page:\n\n```mdx\n{/* test {\"testId\": \"standard-button\"} */}\n\n{/* step {\"goTo\": \"http://localhost:8092/\"} */}\n\n<Steps>\n  <Step>Click **Standard Button**.</Step>\n</Steps>\n\n<!-- test end -->\n```\n\nWhy is the click missing?",
+  "facts": [
+    {
+      "text": "MDX doesn't support HTML comments, so the `<!-- test end -->` line makes the page invalid MDX.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx", "docs/fern/pages/docs/input-formats/markdown.mdx"]
+    },
+    {
+      "text": "Because the page isn't valid MDX, Doc Detective parses it as Markdown, and content inside JSX components such as `<Steps>` isn't detected, so the bold-text click is dropped while the test passes on its `goTo` alone.",
+      "sources": ["docs/fern/pages/docs/input-formats/selectors.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    },
+    {
+      "text": "The fix is to write `test end` as a JSX comment, `{/* test end */}` (or `[comment]: # (test end)`), and to use those forms for every statement in an `.mdx` file.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx", "docs/fern/pages/docs/input-formats/markdown.mdx"]
+    }
+  ],
+  "must_not": [
+    "HTML comments such as `<!-- test end -->` are valid in MDX files.",
+    "Doc Detective never detects steps inside JSX components, so the click needs its own `step` statement inside `<Step>`.",
+    "Step detection is off by default, so bold text needs a custom `markup` definition before it becomes a click."
+  ],
+  "wrong": [
+    {
+      "why": "says detection never reads JSX components",
+      "fails": "no_invention",
+      "answer": "Doc Detective doesn't detect steps inside JSX components such as `<Steps>`, in any MDX file. Add the click yourself inside the component:\n\n```mdx\n{/* test {\"testId\": \"standard-button\"} */}\n\n{/* step {\"goTo\": \"http://localhost:8092/\"} */}\n\n<Steps>\n<Step>\n\nClick **Standard Button**.\n\n{/* step {\"click\": \"Standard Button\"} */}\n\n</Step>\n</Steps>\n\n{/* test end */}\n```\n"
+    },
+    {
+      "why": "gives the fix without the cause",
+      "fails": "correct",
+      "answer": "Change the last line to `{/* test end */}` and run the test again."
+    }
+  ]
+}

@@ -1,0 +1,42 @@
+{
+  "category": "error",
+  "question": "Our `.doc-detective.json` has `\"output\": \"-\"` so the CI job can pipe the results JSON into jq. Locally I ran `npx doc-detective --plain` to get one line per test, and it printed ``Error: set `--output -` or `--plain`, not both.`` and exited 2. I never passed `--output`. What's going on, and how do I get the plain lines locally without breaking CI?",
+  "facts": [
+    {
+      "text": "An `output` of `-` in config means stdout, the same as `--output -`, so the conflict comes from the config key even though the command line has no `--output`.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "adrs/01191-output-modes-compose-or-refuse.md"]
+    },
+    {
+      "text": "Only one output mode can write stdout, so `--plain` can't combine with `--output -`, `--json`, or `--dry-run` (from a flag or from config), and the run exits 2 without running tests.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "adrs/01191-output-modes-compose-or-refuse.md"]
+    },
+    {
+      "text": "Locally, pass a results file with the plain flag, such as `npx doc-detective --plain --output results.json`: the `--output` flag beats the config's `-`, so the lines go to stdout and the results go to the file, and the config stays as CI needs it.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "adrs/01191-output-modes-compose-or-refuse.md"]
+    }
+  ],
+  "must_not": [
+    "`--plain` overrides or wins over an `output` setting in the config.",
+    "`--plain` and `--json` can be combined to print both formats.",
+    "Exit code 2 here means a test failed."
+  ],
+  "wrong": [
+    {
+      "why": "a no-output flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective --plain --output results.json", "to": "npx doc-detective --plain --no-output" }
+      ]
+    },
+    {
+      "why": "says --plain wins over config",
+      "fails": "no_invention",
+      "answer": "That's a bug in how the config loads. `--plain` is meant to override the `output` setting in your config, so retry with `-q` to hide the noise:\n\n```bash\nnpx doc-detective --plain -q\n```\n\nIf it still errors, combine `--plain --json` to get both the lines and the JSON."
+    },
+    {
+      "why": "doesn't explain the config source",
+      "fails": "correct",
+      "answer": "Drop `--plain`. Doc Detective 5 doesn't let `--plain` run with other output options. Run `npx doc-detective` and read the summary instead."
+    }
+  ]
+}

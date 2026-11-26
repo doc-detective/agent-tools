@@ -1,0 +1,48 @@
+{
+  "category": "error",
+  "question": "We just moved our docs CI to Doc Detective 5. The step that worked on v4, `npx doc-detective --input docs --output ./reports`, now stops right away with `Error: --output is a results file, but './reports' is a folder. Use --output-dir for a folder.` and exits 2. A later job step uploads `reports/` and reads the results JSON from it. What should the command be now?",
+  "facts": [
+    {
+      "text": "In v5, `--output` (and the config key `output`) names the JSON results file itself, overwritten on each run. A folder that exists, or a path that ends in a slash, is refused with exit code 2 before any test runs.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/reference/cli.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "Give `--output` a file path inside the folder, such as `--output reports/results.json`, so the results JSON lands in `reports/`.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/reference/cli.mdx"]
+    },
+    {
+      "text": "`--output-dir` is the folder flag: it sets where the run folder (`.doc-detective/runs/<runId>/`) and the html, junit, and markdown reports go, not the path of one results file.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "A path that doesn't exist and has no trailing slash becomes a file, even without an extension, so on a clean checkout where `reports/` is missing, `--output ./reports` writes a file named `reports` instead of failing.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    }
+  ],
+  "must_not": [
+    "`--output` still accepts a folder when the path ends with a slash, such as `--output reports/`.",
+    "With the default reporters, `--output-dir reports` writes the results JSON directly into `reports/`.",
+    "Exit code 2 means some tests failed."
+  ],
+  "wrong": [
+    {
+      "why": "trailing slash makes it a folder",
+      "fails": "no_invention",
+      "answer": "Version 5 only accepts a folder for `--output` when the path ends with a slash. Change the command to:\n\n```bash\nnpx doc-detective --input docs --output reports/\n```\n\nDoc Detective then writes its results JSON into `reports/` as before."
+    },
+    {
+      "why": "a results-dir flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective --input docs --output reports/results.json\n```", "to": "npx doc-detective --input docs --results-dir reports\n```" }
+      ]
+    },
+    {
+      "why": "misses the clean-checkout trap",
+      "fails": "correct",
+      "replace": [
+        { "from": "Watch the clean-checkout case. A path that doesn't exist and has no trailing slash becomes a file, even with no extension. If `reports/` is missing, `--output ./reports` doesn't fail. It writes the results to a file named `reports`.", "to": "" }
+      ]
+    }
+  ]
+}

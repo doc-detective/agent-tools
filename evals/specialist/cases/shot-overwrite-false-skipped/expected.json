@@ -1,0 +1,41 @@
+{
+  "category": "error",
+  "question": "I want my screenshot compared against our committed `home.png` but never replaced, so I set `\"overwrite\": \"false\"` and `\"maxVariation\": 0.02` on the step. Now every run reports SKIPPED: \"Skipped: file already exists at `C:\\docs\\home.png`. Set `overwrite` to `true` to replace it.\" Why isn't it comparing, and what should I set?",
+  "facts": [
+    {
+      "text": "With `overwrite: \"false\"`, an existing file at `path` makes Doc Detective keep it and skip the capture, so the step is SKIPPED and no comparison runs; `maxVariation` has no effect.",
+      "sources": ["docs/fern/pages/docs/test-docs/capture-screenshots-guide.mdx", "docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/screenshot_v3.schema.json"]
+    },
+    {
+      "text": "To compare, use `overwrite: \"aboveVariation\"`, the default (or leave `overwrite` out); a difference within `maxVariation` passes and leaves the reference unchanged.",
+      "sources": ["docs/fern/pages/docs/test-docs/screenshot-visual-regression.mdx", "src/common/src/schemas/src_schemas/screenshot_v3.schema.json"]
+    },
+    {
+      "text": "A difference above `maxVariation` returns WARNING rather than FAIL, and with `aboveVariation` it replaces the reference image with the new capture.",
+      "sources": ["docs/fern/pages/docs/test-docs/screenshot-visual-regression.mdx", "docs/fern/pages/docs/actions/screenshot.mdx"]
+    }
+  ],
+  "must_not": [
+    "`overwrite: \"false\"` compares the new capture against the reference and only declines to replace it.",
+    "A difference above `maxVariation` fails the step.",
+    "`overwrite: \"true\"` compares against the reference and replaces it only when it drifts."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "an overwrite value the schema lacks",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"overwrite\": \"aboveVariation\"\n", "to": "\"overwrite\": \"never\"\n" }]
+    },
+    {
+      "why": "says overwrite false still compares",
+      "fails": "no_invention",
+      "answer": "`\"overwrite\": \"false\"` is right: it compares the new capture against `home.png` and never replaces it. SKIPPED means the comparison found no difference beyond `maxVariation`, so there was nothing to report. A difference above `maxVariation` fails the step, so your CI still catches drift."
+    },
+    {
+      "why": "no reason for the skip",
+      "fails": "correct",
+      "answer": "Remove `overwrite` from the step so it uses the default, and keep `maxVariation`.\n\n```json\n{ \"screenshot\": { \"path\": \"home.png\", \"maxVariation\": 0.02 } }\n```"
+    }
+  ]
+}
