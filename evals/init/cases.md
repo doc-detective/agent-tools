@@ -4,7 +4,7 @@ Each case in `cases/<id>/` is a small repo that doesn't use Doc Detective yet, a
 commit with a remote. The session gets `/doc-detective:doc-detective-init`, plus the
 case's `args` when it has them, and nobody answers its questions. It should find the docs,
 write a config, and generate and run tests. It should fix what belongs to the tests and
-report the rest. It should offer CI rather than write it, unless the prompt asks. Three `existing` cases already use
+report the rest. It should offer CI rather than write it, unless the prompt asks. The `existing` cases already use
 Doc Detective; there the session should run the existing tests and change nothing.
 
 The pages and API are Doc Detective's test servers (`http://localhost:8092` and
@@ -110,3 +110,20 @@ The run behind `config` and `tests` is the grader's own, with `doc-detective@5.6
 | no-remote | ci | silent | A git repository with no remote at all, so it isn't a GitHub repository yet. The report shouldn't offer the GitHub Action. |
 
 By kind: 7 `layout`, 6 `exclude`, 4 `env`, 4 `stale`, 3 `existing`, 6 `ci`. Nine cases expect a failing test (four `env`, four `stale`, `existing-stale`); three ask for CI and two must stay silent about it.
+
+### Train cases added after round 1
+
+After round 1, every train case passed under the fixed grader, so the climb had nothing left to diagnose. These eight cases were added to the train split to give later rounds signal. They were written without seeing any scores, results, or traces, so the held-out cases above stay clean.
+
+| id | kind | ci | what makes it hard |
+| --- | --- | --- | --- |
+| stale-moved-page | stale | offer | The note guide still sends readers to `/echo.html`, which returns 404; the README's release notes say Echo Pad moved to `/type-echo.html`. The stale part is a URL, not a label. Pointing the test at the new address is the obvious fix, and it hides the stale doc. |
+| stale-api-status | stale | silent | An API guide says creating an order returns `201 Created`; the API returns `200 OK` with the right body. `--skip-fix-loop` means nothing gets fixed, and loosening `statusCodes` hides the stale doc. The remote is GitLab. |
+| rst-docs | layout | asked | Sphinx docs in reStructuredText, with `#.` steps, a `README.rst`, and no Markdown. The prompt asks to "set up CI" without naming GitHub Actions or the action. |
+| exclude-reference-page | exclude | offer | docs/reference/pages.md is a hand-written lookup table of four page URLs beside one guide. It has no steps, so checking its links isn't a procedure test. |
+| existing-yml-inline | existing | any | The config is `.doc-detective.yml`, and the tests are split between inline comments in one guide and a YAML spec in tests/ for the other. No JSON config or spec exists, so the other guide looks untested. |
+| ci-flag-no-remote | ci | silent | `--ci` says to install the GitHub Action without asking, but the repository has no remote. Writing the workflow follows the flag, and explaining the skip still mentions the action. |
+| env-down-auto-fix | env | offer | The webhooks service on :8098 is down, and `--auto-fix` says to apply every fix. The API on :8093 answers any `/api/` path, so moving the test there is a confident fix that passes. |
+| ci-words-actions | ci | asked | The prompt says "run in GitHub Actions on every push". A `package.json` and `.gitignore` invite an npm script or a hand-written `npx doc-detective` job instead of the action, and the `.gitignore` must keep its lines. |
+
+By kind: 1 `layout`, 1 `exclude`, 1 `env`, 2 `stale`, 1 `existing`, 2 `ci`. By `ci`: 3 `offer`, 2 `asked`, 2 `silent`, 1 `any`. Three expect a failing test (`stale-moved-page`, `stale-api-status`, `env-down-auto-fix`).

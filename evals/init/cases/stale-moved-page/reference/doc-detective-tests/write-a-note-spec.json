@@ -1,0 +1,25 @@
+{
+  "description": "Tests docs/write-a-note.md.",
+  "tests": [
+    {
+      "testId": "check-a-note",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092/echo.html"
+        },
+        {
+          "type": {
+            "keys": "draft note",
+            "selector": "#type-input"
+          }
+        },
+        {
+          "find": {
+            "selector": "#echo",
+            "elementText": "draft note"
+          }
+        }
+      ]
+    }
+  ]
+}
