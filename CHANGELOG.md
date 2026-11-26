@@ -1,3 +1,14 @@
+## [3.4.0](https://github.com/doc-detective/agent-tools/compare/v3.3.0...v3.4.0) (2026-11-26)
+
+### Features
+
+* **skills:** init reports a stale doc, installs CI when asked, names each test ([#124](https://github.com/doc-detective/agent-tools/issues/124)) ([a8c9b4a](https://github.com/doc-detective/agent-tools/commit/a8c9b4adccb606208b2cf594a01e70ed711ac427))
+
+### Bug Fixes
+
+* **evals:** add eight train cases to the GitHub Action eval ([#127](https://github.com/doc-detective/agent-tools/issues/127)) ([b32493b](https://github.com/doc-detective/agent-tools/commit/b32493b9e7e2e0da8ef6ed1047c3578381a56522))
+* **evals:** run the pinned Doc Detective for a session's bare doc-detective ([#131](https://github.com/doc-detective/agent-tools/issues/131)) ([d85e3e0](https://github.com/doc-detective/agent-tools/commit/d85e3e0b58143891a8366965d450b01a6783f498))
+
 ## [3.3.0](https://github.com/doc-detective/agent-tools/compare/v3.2.0...v3.3.0) (2026-11-25)
 
 ### Features
