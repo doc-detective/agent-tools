@@ -79,9 +79,13 @@ This extension includes hooks that run automatically:
 
 ## Detailed References
 
-For complete documentation, read these files:
+For complete documentation, read these files. Their paths are relative to the extension directory, the folder that holds this file, not the user's project:
+- Run-time behavior, for why a run behaved as it did (exit codes, statuses, skips, config precedence, browsers, recordings, and v5 changes): `skills/doc-detective-test/references/behavior.md`
+- Fixing failing tests, for the fix tool's options, failure patterns, and confidence scoring: `skills/doc-detective-test/references/fix-failing-tests.md`
 - Actions reference: `skills/doc-detective-generate/references/actions.md`
 - Configuration guidance: `skills/doc-detective-init/references/config-guidance.md`
 - Procedure heuristics: `skills/doc-detective-init/references/procedure-heuristics.md`
+- Doc patterns: `skills/doc-detective-init/references/doc-patterns.md`
 - Markup patterns: `skills/doc-detective-inline/references/markup-patterns.md`
+- GitHub Action inputs, run files, and CI behavior: `skills/doc-detective-install-github-action/references/action-reference.md`
 - Doc Detective docs: https://docs.doc-detective.com
