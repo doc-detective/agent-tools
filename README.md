@@ -422,7 +422,8 @@ Initializes Doc Detective in your repository by:
 2. Generating a minimal configuration
 3. Creating tests for identified procedures
 4. Running tests
-5. Iteratively fixing failures with confidence-based suggestions
+5. Trying to fix any failing test that doesn't match its doc, with confidence-based suggestions
+6. Reporting each test's result, and flagging any doc that no longer matches the product, with a proposed edit
 
 ### Convert Documentation to Tests
 
