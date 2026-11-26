@@ -1,0 +1,50 @@
+{
+  "category": "compare",
+  "question": "Our CI step, written for Doc Detective 4, is:\n\n```bash\nnpx doc-detective runTests --input docs -e --logLevel warning > dd.log\ngrep -q \"(ERROR)\" dd.log && exit 1\n```\n\nWe're moving to v5. Does this still work, and what should the step look like now?",
+  "facts": [
+    {
+      "text": "`runTests`, `-e`/`--exit-on-fail`, and `--logLevel` still work in v5 but are deprecated, and each prints a warning on stderr. Replace `runTests` with `run` (or no command) and `--logLevel` with `--log-level`, and delete `-e`.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/reference/cli.mdx"]
+    },
+    {
+      "text": "`-e` is no longer needed because exiting 1 when a test fails is now the default.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/reference/cli.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "Logs and warnings go to stderr, not stdout, and lose level labels such as `(ERROR)`, so `dd.log` never contains `(ERROR)` and the grep check never fails the job.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    },
+    {
+      "text": "Let the exit code gate the job: 0 when no test failed and at least one passed or warned, 1 when a test failed, 2 when nothing valid was tested.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/reference/cli.mdx"]
+    }
+  ],
+  "must_not": [
+    "`-e`/`--exit-on-fail` is still needed in v5 for a failing test to exit non-zero.",
+    "`runTests` or `--logLevel` was removed and now fails as unknown.",
+    "In v5, logs and errors still go to stdout, so the grep check keeps working."
+  ],
+  "wrong": [
+    {
+      "why": "keeps -e as required",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "Delete `-e`. Exiting `1` when a test fails is now the default, so the flag does nothing but warn.", "to": "Keep `-e`. Without it, a failing test still exits `0`, so the job can't fail on it." }
+      ]
+    },
+    {
+      "why": "a fail-on-error flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective run --input docs --log-level warning", "to": "npx doc-detective run --input docs --log-level warning --fail-on-error" }
+      ]
+    },
+    {
+      "why": "misses the stderr move",
+      "fails": "correct",
+      "replace": [
+        { "from": "The grep is the part that breaks. Logs, warnings, and errors go to stderr, not stdout, and they lose their level labels such as `(ERROR)`. `dd.log` holds stdout, so it never contains `(ERROR)`, and the check never fails the job.", "to": "The grep keeps working as before." }
+      ]
+    }
+  ]
+}

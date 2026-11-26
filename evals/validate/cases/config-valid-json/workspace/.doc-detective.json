@@ -1,0 +1,8 @@
+{
+  "input": [
+    "docs"
+  ],
+  "recursive": true,
+  "logLevel": "warning",
+  "concurrentRunners": 2
+}

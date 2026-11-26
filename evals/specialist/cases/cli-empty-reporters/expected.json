@@ -1,0 +1,49 @@
+{
+  "category": "concept",
+  "question": "In CI I only want one results file, so I set `\"reporters\": []` in `.doc-detective.json` and run `npx doc-detective --output results.json`. Every run still creates `.doc-detective/runs/<runId>/` full of PNGs and an MP4, which never happened on v4. Is `reporters: []` being ignored? How do I get just `results.json`?",
+  "facts": [
+    {
+      "text": "`\"reporters\": []` isn't ignored: it runs none of the reporters you'd choose, so the run prints no summary.",
+      "sources": ["docs/fern/pages/docs/ci/reporters-and-artifacts.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    },
+    {
+      "text": "In v5, `autoScreenshot` and `autoRecord` are on by default: a screenshot after every step that drives a browser, app, or device, and a video of every such context.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/reference/cli.mdx"]
+    },
+    {
+      "text": "The `runFolder` reporter runs whenever `autoScreenshot` or `autoRecord` is on, even if `reporters` leaves it out, which is why the run folder still appears.",
+      "sources": ["docs/fern/pages/docs/ci/reporters-and-artifacts.mdx", "docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    },
+    {
+      "text": "Set both `\"autoScreenshot\": false` and `\"autoRecord\": false` (or pass `--no-auto-screenshot --no-auto-record`) so the run writes only `results.json`.",
+      "sources": ["docs/fern/pages/docs/ci/reporters-and-artifacts.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "An empty `reporters` list falls back to the default reporters.",
+    "Leaving `runFolder` out of `reporters`, or setting `reporters` to `[]`, is enough to stop the run folder.",
+    "Turning off only one of `autoScreenshot` and `autoRecord` stops the run folder."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "a misspelled config key",
+      "fails": "snippets_valid",
+      "replace": [
+        { "from": "\"autoScreenshot\": false,", "to": "\"autoScreenshots\": false," }
+      ]
+    },
+    {
+      "why": "a run-folder flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective --output results.json --no-auto-screenshot --no-auto-record", "to": "npx doc-detective --output results.json --no-run-folder" }
+      ]
+    },
+    {
+      "why": "says [] falls back to defaults",
+      "fails": "no_invention",
+      "answer": "Yes. An empty `reporters` list counts as unset, so Doc Detective falls back to its defaults, `terminal` and `runFolder`. Name a reporter you want instead:\n\n```json\n{\n  \"reporters\": [\"terminal\"]\n}\n```\n\nWith `runFolder` left out, the run folder goes away."
+    }
+  ]
+}

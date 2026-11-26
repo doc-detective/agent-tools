@@ -1,0 +1,36 @@
+{
+  "category": "choose",
+  "question": "Our CI runs Firefox contexts (`runOn` with `\"browsers\": \"firefox\"`). After a bad cache, geckodriver broke, and those contexts quietly ran in Chrome and came back as WARNING. I never want a Firefox context to switch browsers. What controls this, what are my options, and what happens to those contexts if I turn switching off?",
+  "facts": [
+    {
+      "text": "`browserFallback` controls it; its default, `auto`, falls back to another available browser, and a fallback from an explicitly requested browser reports WARNING rather than PASS.",
+      "sources": ["docs/fern/pages/docs/config/contexts.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "`explicit` falls back only when Doc Detective auto-selected the browser, and `off` never falls back; with either, the explicitly requested Firefox context is SKIPPED with a diagnostic reason instead of running in another browser.",
+      "sources": ["docs/fern/pages/docs/config/contexts.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "Set it in the config (`\"browserFallback\": \"off\"`), with `--browser-fallback`, or on a single `runOn` context, where it takes precedence over the config.",
+      "sources": ["docs/fern/pages/docs/config/contexts.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json", "src/common/src/schemas/src_schemas/context_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "With `browserFallback` set to `off` or `explicit`, the Firefox context fails.",
+    "A fallback from an explicitly requested browser reports PASS.",
+    "`browserFallback` can only be set for the whole run, not per context."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "invents a value",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{\n  \"browserFallback\": \"off\"\n}", "to": "{\n  \"browserFallback\": \"never\"\n}" }]
+    },
+    {
+      "why": "says off makes the context fail",
+      "fails": "no_invention",
+      "answer": "Set `\"browserFallback\": \"off\"` in your config. Doc Detective then never swaps browsers, and a Firefox context whose driver is broken fails, so the run exits `1`. The default, `auto`, reports the fallback as PASS when you named the browser, which is why it looked clean.\n\n```json\n{ \"browserFallback\": \"off\" }\n```\n"
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "config",
+  "pasted": "pasted.json",
+  "args": "Check this Doc Detective config before I commit it:\n\n```json\n{{pasted}}```",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "A pasted config, with no file. The CLI needs a file for `--config`, so the session must check it without leaving one in the repo."
+}

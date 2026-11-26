@@ -1,0 +1,48 @@
+{
+  "category": "concept",
+  "question": "Our `.doc-detective.json` sets `\"reporters\": [\"terminal\", \"junit\"]` and `\"outputDir\": \"reports\"`. One CI job also needs the HTML report, so it exports `DOC_DETECTIVE_CONFIG='{\"reporters\":[\"html\"]}'` before running `npx doc-detective`. The repo's `.env` file also sets `DOC_DETECTIVE_CONFIG={\"reporters\":[\"markdown\"]}` for local runs. In that CI job, which reporters run, and where do the reports go?",
+  "facts": [
+    {
+      "text": "The shell's `DOC_DETECTIVE_CONFIG` wins over the one in `.env`, because `.env` only fills variables the shell left unset, so the markdown setting doesn't apply in that job.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "adrs/01165-one-config-env-var-and-one-precedence-order.md"]
+    },
+    {
+      "text": "`DOC_DETECTIVE_CONFIG` ranks above the project config and merges into it deeply, but arrays replace rather than combine, so `reporters` becomes only `[\"html\"]`: no terminal summary and no JUnit report.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "adrs/01165-one-config-env-var-and-one-precedence-order.md"]
+    },
+    {
+      "text": "Keys the variable doesn't set still come from the project config, so `outputDir` stays `reports` and the HTML report lands in `reports/`.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "adrs/01165-one-config-env-var-and-one-precedence-order.md"]
+    },
+    {
+      "text": "To add HTML, list every reporter, as in `DOC_DETECTIVE_CONFIG='{\"reporters\":[\"terminal\",\"junit\",\"html\"]}'` or the flag `--reporters terminal,junit,html`, which beats both config layers.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "Arrays merge or append, so the job runs terminal, junit, and html.",
+    "The `.env` file's `DOC_DETECTIVE_CONFIG` overrides the one exported in the shell.",
+    "The project config's `reporters` beats `DOC_DETECTIVE_CONFIG`."
+  ],
+  "wrong": [
+    {
+      "why": "arrays append",
+      "fails": "no_invention",
+      "answer": "`DOC_DETECTIVE_CONFIG` merges into `.doc-detective.json`, and list values add up, so the job runs `terminal`, `junit`, and `html`. The `.env` value doesn't apply, because the shell variable wins. All three reports go to `reports/`, from `outputDir`."
+    },
+    {
+      "why": "a reporters env var that doesn't exist",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "- Or pass the flag, which beats every config layer: `npx doc-detective --reporters terminal,junit,html`.", "to": "- Or set `DOC_DETECTIVE_REPORTERS=terminal,junit,html`, which adds reporters to the config list, and run `npx doc-detective --add-reporters`." }
+      ]
+    },
+    {
+      "why": "misses the .env rule",
+      "fails": "correct",
+      "replace": [
+        { "from": "The shell's value wins over `.env`. A `.env` file only fills variables the shell left unset, so its markdown setting doesn't apply in that job.\n\n", "to": "" }
+      ]
+    }
+  ]
+}

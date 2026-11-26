@@ -1,0 +1,53 @@
+{
+  "category": "concept",
+  "question": "We upgraded to Doc Detective 5 and leave autoRecord at its default. Our specs don't set runOn. In one test I wrapped the checkout steps in `{ \"record\": \"checkout.mp4\" }` and `{ \"stopRecord\": true }`. Will that stopRecord cut the automatic full-test video short? I'm expecting to get both the full-context video in the run folder and checkout.mp4. And if I leave out the stopRecord step, do I lose the clip?",
+  "facts": [
+    {
+      "text": "With no runOn, the context runs headless Chrome, and in headless Chrome an explicit `record` step replaces the automatic recording, so that test's context saves only checkout.mp4 and gets no automatic video (no `autoRecording` in its results).",
+      "sources": [
+        "docs/fern/pages/docs/test-docs/automatic-recording.mdx",
+        "docs/fern/pages/docs/actions/record.mdx",
+        "src/common/src/schemas/src_schemas/config_v3.schema.json"
+      ]
+    },
+    {
+      "text": "An untargeted `stopRecord` (`true` or `null`) never stops the automatic recording; where both run, Doc Detective finalizes the automatic recording at the end of the context.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/actions/stopRecord.mdx",
+        "docs/fern/pages/docs/test-docs/automatic-recording.mdx",
+        "src/common/src/schemas/src_schemas/stopRecord_v3.schema.json"
+      ]
+    },
+    {
+      "text": "Without a `stopRecord` step, Doc Detective stops and saves any recording still running when the test (context) ends, so the clip isn't lost.",
+      "sources": [
+        "docs/fern/pages/docs/actions/record.mdx",
+        "docs/fern/pages/docs/test-docs/record-video-guide.mdx",
+        "src/common/src/schemas/src_schemas/record_v3.schema.json"
+      ]
+    }
+  ],
+  "must_not": [
+    "The `stopRecord: true` step stops, or cuts short, the automatic full-context recording.",
+    "The default headless Chrome context produces both the automatic full-context video and checkout.mp4.",
+    "Without a `stopRecord` step the recording is discarded, not saved, or the test fails."
+  ],
+  "wrong": [
+    {
+      "why": "says both videos come out and stopRecord ends the auto video",
+      "fails": "no_invention",
+      "answer": "Yes, it will. `stopRecord: true` stops the most recent recording, and the automatic recording counts, so it can end the full-context video early. Give your clip a name and stop it by name instead: `{ \"record\": { \"path\": \"checkout.mp4\", \"name\": \"checkout\" } }` and `{ \"stopRecord\": \"checkout\" }`. You then get both videos: the automatic full-context video in the run folder and checkout.mp4. Always keep the stopRecord step, because a recording that's never stopped is discarded."
+    },
+    {
+      "why": "misses the headless Chrome replacement",
+      "fails": "correct",
+      "replace": [
+        {
+          "from": "In this test, though, there's no automatic recording to cut short. A context with no `runOn` runs headless Chrome. In headless Chrome, an explicit `record` step replaces the automatic recording, because a Chrome context records one tab at a time. So that context saves `checkout.mp4` only, and its results have no `autoRecording` field. Your other tests, with no `record` step, still get the automatic video at `.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/recordings/<contextId>.mp4`.\n\nTo get both videos from one test, run it headed (`headless: false` on the browser in `runOn`). The automatic recording then captures the screen with the `ffmpeg` engine, and your `record` step records the tab with the `browser` engine. A headed context needs a display, or Xvfb on Linux.\n\n",
+          "to": ""
+        }
+      ]
+    }
+  ]
+}

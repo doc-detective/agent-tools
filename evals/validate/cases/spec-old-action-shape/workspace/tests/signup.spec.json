@@ -1,0 +1,21 @@
+{
+  "tests": [
+    {
+      "testId": "signup",
+      "steps": [
+        {
+          "action": "goTo",
+          "url": "http://localhost:8092"
+        },
+        {
+          "action": "find",
+          "selector": "#signup",
+          "matchText": "Sign up"
+        },
+        {
+          "click": "Sign up"
+        }
+      ]
+    }
+  ]
+}

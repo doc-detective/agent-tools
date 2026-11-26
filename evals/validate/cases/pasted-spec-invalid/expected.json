@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "pasted": "pasted.json",
+  "args": "Is this spec valid?\n\n```json\n{{pasted}}```",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[0]: unknown action `navigate`."
+  ],
+  "hard": "JSON pasted in the prompt, with no file. `navigate` isn't an action."
+}

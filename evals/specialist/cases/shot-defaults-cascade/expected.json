@@ -1,0 +1,45 @@
+{
+  "category": "concept",
+  "question": "Our `.doc-detective.json` sets `\"annotationDefaults\": {\"color\": \"#E11D48\"}`. One spec sets `\"annotationDefaults\": {\"color\": \"#2563EB\"}`, and a test in that spec sets `\"annotationDefaults\": {\"badge\": {\"background\": \"#16A34A\"}}`. A screenshot in that test has an `outline`, a `badge` with no `style`, and a `badge` with `\"style\": {\"background\": \"#000000\"}`. What color does the outline come out, and what background does each badge get? And can I set `annotationDefaults` on just one screenshot step instead?",
+  "facts": [
+    {
+      "text": "The outline is #2563EB: the test's theme sets only a `badge` block, so the base `color` falls back to the spec's theme, which overrides the config's #E11D48.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "docs/fern/pages/docs/test-docs/annotate-screenshots.mdx", "src/common/src/schemas/src_schemas/annotationDefaults_v3.schema.json"]
+    },
+    {
+      "text": "The badge with no `style` gets the #16A34A background from the test's per-type `badge` block, and the badge with its own `style` gets #000000, because an annotation's `style` overrides every `annotationDefaults` level.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json", "src/common/src/schemas/src_schemas/annotationDefaults_v3.schema.json"]
+    },
+    {
+      "text": "`annotationDefaults` can be set only on the config, a spec, or a test, not on a step; to style one screenshot, set `style` on its annotations.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/screenshot_v3.schema.json", "src/common/src/schemas/src_schemas/test_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "The outline comes out #E11D48, the config's color.",
+    "The test's `annotationDefaults` replaces the spec's whole theme, so the outline falls back to the built-in color.",
+    "A `screenshot` step accepts `annotationDefaults`."
+  ],
+  "wrong": [
+    {
+      "why": "puts annotationDefaults on a screenshot step",
+      "fails": "snippets_valid",
+      "replace": [
+        {
+          "from": "    \"path\": \"form.png\",\n",
+          "to": "    \"path\": \"form.png\",\n    \"annotationDefaults\": { \"color\": \"#E11D48\" },\n"
+        }
+      ]
+    },
+    {
+      "why": "treats a test theme as a whole-object replacement",
+      "fails": "no_invention",
+      "answer": "Each level replaces the one above it as a whole object. The test's `annotationDefaults` only has a `badge` block, so in that test the spec's and config's colors no longer apply, and the outline uses Doc Detective's built-in color. The plain badge gets #16A34A and the styled badge gets #000000. You can also put `annotationDefaults` directly on a `screenshot` step to theme just that capture."
+    },
+    {
+      "why": "gets the outline color wrong",
+      "fails": "correct",
+      "answer": "The config is the base, so the outline is #E11D48. The plain badge gets #16A34A from the test, and the styled badge gets #000000. `annotationDefaults` is only valid on the config, a spec, or a test; use `style` on one screenshot's annotations instead."
+    }
+  ]
+}

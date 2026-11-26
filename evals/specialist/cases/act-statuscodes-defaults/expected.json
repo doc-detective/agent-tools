@@ -1,0 +1,44 @@
+{
+  "category": "compare",
+  "question": "In one test I hit http://localhost:8092/status/302 and http://localhost:8092/status/201 with both `checkLink` and `httpRequest`, without setting `statusCodes`. `checkLink` passes the 302 but fails the 201, and `httpRequest` does the exact opposite. Is that a bug? I want both actions to accept 200, 201, and 302.",
+  "facts": [
+    {
+      "text": "`checkLink` defaults `statusCodes` to `[200, 301, 302, 307, 308]`, which accepts redirects but not 201.",
+      "sources": ["docs/fern/pages/docs/actions/checkLink.mdx", "src/common/src/schemas/src_schemas/checkLink_v3.schema.json"]
+    },
+    {
+      "text": "`httpRequest` defaults `statusCodes` to `[200, 201]`, which accepts 201 but not a 302.",
+      "sources": ["docs/fern/pages/docs/actions/httpRequest.mdx", "src/common/src/schemas/src_schemas/httpRequest_v3.schema.json"]
+    },
+    {
+      "text": "Set `statusCodes` (such as `[200, 201, 302]`) on each step to accept the same codes in both actions.",
+      "sources": ["docs/fern/pages/docs/actions/checkLink.mdx", "docs/fern/pages/docs/actions/httpRequest.mdx", "src/common/src/schemas/src_schemas/checkLink_v3.schema.json", "src/common/src/schemas/src_schemas/httpRequest_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`checkLink` and `httpRequest` share the same default status codes.",
+    "A config-level `statusCodes` setting applies to every `checkLink` and `httpRequest` step.",
+    "`httpRequest` accepts any 2xx or 3xx status by default."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that checks the 302 and 201 URLs with checkLink and httpRequest and accepts 200, 201, and 302",
+      "require": [
+        { "checkLink": ["status/", "201", "302"] },
+        { "httpRequest": ["status/", "201", "302"] }
+      ]
+    }
+  },
+  "wrong": [
+    {
+      "why": "leaves httpRequest on its default",
+      "fails": "snippets_run",
+      "replace": [{ "from": "{ \"httpRequest\": { \"url\": \"http://localhost:8092/status/302\", \"statusCodes\": [200, 201, 302] } }", "to": "{ \"httpRequest\": { \"url\": \"http://localhost:8092/status/302\", \"statusCodes\": [200, 201] } }" }]
+    },
+    {
+      "why": "invents a shared config default",
+      "fails": "no_invention",
+      "answer": "Both actions share one default list, `[200]`, so the difference is a bug. Set it once for every step in your config:\n\n```json\n{ \"statusCodes\": [200, 201, 302] }\n```\n"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "kind": "spec",
+  "input": "tests/api.spec.json",
+  "args": "tests/api.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[0].httpRequest.method: must be one of get, put, post, patch, delete (got \"FETCH\").",
+    "tests[0].steps[1].find.timeout: must be integer (got \"soon\").",
+    "tests[0].steps[2]: unknown key `waitFor`.",
+    "tests[0].steps[3].runShell.exitCodes: must be array (got \"0\")."
+  ],
+  "hard": "Four errors in one file, of four kinds: a bad enum, a wrong type, an unknown key, and a string where an array goes. A report that stops at the first misses three."
+}

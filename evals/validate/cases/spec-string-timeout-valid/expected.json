@@ -1,0 +1,8 @@
+{
+  "kind": "spec",
+  "input": "tests/save.spec.json",
+  "args": "tests/save.spec.json",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "`\"timeout\": \"5000\"` as a string looks wrong, but the validator coerces it."
+}

@@ -1,0 +1,42 @@
+{
+  "category": "syntax",
+  "question": "One of our specs has tests with the IDs `login`, `user-login-sso`, `LoginPage`, and `signup`. For a quick CI smoke job I want to run only `login` and `signup`. `npx doc-detective -i docs -t login -t signup` exits 2 with an error, and `-t login` by itself also runs `user-login-sso` and `LoginPage`. What's the right command?",
+  "facts": [
+    {
+      "text": "Each `--test` pattern is a case-insensitive regular expression that matches anywhere in the `testId`, so `login` also matches `user-login-sso` and `LoginPage`; anchor it as `^login$` to match only that ID.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "`--test` takes one comma-separated list given once; repeating the flag is a usage error that exits 2.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "adrs/01166-one-separator-per-list-flag.md"]
+    },
+    {
+      "text": "The command is `npx doc-detective -i docs --test '^login$,^signup$'` (or the single pattern `'^(login|signup)$'`), quoted so the shell leaves the `$` and `|` alone.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "adrs/01166-one-separator-per-list-flag.md"]
+    }
+  ],
+  "must_not": [
+    "Repeat `-t` (or `--test`) once per pattern.",
+    "`--test` matches the whole test ID exactly, or only from the start of the ID, or case-sensitively.",
+    "Separate the patterns with spaces, as in `-t login signup`."
+  ],
+  "wrong": [
+    {
+      "why": "a test-id flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective -i docs --test '^login$,^signup$'", "to": "npx doc-detective -i docs --test-id login,signup" }
+      ]
+    },
+    {
+      "why": "repeat the flag, exact match",
+      "fails": "no_invention",
+      "answer": "`--test` compares the whole test ID, so `login` should only match `login`. The 2 exit comes from quoting. Repeat the flag once per test, with each ID quoted:\n\n```bash\nnpx doc-detective -i docs -t \"login\" -t \"signup\"\n```"
+    },
+    {
+      "why": "no anchoring",
+      "fails": "correct",
+      "answer": "Give `--test` once, as a comma-separated list. Repeating the flag exits `2`.\n\n```bash\nnpx doc-detective -i docs --test login,signup\n```"
+    }
+  ]
+}

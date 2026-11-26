@@ -1,0 +1,44 @@
+{
+  "category": "error",
+  "question": "Our CI wrapper runs `npx doc-detective runTests -i docs -e --logLevel info > dd.log` and then fails the build with `grep -E \"Element not found within timeout|Failed Items\" dd.log`. Since the runner picked up Doc Detective 5, the log shows \"Warning: `--exit-on-fail` is deprecated. It's now the default, so remove it.\" and \"Warning: `--logLevel` is deprecated. Rename it to `--log-level`.\", and the grep never matches, even on runs where I can see a `find` step failed. Did v5 drop those flags? How should the wrapper detect failures now?",
+  "facts": [
+    {
+      "text": "The deprecated spellings still work and only warn: `-e`/`--exit-on-fail` can be removed because failing the run is now the default, `--logLevel` becomes `--log-level`, and `runTests` becomes `run` (or no command).",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "adrs/01195-one-style-for-step-failure-skip-and-deprecation-messages.md"]
+    },
+    {
+      "text": "The grep stops matching because v5 rewrote the messages and summary: a failed find reads ``Couldn't find element `...`.`` or ``Couldn't find an element within `timeout` (5000 ms).``, and the summary lists `Failed (N):` instead of `Failed Items:`. Logs also moved to stderr, so `> dd.log` doesn't capture them.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "adrs/01195-one-style-for-step-failure-skip-and-deprecation-messages.md"]
+    },
+    {
+      "text": "Use the exit code instead of matching text: `0` means no test failed, `1` means at least one test failed, and `2` means nothing valid was tested. For details, read `result` and `resultCode` from the results (`--output <file>` or `--json`).",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/docs/ci/reporters-and-artifacts.mdx", "src/common/src/schemas/src_schemas/report_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "v5 removed `--logLevel`, `-e`/`--exit-on-fail`, or `runTests`, so they error or are ignored.",
+    "Doc Detective still exits 0 when tests fail unless you pass `-e` or `--exit-on-fail`.",
+    "Update the grep to match the new message text."
+  ],
+  "wrong": [
+    {
+      "why": "says the flags were removed and keeps grepping",
+      "fails": "no_invention",
+      "answer": "v5 removed `--logLevel` and `-e`, so they're ignored now, and the run exits 0 even when a test fails. Switch the grep to the new wording:\n\n```bash\nnpx doc-detective run -i docs --log-level info > dd.log\ngrep -E \"Couldn't find|Failed \\(\" dd.log\n```\n"
+    },
+    {
+      "why": "invents a flag",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective run --input docs --log-level info --output results.json", "to": "npx doc-detective run --input docs --log-level info --results-file results.json" }
+      ]
+    },
+    {
+      "why": "skips the exit codes",
+      "fails": "correct",
+      "replace": [
+        { "from": "Let the exit code decide instead: `0` means no test failed and at least one passed or warned, `1` means at least one test failed, and `2` means nothing valid was tested, such as an invalid spec or a run where every test skipped.", "to": "Let the logs decide instead." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,8 @@
+{
+  "kind": "spec",
+  "input": "tests/home.spec.yaml",
+  "args": "tests/home.spec.yaml",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "A valid spec in YAML."
+}

@@ -1,0 +1,45 @@
+{
+  "category": "error",
+  "question": "Step 1 (`stepId: \"create\"`) POSTs `{\"id\": \"u-42\"}` to http://localhost:8093/api/users, which echoes it back. Step 2 POSTs `{\"userId\": \"u-42\"}` to http://localhost:8093/api/orders. I want step 2 to check that its response's `userId` equals the id step 1 got back, so I gave it `\"assertions\": [\"$$outputs.response.body.userId == $$steps.create.outputs.response.body.id\"]`. Step 2 fails every time, even though the IDs match. Why, and how do I write this check?",
+  "facts": [
+    {
+      "text": "Custom assertions can read only the current step's `$$outputs.*` and `$$platform`, not `$$steps.*`; the `$$steps` reference can't resolve, so the assertion fails closed and the step always fails.",
+      "sources": ["docs/fern/pages/docs/tests/overview.mdx", "docs/fern/pages/reference/expressions.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    },
+    {
+      "text": "Save step 1's id with a step-level `variables` object (such as `\"USER_ID\": \"$$response.body.id\"`) and compare against `$USER_ID` in step 2, for example in `response.body` or in a quoted assertion.",
+      "sources": ["docs/fern/pages/docs/actions/httpRequest.mdx", "docs/fern/pages/reference/expressions.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "Custom assertions can reference another step's outputs with `$$steps.<stepId>.outputs` once that step has a `stepId`.",
+    "`variables` goes inside the `httpRequest` object.",
+    "The assertion fails because `$$steps` needs `{{ }}` around it."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that saves step 1's id and checks step 2's userId against it",
+      "require": [
+        { "httpRequest": ["api/users", "$$response.body.id"] },
+        { "httpRequest": ["api/orders", "$"] }
+      ]
+    }
+  },
+  "wrong": [
+    {
+      "why": "keeps the $$steps assertion",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"response\": { \"body\": { \"userId\": \"$USER_ID\" } }\n          }", "to": "\"response\": { \"body\": { \"userId\": \"u-42\" } }\n          },\n          \"assertions\": [\"$$outputs.response.body.userId == $$steps.create.outputs.response.body.id\"]" }]
+    },
+    {
+      "why": "puts variables inside httpRequest",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"request\": { \"body\": { \"id\": \"u-42\" } }\n          },\n          \"variables\": { \"USER_ID\": \"$$response.body.id\" }", "to": "\"request\": { \"body\": { \"id\": \"u-42\" } },\n            \"variables\": { \"USER_ID\": \"$$response.body.id\" }\n          }" }]
+    },
+    {
+      "why": "says $$steps works in assertions",
+      "fails": "no_invention",
+      "answer": "Assertions can read other steps through `$$steps.<stepId>.outputs`, but the path is wrong. Step outputs keep the body at the top level, so write `$$steps.create.outputs.body.id`:\n\n```json\n{ \"httpRequest\": { \"url\": \"http://localhost:8093/api/orders\", \"method\": \"post\", \"request\": { \"body\": { \"userId\": \"u-42\" } } }, \"assertions\": [\"$$outputs.response.body.userId == $$steps.create.outputs.body.id\"] }\n```\n"
+    }
+  ]
+}

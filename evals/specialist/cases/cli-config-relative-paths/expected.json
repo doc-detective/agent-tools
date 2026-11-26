@@ -1,0 +1,47 @@
+{
+  "category": "concept",
+  "question": "I keep our CI config at `config/ci.json`, which sets `\"input\": \"docs\"` and `\"output\": \"results.json\"`, and run `npx doc-detective -c config/ci.json` from the repo root, where `docs/` lives. On v5 it warns `Cannot access path: <repo>/config/docs. Skipping.`, then prints ``No tests found here. Point at your docs with `doc-detective -i <path>`, or see `doc-detective --help`.`` and exits 2. Why is it looking in `config/`, and how do I make the config's paths relative to the repo root?",
+  "facts": [
+    {
+      "text": "A relative path in a config file resolves against that file's folder, because `relativePathBase` defaults to `file`, so `docs` means `config/docs`.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/get-started/sample-tests.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "`output` resolves against the config's folder too, so `results.json` would land in `config/`, and so would the run folder from the default `outputDir`.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/reference/cli.mdx", "adrs/01192-one-path-rule-for-every-config-source.md"]
+    },
+    {
+      "text": "Set `\"relativePathBase\": \"cwd\"` in the config so its paths resolve against the current directory, or write them relative to the config file, as `\"../docs\"` and `\"../results.json\"`.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "Paths in a config file resolve against the current directory by default.",
+    "`output` in a config file resolves against the current directory even when `input` resolves against the config's folder.",
+    "`relativePathBase` takes a value such as `root`, `repo`, or a path."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "an enum value config_v3 lacks",
+      "fails": "snippets_valid",
+      "replace": [
+        { "from": "\"relativePathBase\": \"cwd\"", "to": "\"relativePathBase\": \"root\"" }
+      ]
+    },
+    {
+      "why": "a path-base flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective -c config/ci.json\n```", "to": "npx doc-detective -c config/ci.json --relative-path-base cwd\n```" }
+      ]
+    },
+    {
+      "why": "says output stays at cwd",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "That covers `output` too. Without a fix, `results.json` lands in `config/`, and so does the run folder from the default `outputDir` of `.`. Version 4 resolved a config's `output` against the current directory, so this part is new.", "to": "`output` is the exception: it still resolves against the current directory, as in version 4, so `results.json` already lands at the repo root." }
+      ]
+    }
+  ]
+}

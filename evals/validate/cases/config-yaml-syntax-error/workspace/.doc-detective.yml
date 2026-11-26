@@ -1,0 +1,4 @@
+input:
+  - docs
+logLevel: [warning
+recursive: true

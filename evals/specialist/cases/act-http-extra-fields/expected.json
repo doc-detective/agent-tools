@@ -1,0 +1,42 @@
+{
+  "category": "syntax",
+  "question": "Our echo API at http://localhost:8093/api/widgets returns the widget I POST to it. My `httpRequest` step posts `{\"name\": \"bolt\", \"size\": 3}` and sets `response.body` to the same object, but the step still passes when the server adds fields I never declared. How do I make it fail if the response has any field beyond `name` and `size`?",
+  "facts": [
+    {
+      "text": "`response.body` checks only the declared fields; extra response fields pass because `allowAdditionalFields` defaults to `true`.",
+      "sources": ["docs/fern/pages/docs/actions/httpRequest.mdx", "src/common/src/schemas/src_schemas/httpRequest_v3.schema.json"]
+    },
+    {
+      "text": "Set `allowAdditionalFields: false` on the `httpRequest` object, beside `response` rather than inside it, to fail the step when the response has a field not declared in `response.body`.",
+      "sources": ["docs/fern/pages/docs/actions/httpRequest.mdx", "src/common/src/schemas/src_schemas/httpRequest_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`allowAdditionalFields` goes inside the `response` object.",
+    "`response.body` already requires the whole response body to match exactly.",
+    "Doc Detective can't reject extra fields, so you need a custom assertion or `response.required` for it."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that POSTs the widget with allowAdditionalFields set to false",
+      "require": [{ "httpRequest": ["8093", "\"allowAdditionalFields\":false"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "puts the flag inside response",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"response\": { \"body\": { \"name\": \"bolt\", \"size\": 3 } },\n            \"allowAdditionalFields\": false", "to": "\"response\": { \"body\": { \"name\": \"bolt\", \"size\": 3 }, \"allowAdditionalFields\": false }" }]
+    },
+    {
+      "why": "expects a value the server doesn't return",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"response\": { \"body\": { \"name\": \"bolt\", \"size\": 3 } },", "to": "\"response\": { \"body\": { \"name\": \"bolt\", \"size\": 4 } }," }]
+    },
+    {
+      "why": "says body is already an exact match",
+      "fails": "no_invention",
+      "answer": "`response.body` is already an exact match of the whole body, so an extra field fails the step. If yours passes, the server isn't adding the field. Use `response.required` to list fields that must exist."
+    }
+  ]
+}

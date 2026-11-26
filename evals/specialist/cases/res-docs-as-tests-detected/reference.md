@@ -1,0 +1,5 @@
+Detected tests would have caught it. Step detection is on by default (`detectSteps`). Doc Detective parses the Markdown and generates steps from its markup, and bold text after a click verb becomes a `click` step and a `find` step. After the edit, the detected test clicks and finds "Save changes". The product shows "Save", so the test fails, and the failure points at the doc.
+
+Your standalone spec missed it because it holds its own copy of the procedure. It never reads the Markdown, so it still clicks "Save", which matches the product, and it passes while the doc is wrong. An inline step comment has the same gap: its JSON sits next to the prose, but nobody changed it, so it still says `Save`.
+
+That's the Docs as Tests point. The test should come from what the doc tells readers to do, and run against the real product. Doc Detective doesn't scan code. It runs the doc's procedure and reports where the doc and the product disagree. Detected tests make the prose itself the test. Inline and standalone tests work too, but someone has to keep them in step with the prose.

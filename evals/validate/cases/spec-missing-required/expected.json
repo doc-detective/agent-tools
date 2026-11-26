@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "input": "tests/health.spec.json",
+  "args": "tests/health.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[0].httpRequest: needs one of url, openApi."
+  ],
+  "hard": "An `httpRequest` with no `url`. The validator names the object, not a missing key path."
+}

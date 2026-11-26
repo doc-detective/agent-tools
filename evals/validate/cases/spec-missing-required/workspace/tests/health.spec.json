@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "testId": "health",
+      "steps": [
+        {
+          "httpRequest": {
+            "method": "get",
+            "statusCodes": [
+              200
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

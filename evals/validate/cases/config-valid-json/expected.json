@@ -1,0 +1,8 @@
+{
+  "kind": "config",
+  "input": ".doc-detective.json",
+  "args": "--config .doc-detective.json",
+  "verdict": "valid",
+  "errors": [],
+  "hard": "A valid config with several keys set. Nothing to report."
+}

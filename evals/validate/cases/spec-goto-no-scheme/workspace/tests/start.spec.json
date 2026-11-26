@@ -1,0 +1,15 @@
+{
+  "tests": [
+    {
+      "testId": "start",
+      "steps": [
+        {
+          "goTo": "localhost:8092"
+        },
+        {
+          "find": "Elements"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "kind": "spec",
+  "pasted": "pasted.json",
+  "args": "```json\n{{pasted}}```\nIs that a valid Doc Detective test?",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[0]: unknown action `action`."
+  ],
+  "hard": "Pasted JSON with the old `{\"action\": \"goTo\"}` shape on its first step."
+}

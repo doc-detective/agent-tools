@@ -1,0 +1,39 @@
+{
+  "category": "concept",
+  "question": "Our CI runner image changed and two screenshot comparisons now hit size mismatches. (1) A step crops to a card element: the committed reference is 1321×433, and the new capture is 1321×432 with identical content. (2) A full-viewport reference was captured at 2400×1600 on a HiDPI laptop, and CI captures 1200×800. How does Doc Detective compare each pair, and does it resize the browser for either one?",
+  "facts": [
+    {
+      "text": "For the cropped step, Doc Detective doesn't resize the browser window, because a cropped image's size comes from the element.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "docs/fern/pages/docs/test-docs/screenshot-visual-regression.mdx"]
+    },
+    {
+      "text": "Because each dimension of the crop pair is within 5%, it compares only the region the two images share, from the top-left corner, so unchanged content reports no difference.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "adrs/01205-compare-same-scale-screenshots-by-cropping.md"]
+    },
+    {
+      "text": "For the 2400×1600 reference, both dimensions differ by the same factor (a pixel-density difference), so it doesn't resize the window; it scales both images to the smaller size before comparing.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "adrs/01205-compare-same-scale-screenshots-by-cropping.md"]
+    },
+    {
+      "text": "Images whose aspect ratios differ by more than 5% aren't compared; the step fails.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx"]
+    }
+  ],
+  "must_not": [
+    "Doc Detective resizes the browser window to match the cropped reference.",
+    "Any difference in image size fails the step.",
+    "The one-pixel size difference reports drift above `maxVariation`."
+  ],
+  "wrong": [
+    {
+      "why": "says it resizes for the crop and fails on any size change",
+      "fails": "no_invention",
+      "answer": "For the crop, Doc Detective resizes the browser window until the crop comes out 1321×433, then takes it again. For the 2400×1600 reference, the sizes don't match, and any difference in image size fails the step, so recapture the reference on CI."
+    },
+    {
+      "why": "misses the shared-region comparison",
+      "fails": "correct",
+      "answer": "Doc Detective doesn't resize the window for a cropped step or for a reference at a different pixel density. Re-seed both references on the new runner with `\"overwrite\": \"true\"`."
+    }
+  ]
+}

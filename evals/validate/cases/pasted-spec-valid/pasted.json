@@ -1,0 +1,26 @@
+{
+  "tests": [
+    {
+      "testId": "pasted",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "find": {
+            "elementText": "Elements",
+            "timeout": 5000
+          }
+        },
+        {
+          "type": {
+            "keys": [
+              "hello",
+              "$ENTER$"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

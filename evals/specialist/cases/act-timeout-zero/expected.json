@@ -1,0 +1,46 @@
+{
+  "category": "false_premise",
+  "question": "I'm moving specs from Doc Detective 4 to 5. On a `goTo` for http://localhost:8092/wait-delay.html I set `\"timeout\": 0` to mean \"no page-load limit\", and on the next step, a `find` for \"Loaded after 2 seconds\", I set `\"timeout\": 0` to mean \"wait as long as it takes\". Version 5 rejects the spec, and when I drop the `goTo` timeout, the `find` fails instantly. What do I set instead?",
+  "facts": [
+    {
+      "text": "A `goTo` `timeout` (like `runShell`, `runCode`, and `httpRequest`) must be 1 or more; `0` makes the spec invalid and the run exits 2. No value turns the limit off, so leave it out for the default (30000 ms on `goTo`) or set a larger number.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/goTo_v3.schema.json", "src/common/src/schemas/src_schemas/runShell_v3.schema.json"]
+    },
+    {
+      "text": "On `find`, `timeout: 0` checks once without waiting, so an element that appears later fails right away.",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    },
+    {
+      "text": "Give `find` a timeout longer than the element's delay, or leave it out for the 5000 ms default.",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`timeout: 0` means no limit, or wait indefinitely, in Doc Detective 5.",
+    "A negative `timeout` such as `-1` disables the limit.",
+    "`find` waits for the element indefinitely when `timeout` is omitted."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that opens wait-delay.html and finds the delayed message",
+      "require": [{ "goTo": ["wait-delay"] }, { "find": ["Loaded after 2 seconds"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "keeps find's timeout at 0",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"timeout\": 10000", "to": "\"timeout\": 0" }]
+    },
+    {
+      "why": "keeps goTo's timeout at 0",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{ \"goTo\": \"http://localhost:8092/wait-delay.html\" },", "to": "{ \"goTo\": { \"url\": \"http://localhost:8092/wait-delay.html\", \"timeout\": 0 } }," }]
+    },
+    {
+      "why": "says -1 means no limit",
+      "fails": "no_invention",
+      "answer": "Version 5 replaced `0` with `-1` for \"no limit\". Set `\"timeout\": -1` on both the `goTo` and the `find`, and Doc Detective waits as long as it takes."
+    }
+  ]
+}
