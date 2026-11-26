@@ -23,7 +23,7 @@ const pass = { pass: true, reason: 'not judged here' };
 const cachedJudge = (system, rubric, answer) => memo(verdicts, system + rubric + '\0' + answer, () => judge(system, rubric, answer));
 const cachedRun = spec => memo(runs, createHash('sha256').update(JSON.stringify(spec)).digest('hex'), () => runSpec(spec));
 
-/** Each JSON object in a fenced JSON block that has a step action, rewritten as `{ action: <name>, ...fields }`. */
+/** Each JSON object in a fenced JSON block (```json, ```jsonc, ```json title=..., or a bare ```) that has a step action, rewritten as `{ action: <name>, ...fields }`. */
 function toV2(text) {
   const { stepActions } = ddCommon();
   const k = 'act' + 'ion'; // spelled apart so the plugin's own format hook doesn't flag this file
@@ -36,8 +36,8 @@ function toV2(text) {
       return { [k]: a, ...(body && typeof body === 'object' && !Array.isArray(body) ? body : { value: body }), ...rest };
     })() : v;
   let changed = false;
-  const out = text.replace(/```json\n([\s\S]*?)\n```/g, (all, body) => {
-    try { const v = JSON.parse(body); const w = rewrite(v); if (JSON.stringify(w) === JSON.stringify(v)) return all; changed = true; return '```json\n' + JSON.stringify(w, null, 2) + '\n```'; }
+  const out = text.replace(/```((?:jsonc?)?(?:[ \t][^\n]*)?)\n([\s\S]*?)\n```/g, (all, info, body) => {
+    try { const v = JSON.parse(body); const w = rewrite(v); if (JSON.stringify(w) === JSON.stringify(v)) return all; changed = true; return '```' + info + '\n' + JSON.stringify(w, null, 2) + '\n```'; }
     catch { return all; }
   });
   return changed ? out : null;

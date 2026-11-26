@@ -1,0 +1,18 @@
+{
+  "tests": [
+    {
+      "testId": "save",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "click": {
+            "elementText": "Elements",
+            "timeout": "5000"
+          }
+        }
+      ]
+    }
+  ]
+}

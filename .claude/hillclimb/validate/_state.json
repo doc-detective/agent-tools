@@ -1,0 +1,119 @@
+{
+  "flow": "validate",
+  "model": "claude-sonnet-5-5",
+  "metrics": [
+    {
+      "id": "complete",
+      "label": "Complete",
+      "kind": "binary"
+    },
+    {
+      "id": "verdict",
+      "label": "Verdict",
+      "kind": "binary"
+    },
+    {
+      "id": "fields",
+      "label": "Fields",
+      "kind": "binary"
+    },
+    {
+      "id": "no_false_pass",
+      "label": "No false pass",
+      "kind": "binary"
+    },
+    {
+      "id": "no_harm",
+      "label": "No harm",
+      "kind": "binary"
+    }
+  ],
+  "perf_fields": [
+    "latency_s",
+    "tool_calls",
+    "turns",
+    "validator_calls",
+    "files_changed",
+    "usage"
+  ],
+  "harness_paths": [
+    "evals/lib/claude-run.mjs",
+    "evals/lib/judge.mjs",
+    "evals/validate/grade.mjs",
+    "evals/test/grade.mjs",
+    "evals/spec-generation/grade.mjs"
+  ],
+  "harness_note": "harness_paths lists every module the grader loads, including transitive ones: grade.mjs imports makeWorkspace, changes, and DD_VERSION from evals/test/grade.mjs, which imports toolEnv from evals/spec-generation/grade.mjs. An edit there can change grading, so it invalidates the sha.",
+  "prices": {
+    "claude-sonnet-5-5": {
+      "in": 2,
+      "out": 10
+    },
+    "claude-haiku-4-5": {
+      "in": 1,
+      "out": 5
+    }
+  },
+  "train_ids": [
+    "spec-valid-basic",
+    "spec-old-action-shape",
+    "spec-several-errors",
+    "spec-wrong-type",
+    "spec-missing-required",
+    "spec-step-timeout",
+    "spec-shorthand-valid",
+    "config-valid-json",
+    "config-invalid-enum",
+    "config-yaml-valid",
+    "config-yaml-syntax-error",
+    "config-deprecated-debug",
+    "pasted-spec-invalid",
+    "pasted-config-valid",
+    "yesno-would-load-invalid",
+    "not-a-spec-package-json",
+    "fix-requested"
+  ],
+  "test_ids": [
+    "spec-valid-yaml",
+    "spec-old-shape-find",
+    "spec-unknown-action",
+    "spec-empty-steps",
+    "spec-unknown-top-key",
+    "spec-goto-missing-url",
+    "spec-goto-no-scheme",
+    "spec-uppercase-method-valid",
+    "spec-string-timeout-valid",
+    "spec-yaml-syntax-error",
+    "config-invalid-multi",
+    "config-unknown-key-typo",
+    "config-yaml-invalid",
+    "pasted-spec-valid",
+    "pasted-spec-old-shape",
+    "yesno-config-deprecated-valid",
+    "not-a-spec-fixture"
+  ],
+  "reps": 3,
+  "goal": {
+    "target": "complete",
+    "direction": "higher",
+    "hold": [
+      "no_false_pass",
+      "no_harm"
+    ]
+  },
+  "scope": {
+    "will_change": [
+      "SKILL.md body of doc-detective-validate",
+      "src/skills/_shared/"
+    ],
+    "off_limits": [
+      "frontmatter descriptions",
+      "scripts",
+      "hooks",
+      "build.js",
+      "evals/"
+    ]
+  },
+  "split_note": "34 cases written before any session ran, 17 held out (50%). Every case's verdict and error lines come from doc-detective@5.6.3 validate. Train holds one of each shape: a valid spec, the old action shape, four errors in one file, a wrong type, a missing required field, a step-level key that belongs in the action, valid shorthand, a valid and an invalid JSON config, a valid and a broken YAML config, deprecated config keys, pasted invalid spec and pasted valid config, a yes-or-no question, valid JSON that isn't a spec, and a request to fix. The held-out side holds the variants: a YAML spec, the old shape with an old action name, an unknown action, empty steps, a config key in a spec, a goTo with no URL or no scheme, two inputs that look wrong but pass (an uppercase method, a string timeout), a broken YAML spec, three invalid configs (several errors, a typo'd key, YAML), a pasted valid spec and old-shape spec, a yes-or-no question with deprecated keys, and test data that isn't a spec.",
+  "harness_sha": "c257d8874de0f934997ef02899f72ce5afd74148aacdb0ee1d0bc971f5030db9"
+}

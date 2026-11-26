@@ -1,0 +1,16 @@
+{
+  "specId": "about",
+  "logLevel": "debug",
+  "tests": [
+    {
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "find": "Elements"
+        }
+      ]
+    }
+  ]
+}

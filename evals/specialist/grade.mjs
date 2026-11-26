@@ -63,7 +63,7 @@ export async function loadCases() {
   const ids = readdirSync(CASES).sort();
   const only = process.env.EVAL_ONLY?.split(',').map(s => s.trim()).filter(Boolean);
   const unknown = (only ?? []).filter(id => !ids.includes(id));
-  if (unknown.length) throw new Error(`EVAL_ONLY names no case ${unknown.join(', ')}`);
+  if (unknown.length) throw new Error(`EVAL_ONLY: no case named ${unknown.join(', ')}`);
   for (const id of only?.length ? ids.filter(id => only.includes(id)) : ids) {
     const cdir = join(CASES, id);
     const e = JSON.parse(readFileSync(join(cdir, 'expected.json'), 'utf8'));
@@ -94,9 +94,9 @@ function splitFences(md) {
       // with four backticks and holds more is inline code, not a fence.
       const m = line.match(/^([ \t]*)(`{3,}|~{3,})(.*)$/);
       if (m && !(m[2][0] === '`' && m[3].includes('`')))
-        open = { indent: m[1].length, fence: m[2], lang: lower(m[3].trim().match(/^[^\s{]*/)[0]), lines: [] };
+        open = { indent: m[1].length, close: new RegExp(`^[ \\t]*${m[2][0] === '`' ? '`' : '~'}{${m[2].length},}[ \\t]*$`), lang: lower(m[3].trim().match(/^[^\s{]*/)[0]), lines: [] };
       else prose.push(line);
-    } else if (new RegExp(`^[ \\t]*${open.fence[0] === '`' ? '`' : '~'}{${open.fence.length},}[ \\t]*$`).test(line)) {
+    } else if (open.close.test(line)) {
       blocks.push({ lang: open.lang, text: open.lines.join('\n') });
       open = null;
     } else open.lines.push(line.slice(Math.min(open.indent, line.match(/^[ \t]*/)[0].length)));

@@ -50,7 +50,7 @@ runEval({
         tool_calls: calls.length,
         refs_read: calls.filter(tc => tc.name === 'Read' && /references|SKILL\.md/.test(tc.input?.file_path ?? '')).length,
         web_fetches: calls.filter(tc => tc.name === 'WebFetch' || tc.name === 'WebSearch').length,
-        num_turns: run.num_turns,
+        num_turns: run.num_turns ?? null,
         cc_cost_usd: run.cost_usd_reported,
         facts: { answer },
       };

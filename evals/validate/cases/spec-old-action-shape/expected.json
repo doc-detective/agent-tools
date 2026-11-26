@@ -1,0 +1,11 @@
+{
+  "kind": "spec",
+  "input": "tests/signup.spec.json",
+  "args": "tests/signup.spec.json",
+  "verdict": "invalid",
+  "errors": [
+    "tests[0].steps[0]: unknown action `action`.",
+    "tests[0].steps[1]: unknown action `action`."
+  ],
+  "hard": "The old `{\"action\": \"goTo\"}` step shape. Both old-shape steps fail; the third step is fine."
+}

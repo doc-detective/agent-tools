@@ -1,0 +1,17 @@
+{
+  "tests": [
+    {
+      "testId": "profile",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "click": {
+            "selector": "#profile"
+          }
+        }
+      ]
+    }
+  ]
+}

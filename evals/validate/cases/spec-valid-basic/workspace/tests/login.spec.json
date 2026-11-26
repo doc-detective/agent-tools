@@ -1,0 +1,23 @@
+{
+  "tests": [
+    {
+      "testId": "login",
+      "steps": [
+        {
+          "goTo": "http://localhost:8092"
+        },
+        {
+          "find": "Elements"
+        },
+        {
+          "click": {
+            "elementText": "Elements"
+          }
+        },
+        {
+          "screenshot": "login.png"
+        }
+      ]
+    }
+  ]
+}

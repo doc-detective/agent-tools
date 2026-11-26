@@ -1,6 +1,6 @@
 # Evals
 
-Seven evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
+Eight evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
 
 | Eval | Question it answers | Headline metric |
 |---|---|---|
@@ -11,6 +11,7 @@ Seven evals measure the plugin the way users meet it: through Claude Code, with 
 | [install-github-action](install-github-action/) | Does `/doc-detective-install-github-action` add one valid workflow that runs Doc Detective the way the request and the repo need, and tell the user what's left? | `complete`: valid workflow, fits the request, no harm, right report |
 | [init](init/) | Does `/doc-detective-init` set up Doc Detective in a repo that doesn't use it yet? It should find the docs, write a config, and test the procedures. Then it should report failures by kind and offer CI. | `complete`: ran, config, tests, no harm, CI, report |
 | [specialist](specialist/) | Does the `doc-detective-specialist` agent answer a hard Doc Detective question correctly, with snippets that validate and run, and without inventing features? | `complete`: valid snippets, working snippets, correct, nothing invented |
+| [validate](validate/) | Does `/doc-detective-validate` give the right verdict on a spec or config, name every invalid field, and never pass an invalid file? | `complete`: right verdict, every field, no false pass, no harm |
 
 Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (`baseline`, `v1`, `v2`, and so on). `_state.json` in each eval's directory declares its metrics and the files whose hash the runner checks before it spends anything.
 
@@ -126,6 +127,23 @@ Each case is a small docs repo, one git commit with a GitHub `origin` remote, un
 
 [install-github-action/cases.md](install-github-action/cases.md) describes the 32 cases and the `expected.json` format. `node evals/install-github-action/check-references.mjs` runs no sessions. It checks that each reference outcome scores `complete`, and that each planted wrong outcome fails the metric it names. It calls the judge about 60 times, under $1.
 
+## Run the validate eval
+
+```bash
+DD_NODE_DIR=<node dir> \
+  node evals/validate/run-eval.mjs --flow .claude/hillclimb/validate --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case is a Doc Detective spec or config: a file in a small docs repo, one git commit, or JSON pasted into the prompt. The session gets `/doc-detective:doc-detective-validate <args>`: a path, `--config <path>`, or a question in words. As in the test and init evals, a bare `doc-detective` in the session runs `doc-detective@5.6.3`. The skill's `npx doc-detective@5` resolves to the same version. The grade reads the final report and the workspace, and the judge reads only what the rules can't settle:
+
+- `verdict`: the report's last `Validation PASSED` or `Validation FAILED` is the right one. With neither, a `claude-haiku-4-5` judge reads the verdict from the report.
+- `fields`: the report names the field of every error the validator gives, by `tests[0].steps[1]`, `tests.0.steps.1`, or `/tests/0/steps/1`. When it gives other field paths, the judge decides whether it reports any of them as an error.
+- `no_false_pass`: on an invalid input, the report never says it passes.
+- `no_harm`: no file changed or added, except a file the prompt asked to fix.
+
+Each case's verdict and error lines come from `doc-detective@5.6.3 validate` itself. [validate/cases.md](validate/cases.md) describes the 34 cases and the `expected.json` format. `node evals/validate/check-references.mjs` runs no sessions. It reruns the validator on every case and fails one whose `expected.json` no longer matches. It also checks that each reference report scores `complete`, and that planted wrong reports fail the metric they target. It calls the judge about 30 times, under $1.
+
+
 ## Run the specialist eval
 
 ```bash
@@ -145,7 +163,7 @@ The judge runs twice per answer, at about $0.01 a run. The test servers must be 
 
 [specialist/cases.md](specialist/cases.md) describes the 60 cases, the `expected.json` format, and the metrics. `node evals/specialist/check-references.mjs` runs no sessions. It checks that each reference answer scores `complete`. It also checks that each wrong answer fails the metric it names, such as a v2-shape step or an invented flag. It calls the judge about 230 times, about $1.50. `NO_JUDGE=1` skips the judged checks for free, which helps while you write cases.
 
-The test, init, install-github-action, and specialist runners use the shared runner code in [lib/runner.mjs](lib/runner.mjs). The routing, spec-generation, and inline runners carry their own copy of the same code.
+The test, init, install-github-action, validate, and specialist runners use the shared runner code in [lib/runner.mjs](lib/runner.mjs). The routing, spec-generation, and inline runners carry their own copy of the same code.
 
 ## Run a subset
 
@@ -163,7 +181,7 @@ A rerun resumes, skipping each case and rep already in `results.jsonl`. When you
 
 ## Approve changed eval code
 
-The runner refuses to start when its code changed since someone last approved it. That code is the eval's runner, the shared `evals/lib/runner.mjs` (test, init, install-github-action, and specialist), and `evals/lib/claude-run.mjs`. It also covers the files in `_state.json`'s `harness_paths`, and `package-lock.json`. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
+The runner refuses to start when its code changed since someone last approved it. That code is the eval's runner, the shared `evals/lib/runner.mjs` (test, init, install-github-action, validate, and specialist), and `evals/lib/claude-run.mjs`. It also covers the files in `_state.json`'s `harness_paths`, and `package-lock.json`. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
 
 ## Read the results
 
