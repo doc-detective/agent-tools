@@ -165,7 +165,7 @@ A relative path (`input`, `output`, `outputDir`, `cacheDir`, `loadVariables`, `b
 
 ### Environment variable masking
 
-- Every output shows `***NAME***` for each substituted `$NAME`, each variable from `.env`, `loadVariables`, or a credential file, and each variable whose name contains `TOKEN`, `SECRET`, `PASSWORD`, `API_KEY`, `PRIVATE_KEY`, or `CREDENTIAL`. Values under 4 characters aren't masked. Steps and assertions use real values.
+- Logs, reports, and results show `***NAME***` for each substituted `$NAME`, each variable from `.env`, `loadVariables`, or a credential file, and each variable whose name contains `TOKEN`, `SECRET`, `PASSWORD`, `API_KEY`, `PRIVATE_KEY`, or `CREDENTIAL`. Values under 4 characters aren't masked. Steps and assertions use real values. Pixels are a separate case: screenshots blur elements holding a masked value, with gaps ("Redaction and blur"), and recordings show the page unblurred ("Narration and audio").
 - `publicVariables` (config, spec, or test; `*` wildcard) unmasks a name for the whole run.
 
 Sources: reference/cli.mdx, docs/ci/reporters-and-artifacts.mdx, docs/ci/upgrade-to-v5.mdx, docs/ci/secrets.mdx, docs/troubleshooting/setup-issues.mdx, schemas/config_v3.schema.json, adrs/01165-one-config-env-var-and-one-precedence-order.md, adrs/01192-one-path-rule-for-every-config-source.md

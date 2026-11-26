@@ -27,6 +27,8 @@ With options:
 ```
 
 **Options:**
+- `origin`: Protocol and domain joined to a `url` that starts with `/`, such as `"https://my-app.com"`. Overrides `origin` in the config for this step.
+- `params`: Object of query parameters appended to the resolved URL, merged over config `originParams`. Step keys win, and a key already in `url` is replaced. Values take `$VAR` substitution.
 - `waitUntil`: Object, not a string such as `"networkidle"`. All fields are optional. The network and DOM checks run on every `goTo`, even without `waitUntil`, using the defaults below.
   - `networkIdleTime`: Milliseconds with no new network requests (default `500`, `0` for no wait)
   - `domIdleTime`: Milliseconds with no DOM changes (default `1000`, `0` for no wait)
