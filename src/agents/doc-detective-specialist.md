@@ -4,7 +4,7 @@ description: "Use this agent to answer questions about Doc Detective, including 
 model: inherit
 metadata:
   organization: Doc Detective
-  version: '3.4.1'
+  version: '3.4.2'
   date: November 2026
 ---
 

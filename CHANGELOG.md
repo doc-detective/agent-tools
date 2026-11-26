@@ -1,3 +1,9 @@
+## [3.4.2](https://github.com/doc-detective/agent-tools/compare/v3.4.1...v3.4.2) (2026-11-26)
+
+### Bug Fixes
+
+* **agents:** read specialist references by plugin path, add a run-time behavior reference ([#137](https://github.com/doc-detective/agent-tools/issues/137)) ([0fcb385](https://github.com/doc-detective/agent-tools/commit/0fcb3855ba398e9c3a535888de038aed00e1c8ba))
+
 ## [3.4.1](https://github.com/doc-detective/agent-tools/compare/v3.4.0...v3.4.1) (2026-11-26)
 
 ### Bug Fixes

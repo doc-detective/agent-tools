@@ -2,7 +2,7 @@
 name: doc-detective-test
 description: 'Run Doc Detective tests to check that documented procedures still work as written, from a doc file, an existing spec, or docs with inline tests, and optionally fix failing tests. Use for test my docs, verify these steps, or run-and-fix requests. To write a spec without running it, use doc-detective-generate. Not for Playwright, unit, or app end-to-end tests, or for testing Doc Detective itself.'
 metadata:
-  version: '3.4.1'
+  version: '3.4.2'
   organization: Doc Detective
   date: November 2026
   abstract: Convert documentation procedures into executable Doc Detective test specifications, run them, fix failures, and verify the documentation matches actual behavior.
