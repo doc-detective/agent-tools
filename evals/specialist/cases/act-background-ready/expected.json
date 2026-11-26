@@ -1,0 +1,46 @@
+{
+  "category": "syntax",
+  "question": "I start a local server for later steps with `runShell` and `\"background\": {\"name\": \"api\"}`. The command is `node -e \"require('http').createServer((q,s)=>s.end('ok')).listen(4123,()=>console.log('Listening on 4123'))\"`. I added `\"stdio\": \"Listening on 4123\"` to the `runShell` so the step fails if the server doesn't come up, but Doc Detective seems to ignore it: the step passes even when I change it to text the server never prints. How do I make it wait until the server is ready, and stop the server afterward?",
+  "facts": [
+    {
+      "text": "In background mode Doc Detective doesn't apply the `runShell` `stdio` or `exitCodes` checks, because the process doesn't exit during the step.",
+      "sources": ["docs/fern/pages/docs/actions/runShell.mdx", "src/common/src/schemas/src_schemas/runShell_v3.schema.json"]
+    },
+    {
+      "text": "Put the readiness check in `background.waitUntil` (`stdio`, `port`, `httpGet`, or `delayMs`); the step fails if the process isn't ready before `timeout`.",
+      "sources": ["docs/fern/pages/docs/actions/runShell.mdx", "src/common/src/schemas/src_schemas/runShell_v3.schema.json"]
+    },
+    {
+      "text": "Stop the process with a `closeSurface` step that names it, such as `{\"closeSurface\": \"api\"}`.",
+      "sources": ["docs/fern/pages/docs/actions/runShell.mdx", "docs/fern/pages/docs/actions/closeSurface.mdx", "src/common/src/schemas/src_schemas/closeSurface_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "The top-level `runShell.stdio` waits for that output when `background` is set.",
+    "Doc Detective leaves a background process running after the run ends unless a step kills it.",
+    "`waitUntil` goes on the `runShell` object, beside `background`."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that starts the server in the background and waits for it with waitUntil",
+      "require": [{ "runShell": ["4123", "\"background\"", "\"waitUntil\""] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "waits for output the server never prints",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"waitUntil\": { \"stdio\": \"Listening on 4123\", \"port\": 4123 }", "to": "\"waitUntil\": { \"stdio\": \"Server ready\", \"port\": 4123 }" }]
+    },
+    {
+      "why": "puts waitUntil beside background",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"background\": {\n              \"name\": \"api\",\n              \"waitUntil\": { \"stdio\": \"Listening on 4123\", \"port\": 4123 }\n            },", "to": "\"background\": { \"name\": \"api\" },\n            \"waitUntil\": { \"stdio\": \"Listening on 4123\", \"port\": 4123 }," }]
+    },
+    {
+      "why": "says the top-level stdio works in background mode",
+      "fails": "no_invention",
+      "answer": "Keep `stdio` on the `runShell`. In background mode Doc Detective waits until that text appears before it continues, so the step only passes once the server prints `Listening on 4123`. The server keeps running after the run ends, so stop it yourself with `npx kill-port 4123`."
+    }
+  ]
+}

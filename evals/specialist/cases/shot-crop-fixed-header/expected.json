@@ -1,0 +1,47 @@
+{
+  "category": "false_premise",
+  "question": "Our docs site has an 80px fixed header. I'm testing against http://localhost:8092/crop-sticky-header.html and want a cropped screenshot of the `#learn-more` button, far down the page, with 10px of padding. How do I set a `scrollOffset` on `crop` so the header doesn't cover the button? Earlier I tried cropping to `main` and got \"Element can't fit in viewport.\"",
+  "facts": [
+    {
+      "text": "`crop` has no `scrollOffset` option or any other scroll setting.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/screenshot_v3.schema.json"]
+    },
+    {
+      "text": "Before the capture, Doc Detective scrolls the crop target to the center of the viewport, so a fixed header or footer at the viewport's edge doesn't cover it.",
+      "sources": ["adrs/01204-center-crop-targets-before-capture.md", "docs/fern/pages/docs/test-docs/find-elements-by-image.mdx"]
+    },
+    {
+      "text": "\"Element can't fit in viewport.\" means the element plus its padding is larger than the viewport; crop to a smaller element or give the context a larger `viewport`.",
+      "sources": ["adrs/01204-center-crop-targets-before-capture.md", "docs/fern/pages/docs/actions/screenshot.mdx", "docs/fern/pages/docs/config/contexts.mdx"]
+    }
+  ],
+  "must_not": [
+    "`crop` accepts a `scrollOffset` (or a similar offset or margin) field.",
+    "Doc Detective scrolls the crop target to the top edge of the viewport.",
+    "Adding `padding` fixes \"Element can't fit in viewport.\""
+  ],
+  "snippet": {
+    "run": {
+      "does": "that crops a screenshot to `#learn-more` with padding",
+      "setup": [{ "goTo": "http://localhost:8092/crop-sticky-header.html" }],
+      "require": [{ "screenshot": ["learn-more", "padding"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "the invented scrollOffset field",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"crop\": { \"selector\": \"#learn-more\", \"padding\": 10 }", "to": "\"crop\": { \"selector\": \"#learn-more\", \"padding\": 10, \"scrollOffset\": 80 }" }]
+    },
+    {
+      "why": "crops to an element larger than the viewport",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"crop\": { \"selector\": \"#learn-more\", \"padding\": 10 }", "to": "\"crop\": { \"selector\": \"main\", \"padding\": 10 }" }]
+    },
+    {
+      "why": "accepts the premise",
+      "fails": "no_invention",
+      "answer": "Set `scrollOffset` to the header's height so Doc Detective scrolls the button 80px below the top edge before it crops:\n\n```json\n{ \"screenshot\": { \"path\": \"learn-more.png\", \"crop\": { \"selector\": \"#learn-more\", \"padding\": 10, \"scrollOffset\": 80 } } }\n```\n\nFor `main`, set `padding` to 0 so it fits."
+    }
+  ]
+}

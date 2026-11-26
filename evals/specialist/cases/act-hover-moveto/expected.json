@@ -1,0 +1,47 @@
+{
+  "category": "false_premise",
+  "question": "On http://localhost:8092/ I want the cursor to rest on the \"Standard Button\" so its hover state shows in my recording. I wrote `{\"find\": {\"elementText\": \"Standard Button\", \"hover\": true}}`, and now the run exits 2 before anything runs. What's the hover syntax in v5?",
+  "facts": [
+    {
+      "text": "Doc Detective has no `hover` action or `find` `hover` option; an unknown key like `hover` makes the spec invalid, so the run exits 2.",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    },
+    {
+      "text": "Set `moveTo: true` on `find` to move the cursor to the element, which also scrolls it into view if needed.",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    },
+    {
+      "text": "`moveTo` defaults to `false`, so a bare `find` leaves the cursor where it is.",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`hover` is a Doc Detective action, or a `find` or `click` option, in v5 or an earlier version.",
+    "`find` moves the cursor to the element by default.",
+    "Hovering needs `runBrowserScript` because Doc Detective can't move the cursor."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that moves the cursor to the Standard Button",
+      "setup": [{ "goTo": "http://localhost:8092/" }],
+      "require": [{ "find": ["Standard Button", "\"moveTo\":true"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "keeps the hover key",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"moveTo\": true", "to": "\"hover\": true" }]
+    },
+    {
+      "why": "wrong case in the element text",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"elementText\": \"Standard Button\",", "to": "\"elementText\": \"Standard button\", \"timeout\": 1000," }]
+    },
+    {
+      "why": "treats hover as a real action",
+      "fails": "no_invention",
+      "answer": "In v5, `hover` moved from a `find` option to its own action. Use a `hover` step instead:\n\n```json\n{ \"hover\": \"Standard Button\" }\n```\n"
+    }
+  ]
+}

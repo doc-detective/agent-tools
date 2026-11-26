@@ -1,0 +1,41 @@
+{
+  "category": "error",
+  "question": "On our Windows build agent, `{\"runShell\": {\"command\": \"echo %OS%\", \"stdio\": \"Windows_NT\"}}` fails because the output is literally `%OS%`. The same command prints `Windows_NT` when I run it in a Command Prompt on that machine. How do I fix the step?",
+  "facts": [
+    {
+      "text": "`runShell` runs commands in `bash` by default on every platform, Windows included (Git Bash there), so cmd syntax like `%OS%` isn't expanded.",
+      "sources": ["docs/fern/pages/docs/actions/runShell.mdx", "src/common/src/schemas/src_schemas/runShell_v3.schema.json"]
+    },
+    {
+      "text": "Set `shell` to `cmd` (or `powershell`) on the step or in the config, which works only on Windows, or rewrite the command in bash syntax such as `echo $OS`.",
+      "sources": ["docs/fern/pages/docs/actions/runShell.mdx", "src/common/src/schemas/src_schemas/runShell_v3.schema.json", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`runShell` uses `cmd.exe` by default on Windows.",
+    "`shell: \"cmd\"` or `shell: \"powershell\"` also works on Linux and macOS."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that echoes the OS variable and expects Windows_NT",
+      "require": [{ "runShell": ["Windows_NT"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "keeps the default shell",
+      "fails": "snippets_run",
+      "replace": [{ "from": "            \"shell\": \"cmd\",\n", "to": "" }]
+    },
+    {
+      "why": "misnames the shell",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"shell\": \"cmd\",", "to": "\"shell\": \"cmd.exe\"," }]
+    },
+    {
+      "why": "says cmd is the default",
+      "fails": "no_invention",
+      "answer": "`runShell` already uses `cmd.exe` on Windows, so `%OS%` should expand. The variable isn't set in the agent's service account. Set `OS` in a `.env` file next to your spec and rerun."
+    }
+  ]
+}

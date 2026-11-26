@@ -1,0 +1,51 @@
+{
+  "category": "concept",
+  "question": "Our CI script runs `npx doc-detective --input docs --no-auto-record` so runs don't make videos, but one spec still leaves an .mp4 under `.doc-detective/runs/<runId>/.../recordings/` every run. A teammate says the flag is broken in 5.x. Is it? What do I change so nothing gets auto-recorded?",
+  "facts": [
+    {
+      "text": "`--no-auto-record` sets `autoRecord` at the config level only.",
+      "sources": [
+        "docs/fern/pages/docs/test-docs/automatic-recording.mdx",
+        "src/common/src/schemas/src_schemas/config_v3.schema.json"
+      ]
+    },
+    {
+      "text": "A spec or test that sets `autoRecord: true` overrides the config level (test over spec over config), so that spec still records; the flag works as designed.",
+      "sources": [
+        "docs/fern/pages/docs/test-docs/automatic-recording.mdx",
+        "docs/fern/pages/docs/actions/record.mdx",
+        "src/common/src/schemas/src_schemas/spec_v3.schema.json",
+        "src/common/src/schemas/src_schemas/test_v3.schema.json"
+      ]
+    },
+    {
+      "text": "To stop it, remove `autoRecord: true` from that spec or its tests, or set it to `false` there.",
+      "sources": [
+        "docs/fern/pages/docs/test-docs/automatic-recording.mdx",
+        "src/common/src/schemas/src_schemas/spec_v3.schema.json"
+      ]
+    }
+  ],
+  "must_not": [
+    "`--no-auto-record` overrides `autoRecord` set in a spec or test.",
+    "The flag is broken or the behavior is a bug in Doc Detective 5.",
+    "A different flag or environment variable forces automatic recording off over spec- and test-level settings."
+  ],
+  "wrong": [
+    {
+      "why": "a flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "answer": "The flag only covers the default contexts. Use the stronger flag, which overrides every spec and test:\n\n```bash\nnpx doc-detective --input docs --no-record\n```\n"
+    },
+    {
+      "why": "says the CLI flag wins over the spec",
+      "fails": "no_invention",
+      "answer": "Command-line flags always win over spec and test settings, so `--no-auto-record` should turn recording off everywhere. Your teammate is right: it's a 5.x bug. Set `\"autoRecord\": false` in `.doc-detective.json` as well until it's fixed."
+    },
+    {
+      "why": "never names the override",
+      "fails": "correct",
+      "answer": "The flag works. Videos in the run folder can also come from screenshots and reporters, so check that `autoScreenshot` is off too, and clear out `.doc-detective/` between runs."
+    }
+  ]
+}

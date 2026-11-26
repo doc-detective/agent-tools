@@ -1,0 +1,36 @@
+{
+  "category": "error",
+  "question": "I want one step to run only when CI sets `RUN_SLOW=true`, so I gave it `\"if\": \"$RUN_SLOW == 'true'\"`. Even with the variable exported before I run Doc Detective, that step always shows SKIPPED, while the steps after it still run. What's going on, and how should I gate it?",
+  "facts": [
+    {
+      "text": "An `if` condition doesn't substitute environment variables, so `$RUN_SLOW` stays literal text and the condition is false even when the variable is set.",
+      "sources": ["docs/fern/pages/reference/expressions.mdx", "docs/fern/pages/docs/tests/overview.mdx"]
+    },
+    {
+      "text": "A false `if` skips the step (SKIPPED, not FAIL) without running it, and the steps after it still run.",
+      "sources": ["docs/fern/pages/docs/tests/overview.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    },
+    {
+      "text": "To gate on the variable, check it in an earlier step (such as `runShell` with `test \"$RUN_SLOW\" = true` and a `stepId`) and use a step-level `if` on `$$steps.<stepId>.outputs`, or gate the test's context with `requires` and `env: [\"RUN_SLOW\"]`, which skips the context when the variable is unset or empty.",
+      "sources": ["docs/fern/pages/docs/tests/overview.mdx", "docs/fern/pages/docs/config/contexts.mdx", "src/common/src/schemas/src_schemas/context_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "An `if` condition substitutes `$VAR` environment variables, so the variable isn't reaching Doc Detective.",
+    "A false `if` condition fails the step.",
+    "Writing the condition as `\"$RUN_SLOW\"` alone or `\"${RUN_SLOW} == true\"` makes it read the variable."
+  ],
+  "snippet": {},
+  "wrong": [
+    {
+      "why": "blames the export and keeps the env var in the if",
+      "fails": "no_invention",
+      "answer": "Doc Detective substitutes `$RUN_SLOW` in the `if`, so if the step skips, the variable isn't reaching it. Export it in the same shell, or put it in a `.env` file:\n\n```json\n{\n  \"tests\": [\n    {\n      \"steps\": [\n        { \"if\": \"$RUN_SLOW == 'true'\", \"runShell\": \"npm run test:slow\" }\n      ]\n    }\n  ]\n}\n```\n"
+    },
+    {
+      "why": "routing entry with an invalid action",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "\"if\": \"$$steps.slow-flag.outputs.exitCode == 0\",", "to": "\"if\": \"$$steps.slow-flag.outputs.exitCode == 0\",\n          \"onSkip\": [{ \"stop\": \"spec\" }]," }]
+    }
+  ]
+}

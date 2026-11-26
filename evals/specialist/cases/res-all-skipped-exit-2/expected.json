@@ -1,0 +1,36 @@
+{
+  "category": "concept",
+  "question": "We run the same Doc Detective job on Windows, macOS, and Linux runners. One spec's tests all have `\"runOn\": [{ \"platforms\": [\"linux\", \"mac\"] }]`, and that spec is the only input for one job. Since we moved to v5, the Windows leg of that job ends with \"Nothing was tested: every test was skipped. First reason: this system can't run a `linux` context. Run where these tests apply, or pass --no-exit-on-fail.\" and exits 2, even though no test failed. On v4 it was green. Meanwhile, on Linux, another test with both a `windows` and a `linux` runOn entry reports PASS even though its Windows context was skipped. Is a skip a failure now, and is that PASS a bug?",
+  "facts": [
+    {
+      "text": "A SKIPPED result doesn't fail a run, but when every test in the run is skipped, nothing was tested, so v5 exits 2 (v4 exited 0).",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "docs/fern/pages/docs/ci/reporters-and-artifacts.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "A test is SKIPPED only when every one of its contexts is skipped, so a test with one passing context and one skipped context reports PASS; that's expected, not a bug.",
+      "sources": ["docs/fern/pages/docs/tests/overview.mdx"]
+    },
+    {
+      "text": "The fix is to run that job only on the platforms the tests apply to (such as a workflow `if:` on the runner OS), or pass `--no-exit-on-fail` or set `exitOnFail: false`, which makes an all-skipped run exit 0.",
+      "sources": ["docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "A SKIPPED test or context counts as a failure, or exit code 2 means a test failed.",
+    "A test with any skipped context is reported as SKIPPED, or the PASS is a bug."
+  ],
+  "wrong": [
+    {
+      "why": "says skips now fail the run",
+      "fails": "no_invention",
+      "answer": "Yes. In v5 a SKIPPED test counts as a failure, which is why the Windows job exits 2. The PASS on Linux is a bug: a test with any skipped context should report SKIPPED. Remove the `runOn` entries so every test runs everywhere."
+    },
+    {
+      "why": "misses the context roll-up",
+      "fails": "correct",
+      "replace": [
+        { "from": "The PASS on Linux is correct. A test is SKIPPED only when every one of its contexts is skipped. When one context passes and another skips, the test passes, and the skipped context shows up in the results and in the summary's `Skipped` list.", "to": "The PASS on Linux is fine." }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "category": "compare",
+  "question": "I'm recording a walkthrough of http://localhost:8092/ with `record`. Midway through I have a `screenshot` step with `\"annotations\": [{\"callout\": \"Standard Button\", \"label\": \"Click here\", \"transition\": {\"enter\": \"fade\"}, \"duration\": 3000}]`. The PNG has the callout, but the video never shows it, and the fade doesn't seem to do anything. How do I get the callout into the recording?",
+  "facts": [
+    {
+      "text": "A screenshot's `annotations` are composited into the saved image and never touch the page, so they never appear in a recording.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "docs/fern/pages/docs/actions/annotate.mdx", "src/common/src/schemas/src_schemas/screenshot_v3.schema.json"]
+    },
+    {
+      "text": "To show the callout in the video, draw it with an `annotate` step (`add`); it stays on the page across steps until an `annotate` step clears it, its `duration` elapses, or the context ends.",
+      "sources": ["docs/fern/pages/docs/actions/annotate.mdx", "src/common/src/schemas/src_schemas/annotate_v3.schema.json"]
+    },
+    {
+      "text": "`transition` and `duration` do nothing on a still screenshot's annotations; they apply only to annotations an `annotate` step draws.",
+      "sources": ["docs/fern/pages/docs/actions/annotate.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "A screenshot's `annotations` show up in a recording that's running at the same time.",
+    "An option on a screenshot annotation, such as `persist`, `track`, or `duration`, keeps it on the page so the recording shows it."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that draws the callout on the Standard Button with `annotate`",
+      "setup": [{ "goTo": "http://localhost:8092/" }],
+      "require": [{ "annotate": ["callout", "Standard Button"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "annotates an element the page lacks",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"callout\": \"Standard Button\"", "to": "\"callout\": \"Standard Button Missing\"" }]
+    },
+    {
+      "why": "an annotate step with none of add, update, or clear",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{ \"annotate\": { \"clear\": [\"guide\"] } }", "to": "{ \"annotate\": { \"remove\": [\"guide\"] } }" }]
+    },
+    {
+      "why": "invents a persist option on the screenshot",
+      "fails": "no_invention",
+      "answer": "Screenshot annotations are removed from the page right after the capture. Add `\"persist\": true` to the annotation so it stays on the page, and the recording picks it up:\n\n```json\n{ \"screenshot\": { \"path\": \"step.png\", \"annotations\": [{ \"callout\": \"Standard Button\", \"label\": \"Click here\" }] } }\n```\n\nThe fade needs `durationMs` to take effect."
+    },
+    {
+      "why": "says screenshot annotations reach the video",
+      "fails": "correct",
+      "answer": "The callout is in the video, but only for the instant the screenshot is taken, so it's easy to miss. Raise `duration` to keep it up longer."
+    }
+  ]
+}

@@ -1,0 +1,43 @@
+{
+  "category": "error",
+  "question": "On http://localhost:8092/annotate-late-element.html, my screenshot step with `\"annotations\": [{\"outline\": \"#late-panel\"}]` fails with: \"Couldn't resolve every annotation target. Couldn't find the element to annotate: #late-panel. Couldn't find element `#late-panel`.\" The panel shows up about 6.5 seconds after the page loads. I tried adding `\"timeout\": 10000` next to `outline`, but then the spec doesn't validate. How do I fix it?",
+  "facts": [
+    {
+      "text": "An annotation's element target waits up to 5000 ms by default and then fails the step, so a panel that appears after about 6.5 seconds isn't found.",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json"]
+    },
+    {
+      "text": "`timeout` goes on the object form of the target, such as `{\"outline\": {\"selector\": \"#late-panel\", \"timeout\": 10000}}`, not beside `outline` (or a `find` with a longer `timeout` waits for the panel before the screenshot).",
+      "sources": ["docs/fern/pages/docs/actions/screenshot.mdx", "docs/fern/pages/docs/test-docs/annotate-screenshots.mdx", "src/common/src/schemas/src_schemas/annotation_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`timeout` is a field of the annotation object, next to `outline`.",
+    "When an annotation's target is missing, Doc Detective saves the screenshot without that annotation.",
+    "The string shorthand target accepts a timeout, such as `\"#late-panel\"` with a `timeout` suffix or option."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that annotates `#late-panel` in a screenshot on annotate-late-element.html",
+      "setup": [{ "goTo": "http://localhost:8092/annotate-late-element.html" }],
+      "require": [{ "screenshot": ["late-panel"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "timeout shorter than the panel's delay",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"timeout\": 10000 }", "to": "\"timeout\": 3000 }" }]
+    },
+    {
+      "why": "timeout beside outline",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "{ \"outline\": { \"selector\": \"#late-panel\", \"timeout\": 10000 } }", "to": "{ \"outline\": \"#late-panel\", \"timeout\": 10000 }" }]
+    },
+    {
+      "why": "says a missing target is skipped",
+      "fails": "no_invention",
+      "answer": "A missing annotation target only drops that annotation; Doc Detective saves the screenshot without it. The step itself fails only because the spec is invalid. Fix it by adding `\"timeout\": 10000` to the annotation next to `outline`."
+    }
+  ]
+}

@@ -1,6 +1,6 @@
 # Evals
 
-Seven evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
+Eight evals measure the plugin the way users meet it: through Claude Code, with only this plugin loaded. Each run rebuilds `plugins/doc-detective/` from `src/` first, so an edit to a skill is what gets measured.
 
 | Eval | Question it answers | Headline metric |
 |---|---|---|
@@ -10,6 +10,7 @@ Seven evals measure the plugin the way users meet it: through Claude Code, with 
 | [test](test/) | Does `/doc-detective-test --fix` run a user's tests, name why each failed, and fix only what belongs to the test? | `complete`: ran, right cause, right files, fixed, no harm |
 | [install-github-action](install-github-action/) | Does `/doc-detective-install-github-action` add one valid workflow that runs Doc Detective the way the request and the repo need, and tell the user what's left? | `complete`: valid workflow, fits the request, no harm, right report |
 | [init](init/) | Does `/doc-detective-init` set up Doc Detective in a repo that doesn't use it yet? It should find the docs, write a config, and test the procedures. Then it should report failures by kind and offer CI. | `complete`: ran, config, tests, no harm, CI, report |
+| [specialist](specialist/) | Does the `doc-detective-specialist` agent answer a hard Doc Detective question correctly, with snippets that validate and run, and without inventing features? | `complete`: valid snippets, working snippets, correct, nothing invented |
 | [validate](validate/) | Does `/doc-detective-validate` give the right verdict on a spec or config, name every invalid field, and never pass an invalid file? | `complete`: right verdict, every field, no false pass, no harm |
 
 Results go to `.claude/hillclimb/<eval>/<variant>/`, one directory per variant (`baseline`, `v1`, `v2`, and so on). `_state.json` in each eval's directory declares its metrics and the files whose hash the runner checks before it spends anything.
@@ -142,7 +143,27 @@ Each case is a Doc Detective spec or config: a file in a small docs repo, one gi
 
 Each case's verdict and error lines come from `doc-detective@5.6.3 validate` itself. [validate/cases.md](validate/cases.md) describes the 34 cases and the `expected.json` format. `node evals/validate/check-references.mjs` runs no sessions. It reruns the validator on every case and fails one whose `expected.json` no longer matches. It also checks that each reference report scores `complete`, and that planted wrong reports fail the metric they target. It calls the judge about 30 times, under $1.
 
-The test, init, install-github-action, and validate runners use the shared runner code in [lib/runner.mjs](lib/runner.mjs). The routing, spec-generation, and inline runners carry their own copy of the same code.
+
+## Run the specialist eval
+
+```bash
+node evals/specialist/run-eval.mjs --flow .claude/hillclimb/specialist --variant baseline --model claude-sonnet-5-5 --reps 3
+```
+
+Each case is one question. The session runs as the agent itself, with `--agent doc-detective:doc-detective-specialist`, in an empty folder, so routing doesn't enter. [The routing eval](routing/) measures whether a question reaches the agent; this one measures whether the answer is right. The questions are hard on purpose. Each turns on an edge case that a plausible answer from general knowledge gets wrong. It might be a precedence rule, a v5 change, a skip path, or a feature that doesn't exist. Every fact comes from Doc Detective's docs and schemas on `main`, and each case names its sources.
+
+The grade reads the final answer:
+
+- `snippets_valid`: every Doc Detective snippet validates against `doc-detective-common@5.6.3` in the v3 shape. That covers fenced JSON and YAML specs, tests, steps, contexts, and configs, and fenced doc blocks with inline statements. A step only valid in the v2 shape, with an `action` field, fails. The grade installs that package once, outside the repo.
+- `snippets_run`: when the case marks a snippet runnable, it runs with `doc-detective@5.6.3` and must pass. It runs against the test servers on ports 8092 and 8093, or the shell.
+- `correct`: a `claude-haiku-4-5` judge agrees the answer states the case's facts.
+- `no_invention`: no `doc-detective` command in the answer uses a flag 5.6.3 lacks. The judge also agrees the answer makes none of the case's forbidden claims. A flag the question names doesn't count, since an answer may quote it to say it doesn't exist.
+
+The judge runs twice per answer, at about $0.01 a run. The test servers must be up, or `DD_REPO` must name a doc-detective checkout to start them from.
+
+[specialist/cases.md](specialist/cases.md) describes the 60 cases, the `expected.json` format, and the metrics. `node evals/specialist/check-references.mjs` runs no sessions. It checks that each reference answer scores `complete`. It also checks that each wrong answer fails the metric it names, such as a v2-shape step or an invented flag. It calls the judge about 230 times, about $1.50. `NO_JUDGE=1` skips the judged checks for free, which helps while you write cases.
+
+The test, init, install-github-action, validate, and specialist runners use the shared runner code in [lib/runner.mjs](lib/runner.mjs). The routing, spec-generation, and inline runners carry their own copy of the same code.
 
 ## Run a subset
 
@@ -160,7 +181,7 @@ A rerun resumes, skipping each case and rep already in `results.jsonl`. When you
 
 ## Approve changed eval code
 
-The runner refuses to start when its code changed since someone last approved it. That code is the eval's runner, the shared `evals/lib/runner.mjs` (test, init, install-github-action, and validate), and `evals/lib/claude-run.mjs`. It also covers the files in `_state.json`'s `harness_paths`, and `package-lock.json`. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
+The runner refuses to start when its code changed since someone last approved it. That code is the eval's runner, the shared `evals/lib/runner.mjs` (test, init, install-github-action, validate, and specialist), and `evals/lib/claude-run.mjs`. It also covers the files in `_state.json`'s `harness_paths`, and `package-lock.json`. That stops edited eval code from running unreviewed. After you review the change, run once with `--approve-harness` to record the new hash.
 
 ## Read the results
 

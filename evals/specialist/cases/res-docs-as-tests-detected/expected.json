@@ -1,0 +1,37 @@
+{
+  "category": "concept",
+  "question": "We're adopting Docs as Tests. A writer just changed a Markdown procedure from `Click **Save**.` to `Click **Save changes**.`, but the product's button still says \"Save\", so the doc is now wrong. We already have a standalone `save-draft.spec.json` that clicks \"Save\" against the product, and it still passes. Which way of writing Doc Detective tests would have caught this without anyone editing a test, and why didn't our spec catch it?",
+  "facts": [
+    {
+      "text": "Detected tests catch it: with step detection on (the default, `detectSteps`), Doc Detective generates steps from the doc's markup, so bold text after a click verb becomes `click` and `find` steps for \"Save changes\", and that test fails against the product.",
+      "sources": ["docs/fern/pages/docs/tests/detected.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "A standalone spec (or a hand-written inline step) holds its own copy of the steps, so it doesn't change when the prose changes; it still clicks \"Save\", matches the product, and passes while the doc is wrong.",
+      "sources": ["docs/fern/pages/docs/tests/standalone.mdx", "docs/fern/pages/docs/tests/detected.mdx"]
+    },
+    {
+      "text": "Doc Detective checks the docs by running their procedures against the real product; it doesn't scan code or compare the docs to source.",
+      "sources": ["docs/fern/pages/docs/intro.mdx", "docs/fern/pages/docs/test-docs/overview.mdx"]
+    }
+  ],
+  "must_not": [
+    "The standalone spec should have caught the change, or Doc Detective re-reads the Markdown when it runs a standalone spec.",
+    "An inline step comment updates itself when the prose next to it changes.",
+    "Doc Detective compares the docs against the product's source code."
+  ],
+  "wrong": [
+    {
+      "why": "says inline steps follow the prose",
+      "fails": "no_invention",
+      "answer": "Use inline tests. Put `<!-- step {\"click\": \"Save\"} -->` under the instruction, and Doc Detective rewrites the step whenever the sentence above it changes, so it would now click \"Save changes\" and fail. Your standalone spec didn't catch it because it tests the product, not the docs."
+    },
+    {
+      "why": "misses detection",
+      "fails": "correct",
+      "replace": [
+        { "from": "Detected tests would have caught it. Step detection is on by default (`detectSteps`). Doc Detective parses the Markdown and generates steps from its markup, and bold text after a click verb becomes a `click` step and a `find` step. After the edit, the detected test clicks and finds \"Save changes\". The product shows \"Save\", so the test fails, and the failure points at the doc.", "to": "A better-maintained spec would have caught it." }
+      ]
+    }
+  ]
+}

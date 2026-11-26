@@ -1,0 +1,35 @@
+{
+  "category": "false_premise",
+  "question": "Step detection was too noisy across our docs, so I set `\"detectSteps\": false` in `.doc-detective.json`. On one page I still want links and bold text turned into steps, so I opened its test with `<!-- test {\"testId\": \"checkout\", \"detectSteps\": true} -->`, since the test-level setting should override the config. Instead the test never runs, and Doc Detective prints `Couldn't convert test in docs/checkout.md to valid test. Skipping.` How do I make the test-level `detectSteps` win?",
+  "facts": [
+    {
+      "text": "It can't: `detectSteps: false` in the config turns step detection off for every file, and `\"detectSteps\": true` on a `test` statement doesn't turn it back on. A test's `detectSteps` can only turn detection off for that test.",
+      "sources": ["docs/fern/pages/docs/tests/detected.mdx", "docs/fern/pages/reference/schemas/config.mdx", "docs/fern/pages/reference/schemas/test.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json", "src/common/src/schemas/src_schemas/test_v3.schema.json", "src/common/src/detectTests.ts"]
+    },
+    {
+      "text": "With nothing detected, the `checkout` test has no steps, so Doc Detective can't build a valid test from it and skips it; that's the `Couldn't convert test` message.",
+      "sources": ["src/common/src/detectTests.ts", "src/common/src/schemas/src_schemas/test_v3.schema.json"]
+    },
+    {
+      "text": "To get detection on that page, leave `detectSteps` on in the config and set `\"detectSteps\": false` on the tests that shouldn't detect, or run that page with a separate config that leaves detection on, or declare its steps with `step` statements.",
+      "sources": ["docs/fern/pages/docs/tests/detected.mdx", "docs/fern/pages/docs/tests/inline.mdx"]
+    }
+  ],
+  "must_not": [
+    "A `test` statement's `\"detectSteps\": true` overrides `detectSteps: false` in the config.",
+    "The fix is to write the value as a string, `\"detectSteps\": \"true\"`, or in YAML.",
+    "`--detect-steps` turns detection on for one run."
+  ],
+  "wrong": [
+    {
+      "why": "says the test-level value overrides the config",
+      "fails": "no_invention",
+      "answer": "A test's `detectSteps` overrides the config, so your statement is right. The message means the test has no steps yet. Add `<!-- test end -->` after the procedure so Doc Detective knows where the detected steps stop."
+    },
+    {
+      "why": "a flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "answer": "Config `detectSteps: false` turns detection off everywhere, and a test can't turn it back on, so the test ends up with no steps and is skipped. For that page, run `npx doc-detective --input docs/checkout.md --detect-steps`."
+    }
+  ]
+}

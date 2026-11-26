@@ -1,0 +1,56 @@
+{
+  "category": "false_premise",
+  "question": "Our browser tests are a bit flaky in CI. I want Doc Detective to re-run a failing check up to 3 times before it fails the build. Is that `npx doc-detective --retries 3`? I also saw a `retries` setting in the config reference. Would `\"retries\": 3` in `.doc-detective.json` do the same thing? For example, our home page test does a `find` on the \"Standard Button\" text that sometimes fails.",
+  "facts": [
+    {
+      "text": "There's no `--retries` flag; the CLI rejects it as an unknown option and exits 2.",
+      "sources": ["docs/fern/pages/reference/cli.mdx"]
+    },
+    {
+      "text": "The config `retries` key (default 1, maximum 10) re-runs a whole context on a fresh session only when the session itself turned unusable, such as a dead session, a browser error page, or a context that never left its blank page. A real failure, where the page loaded and the element or assertion failed, is never retried.",
+      "sources": ["docs/fern/pages/reference/schemas/config.mdx", "docs/fern/pages/docs/ci/overview.mdx", "src/common/src/schemas/src_schemas/config_v3.schema.json"]
+    },
+    {
+      "text": "To retry a flaky step, give that step an `onFail` handler with `retry` and a `limit` (optionally `delay` and `backoff`); the step's result is the result of its final attempt.",
+      "sources": ["docs/fern/pages/docs/tests/overview.mdx", "docs/fern/pages/docs/troubleshoot/overview.mdx", "src/common/src/schemas/src_schemas/step_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`--retries` is a valid Doc Detective CLI flag.",
+    "Setting `\"retries\": 3` re-runs tests that fail an assertion or can't find an element.",
+    "A `retry` handler on a test, or a config-wide setting, retries every failing step."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that retries a find for \"Standard Button\" with an onFail retry handler",
+      "setup": [{ "goTo": "http://localhost:8092/" }],
+      "require": [{ "find": ["Standard Button", "\"onFail\"", "\"retry\"", "\"limit\""], "click": ["Standard Button", "\"onFail\"", "\"retry\"", "\"limit\""] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "retry handler on the test",
+      "fails": "snippets_valid",
+      "answer": "Put a retry handler on the test so every failing step retries:\n\n```json\n{\n  \"testId\": \"home\",\n  \"onFail\": [{ \"retry\": { \"limit\": 3 } }],\n  \"steps\": [\n    { \"goTo\": \"http://localhost:8092/\" },\n    { \"find\": \"Standard Button\" }\n  ]\n}\n```"
+    },
+    {
+      "why": "a snippet that never passes",
+      "fails": "snippets_run",
+      "replace": [
+        { "from": "{ \"goTo\": \"http://localhost:8092/\" },", "to": "{ \"goTo\": \"http://localhost:8092/type-echo.html\" }," }
+      ]
+    },
+    {
+      "why": "keeps the --retries flag",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "There's no `--retries` flag. The CLI rejects it as an unknown option and exits `2`.", "to": "Yes, run `npx doc-detective --retries 3`. It re-runs each failing test up to three times." }
+      ]
+    },
+    {
+      "why": "says config retries covers assertion failures",
+      "fails": "no_invention",
+      "answer": "There's no `--retries` flag, but the config key does what you want. Set it in `.doc-detective.json`:\n\n```json\n{\n  \"retries\": 3\n}\n```\n\nA test that fails, such as a `find` that can't see \"Standard Button\", then re-runs up to three times before the build fails."
+    }
+  ]
+}

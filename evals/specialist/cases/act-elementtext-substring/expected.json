@@ -1,0 +1,37 @@
+{
+  "category": "error",
+  "question": "On http://localhost:8092/ there's a paragraph that reads \"This is a paragraph of text. It demonstrates the paragraph element in HTML.\" My step `{\"find\": {\"selector\": \"p\", \"elementText\": \"demonstrates the paragraph element\"}}` times out even though that text is right there on the page. What's wrong?",
+  "facts": [
+    {
+      "text": "`elementText` matches the element's entire visible text (with whitespace normalized), not a substring, so a fragment of the paragraph doesn't match.",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    },
+    {
+      "text": "To match part of the text, wrap the value in slashes as a regular expression, such as `\"/demonstrates the paragraph element/\"`, or give the paragraph's full text.",
+      "sources": ["docs/fern/pages/docs/actions/find.mdx", "src/common/src/schemas/src_schemas/find_v3.schema.json"]
+    }
+  ],
+  "must_not": [
+    "`elementText` matches any element whose text contains the value.",
+    "`selector` and `elementText` can't be combined, so one of them is ignored or makes the step fail."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that finds the paragraph by part of its text",
+      "setup": [{ "goTo": "http://localhost:8092/" }],
+      "require": [{ "find": ["demonstrates the paragraph element"] }]
+    }
+  },
+  "wrong": [
+    {
+      "why": "keeps the fragment without slashes",
+      "fails": "snippets_run",
+      "replace": [{ "from": "\"elementText\": \"/demonstrates the paragraph element/\"", "to": "\"elementText\": \"demonstrates the paragraph element\", \"timeout\": 1000" }]
+    },
+    {
+      "why": "blames the selector and calls elementText a substring match",
+      "fails": "no_invention",
+      "answer": "`elementText` already matches any element whose text contains your value, so the fragment is fine. The `selector` is the problem: when both are set, Doc Detective uses only the selector. Drop it:\n\n```json\n{ \"find\": { \"elementText\": \"/demonstrates the paragraph element/\" } }\n```\n"
+    }
+  ]
+}

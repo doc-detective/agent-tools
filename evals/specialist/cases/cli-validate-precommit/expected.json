@@ -1,0 +1,42 @@
+{
+  "category": "choose",
+  "question": "I want a pre-commit hook that blocks the commit when any Doc Detective spec or inline test in a package's `docs/` folder is broken, without starting browsers or running steps. Is `npx doc-detective --dry-run` the right tool? The hook treats exit 0 as OK and anything else as blocked, and a few of our packages don't have any tests yet.",
+  "facts": [
+    {
+      "text": "Use the `validate` command, such as `npx doc-detective validate docs`: it checks spec files and inline tests without running them, finding files the same way a run does.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx", "adrs/01206-add-a-validate-subcommand.md"]
+    },
+    {
+      "text": "`validate` exits 0 when every test is valid, 1 when at least one spec or inline test is invalid, and 2 for a usage error, invalid config, or no tests found.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "adrs/01206-add-a-validate-subcommand.md"]
+    },
+    {
+      "text": "So in a package with no tests, `validate` exits 2 and the hook would block the commit; skip those packages or let the hook allow exit code 2.",
+      "sources": ["docs/fern/pages/reference/cli.mdx", "adrs/01206-add-a-validate-subcommand.md"]
+    }
+  ],
+  "must_not": [
+    "`validate` exits 0 when it finds no tests.",
+    "`validate` exits 2 when a spec is invalid.",
+    "`validate` launches a browser or runs the steps."
+  ],
+  "wrong": [
+    {
+      "why": "a strict flag 5.6.3 lacks",
+      "fails": "no_invention",
+      "replace": [
+        { "from": "npx doc-detective validate docs\n```", "to": "npx doc-detective validate docs --strict\n```" }
+      ]
+    },
+    {
+      "why": "no tests exits 0",
+      "fails": "no_invention",
+      "answer": "Use `npx doc-detective validate docs`. It checks spec files and inline tests without running them. It exits `0` when every test is valid or when there's nothing to check, so packages without tests pass, and `1` when anything is invalid."
+    },
+    {
+      "why": "recommends dry-run",
+      "fails": "correct",
+      "answer": "Yes. `npx doc-detective --input docs --dry-run` resolves every test without running a step, and it exits non-zero when a spec is invalid. Use it as the hook."
+    }
+  ]
+}

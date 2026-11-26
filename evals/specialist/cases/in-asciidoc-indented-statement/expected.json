@@ -1,0 +1,50 @@
+{
+  "category": "inline",
+  "question": "I'm adding inline Doc Detective tests to an AsciiDoc procedure. To keep the source tidy, I indented one step comment to line up with its list item, and I wrote the other one the way our regular comments look:\n\n```asciidoc\n// (test {\"testId\": \"standard-button\"})\n\n. Open the demo page.\n+\n  // (step {\"goTo\": \"http://localhost:8092/\"})\n. Click the button.\n+\n// step {\"click\": \"Standard Button\"}\n\n// (test end)\n```\n\nThe results don't show either of my two steps. What's wrong with them?",
+  "facts": [
+    {
+      "text": "An AsciiDoc statement goes in parentheses, as `// (step {...})`; `// step {...}` without them is an ordinary comment that Doc Detective doesn't read.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx", "docs/fern/pages/docs/input-formats/asciidoc.mdx"]
+    },
+    {
+      "text": "The `//` must start its line; an indented statement isn't read.",
+      "sources": ["docs/fern/pages/docs/tests/inline.mdx", "docs/fern/pages/docs/input-formats/asciidoc.mdx", "docs/fern/pages/docs/ci/upgrade-to-v5.mdx"]
+    }
+  ],
+  "must_not": [
+    "AsciiDoc statements can be indented to line up with list item content.",
+    "Parentheses are optional in AsciiDoc statements.",
+    "AsciiDoc statements use HTML comments (`<!-- -->`)."
+  ],
+  "snippet": {
+    "run": {
+      "does": "that opens localhost:8092 and clicks \"Standard Button\"",
+      "require": [
+        { "goTo": ["localhost:8092"] },
+        { "click": ["Standard Button"], "find": ["Standard Button", "\"click\":true"] }
+      ]
+    }
+  },
+  "wrong": [
+    {
+      "why": "keeps the indented statement",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "+\n// (step {\"goTo\": \"http://localhost:8092/\"})", "to": "+\n  // (step {\"goTo\": \"http://localhost:8092/\"})" }]
+    },
+    {
+      "why": "drops the parentheses",
+      "fails": "snippets_valid",
+      "replace": [{ "from": "// (step {\"click\": \"Standard Button\"})", "to": "// step {\"click\": \"Standard Button\"}" }]
+    },
+    {
+      "why": "clicks a button the page lacks",
+      "fails": "snippets_run",
+      "replace": [{ "from": "// (step {\"click\": \"Standard Button\"})", "to": "// (step {\"click\": \"Fancy Button\"})" }]
+    },
+    {
+      "why": "says indentation is fine",
+      "fails": "no_invention",
+      "answer": "Indentation doesn't matter in AsciiDoc comments, so the indented `goTo` is fine. The `click` step is missing its parentheses. Write it as `// (step {\"click\": \"Standard Button\"})`."
+    }
+  ]
+}

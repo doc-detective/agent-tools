@@ -36,8 +36,9 @@ export const removeWorkspace = dir => rmSync(dir, { recursive: true, force: true
  * @param {(ev: object, state: object) => boolean} [o.stopWhen]  kill the session once this returns true
  * @param {number} [o.maxTurns]
  * @param {object} [o.env]      extra environment for the session
+ * @param {string} [o.agent]    run the whole session as this agent (`--agent`), such as a plugin's `<plugin>:<agent>`
  */
-export function runClaude({ prompt, cwd, model, disallowedTools = [], stopWhen, maxTurns, env }) {
+export function runClaude({ prompt, cwd, model, disallowedTools = [], stopWhen, maxTurns, env, agent }) {
   const args = [
     '-p', prompt,
     '--output-format', 'stream-json', '--verbose',
@@ -50,6 +51,7 @@ export function runClaude({ prompt, cwd, model, disallowedTools = [], stopWhen, 
   ];
   if (disallowedTools.length) args.push('--disallowed-tools', ...disallowedTools);
   if (maxTurns) args.push('--max-turns', String(maxTurns));
+  if (agent) args.push('--agent', agent);
 
   return new Promise((resolvePromise, reject) => {
     const child = spawn('claude', args, { cwd, env: env ? { ...process.env, ...env } : process.env, stdio: ['ignore', 'pipe', 'pipe'] });
