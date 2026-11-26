@@ -42,7 +42,7 @@ Contents: [CLI](#cli) · [Config loading](#config-loading) · [Results](#results
 ### stdout and stderr
 
 - stdout carries results only. Logs, warnings, hints, notices, progress, and report-path lines go to stderr.
-- Default logs have no level labels; `-d` restores them and adds timestamps. `-q` shows only errors and the one-line verdict. `-l silent` prints nothing, summary included. Log levels: `silent`, `error`, `warning`, `info` (default), `debug`.
+- Default logs label only warnings and errors (`Warning:`, `Error:`); `-d` labels every line (`(INFO)`) and adds timestamps. `-q` shows only errors and the one-line verdict. `-l silent` prints nothing, summary included. Log levels: `silent`, `error`, `warning`, `info` (default), `debug`.
 - Report-path lines (`Results:`, `Run report:`, `Run summary:`, `Run results:`, `HTML report:`, `JUnit report:`, `Markdown summary:`) are info-level absolute paths; `-l warning` hides them.
 - Hints print one tip only in an interactive terminal at `info` level; `--no-hints` turns them off.
 
@@ -97,7 +97,7 @@ No flag selects platform, browser, or headless mode; those are contexts.
 - Subcommands: `all`, `browsers`, `runtime`, `bash`, `android`, `ios`, `status`, `agents`. `install all` covers runtime packages, browsers, and Git Bash on Windows, not `agents`, `android`, or `ios`.
 - `install browsers` names: `chrome`, `firefox`, `chromedriver`, `geckodriver` (all four by default). Safari isn't installable. Chrome/ChromeDriver have no `linux/arm64` build and report `skipped`.
 - `install android` never downloads without `--yes`; declining exits `2`. `install ios` is macOS-only.
-- `install` reads `cacheDir` from config and `.env`; an invalid config exits `2`. Default cache: `$XDG_CACHE_HOME/doc-detective` (`%LOCALAPPDATA%\doc-detective` on Windows), or an existing `~/.doc-detective`.
+- `install` reads `cacheDir` from config and `.env`; an invalid config exits `2`. Default cache: an existing `~/.doc-detective`, else `$XDG_CACHE_HOME/doc-detective` (`%LOCALAPPDATA%\doc-detective` on Windows), else `~/.cache/doc-detective`.
 - `doc-detective debug` prints findings with `fix:` commands and the effective config, and runs no tests.
 
 Sources: reference/cli.mdx, reference/cli/install.mdx, docs/ci/upgrade-to-v5.mdx, docs/ci/reporters-and-artifacts.mdx, docs/tests/overview.mdx, docs/troubleshooting/setup-issues.mdx, schemas/config_v3.schema.json, adrs/01146-cli-v5-contract.md, adrs/01166-one-separator-per-list-flag.md, adrs/01191-output-modes-compose-or-refuse.md
@@ -256,7 +256,7 @@ After `retry` runs out, routing resolves again without `retry` entries, falling 
 
 ### Invalid specs
 
-- Invalid: an unknown key on a spec or step (or in `click`, `runCode`, `record`, `dragAndDrop`), two actions in one step, duplicate `testId`s, a missing `before`/`after` file or an invalid step in one, an invalid inline step, wrong-scope routing, an out-of-range value (`timeout` below `1` on `goTo`, `httpRequest`, `runShell`, `runCode`, `startSurface`; negative durations), or `autoScreenshot` on a step.
+- Invalid: an unknown key on a spec or step (or in `click`, `runCode`, `record`, `dragAndDrop`), two actions in one step, duplicate `testId`s, a missing `before`/`after` file or an invalid step in one, an invalid inline step, wrong-scope routing, an out-of-range value (`timeout` below `1` on `goTo`, `checkLink`, `httpRequest`, `runShell`, `runCode`, `startSurface`; negative durations), or `autoScreenshot` on a step.
 - Default: exit `2` before any test runs. With `exitOnFail: false` / `--no-exit-on-fail`, the invalid spec is skipped with a warning and the rest run. `runTests()` rejects with `Invalid test specifications, so nothing ran:` under the same rule.
 
 Sources: docs/tests/overview.mdx, docs/ci/reporters-and-artifacts.mdx, docs/ci/upgrade-to-v5.mdx, docs/ci/overview.mdx, docs/troubleshoot/overview.mdx, docs/test-docs/automatic-recording.mdx, docs/config/contexts.mdx, reference/expressions.mdx, schemas/config_v3.schema.json, adrs/00013-json-result-output-and-pass-warning-fail-rollup.md, adrs/01199-reject-invalid-specs-from-runtests-by-default.md
@@ -338,7 +338,7 @@ No file at `path`: the capture is saved and `maxVariation` is ignored, so the fi
 
 ### Differently sized images
 
-1. Doc Detective resizes the window so the viewport matches the reference, recaptures, compares, and restores the window. It doesn't resize when the step uses `crop`, `overwrite` is `"true"`, a recording is running, the context's `viewport`/`window` no longer matches the reference (within 16px of `viewport`, or 5% for `window`, still matches), or both dimensions differ by one factor. If the browser can't reach the size, it warns and compares the first capture.
+1. Doc Detective resizes the window so the viewport matches the reference, recaptures, compares, and restores the window. It doesn't resize when the step uses `crop`, `overwrite` is `"true"`, a `record` step's recording is running (the automatic recording doesn't block it), the context's `viewport`/`window` no longer matches the reference (within 16px of `viewport`, or 5% for `window`, still matches), or both dimensions differ by one factor. If the browser can't reach the size, it warns and compares the first capture.
 2. Still different: compared only if aspect ratios are within 5%; otherwise FAIL.
 3. Each dimension within 5%: compares the shared top-left region, so unchanged content reports `0`.
 4. A larger same-factor difference (pixel density): both images scale to the smaller size.
@@ -404,7 +404,7 @@ Sources: docs/actions/screenshot.mdx, src/core/tests/saveScreenshot.ts, docs/tes
 
 - Formats `.mp4`, `.webm`, `.gif`, extension in any case. Video only, no audio.
 - `record: true` saves `<stepId>.mp4` in `outputDir`; a string or `path` resolves against the spec file or `directory`. `record: false` skips.
-- `stopRecord: true`/`null` stops the newest active recording (LIFO); `"<name>"` or `{ "name": "<name>" }` stops that one; `false` skips. Unstopped recordings finalize at the end of the run.
+- `stopRecord: true`/`null` stops the newest active recording (LIFO); `"<name>"` or `{ "name": "<name>" }` stops that one; `false` skips. Unstopped recordings finalize at the end of the context.
 
 ### Engines
 
@@ -553,7 +553,7 @@ Every built-in parses the file first, then detects:
 | `checkLink` | Every `http(s)` link, including one after "Go to" |
 | `click` | Bold text right after "Click", "Tap", "Left-click", "Choose", "Select", "Check" |
 | `find` | All bold text, including bold after "Click" |
-| `type` | Quoted text after "Type", "Enter", "Press" in prose, any capitalization |
+| `type` | Quoted text after "Type", "Enter", "Press" in prose, first letter upper- or lowercase |
 | `screenshot` | An image with the `screenshot` class; its source is the save path |
 | `httpRequest` | A code block tagged `http`, or untagged, holding a request line, headers, blank line, body |
 | `runCode` | A code block tagged `bash`, `python`, `py`, `javascript`, `js`, marked `unsafe` |
@@ -599,6 +599,6 @@ Each item is detailed in its section above.
 - Automatic screenshots and recordings are on, and every run writes a run folder. Default browser is headless Chrome.
 - Detection reads parsed structure: nothing inside code; AsciiDoc and HTML detect like Markdown; capitalized `Type` and `py`/`js` fences become steps; `json` fences don't.
 - Results show effective step objects; `$$stdioMatched`, `$$aspectRatioMatch`, `$$resolutionMatch` became `...Matches`.
-- `.env` loads automatically; env values print as `***NAME***`; `edge` isn't a browser; `timeout: 0` is invalid.
+- `.env` loads automatically; env values print as `***NAME***`; `edge` isn't a browser; `timeout: 0` is invalid except on locators (`find`, `click`, `type`), where it checks once.
 
 Sources: docs/ci/upgrade-to-v5.mdx, reference/cli.mdx
