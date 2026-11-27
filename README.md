@@ -505,6 +505,7 @@ The plugin includes complete documentation for Doc Detective actions:
 | `screenshot`              | Capture screenshots                  |
 | `wait`                    | Pause or wait for elements           |
 | `checkLink`               | Verify URL returns OK                |
+| `checkFile`               | Wait for a file or download          |
 | `loadVariables`           | Load environment variables           |
 | `saveCookie`/`loadCookie` | Manage session persistence           |
 | `record`/`stopRecord`     | Video recording                      |

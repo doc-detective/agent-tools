@@ -531,6 +531,64 @@ With options:
 - `url`: URL to check
 - `statusCodes`: Array of acceptable status codes (default: `[200, 301, 302, 307, 308]`)
 
+### checkFile
+
+Wait for a finished file or browser download, and optionally check its text. Use it when a procedure ends with a file, such as an export the reader downloads or a report a command writes.
+
+A file counts as finished once it's no longer an in-progress download and its size stays the same for 250 ms. An in-progress download has a `.crdownload` or `.part` suffix, or a sibling with one.
+
+Check a download. Put the check after the step that starts the download:
+
+```json
+[
+  { "goTo": "https://example.com/reports" },
+  { "click": "Export CSV" },
+  { "checkFile": { "download": "*.csv" } }
+]
+```
+
+Check a file that a command writes. A string is shorthand for `path` and never checks a download:
+
+```json
+{ "checkFile": "out/report.txt" }
+```
+
+```json
+{
+  "checkFile": {
+    "path": "out/*.log",
+    "content": "/build \\d+ passed/",
+    "timeout": 60000
+  }
+}
+```
+
+**Options:**
+- `path`: Glob for the file to wait for. A relative path resolves against the spec file's folder. When several files match, the newest finished one counts. Works in every context and needs no browser.
+- `download`: Glob for a file name in the context's download folder. Desktop Chrome and Firefox save every download there with no prompt: `.doc-detective/runs/<runId>/specs/<specId>/tests/<testId>/contexts/<contextId>/downloads/`. Each `download` check returns the oldest finished download that no earlier `checkFile` in the context returned, so two exports followed by two checks return two different files. A download that finished before the step runs still counts.
+- `content`: Text the file must contain, read as UTF-8. A value that starts and ends with `/` is a regular expression. Use it for text formats such as CSV, JSON, or logs, not PDF files. A `download` check consumes its file even when `content` doesn't match.
+- `timeout`: Milliseconds to wait for a finished match (default `30000`).
+
+Set exactly one of `path` or `download`. Setting neither or both fails validation.
+
+`download` needs a desktop Chrome or Firefox browser, headed or headless, that an earlier step opened, such as `goTo`. In Safari, on mobile, in an app, or with no browser open, the step is SKIPPED. On Windows, Chrome can't save a file whose full path is longer than 260 characters, and the step times out. If a download never arrives on Windows, shorten the spec and test IDs, or set a shorter `outputDir`. `outputDir` goes in the Doc Detective config, not in the spec.
+
+The step fails when no finished file matches within `timeout`, when the file can't be read, or when it doesn't contain `content`.
+
+**Outputs:** `outputs.filePath` (absolute path), `outputs.fileName`, and `outputs.fileSize` (bytes). For checks beyond `content`, set the step's `variables` to save the path to an environment variable, such as `CSV` below. Read it in a later `runShell` or `runCode` step through `process.env`, so Windows paths stay intact:
+
+```json
+[
+  {
+    "checkFile": { "download": "report-*.csv" },
+    "variables": { "CSV": "$$filePath" }
+  },
+  {
+    "runShell": "node -e \"const rows = require('fs').readFileSync(process.env.CSV, 'utf8').trim().split('\\n'); if (rows.length < 2) process.exit(1)\""
+  }
+]
+```
+
 ---
 
 ## HTTP Requests
