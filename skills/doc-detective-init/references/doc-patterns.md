@@ -12,6 +12,11 @@ Reference for identifying documentation files and their formats.
 | reStructuredText | `.rst` | `.. directive::`, underline headers |
 | HTML | `.html`, `.htm` | `<article>`, `<main>`, `<section>` |
 | DITA | `.dita`, `.ditamap`, `.xml` | `<!DOCTYPE topic`, `<task>`, `<concept>` |
+| Gherkin | `.feature` | `Feature:`, `Scenario:`, `Given`/`When`/`Then` steps |
+
+Don't generate specs for Gherkin `.feature` files. Doc Detective runs each scenario as a test, and its steps run when they use Doc Detective's step phrases. Steps written for a Cucumber suite's step definitions don't map and warn. Count the files in the detection report.
+
+If the config sets `fileTypes` and the repository has `.feature` files, add `"gherkin"` to the list. A `fileTypes` list replaces the default list, so Doc Detective reads no `.feature` files when the list leaves out `"gherkin"`.
 
 ## Detection Patterns
 
@@ -39,6 +44,9 @@ Use these patterns:
 
 # reStructuredText
 **/*.rst
+
+# Gherkin (runs as-is; don't generate specs)
+**/*.feature
 
 # HTML (documentation only)
 **/docs/**/*.html
@@ -125,6 +133,7 @@ AsciiDoc    | 0     | —
 RST         | 0     | —
 HTML        | 2     | documentation/
 DITA        | 0     | —
+Gherkin     | 0     | —
 ------------|-------|---------------------------
 Total       | 17    | 
 
@@ -143,6 +152,7 @@ Map detected file types to Doc Detective `fileTypes` config:
 | reStructuredText | `"rst"` |
 | HTML | `"html"` |
 | DITA | `"dita"` |
+| Gherkin | `"gherkin"` |
 
 Example generated config segment:
 
@@ -151,6 +161,8 @@ Example generated config segment:
   "fileTypes": ["markdown", "html"]
 }
 ```
+
+This list replaces the default list. When the repository has `.feature` files that should run, add `"gherkin"`.
 
 ## Related Resources
 

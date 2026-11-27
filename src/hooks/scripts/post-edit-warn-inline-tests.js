@@ -11,7 +11,7 @@ const path = require('path');
 
 const DOC_EXTENSIONS = new Set([
   '.md', '.markdown', '.mdx', '.html', '.htm',
-  '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst'
+  '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst', '.feature'
 ]);
 
 // Inline test comment patterns by format
@@ -27,6 +27,8 @@ const INLINE_PATTERNS = [
   // RST comments can nest in an indented block, such as a list item or a note body.
   { pattern: /^[ \t]*\.\.[ \t]+step(\s|$)/m, format: 'reStructuredText' },
   { pattern: /^[ \t]*\.\.[ \t]+test(\s|$)/m, format: 'reStructuredText' },
+  // Gherkin statements are `#` comments that hold JSON or `ignore start`/`ignore end`.
+  { pattern: /^[ \t]*#[ \t]*(test|step)[ \t]+(\{|ignore[ \t]+(start|end))/m, format: 'Gherkin' },
 ];
 
 function readStdin() {

@@ -14,7 +14,8 @@
       ".rst": "doc-detective",
       ".html": "doc-detective",
       ".htm": "doc-detective",
-      ".dita": "doc-detective"
+      ".dita": "doc-detective",
+      ".feature": "doc-detective"
     },
     "restartOnCrash": true,
     "diagnostics": true

@@ -107,6 +107,37 @@ describe('Hook 6: post-edit-warn-inline-tests', function () {
     }
   });
 
+  it('should warn for Gherkin files with comment-based tests', async function () {
+    for (const line of ['# test {"testId":"sign-up"}', '  # step {"find":"Welcome"}', '    # test ignore start']) {
+      const filePath = path.join(tmpDir, 'sign-up.feature');
+      fs.writeFileSync(filePath, ['Feature: Sign up', '', line, '  Scenario: Sign up', '    Given I go to "https://example.com"'].join('\n'));
+
+      const result = await runHook('post-edit-warn-inline-tests.js', {
+        tool_input: { file_path: filePath },
+      });
+      assert.strictEqual(result.code, 0);
+
+      const output = parseOutput(result.stdout);
+      assert.ok(output?.additionalContext.includes('Gherkin'), `should warn for ${line}`);
+    }
+  });
+
+  it('should not treat plain Gherkin comments or Markdown headings as inline tests', async function () {
+    for (const [name, content] of [
+      ['plain.feature', ['Feature: Sign up', '', '  # test the happy path first', '  Scenario: Sign up', '    Given I go to "https://example.com"'].join('\n')],
+      ['heading.md', '# Test results\n\n# step one\n\nSome content.\n'],
+    ]) {
+      const filePath = path.join(tmpDir, name);
+      fs.writeFileSync(filePath, content);
+
+      const result = await runHook('post-edit-warn-inline-tests.js', {
+        tool_input: { file_path: filePath },
+      });
+      assert.strictEqual(result.code, 0);
+      assert.strictEqual(result.stdout.trim(), '', `should stay silent for ${name}`);
+    }
+  });
+
   it('should not treat RST directives as inline tests', async function () {
     const filePath = path.join(tmpDir, 'plain.rst');
     fs.writeFileSync(filePath, ['Guide', '=====', '', '.. note::', '', '   A test step note.', ''].join('\n'));
@@ -166,7 +197,7 @@ describe('Hook 6: post-edit-warn-inline-tests', function () {
   });
 
   it('should handle all supported doc extensions', async function () {
-    const extensions = ['.md', '.markdown', '.mdx', '.html', '.htm', '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst'];
+    const extensions = ['.md', '.markdown', '.mdx', '.html', '.htm', '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst', '.feature'];
     for (const ext of extensions) {
       const filePath = path.join(tmpDir, `file${ext}`);
       fs.writeFileSync(filePath, '<!-- step {"goTo":"url"} -->');

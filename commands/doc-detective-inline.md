@@ -71,6 +71,8 @@ The file extension sets the comment syntax, unless `--syntax` overrides it:
 | AsciiDoc | `.adoc`, `.asciidoc`, `.asc` | `// (step {...})` |
 | reStructuredText | `.rst` | `.. step {...}` |
 
+Don't run the inject script on Gherkin `.feature` files. It doesn't know their comment syntax and writes Markdown comments instead. Doc Detective already runs each scenario as a test. To add a step to a scenario, write a `# step {...}` comment on its own line inside the scenario.
+
 Serialize each step in the file's comment wrapper, in the format `--syntax` sets:
 
 - **json** (default): `<!-- step {"goTo":"https://duckduckgo.com"} -->`

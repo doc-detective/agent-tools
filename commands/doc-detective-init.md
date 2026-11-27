@@ -45,6 +45,8 @@ Leave the repository with working Doc Detective test coverage for its documented
 
 Search for documentation files that match `**/*.md`, `**/*.mdx`, `**/*.adoc`, `**/*.rst`, `**/*.html`, and `**/*.dita`. Check for an existing config at `.doc-detective.json`, `.doc-detective.yaml`, or `.doc-detective.yml`. See [references/doc-patterns.md](references/doc-patterns.md) for detection patterns.
 
+Also look for Gherkin files (`**/*.feature`), and don't generate tests for them. Doc Detective runs each scenario in them as a test, and its steps run when they use Doc Detective's step phrases, such as `I go to "<url>"` and `I click "<text>"`. A file that belongs to a Cucumber suite, such as one next to `step_definitions/` or a `cucumber.js`, uses its own phrases. Those steps don't map to actions and warn on every run. Tell the user which kind you found. For a Cucumber suite, narrow `input` or set `fileTypes` without `"gherkin"`.
+
 Tests are worth generating only for files that walk a reader through a task. Read each file. Flag it as procedure-heavy when it has three or more numbered steps, or sequential bullet points with action verbs. Such verbs include navigate, click, enter, verify, type, and select. See [references/procedure-heuristics.md](references/procedure-heuristics.md) for more signals.
 
 Report the file counts, the key directories, and the procedure-heavy files to the user.
