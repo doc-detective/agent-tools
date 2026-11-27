@@ -570,13 +570,14 @@ Gherkin files don't use the built-in detection table above. Each step phrase map
 
 - Each `.feature` file is a spec, and each `Scenario` (or `Example`) is a test whose `testId` and `description` are the scenario name. `Background` steps run at the start of every scenario. A `Scenario Outline` runs once per `Examples` row, with `testId` `<name> [row N]`.
 - Step phrases include `I go to "<url>"`, `I click "<text>"`, `I should see "<text>"`, `I type "<keys>" into "<selector>"`, `I press "<key>"`, `I run "<command>"`, `I send a <METHOD> request to "<url>"`, and `I take a screenshot "<path>"`. Use only phrases from the full table at https://docs.doc-detective.com/docs/test-docs/input-formats/gherkin#step-phrases. A step that matches no phrase doesn't run and warns on stderr; the rest of the scenario still runs.
+- A quoted value can't contain double quotes. A step whose text to type, or whose `I fill in:` value cell, has them matches no phrase. Only the selector after `into` can contain them, such as `[name="email"]`. Write a `# step` statement where that step goes instead, escaping the quotes in its JSON: `# step {"type": {"keys": "Say \"hi\"", "selector": "#msg"}}`.
 - With `detectSteps: false`, in config or in a `# test {...}` statement, step phrases neither run nor warn, and only `# step` statements run.
 - `I run:` with a doc string makes an unsafe `runCode` step, which is SKIPPED without `allowUnsafeSteps`.
 - Tags: `@chrome`, `@firefox`, `@safari`, `@webkit` and `@windows`, `@mac`, `@linux`, `@android`, `@ios` set `runOn`; `@headless` runs headless; `@record` sets `autoRecord`; `@skip` and `@wip` skip the test (SKIPPED); `@id:<id>` sets `testId`. A `# test {...}` statement's keys win over tags.
 - Emulation steps (`a 390x844 viewport`, `dark mode`, `the locale is "de-DE"`, `the timezone is "Europe/Berlin"`) apply to the whole scenario. With no browser tag, the scenario runs in Chrome.
 - Keywords must be in English. To add phrases, write `markup` entries in a file type that extends `gherkin`, matching `element` nodes with tag `step`.
 
-Sources: docs/input-formats/gherkin.mdx, adrs/01227-built-in-gherkin-file-type.md
+Sources: docs/input-formats/gherkin.mdx, adrs/01233-built-in-gherkin-file-type.md
 
 ### Unsafe detected code
 
