@@ -209,7 +209,7 @@ Specs, tests, steps:
 - `if` false. Unresolvable conditions, plain text (`"1"`, `"yes"`, `$FEATURE_FLAG`), failed or empty `jq()`, and `$$steps.*` in a spec/test `if` all count as false. A false step `if` skips only that step.
 - An `unsafe` step without `allowUnsafeSteps`/`--allow-unsafe`.
 - Steps after a FAIL, or after a step routing `stop: "test"`. Remaining tests after a test-level `stop: "spec"`.
-- Action-level: `screenshot: false`, `record: false`, `stopRecord: false`, `wait: false`; `record` on an existing file under the default `overwrite: "false"`; `record` on headless Firefox or Safari; `record` covered by a failed host check (its `stopRecord` skips too).
+- Action-level: `screenshot: false`, `record: false`, `stopRecord: false`, `wait: false`; `record` on an existing file under the default `overwrite: "false"`; `record` on headless Firefox or Safari; `record` covered by a failed host check (its `stopRecord` skips too). `checkFile` with `download` outside a desktop Chrome or Firefox context with an open browser, including Safari.
 
 A step skipped before it ran (`if` false, unsafe) fires `onSkip`, but `retry` entries there are passed over. A step never reached fires no handler.
 
@@ -256,7 +256,7 @@ After `retry` runs out, routing resolves again without `retry` entries, falling 
 
 ### Invalid specs
 
-- Invalid: an unknown key on a spec or step (or in `click`, `runCode`, `record`, `dragAndDrop`), two actions in one step, duplicate `testId`s, a missing `before`/`after` file or an invalid step in one, an invalid inline step, wrong-scope routing, an out-of-range value (`timeout` below `1` on `goTo`, `checkLink`, `httpRequest`, `runShell`, `runCode`, `startSurface`; negative durations), or `autoScreenshot` on a step.
+- Invalid: an unknown key on a spec or step (or in `click`, `runCode`, `record`, `dragAndDrop`), two actions in one step, duplicate `testId`s, a missing `before`/`after` file or an invalid step in one, an invalid inline step, wrong-scope routing, an out-of-range value (`timeout` below `1` on `goTo`, `checkLink`, `httpRequest`, `runShell`, `runCode`, `startSurface`, `checkFile`; negative durations), or `autoScreenshot` on a step.
 - Default: exit `2` before any test runs. With `exitOnFail: false` / `--no-exit-on-fail`, the invalid spec is skipped with a warning and the rest run. `runTests()` rejects with `Invalid test specifications, so nothing ran:` under the same rule.
 
 Sources: docs/tests/overview.mdx, docs/ci/reporters-and-artifacts.mdx, docs/ci/upgrade-to-v5.mdx, docs/ci/overview.mdx, docs/troubleshoot/overview.mdx, docs/test-docs/automatic-recording.mdx, docs/config/contexts.mdx, reference/expressions.mdx, schemas/config_v3.schema.json, adrs/00013-json-result-output-and-pass-warning-fail-rollup.md, adrs/01199-reject-invalid-specs-from-runtests-by-default.md

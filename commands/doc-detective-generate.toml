@@ -68,6 +68,7 @@ To build tests by hand, read the source file, or use the pasted doc text, and fi
 | Screenshot/capture | `screenshot` | `{ "screenshot": "page.png" }` |
 | Wait/pause/delay | `wait` | `{ "wait": 2000 }` |
 | Check link/verify URL | `checkLink` | `{ "checkLink": "https://example.com" }` |
+| Download/export a file, or check a file a command writes | `checkFile` | `{ "checkFile": { "download": "*.csv" } }` after the click that starts it; `{ "checkFile": "out/report.txt" }` |
 | Load environment vars | `loadVariables` | `{ "loadVariables": ".env" }` |
 
 Match elements by their visible text, as a reader does: write `{ "click": "Submit" }`, not `{ "click": { "selector": "button.submit" } }`. Text matching keeps working when the markup changes. Use a selector only when the docs give one, several elements share the same text, or the element has no visible text.
