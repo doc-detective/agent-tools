@@ -132,8 +132,8 @@ describe('Hook 2: pre-edit-block-action-antipattern', function () {
     assert.strictEqual(result.code, 0);
   });
 
-  it('should handle doc extensions: .mdx, .html, .adoc, .rst, .dita', async function () {
-    for (const ext of ['.mdx', '.html', '.adoc', '.rst', '.dita']) {
+  it('should handle doc extensions: .mdx, .html, .adoc, .rst, .dita, .feature', async function () {
+    for (const ext of ['.mdx', '.html', '.adoc', '.rst', '.dita', '.feature']) {
       const result = await runHook('pre-edit-block-action-antipattern.js', {
         tool_input: {
           file_path: `/tmp/file${ext}`,

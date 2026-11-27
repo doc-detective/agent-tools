@@ -120,7 +120,7 @@ describe('Hook 3: post-edit-suggest-testing', function () {
   it('should handle all doc extensions', async function () {
     fs.writeFileSync(path.join(tmpDir, '.doc-detective.json'), '{}');
 
-    const extensions = ['.md', '.markdown', '.mdx', '.html', '.htm', '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst'];
+    const extensions = ['.md', '.markdown', '.mdx', '.html', '.htm', '.xml', '.dita', '.ditamap', '.adoc', '.asciidoc', '.asc', '.rst', '.feature'];
     for (const ext of extensions) {
       const result = await runHook('post-edit-suggest-testing.js', {
         tool_input: { file_path: path.join(tmpDir, `file${ext}`) },

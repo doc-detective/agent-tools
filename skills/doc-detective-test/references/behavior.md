@@ -519,8 +519,9 @@ Sources: docs/actions/record.mdx, docs/actions/stopRecord.mdx, docs/test-docs/au
 | AsciiDoc (`adoc`, `asciidoc`, `asc`) | `// (test {...})` | `// (test end)` | `// (test ignore start)` / `end` |
 | reStructuredText (`rst`) | `.. test {...}` | `.. test end` | `.. test ignore start` / `end` |
 | DITA (`dita`, `ditamap`, `xml`) | `<?doc-detective test ... ?>`, `<!-- test ... -->`, `<data name="doc-detective" value="test ..."/>` | `test end` in the same forms | `test ignore start` / `end` (PI or comment) |
+| Gherkin (`feature`) | `# test {...}` above a scenario or its tags | None. The scenario ends the test | `# test ignore start` / `end` |
 
-- Steps use the same forms with `step`. Content is JSON or YAML; DITA also takes XML attributes (`testId="x" detectSteps=false`, dot notation for nesting) and decodes XML entities first.
+- Steps use the same forms with `step`. Content is JSON or YAML (Gherkin: JSON only); DITA also takes XML attributes (`testId="x" detectSteps=false`, dot notation for nesting) and decodes XML entities first.
 - A step with no open test gets a test created around it. A new `test` closes an open one.
 
 ### When a statement isn't read
@@ -562,6 +563,20 @@ Every built-in parses the file first, then detects:
 - DITA adds `<uicontrol>` (click, find, type target), `<wintitle>` (find), `<link>`/`<xref>` (checkLink); `<codeblock>` language comes from `outputclass="language-x"`.
 - Custom `regex` markup matches raw text, code samples included; selectors match structure. A config `fileTypes` list replaces the default list.
 - A test without a `testId` gets a new generated ID when its steps change.
+
+### Gherkin (`.feature`)
+
+Gherkin files don't use the built-in detection table above. Each step phrase maps to an action instead, or sets emulation or the previous request's accepted status. A data table after `I fill in:` or `I should see:` makes one step per row.
+
+- Each `.feature` file is a spec, and each `Scenario` (or `Example`) is a test whose `testId` and `description` are the scenario name. `Background` steps run at the start of every scenario. A `Scenario Outline` runs once per `Examples` row, with `testId` `<name> [row N]`.
+- Step phrases include `I go to "<url>"`, `I click "<text>"`, `I should see "<text>"`, `I type "<keys>" into "<selector>"`, `I press "<key>"`, `I run "<command>"`, `I send a <METHOD> request to "<url>"`, and `I take a screenshot "<path>"`. Use only phrases from the full table at https://docs.doc-detective.com/docs/test-docs/input-formats/gherkin#step-phrases. A step that matches no phrase doesn't run and warns on stderr; the rest of the scenario still runs.
+- With `detectSteps: false`, in config or in a `# test {...}` statement, step phrases neither run nor warn, and only `# step` statements run.
+- `I run:` with a doc string makes an unsafe `runCode` step, which is SKIPPED without `allowUnsafeSteps`.
+- Tags: `@chrome`, `@firefox`, `@safari`, `@webkit` and `@windows`, `@mac`, `@linux`, `@android`, `@ios` set `runOn`; `@headless` runs headless; `@record` sets `autoRecord`; `@skip` and `@wip` skip the test (SKIPPED); `@id:<id>` sets `testId`. A `# test {...}` statement's keys win over tags.
+- Emulation steps (`a 390x844 viewport`, `dark mode`, `the locale is "de-DE"`, `the timezone is "Europe/Berlin"`) apply to the whole scenario. With no browser tag, the scenario runs in Chrome.
+- Keywords must be in English. To add phrases, write `markup` entries in a file type that extends `gherkin`, matching `element` nodes with tag `step`.
+
+Sources: docs/input-formats/gherkin.mdx, adrs/01227-built-in-gherkin-file-type.md
 
 ### Unsafe detected code
 
