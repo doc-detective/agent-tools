@@ -590,12 +590,37 @@ Perform HTTP requests for API testing.
 }
 ```
 
+**With schema validation** (for values that change every run):
+
+```json
+{
+  "httpRequest": {
+    "url": "https://api.example.com/invoices/42",
+    "method": "GET",
+    "response": {
+      "schema": {
+        "type": "object",
+        "required": ["id", "code"],
+        "properties": {
+          "id": { "type": "string", "format": "uuid" },
+          "code": { "type": "string", "pattern": "^INV-\\d+$" }
+        }
+      }
+    }
+  }
+}
+```
+
 **Options:**
 - `url`: Request URL
 - `method`: `"GET"` | `"POST"` | `"PUT"` | `"PATCH"` | `"DELETE"`
 - `request`: What to send: `headers` (object), `parameters` (URL query parameters, object), and `body` (object or string)
 - `statusCodes`: Expected status codes (default `[200, 201]`)
-- `response`: What to expect: `headers` (object) and `body` (JSON object, partial match). A missing key/value pair fails the step.
+- `response`: What to expect. The step fails if the response misses any of these:
+  - `headers` (object): Headers that must be present with these values.
+  - `body` (JSON object, partial match): Key/value pairs that must be present with these exact values.
+  - `required` (array of field paths, such as `user.name` or `items[0].id`): Fields that must exist, with any value. This is separate from a `required` keyword inside `schema`, which follows JSON Schema.
+  - `schema` (JSON Schema object): A schema the response body must match. It accepts any JSON Schema keyword. Use `type`, `format` (such as `uuid`, `email`, or `date-time`), or `pattern` for values that change every run, such as generated IDs or timestamps, and `const` or `enum` for exact values. It applies alongside `headers`, `body`, and `required`. When `openApi.validateAgainstSchema` also checks the response, `response.schema` replaces the OpenAPI response schema.
 - `timeout`: Request timeout in ms (default `60000`)
 
 The object form is strict: `headers`, `body`, `responseHeaders`, or `responseBody` at the top level fails validation.
