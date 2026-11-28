@@ -620,7 +620,7 @@ Perform HTTP requests for API testing.
   - `headers` (object): Headers that must be present with these values.
   - `body` (JSON object, partial match): Key/value pairs that must be present with these exact values.
   - `required` (array of field paths, such as `user.name` or `items[0].id`): Fields that must exist, with any value. This is separate from a `required` keyword inside `schema`, which follows JSON Schema.
-  - `schema` (JSON Schema object): A schema the response body must match. It checks each value's type, `format` (such as `uuid`, `email`, or `date-time`), or `pattern`, so use it for values that change every run, such as generated IDs or timestamps. It applies alongside `headers`, `body`, and `required`. When `openApi.validateAgainstSchema` also checks the response, `response.schema` replaces the OpenAPI response schema.
+  - `schema` (JSON Schema object): A schema the response body must match. It accepts any JSON Schema keyword. Use `type`, `format` (such as `uuid`, `email`, or `date-time`), or `pattern` for values that change every run, such as generated IDs or timestamps, and `const` or `enum` for exact values. It applies alongside `headers`, `body`, and `required`. When `openApi.validateAgainstSchema` also checks the response, `response.schema` replaces the OpenAPI response schema.
 - `timeout`: Request timeout in ms (default `60000`)
 
 The object form is strict: `headers`, `body`, `responseHeaders`, or `responseBody` at the top level fails validation.
